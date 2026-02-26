@@ -164,76 +164,78 @@ export function Map() {
       {/* LIST MODE */}
       {mode === 'list' && (
         <div
-          ref={listScrollRef}
-          className="fixed inset-0 overflow-y-auto"
+          className="fixed inset-0 flex flex-col"
           style={{
-            paddingBottom: '80px',
             background: 'var(--color-bg)',
             zIndex: 1,
           }}
         >
-          {/* Search bar */}
-          <div className="px-4 pt-3 pb-2" style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            background: 'var(--color-bg)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-          }}>
-            <div style={{
-              borderRadius: '14px',
-              boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+          {/* Fixed header: search + chips */}
+          <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
+            {/* Search bar */}
+            <div className="px-4 pt-3 pb-2" style={{
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}>
-              <DishSearch
-                loading={false}
-                placeholder="What are you craving?"
-                onSearchChange={handleSearchChange}
-                initialQuery={searchQuery}
-                rightSlot={
-                  <button
-                    onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
-                    aria-label={'Search radius: ' + radius + ' miles'}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
-                    style={{
-                      fontSize: '12px',
-                      background: 'var(--color-bg)',
-                      color: 'var(--color-text-secondary)',
-                      border: '1px solid var(--color-divider)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {radius} mi
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                }
-              />
+              <div style={{
+                borderRadius: '14px',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+              }}>
+                <DishSearch
+                  loading={false}
+                  placeholder="What are you craving?"
+                  onSearchChange={handleSearchChange}
+                  initialQuery={searchQuery}
+                  rightSlot={
+                    <button
+                      onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
+                      aria-label={'Search radius: ' + radius + ' miles'}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                      style={{
+                        fontSize: '12px',
+                        background: 'var(--color-bg)',
+                        color: 'var(--color-text-secondary)',
+                        border: '1px solid var(--color-divider)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {radius} mi
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  }
+                />
+              </div>
             </div>
+
+            {/* Category chips */}
+            <CategoryChips
+              selected={selectedCategory}
+              onSelect={function (cat) { setSelectedCategory(cat); setListLimit(10) }}
+              maxVisible={23}
+            />
           </div>
 
-          {/* Category chips */}
-          <CategoryChips
-            selected={selectedCategory}
-            onSelect={function (cat) { setSelectedCategory(cat); setListLimit(10) }}
-            sticky
-            maxVisible={23}
-          />
+          {/* Scrollable content */}
+          <div
+            ref={listScrollRef}
+            className="flex-1 overflow-y-auto"
+            style={{ paddingBottom: '80px' }}
+          >
+            {/* Section title */}
+            <div className="px-4 pt-2 pb-2">
+              <h2 style={{
+                fontSize: '17px',
+                fontWeight: 800,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '-0.02em',
+              }}>
+                {listTitle}
+              </h2>
+            </div>
 
-          {/* Section title */}
-          <div className="px-4 pt-2 pb-2">
-            <h2 style={{
-              fontSize: '17px',
-              fontWeight: 800,
-              color: 'var(--color-text-primary)',
-              letterSpacing: '-0.02em',
-            }}>
-              {listTitle}
-            </h2>
-          </div>
-
-          {/* Dish list */}
-          <div className="px-4 pb-4">
+            {/* Dish list */}
+            <div className="px-4 pb-4">
             {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
               <ListSkeleton />
             ) : activeDishes && activeDishes.length > 0 ? (
@@ -284,6 +286,7 @@ export function Map() {
               />
             )}
           </div>
+        </div>
         </div>
       )}
 

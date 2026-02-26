@@ -68,7 +68,7 @@ export function CategoryChips({
                 minWidth: '56px',
                 fontSize: '11px',
                 background: 'transparent',
-                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                 fontWeight: isActive ? 700 : 500,
               }}
             >
