@@ -5,6 +5,51 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-02-25 — Dan + Claude
+
+### Map becomes the homepage + major cleanup
+
+**Merged Home and Map pages.** They were redundant — both showed ranked dishes with a map. Now `/` is the full-screen map with a bottom sheet discovery panel. `/map` redirects to `/`. Removed the old Home page entirely.
+
+**Simplified nav to 4 tabs:** Discover (was Hub), Restaurants, Map (center), You. Removed the separate Discover page — `/discover` redirects to `/hub`.
+
+**Map UX overhaul:**
+- Floating search bar with custom zoom buttons: `[+] [search] [-]` layout over the map, radius tucked top-right
+- When you tap a food icon pin, the search bar and zoom controls fade out so the mini-card isn't blocked
+- Tapping the map background brings the controls back
+- Fixed touch event bleed-through — `stopPropagation` on BottomSheet pointer events + `touchAction: pan-x/pan-y` on scroll areas
+- Map pins and list now use the **same ranked data source** (was two different queries showing different dishes — a 1-vote dish at 8.8 could appear as a pin but not in the list)
+- Capped to top 10 dishes on map for clarity
+- Removed town filter from map (was getting stuck on last-selected town with no UI to change it) — map always shows whole island
+- Mini-card now shows **ranking badge**: "#3 nearby" or "#1 Burger nearby" based on active filters
+
+**Profile cleanup:** Removed duplicate Settings section (already lives in the gear dropdown). Removed Edit Favorites (feature was deleted previously). Added pagination to JournalFeed — shows 5 items with "Show More" button.
+
+**Restored WelcomeModal to Dan's version:** Denis's merge re-added a favorites/CategoryPicker step that Dan explicitly removed. Restored the 3-step flow (welcome → how it works → name). Kept location-agnostic text updates (DM Sans font, "near you", "Dish Discovery" tagline).
+
+### Known issue: 131 orphaned dishes
+
+There are **131 dishes with votes but no `restaurant_id`** in the database. These appear to be from seed data that was never linked to restaurants. Some have significant vote counts (Steamed Lobster: 29 votes, Miso Cod: 25 votes, Caesar Salad: 19 votes). They show up in ranked lists but can't appear on the map (no coordinates). Need to either match them to their actual restaurants or decide what to do with them. Full list was pulled — Dan has it.
+
+### Where Dan's head is at
+
+Still searching for the soul of the app. Moving in the right direction — the map-first homepage feels closer to right. A few things are staring us in the face that we're not seeing yet. Close but not there. WGH.
+
+### Files changed
+- `src/pages/Map.jsx` — Major rewrite: floating controls, custom zoom, single data source, pin-selected state
+- `src/components/restaurants/RestaurantMap.jsx` — MapRefExposer, onMapClick callback, dishRanks/rankingContext props, ranking badge on mini-card
+- `src/components/BottomSheet.jsx` — stopPropagation on pointer events, touchAction: pan-y
+- `src/components/CategoryChips.jsx` — touchAction: pan-x
+- `src/App.jsx` — Map as homepage, removed Home/Discover, added redirects
+- `src/components/BottomNav.jsx` — 4 tabs (Discover, Restaurants, Map, You)
+- `src/pages/Profile.jsx` — Removed duplicate Settings + Edit Favorites
+- `src/components/profile/JournalFeed.jsx` — Pagination (5 items, Show More)
+- `src/components/Auth/WelcomeModal.jsx` — Restored Dan's 3-step version (no favorites)
+- `src/pages/NotFound.jsx` — Simplified to "Explore the Map" → `/`
+- `src/pages/UserProfile.jsx` — Updated map link to `/`
+
+---
+
 ## 2026-02-17 - Daniel + Claude
 
 ### Search Engine V2 — Tags, Ranking, Multi-Word Search

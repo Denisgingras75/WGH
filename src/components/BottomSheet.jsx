@@ -260,10 +260,18 @@ function BottomSheetInner({ children, initialDetent, onDetentChange, contentRef:
   var isDragging = dragRef.current.isDragging
   var sheetHeight = Math.round(heightFraction * 100)
 
+  // Stop all pointer/touch events from leaking through the sheet to the map below
+  var stopPropagation = useCallback(function (e) {
+    e.stopPropagation()
+  }, [])
+
   return (
     <div
       ref={sheetRef}
       className="fixed left-0 right-0 bottom-0 z-20"
+      onPointerDown={stopPropagation}
+      onPointerMove={stopPropagation}
+      onPointerUp={stopPropagation}
       style={{
         height: sheetHeight + 'vh',
         transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
@@ -312,6 +320,7 @@ function BottomSheetInner({ children, initialDetent, onDetentChange, contentRef:
         style={{
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
         }}
         onTouchStart={handleContentTouchStart}
         onTouchMove={handleContentTouchMove}

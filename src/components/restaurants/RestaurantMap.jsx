@@ -13,6 +13,15 @@ const MILES_TO_METERS = 1609.34
 const EXTRA_RADIUS_MI = 5
 const PROXIMITY_THRESHOLD_MI = 0.062 // ~100m
 
+// ─── Expose map instance to parent via ref ───────────────────────────────────
+function MapRefExposer({ mapRef }) {
+  const map = useMap()
+  useEffect(function () {
+    if (mapRef) mapRef.current = map
+  }, [map, mapRef])
+  return null
+}
+
 // ─── Shared: Auto-fit bounds on first render ─────────────────────────────────
 function FitBounds({ points }) {
   const map = useMap()
@@ -343,6 +352,7 @@ export function RestaurantMap({
   onSelectRestaurant,
   onSelectDish,
   onAddPlace,
+  onMapClick,
   isAuthenticated,
   existingPlaceIds,
   radiusMi,
@@ -350,6 +360,9 @@ export function RestaurantMap({
   compact = false,
   fullScreen = false,
   focusDishId = null,
+  mapRef = null,
+  dishRanks = {},
+  rankingContext = 'nearby',
 }) {
   const nav = useNavigate()
   const defaultCenter = [41.43, -70.56]
@@ -513,11 +526,14 @@ export function RestaurantMap({
     >
       <MapContainer
         center={center}
-        zoom={fullScreen ? 15 : 13}
+        zoom={fullScreen ? 13 : 13}
         style={{ height: '100%', width: '100%' }}
         attributionControl={true}
-        zoomControl={true}
+        zoomControl={!fullScreen}
       >
+        {/* Expose map instance to parent */}
+        {mapRef && <MapRefExposer mapRef={mapRef} />}
+
         {/* Tiles — warm land, blue ocean */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
@@ -530,7 +546,10 @@ export function RestaurantMap({
 
         {/* Click handler — dismisses dish mini-card */}
         {isDishMode && (
-          <MapClickHandler onMapClick={() => setSelectedRestaurantId(null)} />
+          <MapClickHandler onMapClick={() => {
+            setSelectedRestaurantId(null)
+            if (onMapClick) onMapClick()
+          }} />
         )}
         {isDishMode && flyTarget && <FlyToLocation lat={flyTarget.lat} lng={flyTarget.lng} />}
 
@@ -752,7 +771,7 @@ export function RestaurantMap({
         const topDish = selectedGroup.dishes[0]
         const posterImage = getPosterIconSrc(topDish.category, topDish.dish_name)
         const emoji = getCategoryEmoji(topDish.category)
-        const moreDishes = selectedGroup.dishes.length - 1
+        const rank = dishRanks[topDish.dish_id]
 
         return (
           <div
@@ -771,6 +790,19 @@ export function RestaurantMap({
               padding: '12px 14px',
             }}
           >
+            {/* Ranking badge */}
+            {rank && (
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: rank <= 3 ? 'var(--color-medal-gold)' : 'var(--color-accent-gold)',
+                marginBottom: '6px',
+                letterSpacing: '-0.01em',
+              }}>
+                #{rank} {rankingContext}
+              </div>
+            )}
+
             {/* Top dish row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>

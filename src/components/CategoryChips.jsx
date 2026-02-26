@@ -48,6 +48,7 @@ export function CategoryChips({
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           minHeight: '68px',
+          touchAction: 'pan-x',
         }}
       >
         {townPicker && (

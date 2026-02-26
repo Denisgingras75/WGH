@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { LocationProvider } from './context/LocationContext'
@@ -48,7 +48,6 @@ function lazyWithRetry(importFn, namedExport) {
 }
 
 // Lazy load pages for code splitting
-const Home = lazyWithRetry(() => import('./pages/Home'), 'Home')
 const Browse = lazyWithRetry(() => import('./pages/Browse'), 'Browse')
 const Dish = lazyWithRetry(() => import('./pages/Dish'), 'Dish')
 const Restaurants = lazyWithRetry(() => import('./pages/Restaurants'), 'Restaurants')
@@ -59,7 +58,6 @@ const Login = lazyWithRetry(() => import('./pages/Login'), 'Login')
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy')
 const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms')
 const UserProfile = lazyWithRetry(() => import('./pages/UserProfile'), 'UserProfile')
-const Discover = lazyWithRetry(() => import('./pages/Discover'), 'Discover')
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'), 'ResetPassword')
 const AcceptInvite = lazyWithRetry(() => import('./pages/AcceptInvite'), 'AcceptInvite')
 const ManageRestaurant = lazyWithRetry(() => import('./pages/ManageRestaurant'), 'ManageRestaurant')
@@ -71,13 +69,11 @@ const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
 // Prefetch functions for smoother navigation - call on hover/focus
 export const prefetchRoutes = {
-  home: () => import('./pages/Home'),
   browse: () => import('./pages/Browse'),
   dish: () => import('./pages/Dish'),
   map: () => import('./pages/Map'),
   restaurants: () => import('./pages/Restaurants'),
   restaurantDetail: () => import('./pages/RestaurantDetail'),
-  discover: () => import('./pages/Discover'),
   hub: () => import('./pages/Hub'),
   profile: () => import('./pages/Profile'),
 }
@@ -128,14 +124,14 @@ function App() {
           <WelcomeModal />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<Layout><Home /></Layout>} />
+              <Route path="/" element={<><MapPage /><BottomNav /></>} />
+              <Route path="/map" element={<Navigate to="/" replace />} />
               <Route path="/browse" element={<Layout><Browse /></Layout>} />
               <Route path="/dish/:dishId" element={<Layout><Dish /></Layout>} />
               <Route path="/restaurants" element={<Layout><Restaurants /></Layout>} />
               <Route path="/restaurants/:restaurantId" element={<Layout><RestaurantDetail /></Layout>} />
-              <Route path="/map" element={<><MapPage /><BottomNav /></>} />
               <Route path="/hub" element={<Layout><Hub /></Layout>} />
-              <Route path="/discover" element={<Layout><Discover /></Layout>} />
+              <Route path="/discover" element={<Navigate to="/hub" replace />} />
               <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
               <Route path="/user/:userId" element={<Layout><UserProfile /></Layout>} />
               <Route path="/login" element={<Login />} />

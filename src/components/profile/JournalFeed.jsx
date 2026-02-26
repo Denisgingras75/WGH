@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
 import { JournalCard } from './JournalCard'
+
+var PAGE_SIZE = 5
 
 /**
  * JournalFeed — reverse-chronological feed of food journal entries.
@@ -15,6 +18,13 @@ import { JournalCard } from './JournalCard'
  *   loading     - show loading skeletons
  */
 export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loading }) {
+  var [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
+  // Reset to first page when shelf changes
+  useEffect(function () {
+    setVisibleCount(PAGE_SIZE)
+  }, [activeShelf])
+
   if (loading) {
     return (
       <div className="space-y-3 p-4">
@@ -91,9 +101,13 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
     )
   }
 
+  var visibleEntries = entries.slice(0, visibleCount)
+  var hasMore = entries.length > visibleCount
+  var remaining = entries.length - visibleCount
+
   return (
     <div className="space-y-3 p-4">
-      {entries.map(function (entry) {
+      {visibleEntries.map(function (entry) {
         var key = entry.variant + '-' + (entry.dish.dish_id || entry.dish.id)
         return (
           <JournalCard
@@ -104,6 +118,20 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
           />
         )
       })}
+      {hasMore && (
+        <button
+          onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
+          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+          style={{
+            fontSize: '14px',
+            color: 'var(--color-accent-gold)',
+            background: 'var(--color-card)',
+            border: '1.5px solid var(--color-divider)',
+          }}
+        >
+          Show More ({remaining > PAGE_SIZE ? PAGE_SIZE : remaining} more)
+        </button>
+      )}
     </div>
   )
 }

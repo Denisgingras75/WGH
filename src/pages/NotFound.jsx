@@ -24,26 +24,13 @@ export function NotFound() {
         >
           Looks like this dish isn't on the menu. Let's get you back to exploring.
         </p>
-        <div className="space-y-3">
-          <Link
-            to="/"
-            className="block w-full py-3 px-6 rounded-xl font-semibold text-center transition-all hover:opacity-90"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            Go to Home
-          </Link>
-          <Link
-            to="/map"
-            className="block w-full py-3 px-6 rounded-xl font-medium text-center border-2 transition-all"
-            style={{
-              background: 'var(--color-surface-elevated)',
-              borderColor: 'var(--color-divider)',
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            Explore the Map
-          </Link>
-        </div>
+        <Link
+          to="/"
+          className="block w-full py-3 px-6 rounded-xl font-semibold text-center transition-all hover:opacity-90"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+        >
+          Explore the Map
+        </Link>
       </div>
     </div>
   )
