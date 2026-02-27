@@ -114,21 +114,22 @@ export function Map() {
 
   var activeDishes = searchQuery ? searchResults : listDishes
 
-  // Build dish rank map for mini-card display (always based on top 10)
+  // Build dish rank map for mini-card display — based on what's actually shown
   var dishRanks = useMemo(function () {
     var ranks = {}
-    var list = mapDishes || []
+    var list = searchQuery ? (searchResults || []) : (mapDishes || [])
     for (var i = 0; i < list.length; i++) {
       ranks[list[i].dish_id] = i + 1
     }
     return ranks
-  }, [mapDishes])
+  }, [searchQuery, searchResults, mapDishes])
 
   var rankingContext = useMemo(function () {
+    if (searchQuery) return 'for \u201c' + searchQuery + '\u201d'
     var categoryLabel = selectedCategoryLabel ? selectedCategoryLabel.label : null
     if (categoryLabel) return categoryLabel + ' nearby'
     return 'nearby'
-  }, [selectedCategoryLabel])
+  }, [searchQuery, selectedCategoryLabel])
 
   // Map pin tap: show mini-card, hide floating controls
   var handlePinTap = useCallback(function (dishId) {
