@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { JitterBadge } from './jitter/JitterBadge'
 
 /**
  * Displays trust indicators on reviews and profiles.
@@ -14,35 +15,17 @@ import { useState } from 'react'
 export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
   const [showPopover, setShowPopover] = useState(false)
 
-  // WAR score mode — overrides type-based badge
+  // WAR score mode — delegate to JitterBadge
   if (warScore != null) {
-    const war = getWarConfig(warScore)
-    const hasPopover = profileData != null
-
     return (
-      <span
-        className="inline-flex items-center gap-1 rounded-full flex-shrink-0 relative"
-        style={{
-          padding: '2px 8px',
-          background: war.bg,
-          color: war.color,
-          fontSize: size === 'sm' ? '11px' : '12px',
-          fontWeight: 600,
-          cursor: hasPopover ? 'pointer' : 'default',
-          lineHeight: 1.4,
-        }}
-        title={war.label + ' \u00B7 WAR ' + warScore.toFixed(2)}
-        onClick={() => hasPopover && setShowPopover(!showPopover)}
-        onMouseEnter={() => hasPopover && setShowPopover(true)}
-        onMouseLeave={() => setShowPopover(false)}
-      >
-        <span>{war.icon}</span>
-        <span>{war.label} {'\u00B7'} {warScore.toFixed(2)}</span>
-
-        {showPopover && profileData && (
-          <WarPopover profileData={profileData} warScore={warScore} warConfig={war} />
-        )}
-      </span>
+      <JitterBadge
+        warScore={warScore}
+        size={size}
+        stats={profileData ? {
+          reviews: profileData.review_count,
+          consistency: profileData.consistency_score,
+        } : undefined}
+      />
     )
   }
 
@@ -140,57 +123,6 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
           </span>
         </span>
       )}
-    </span>
-  )
-}
-
-function getWarConfig(warScore) {
-  if (warScore >= 0.80) {
-    return {
-      label: 'Verified',
-      color: 'var(--color-rating)',
-      bg: 'rgba(34, 197, 94, 0.15)',
-      icon: '\u2713',
-    }
-  }
-  if (warScore >= 0.50) {
-    return {
-      label: 'Suspicious',
-      color: 'var(--color-accent-orange)',
-      bg: 'rgba(245, 158, 11, 0.12)',
-      icon: '\u26A0',
-    }
-  }
-  return {
-    label: 'Bot',
-    color: 'var(--color-error, #ef4444)',
-    bg: 'rgba(239, 68, 68, 0.12)',
-    icon: '\u2716',
-  }
-}
-
-function WarPopover({ profileData, warScore, warConfig }) {
-  return (
-    <span
-      className="absolute left-0 top-full mt-1 p-3 rounded-lg shadow-lg z-50"
-      style={{
-        background: 'var(--color-card)',
-        border: '1px solid var(--color-divider)',
-        minWidth: '180px',
-        fontSize: '11px',
-        display: 'block',
-      }}
-    >
-      <span className="block space-y-1.5">
-        {profileData.review_count != null && (
-          <PopoverRow label="Reviews" value={profileData.review_count} />
-        )}
-        {profileData.consistency_score != null && (
-          <PopoverRow label="Consistency" value={Number(profileData.consistency_score).toFixed(2)} />
-        )}
-        <PopoverRow label="WAR" value={warScore.toFixed(2)} />
-        <PopoverRow label="Classification" value={warConfig.label} />
-      </span>
     </span>
   )
 }
