@@ -291,6 +291,8 @@ CREATE TABLE IF NOT EXISTS jitter_samples (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   sample_data JSONB NOT NULL,
+  war_score DECIMAL(4, 3),
+  classification TEXT CHECK (classification IN ('verified', 'suspicious', 'bot')),
   collected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

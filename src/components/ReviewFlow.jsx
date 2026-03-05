@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
-import { JitterInput, SessionCard } from './jitter'
+import { SessionCard } from './jitter'
+import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
 import { FoodRatingSlider } from './FoodRatingSlider'
@@ -16,13 +17,14 @@ import {
 } from '../lib/storage'
 import { logger } from '../utils/logger'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
+// scoreSession replaced by JitterBox.score() (WAR v2)
 import { PhotoUploadButton } from './PhotoUploadButton'
 import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
 
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
-  const jitterRef = useRef(null)
+  const jitterBoxRef = useRef(null)
   const [userVote, setUserVote] = useState(null)
   const [userRating, setUserRating] = useState(null)
   const [userReviewText, setUserReviewText] = useState(null)
@@ -115,6 +117,19 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     }
   }, [step, user, onLoginRequired])
 
+  // Attach JitterBox to textarea when it mounts (step 2)
+  useEffect(() => {
+    if (reviewTextareaRef.current && !jitterBoxRef.current) {
+      jitterBoxRef.current = JitterBox.attach(reviewTextareaRef.current)
+    }
+    return () => {
+      if (jitterBoxRef.current) {
+        jitterBoxRef.current.detach()
+        jitterBoxRef.current = null
+      }
+    }
+  }, [step]) // re-run when step changes (textarea mounts on step 2)
+
   const handleVoteClick = (wouldOrderAgain) => {
     setPendingVote(wouldOrderAgain)
     hapticLight() // Tactile feedback on selection
@@ -191,10 +206,16 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       is_update: previousVote !== null,
     })
 
-    // Capture purity and jitter before clearing state
-    const purityData = reviewTextToSubmit && jitterRef.current ? jitterRef.current.getPurity() : null
-    const jitterData = reviewTextToSubmit && jitterRef.current ? jitterRef.current.getJitterProfile() : null
-    const sessionStatsData = jitterRef.current?.getSessionStats() || null
+    // Capture WAR badge before clearing state
+    const badge = reviewTextToSubmit && jitterBoxRef.current
+      ? jitterBoxRef.current.score()
+      : null
+    const purityData = badge ? { purity: badge.purity } : null
+    const jitterData = badge ? badge.profile : null
+    const jitterScore = badge
+      ? { score: badge.war, flags: badge.flags, classification: badge.classification }
+      : null
+    const sessionStatsData = badge ? { isCapturing: true, keystrokes: badge.session.keystrokes, wpm: badge.session.wpm, duration: badge.session.duration } : null
 
     // Clear UI state immediately - instant feedback
     clearPendingVoteStorage()
@@ -203,7 +224,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     setReviewText('')
     setReviewError(null)
     setPhotoAdded(false)
-    jitterRef.current?.reset()
+    if (jitterBoxRef.current) jitterBoxRef.current.reset()
 
     // Haptic success feedback
     hapticSuccess()
@@ -216,7 +237,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     onVote?.()
 
     // Submit to server in background (non-blocking)
-    submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData)
+    submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore)
       .then(async (result) => {
         if (result.success && sessionStatsData?.isCapturing) {
           try {
@@ -417,25 +438,31 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             category={category}
           />
 
-          {/* Review textarea with Jitter biometric capture */}
+          {/* Review textarea with JitterBox biometric capture */}
           <div className="relative">
             <label htmlFor="review-text" className="sr-only">Your review</label>
-            <JitterInput
-              ref={jitterRef}
+            <textarea
+              ref={reviewTextareaRef}
               id="review-text"
+              className="w-full rounded-lg p-3 text-sm"
+              style={{
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-primary)',
+                border: reviewError ? '2px solid var(--color-primary)' : '1px solid var(--color-divider)',
+                minHeight: '60px',
+                resize: 'vertical',
+              }}
               value={reviewText}
-              onChange={(val) => {
-                setReviewText(val)
+              onChange={(e) => {
+                setReviewText(e.target.value)
                 if (reviewError) setReviewError(null)
               }}
               placeholder="What stood out?"
-              ariaLabel="Write your review"
-              ariaDescribedby={reviewError ? 'review-error' : 'review-char-count'}
-              ariaInvalid={!!reviewError}
+              aria-label="Write your review"
+              aria-describedby={reviewError ? 'review-error' : 'review-char-count'}
+              aria-invalid={!!reviewError}
               maxLength={MAX_REVIEW_LENGTH + 50}
               rows={1}
-              showBadge={true}
-              style={reviewError ? { border: '2px solid var(--color-primary)' } : {}}
             />
             {reviewText.length > 0 && (
               <div id="review-char-count" className="absolute bottom-2 right-3 text-xs" style={{ color: reviewText.length > MAX_REVIEW_LENGTH ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>

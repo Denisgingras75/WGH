@@ -36,6 +36,7 @@ describe('useVote Hook', () => {
         reviewText: null,
         purityData: null,
         jitterData: null,
+        jitterScore: null,
       })
     })
 
@@ -102,6 +103,7 @@ describe('useVote Hook', () => {
         reviewText: null,
         purityData: null,
         jitterData: null,
+        jitterScore: null,
       })
     })
   })

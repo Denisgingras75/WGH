@@ -4,7 +4,7 @@ import { useState } from 'react'
  * Full Jitter identity card for the user's profile page.
  * Shows all cumulative stats, per-key fingerprint, badge progress.
  */
-export function ProfileJitterCard({ profile }) {
+export function ProfileJitterCard({ profile, warScore }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!profile) return null
@@ -35,6 +35,25 @@ export function ProfileJitterCard({ profile }) {
             {badgeLabel}
           </span>
         </div>
+
+        {/* WAR hero stat */}
+        {warScore != null && (
+          <div className="text-center mb-4">
+            <div
+              className="text-3xl font-mono font-bold"
+              style={{
+                color: warScore >= 0.80
+                  ? 'var(--color-rating)'
+                  : warScore >= 0.50
+                    ? 'var(--color-accent-orange)'
+                    : 'var(--color-error, #ef4444)',
+              }}
+            >
+              {Number(warScore).toFixed(2)}
+            </div>
+            <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>WAR Score</div>
+          </div>
+        )}
 
         {/* Headline stats */}
         <div className="grid grid-cols-3 gap-3 text-center">
