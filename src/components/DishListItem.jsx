@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
+import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
 import { RestaurantAvatar } from './RestaurantAvatar'
 import { ThumbsUpIcon } from './ThumbsUpIcon'
 import { ThumbsDownIcon } from './ThumbsDownIcon'
@@ -112,6 +113,25 @@ export const DishListItem = memo(function DishListItem({
         >
           {rank}
         </span>
+      )}
+
+      {/* Category icon (when no photo thumbnail) */}
+      {!showPhoto && (
+        <div
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{ width: isPodium ? '44px' : '38px', height: isPodium ? '44px' : '38px', marginLeft: '4px' }}
+        >
+          {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
+            <img
+              src={getDishNameIcon(dishName) || getCategoryNeonImage(category)}
+              alt=""
+              className="w-full h-full object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <span style={{ fontSize: isPodium ? '20px' : '16px' }}>{getCategoryEmoji(category)}</span>
+          )}
+        </div>
       )}
 
       {/* Photo thumbnail (restaurant detail only) */}

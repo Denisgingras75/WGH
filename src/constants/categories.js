@@ -93,6 +93,10 @@ export const ALL_CATEGORIES = [
   { id: 'shrimp', label: 'Shrimp', emoji: '🦐' },
   { id: 'waffles', label: 'Waffles', emoji: '🧇' },
   { id: 'wrap', label: 'Wrap', emoji: '🌯' },
+  { id: 'fish-and-chips', label: 'Fish & Chips', emoji: '🐟' },
+  { id: 'fish-sandwich', label: 'Fish Sandwich', emoji: '🐟' },
+  { id: 'eggs-benedict', label: 'Eggs Benedict', emoji: '🍳' },
+  { id: 'veggies', label: 'Veggies', emoji: '🥦' },
 ]
 
 // Fuzzy match a search term to existing categories
@@ -146,8 +150,8 @@ export function getCategoryEmoji(id) {
   return category?.emoji || '🍽️'
 }
 
-// Hand-drawn poster icons — WGH Icon System v1.0
-// Coral fill + black outlines + white details
+// Watercolor food illustrations — WGH Icon System v2.0
+// Warm natural colors, thin ink outlines, transparent backgrounds
 // See ICON-SPEC.md for the full spec
 const CATEGORY_IMAGES = {
   pizza: '/categories/icons/pizza.png',
@@ -175,6 +179,124 @@ const CATEGORY_IMAGES = {
   fries: '/categories/icons/fries.png',
   ribs: '/categories/icons/ribs.png',
   quesadilla: '/categories/icons/quesadilla.png',
+  'fish-and-chips': '/categories/icons/fish-and-chips.png',
+  'fish-sandwich': '/categories/icons/fish-sandwich.png',
+  'eggs-benedict': '/categories/icons/eggs-benedict.png',
+  veggies: '/categories/icons/veggies.png',
+  bruschetta: '/categories/icons/bruschetta.png',
+  burrito: '/categories/icons/burrito.png',
+  calamari: '/categories/icons/calamari.png',
+  crab: '/categories/icons/crab.png',
+  curry: '/categories/icons/curry.png',
+  lobster: '/categories/icons/lobster.png',
+  mussels: '/categories/icons/mussels.png',
+  'onion rings': '/categories/icons/onion-rings.png',
+  pancakes: '/categories/icons/pancakes.png',
+  scallops: '/categories/icons/scallops.png',
+  shrimp: '/categories/icons/shrimp.png',
+  waffles: '/categories/icons/waffles.png',
+  wrap: '/categories/icons/wrap.png',
+  pokebowl: '/categories/icons/pokebowl.png',
+  'lobster benedict': '/categories/icons/eggs-benedict.png',
+}
+
+// Dish name keyword → icon mapping
+// Order matters — first match wins. More specific keywords go first.
+const DISH_NAME_ICON_RULES = [
+  // Specific compound terms first
+  { keyword: 'lobster roll', icon: '/categories/icons/lobster-roll.png' },
+  { keyword: 'lobster benedict', icon: '/categories/icons/eggs-benedict.png' },
+  { keyword: 'cod and chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'cod & chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'filet and chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'filet & chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'fish and chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'fish & chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'fish n chips', icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: "fish n' chips", icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: "fish 'n chips", icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: "fish 'n' chips", icon: '/categories/icons/fish-and-chips.png' },
+  { keyword: 'fish sandwich', icon: '/categories/icons/fish-sandwich.png' },
+  { keyword: 'fish taco', icon: '/categories/icons/fish.png' },
+  { keyword: 'breakfast sandwich', icon: '/categories/icons/breakfast-sandwich.png' },
+  { keyword: 'fried chicken', icon: '/categories/icons/fried-chicken.png' },
+  { keyword: 'chicken tender', icon: '/categories/icons/tendys.png' },
+  { keyword: 'chicken wing', icon: '/categories/icons/wings.png' },
+  { keyword: 'onion ring', icon: '/categories/icons/onion-rings.png' },
+  { keyword: 'poke bowl', icon: '/categories/icons/pokebowl.png' },
+  { keyword: 'rice bowl', icon: '/categories/icons/pokebowl.png' },
+  { keyword: 'eggs benedict', icon: '/categories/icons/eggs-benedict.png' },
+  { keyword: 'ice cream', icon: '/categories/icons/dessert.png' },
+  // Single keywords
+  { keyword: 'benedict', icon: '/categories/icons/eggs-benedict.png' },
+  { keyword: 'burrito', icon: '/categories/icons/burrito.png' },
+  { keyword: 'wrap', icon: '/categories/icons/wrap.png' },
+  { keyword: 'taco', icon: '/categories/icons/taco.png' },
+  { keyword: 'burger', icon: '/categories/icons/burger.png' },
+  { keyword: 'pizza', icon: '/categories/icons/pizza.png' },
+  { keyword: 'sushi', icon: '/categories/icons/sushi.png' },
+  { keyword: 'maki', icon: '/categories/icons/sushi.png' },
+  { keyword: 'lobster', icon: '/categories/icons/lobster.png' },
+  { keyword: 'steak', icon: '/categories/icons/steak.png' },
+  { keyword: 'filet', icon: '/categories/icons/steak.png' },
+  { keyword: 'ribeye', icon: '/categories/icons/steak.png' },
+  { keyword: 'sirloin', icon: '/categories/icons/steak.png' },
+  { keyword: 'pasta', icon: '/categories/icons/pasta.png' },
+  { keyword: 'spaghetti', icon: '/categories/icons/pasta.png' },
+  { keyword: 'linguine', icon: '/categories/icons/pasta.png' },
+  { keyword: 'fettuccine', icon: '/categories/icons/pasta.png' },
+  { keyword: 'penne', icon: '/categories/icons/pasta.png' },
+  { keyword: 'rigatoni', icon: '/categories/icons/pasta.png' },
+  { keyword: 'ravioli', icon: '/categories/icons/pasta.png' },
+  { keyword: 'sandwich', icon: '/categories/icons/sandwich.png' },
+  { keyword: 'sub', icon: '/categories/icons/sandwich.png' },
+  { keyword: 'wing', icon: '/categories/icons/wings.png' },
+  { keyword: 'chowder', icon: '/categories/icons/chowder.png' },
+  { keyword: 'salad', icon: '/categories/icons/salad.png' },
+  { keyword: 'pancake', icon: '/categories/icons/pancakes.png' },
+  { keyword: 'waffle', icon: '/categories/icons/waffles.png' },
+  { keyword: 'french toast', icon: '/categories/icons/breakfast.png' },
+  { keyword: 'omelette', icon: '/categories/icons/breakfast.png' },
+  { keyword: 'omelet', icon: '/categories/icons/breakfast.png' },
+  { keyword: 'quesadilla', icon: '/categories/icons/quesadilla.png' },
+  { keyword: 'fries', icon: '/categories/icons/fries.png' },
+  { keyword: 'calamari', icon: '/categories/icons/calamari.png' },
+  { keyword: 'crab', icon: '/categories/icons/crab.png' },
+  { keyword: 'crab cake', icon: '/categories/icons/crab.png' },
+  { keyword: 'shrimp', icon: '/categories/icons/shrimp.png' },
+  { keyword: 'scallop', icon: '/categories/icons/scallops.png' },
+  { keyword: 'mussel', icon: '/categories/icons/mussels.png' },
+  { keyword: 'clam', icon: '/categories/icons/clams.png' },
+  { keyword: 'oyster', icon: '/categories/icons/clams.png' },
+  { keyword: 'fish', icon: '/categories/icons/fish.png' },
+  { keyword: 'salmon', icon: '/categories/icons/fish.png' },
+  { keyword: 'tuna', icon: '/categories/icons/fish.png' },
+  { keyword: 'cod', icon: '/categories/icons/fish.png' },
+  { keyword: 'swordfish', icon: '/categories/icons/fish.png' },
+  { keyword: 'halibut', icon: '/categories/icons/fish.png' },
+  { keyword: 'mahi', icon: '/categories/icons/fish.png' },
+  { keyword: 'rib', icon: '/categories/icons/ribs.png' },
+  { keyword: 'pork', icon: '/categories/icons/pork.png' },
+  { keyword: 'chicken', icon: '/categories/icons/chicken.png' },
+  { keyword: 'curry', icon: '/categories/icons/curry.png' },
+  { keyword: 'soup', icon: '/categories/icons/soup.png' },
+  { keyword: 'bruschetta', icon: '/categories/icons/bruschetta.png' },
+  { keyword: 'cake', icon: '/categories/icons/dessert.png' },
+  { keyword: 'pie', icon: '/categories/icons/dessert.png' },
+  { keyword: 'brownie', icon: '/categories/icons/dessert.png' },
+  { keyword: 'cookie', icon: '/categories/icons/dessert.png' },
+]
+
+// Match a dish name to an icon based on keywords
+export function getDishNameIcon(dishName) {
+  if (!dishName) return null
+  const lower = dishName.toLowerCase()
+  for (var i = 0; i < DISH_NAME_ICON_RULES.length; i++) {
+    if (lower.includes(DISH_NAME_ICON_RULES[i].keyword)) {
+      return DISH_NAME_ICON_RULES[i].icon
+    }
+  }
+  return null
 }
 
 // Get category image path (light mode only)
@@ -241,6 +363,10 @@ export const CATEGORY_INFO = {
   'shrimp': { emoji: '🦐', label: 'Shrimp' },
   'waffles': { emoji: '🧇', label: 'Waffles' },
   'wrap': { emoji: '🌯', label: 'Wrap' },
+  'fish-and-chips': { emoji: '🐟', label: 'Fish & Chips' },
+  'fish-sandwich': { emoji: '🐟', label: 'Fish Sandwich' },
+  'eggs-benedict': { emoji: '🍳', label: 'Eggs Benedict' },
+  'veggies': { emoji: '🥦', label: 'Veggies' },
 }
 
 // Get category info with fuzzy matching
