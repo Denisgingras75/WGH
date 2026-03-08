@@ -119,7 +119,7 @@ export const DishListItem = memo(function DishListItem({
       {!showPhoto && (
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: isPodium ? '44px' : '38px', height: isPodium ? '44px' : '38px', marginLeft: '4px' }}
+          style={{ width: isPodium ? '52px' : '44px', height: isPodium ? '52px' : '44px', marginLeft: '4px' }}
         >
           {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
             <img
