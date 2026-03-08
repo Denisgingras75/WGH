@@ -179,7 +179,7 @@ export function RestaurantDetail() {
   if (!restaurant) return null
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">{restaurant.name}</h1>
 
       {/* Sticky header with back button */}
@@ -481,6 +481,55 @@ export function RestaurantDetail() {
         onDishCreated={() => refetch()}
         existingDishes={dishes}
       />
+
+      {/* Sticky bottom action bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"
+        style={{
+          background: 'var(--color-bg)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        <div className="flex gap-2 pb-2">
+          {restaurant.toast_slug && (
+            <a
+              href={'https://order.toasttab.com/online/' + restaurant.toast_slug}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{
+                background: 'var(--color-accent-orange)',
+                color: 'var(--color-bg)',
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+              </svg>
+              Order Now
+            </a>
+          )}
+          <a
+            href={restaurant.lat && restaurant.lng
+              ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurant.lat + ',' + restaurant.lng
+              : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent((restaurant.address || (restaurant.name + ', ' + (restaurant.town || "Martha's Vineyard") + ', MA')))
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
+            style={{
+              background: 'var(--color-accent-gold)',
+              color: 'var(--color-bg)',
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+            </svg>
+            Directions
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
