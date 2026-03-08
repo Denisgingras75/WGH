@@ -3,6 +3,9 @@ import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
+import { SessionCard } from './jitter'
+import JitterBox from '../utils/jitter-box'
+import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
 import { FoodRatingSlider } from './FoodRatingSlider'
 import { ThumbsUpIcon } from './ThumbsUpIcon'
@@ -22,6 +25,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
   const { getPurity, getJitterProfile, attachToTextarea, reset: resetPurity } = usePurityTracker()
+  const jitterBoxRef = useRef(null)
   const [userVote, setUserVote] = useState(null)
   const [userRating, setUserRating] = useState(null)
   const [userReviewText, setUserReviewText] = useState(null)
@@ -46,6 +50,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
   const [awaitingLogin, setAwaitingLogin] = useState(false)
   const [announcement, setAnnouncement] = useState('') // For screen reader announcements
   const [photoAdded, setPhotoAdded] = useState(false)
+  const [sessionCardData, setSessionCardData] = useState(null)
   const reviewTextareaRef = useRef(null)
   // Combined ref: partner's focus ref + Denis's purity tracker ref
   const combinedTextareaRef = (el) => {
@@ -117,6 +122,19 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       onLoginRequired?.()
     }
   }, [step, user, onLoginRequired])
+
+  // Attach JitterBox to textarea when it mounts (step 2)
+  useEffect(() => {
+    if (reviewTextareaRef.current && !jitterBoxRef.current) {
+      jitterBoxRef.current = JitterBox.attach(reviewTextareaRef.current)
+    }
+    return () => {
+      if (jitterBoxRef.current) {
+        jitterBoxRef.current.detach()
+        jitterBoxRef.current = null
+      }
+    }
+  }, [step]) // re-run when step changes (textarea mounts on step 2)
 
   const handleVoteClick = (wouldOrderAgain) => {
     setPendingVote(wouldOrderAgain)
@@ -194,9 +212,16 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       is_update: previousVote !== null,
     })
 
-    // Capture purity and jitter before clearing state
-    const purityData = reviewTextToSubmit ? getPurity() : null
-    const jitterData = reviewTextToSubmit ? getJitterProfile() : null
+    // Capture WAR badge before clearing state
+    const badge = reviewTextToSubmit && jitterBoxRef.current
+      ? jitterBoxRef.current.score()
+      : null
+    const purityData = badge ? { purity: badge.purity } : (reviewTextToSubmit ? getPurity() : null)
+    const jitterData = badge ? badge.profile : (reviewTextToSubmit ? getJitterProfile() : null)
+    const jitterScore = badge
+      ? { score: badge.war, flags: badge.flags, classification: badge.classification }
+      : null
+    const sessionStatsData = badge ? { isCapturing: true, keystrokes: badge.session.keystrokes, wpm: badge.session.wpm, duration: badge.session.duration } : null
 
     // Clear UI state immediately - instant feedback
     clearPendingVoteStorage()
@@ -206,6 +231,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     setReviewError(null)
     setPhotoAdded(false)
     resetPurity()
+    if (jitterBoxRef.current) jitterBoxRef.current.reset()
 
     // Haptic success feedback
     hapticSuccess()
@@ -217,9 +243,35 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     // Notify parent to refresh data
     onVote?.()
 
-    // Submit to server in background (non-blocking)
-    submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData)
-      .then((result) => {
+    // Attest + submit in parallel (both non-blocking)
+    const attestPromise = jitterScore && user
+      ? jitterApi.attestReview({
+          userId: user.id,
+          warScore: jitterScore.score,
+          classification: jitterScore.classification,
+          flags: jitterScore.flags,
+          meta: {
+            keys: badge?.session?.keystrokes || 0,
+            paste_chars: badge?.session?.pasteChars || 0,
+            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
+          },
+        })
+      : Promise.resolve(null)
+
+    attestPromise
+      .then((attestResult) => {
+        const badgeHash = attestResult?.badge_hash || null
+        return submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+      })
+      .then(async (result) => {
+        if (result.success && sessionStatsData?.isCapturing) {
+          try {
+            const profile = await jitterApi.getMyProfile()
+            setSessionCardData({ sessionStats: sessionStatsData, profileStats: profile })
+          } catch (e) {
+            setSessionCardData({ sessionStats: sessionStatsData, profileStats: null })
+          }
+        }
         if (!result.success) {
           logger.error('Vote submission failed:', result.error)
         }
@@ -283,6 +335,14 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             </div>
           </div>
         )}
+        {sessionCardData && (
+          <SessionCard
+            sessionStats={sessionCardData.sessionStats}
+            profileStats={sessionCardData.profileStats}
+            onDismiss={() => setSessionCardData(null)}
+          />
+        )}
+
         <button
           onClick={() => {
             setPendingVote(userVote)
