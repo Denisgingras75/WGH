@@ -6,11 +6,11 @@
 export const BROWSE_CATEGORIES = [
   { id: 'pizza', label: 'Pizza', emoji: '🍕' },
   { id: 'burger', label: 'Burgers', emoji: '🍔' },
-  { id: 'seafood', label: 'Seafood', emoji: '🦐' },
+  { id: 'lobster roll', label: 'Lobster Rolls', emoji: '🦞' },
   { id: 'wings', label: 'Wings', emoji: '🍗' },
   { id: 'sushi', label: 'Sushi', emoji: '🍣' },
   { id: 'breakfast', label: 'Breakfast', emoji: '🍳' },
-  { id: 'lobster roll', label: 'Lobster Rolls', emoji: '🦞' },
+  { id: 'seafood', label: 'Seafood', emoji: '🦐' },
   { id: 'chowder', label: 'Chowder', emoji: '🍲' },
   { id: 'pasta', label: 'Pasta', emoji: '🍝' },
   { id: 'steak', label: 'Steak', emoji: '🥩' },
