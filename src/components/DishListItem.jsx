@@ -246,11 +246,19 @@ export const DishListItem = memo(function DishListItem({
         <div className="flex">
           {/* Image */}
           <div
-            className="relative w-24 h-24 rounded-l-xl flex-shrink-0 overflow-hidden"
+            className="relative w-24 h-24 rounded-l-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
             style={{ background: 'var(--color-surface-elevated)' }}
           >
             {photoUrl ? (
               <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
+            ) : (getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
+              <img
+                src={getDishNameIcon(dishName) || getCategoryNeonImage(category)}
+                alt=""
+                className="object-contain"
+                style={{ width: '56px', height: '56px' }}
+                loading="lazy"
+              />
             ) : (
               <RestaurantAvatar name={restaurantName} town={restaurantTown} fill className="absolute inset-0" />
             )}

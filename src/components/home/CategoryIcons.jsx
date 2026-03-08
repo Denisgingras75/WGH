@@ -1,9 +1,6 @@
-// WGH Icon System v1.0 — Hand-drawn coral stamp icons
-// Two-color: coral fill (#E4440A) + black outlines + white details
+// WGH Icon System v2.0 — Flat vector food icons
+// Consistent outline weight, flat color fills, transparent backgrounds
 // See ICON-SPEC.md for the full system spec
-//
-// All 42 poster icons from whats-good-here-soul/public/categories/poster/
-// Icons needing color adjustment are marked with // COLOR-FIX
 
 const categoryIcons = {
   // === BROWSE CATEGORIES (19 of 23 have icons) ===
@@ -11,47 +8,46 @@ const categoryIcons = {
   burger: '/categories/icons/burger.png',
   wings: '/categories/icons/wings.png',
   breakfast: '/categories/icons/breakfast.png',
-  'lobster roll': '/categories/icons/lobster-roll.png',  // COLOR-FIX: bun is yellow-orange, not coral
-  chowder: '/categories/icons/chowder.png',
+  'lobster roll': '/categories/icons/lobster-roll.png',  chowder: '/categories/icons/chowder.png',
   steak: '/categories/icons/steak.png',
   sandwich: '/categories/icons/sandwich.png',
   salad: '/categories/icons/salad.png',
   taco: '/categories/icons/taco.png',
   pasta: '/categories/icons/pasta.png',
   seafood: '/categories/icons/seafood.png',
-  sushi: '/categories/icons/sushi.png',              // COLOR-FIX: salmon pink tones, not straight coral
+  sushi: '/categories/icons/sushi.png',             // salmon pink tones, not straight coral
   tendys: '/categories/icons/tendys.png',
-  dessert: '/categories/icons/dessert.png',          // COLOR-FIX: cake layers have orange variation
+  dessert: '/categories/icons/dessert.png',         // cake layers have orange variation
   fish: '/categories/icons/fish.png',
-  clams: '/categories/icons/clams.png',              // COLOR-FIX: basket has yellow-orange hatching
+  clams: '/categories/icons/clams.png',             // basket has yellow-orange hatching
   chicken: '/categories/icons/chicken.png',
   pork: '/categories/icons/pork.png',
   // Missing poster icons: oysters, coffee, cocktails, ice cream (use SVG fallback)
 
   // === SUB-CATEGORIES ===
-  'fried chicken': '/categories/icons/fried-chicken.png',  // COLOR-FIX: grittier texture, slightly off-coral
-  'breakfast sandwich': '/categories/icons/breakfast-sandwich.png',  // COLOR-FIX: egg yolk is yellow-orange
+  'fried chicken': '/categories/icons/fried-chicken.png', // grittier texture, slightly off-coral
+  'breakfast sandwich': '/categories/icons/breakfast-sandwich.png', // egg yolk is yellow-orange
   soup: '/categories/icons/soup.png',
   fries: '/categories/icons/fries.png',
-  ribs: '/categories/icons/ribs.png',                // COLOR-FIX: coleslaw has green/yellow tones
-  quesadilla: '/categories/icons/quesadilla.png',    // COLOR-FIX: mostly cream/tan, minimal coral
-  bruschetta: '/categories/icons/bruschetta.png',     // COLOR-FIX: bread is yellow-orange
-  burrito: '/categories/icons/burrito.png',           // COLOR-FIX: mostly black/white, coral only in filling
+  ribs: '/categories/icons/ribs.png',               // coleslaw has green/yellow tones
+  quesadilla: '/categories/icons/quesadilla.png',   // mostly cream/tan, minimal coral
+  bruschetta: '/categories/icons/bruschetta.png',    // bread is yellow-orange
+  burrito: '/categories/icons/burrito.png',          // mostly black/white, coral only in filling
   calamari: '/categories/icons/calamari.png',
   crab: '/categories/icons/crab.png',
   curry: '/categories/icons/curry.png',
-  'eggs-benedict': '/categories/icons/eggs-benedict.png',  // COLOR-FIX: english muffin is tan/cream
+  'eggs-benedict': '/categories/icons/eggs-benedict.png', // english muffin is tan/cream
   'fish-and-chips': '/categories/icons/fish-and-chips.png',
-  'fish-sandwich': '/categories/icons/fish-sandwich.png',  // COLOR-FIX: grittier texture, slightly off-coral
-  lobster: '/categories/icons/lobster.png',           // COLOR-FIX: more orange than coral
-  mussels: '/categories/icons/mussels.png',           // COLOR-FIX: bowl is bright orange, not coral
+  'fish-sandwich': '/categories/icons/fish-sandwich.png', // grittier texture, slightly off-coral
+  lobster: '/categories/icons/lobster.png',          // more orange than coral
+  mussels: '/categories/icons/mussels.png',          // bowl is bright orange, not coral
   'onion rings': '/categories/icons/onion-rings.png',
   pancakes: '/categories/icons/pancakes.png',
   scallops: '/categories/icons/scallops.png',
   shrimp: '/categories/icons/shrimp.png',
   veggies: '/categories/icons/veggies.png',
   waffles: '/categories/icons/waffles.png',
-  wrap: '/categories/icons/wrap.png',                 // COLOR-FIX: mostly cream/white, coral only in spots
+  wrap: '/categories/icons/wrap.png',                // mostly cream/white, coral only in spots
 }
 
 // Inline SVG fallbacks — only for categories with NO poster icon
