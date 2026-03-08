@@ -15,6 +15,43 @@ import { LoginModal } from './Auth/LoginModal'
 
 const STEPS = { SEARCH: 'search', DETAILS: 'details', DISH: 'dish' }
 
+/**
+ * Auto-detect Toast slug or ordering URL from a website URL.
+ * Returns { toastSlug, orderUrl } — one or both may be null.
+ */
+function detectOrderingInfo(url) {
+  if (!url) return { toastSlug: null, orderUrl: null }
+  var lower = url.toLowerCase()
+
+  // Direct Toast ordering link: order.toasttab.com/online/SLUG
+  var toastMatch = url.match(/order\.toasttab\.com\/online\/([^/?#]+)/i)
+  if (toastMatch) {
+    return { toastSlug: toastMatch[1], orderUrl: null }
+  }
+
+  // Toast website (not ordering page): www.toasttab.com/SLUG
+  var toastSiteMatch = url.match(/(?:www\.)?toasttab\.com\/([^/?#]+)/i)
+  if (toastSiteMatch && toastSiteMatch[1] !== 'online') {
+    return { toastSlug: toastSiteMatch[1], orderUrl: null }
+  }
+
+  // Common ordering platforms → save as order_url
+  if (
+    lower.includes('doordash.com') ||
+    lower.includes('grubhub.com') ||
+    lower.includes('ubereats.com') ||
+    lower.includes('seamless.com') ||
+    lower.includes('postmates.com') ||
+    lower.includes('chownow.com') ||
+    lower.includes('order.online') ||
+    lower.includes('ordering.app')
+  ) {
+    return { toastSlug: null, orderUrl: url }
+  }
+
+  return { toastSlug: null, orderUrl: null }
+}
+
 export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -38,6 +75,8 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [menuUrl, setMenuUrl] = useState('')
   const [googlePlaceId, setGooglePlaceId] = useState(null)
+  const [toastSlug, setToastSlug] = useState(null)
+  const [orderUrl, setOrderUrl] = useState(null)
 
   // Optional first dish
   const [dishName, setDishName] = useState('')
@@ -68,6 +107,8 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       setWebsiteUrl('')
       setMenuUrl('')
       setGooglePlaceId(null)
+      setToastSlug(null)
+      setOrderUrl(null)
       setDishName('')
       setDishCategory('')
       setDishPrice('')
@@ -117,6 +158,13 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         setWebsiteUrl(details.websiteUrl || '')
         setMenuUrl(details.menuUrl || '')
         setGooglePlaceId(prediction.placeId)
+        // Auto-detect Toast slug or ordering URL from website
+        var ordering = detectOrderingInfo(details.websiteUrl)
+        if (!ordering.toastSlug && !ordering.orderUrl) {
+          ordering = detectOrderingInfo(details.menuUrl)
+        }
+        setToastSlug(ordering.toastSlug)
+        setOrderUrl(ordering.orderUrl)
         // Try to extract town from address
         const parts = (details.address || '').split(',')
         if (parts.length >= 2) {
@@ -192,12 +240,16 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         websiteUrl: websiteUrl.trim() || null,
         menuUrl: menuUrl.trim() || null,
         phone: phone.trim() || null,
+        toastSlug: toastSlug || null,
+        orderUrl: orderUrl || null,
       })
 
       capture('restaurant_created', {
         restaurant_id: restaurant.id,
         source: googlePlaceId ? 'google_places' : 'manual',
         has_first_dish: !!dishName.trim(),
+        has_toast: !!toastSlug,
+        has_order_url: !!orderUrl,
       })
 
       // Optionally create first dish
