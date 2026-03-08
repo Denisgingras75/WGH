@@ -9,7 +9,7 @@ export function useVote() {
   const inFlightRef = useRef(new Set())
 
   // Submit wouldOrderAgain, rating_10, and optional review text in one call
-  const submitVote = useCallback(async (dishId, wouldOrderAgain, rating10, reviewText = null, purityData = null, jitterData = null) => {
+  const submitVote = useCallback(async (dishId, wouldOrderAgain, rating10, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null) => {
     // Prevent duplicate submissions for the same dish
     if (inFlightRef.current.has(dishId)) {
       return { success: false, error: 'Vote already in progress' }
@@ -27,6 +27,8 @@ export function useVote() {
         reviewText,
         purityData,
         jitterData,
+        jitterScore,
+        badgeHash,
       })
 
       return { success: true }

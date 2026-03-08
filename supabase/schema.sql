@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS restaurants (
   menu_last_checked TIMESTAMPTZ,
   menu_content_hash TEXT,
   menu_section_order TEXT[] DEFAULT '{}',
+  toast_slug TEXT,
+  order_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -84,6 +86,8 @@ CREATE TABLE IF NOT EXISTS votes (
   scored_at TIMESTAMPTZ,
   category_snapshot TEXT,
   purity_score DECIMAL(5, 2),
+  war_score DECIMAL(4, 3),
+  badge_hash TEXT,
   source TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('user', 'ai_estimated')),
   source_metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -672,7 +676,12 @@ RETURNS TABLE (
   search_score DECIMAL,
   featured_photo_url TEXT,
   restaurant_lat DECIMAL,
-  restaurant_lng DECIMAL
+  restaurant_lng DECIMAL,
+  restaurant_address TEXT,
+  restaurant_phone TEXT,
+  restaurant_website_url TEXT,
+  toast_slug TEXT,
+  order_url TEXT
 ) AS $$
 DECLARE
   lat_delta DECIMAL := radius_miles / 69.0;
@@ -680,7 +689,8 @@ DECLARE
 BEGIN
   RETURN QUERY
   WITH nearby_restaurants AS (
-    SELECT r.id, r.name, r.town, r.lat, r.lng, r.cuisine
+    SELECT r.id, r.name, r.town, r.lat, r.lng, r.cuisine,
+           r.address, r.phone, r.website_url, r.toast_slug, r.order_url
     FROM restaurants r
     WHERE r.is_open = true
       AND r.lat BETWEEN (user_lat - lat_delta) AND (user_lat + lat_delta)
@@ -690,6 +700,7 @@ BEGIN
   restaurants_with_distance AS (
     SELECT
       nr.id, nr.name, nr.town, nr.lat, nr.lng, nr.cuisine,
+      nr.address, nr.phone, nr.website_url, nr.toast_slug, nr.order_url,
       ROUND((
         3959 * ACOS(
           LEAST(1.0, GREATEST(-1.0,
@@ -816,7 +827,12 @@ BEGIN
     ) AS search_score,
     bp.photo_url AS featured_photo_url,
     fr.lat AS restaurant_lat,
-    fr.lng AS restaurant_lng
+    fr.lng AS restaurant_lng,
+    fr.address AS restaurant_address,
+    fr.phone AS restaurant_phone,
+    fr.website_url AS restaurant_website_url,
+    fr.toast_slug,
+    fr.order_url
   FROM dishes d
   INNER JOIN filtered_restaurants fr ON d.restaurant_id = fr.id
   LEFT JOIN votes v ON d.id = v.dish_id
@@ -828,6 +844,7 @@ BEGIN
     AND d.parent_dish_id IS NULL
   GROUP BY d.id, d.name, fr.id, fr.name, fr.town, d.category, d.tags, fr.cuisine,
            d.price, d.photo_url, fr.distance, fr.lat, fr.lng,
+           fr.address, fr.phone, fr.website_url, fr.toast_slug, fr.order_url,
            vs.total_child_votes, vs.total_child_yes, vs.child_count,
            bv.best_name, bv.best_rating,
            d.value_score, d.value_percentile,

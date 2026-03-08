@@ -1,5 +1,9 @@
+import { useState } from 'react'
+import { JitterBadge } from './jitter/JitterBadge'
+
 /**
  * Displays trust indicators on reviews and profiles.
+ * Optional popover shows cumulative stats when profileData is provided.
  *
  * Types:
  * - 'human_verified': Green check — reviewer has consistent jitter profile (5+ reviews)
@@ -8,62 +12,133 @@
  * - 'building': Gray — new reviewer, building verification
  * - null: No badge shown
  */
-export function TrustBadge({ type, size = 'sm' }) {
+export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
+  const [showPopover, setShowPopover] = useState(false)
+
+  // WAR score mode — delegate to JitterBadge
+  if (warScore != null) {
+    return (
+      <JitterBadge
+        warScore={warScore}
+        size={size}
+        stats={profileData ? {
+          reviews: profileData.review_count,
+          consistency: profileData.consistency_score,
+        } : undefined}
+      />
+    )
+  }
+
   if (!type) return null
 
   const configs = {
     human_verified: {
       label: 'Verified Human',
-      icon: '\u2713',
-      bg: 'rgba(34, 197, 94, 0.12)',
       color: 'var(--color-rating)',
-      border: 'rgba(34, 197, 94, 0.3)',
+      bg: 'rgba(34, 197, 94, 0.15)',
     },
     trusted_reviewer: {
       label: 'Trusted Reviewer',
-      icon: '\u2713\u2713',
-      bg: 'rgba(34, 197, 94, 0.18)',
       color: 'var(--color-rating)',
-      border: 'rgba(34, 197, 94, 0.4)',
+      bg: 'rgba(34, 197, 94, 0.22)',
     },
     ai_estimated: {
-      label: 'Estimated from public reviews',
-      icon: '\u2139',
-      bg: 'rgba(59, 130, 246, 0.1)',
-      color: 'var(--color-blue)',
-      border: 'rgba(59, 130, 246, 0.25)',
+      label: 'AI Estimated',
+      color: 'var(--color-blue, #3b82f6)',
+      bg: 'rgba(59, 130, 246, 0.12)',
     },
     building: {
-      label: 'Building verification...',
-      icon: '\u25CC',
-      bg: 'rgba(156, 163, 175, 0.1)',
+      label: 'Building...',
       color: 'var(--color-text-tertiary)',
-      border: 'rgba(156, 163, 175, 0.25)',
+      bg: 'rgba(156, 163, 175, 0.12)',
     },
   }
 
   const config = configs[type]
   if (!config) return null
 
-  const fontSize = size === 'sm' ? '11px' : '12px'
-  const padding = size === 'sm' ? '2px 6px' : '3px 8px'
+  const dim = size === 'sm' ? 16 : 20
+  const iconSize = size === 'sm' ? 10 : 12
+  const isTrusted = type === 'trusted_reviewer'
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap"
+      className="inline-flex items-center justify-center rounded-full flex-shrink-0 relative"
       style={{
-        fontSize,
-        padding,
-        background: config.bg,
-        color: config.color,
-        border: `1px solid ${config.border}`,
+        width: dim,
+        height: dim,
+        background: isTrusted ? config.color : config.bg,
+        cursor: profileData ? 'pointer' : 'default',
       }}
       title={config.label}
+      onClick={() => profileData && setShowPopover(!showPopover)}
+      onMouseEnter={() => profileData && setShowPopover(true)}
+      onMouseLeave={() => setShowPopover(false)}
     >
-      <span style={{ fontSize: size === 'sm' ? '10px' : '11px' }}>{config.icon}</span>
-      {config.label}
+      {(type === 'human_verified' || type === 'trusted_reviewer') && (
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 13l4 4L19 7"
+            stroke={isTrusted ? 'white' : config.color}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+      {type === 'ai_estimated' && (
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="7" r="1.5" fill={config.color} />
+          <rect x="10.5" y="11" width="3" height="7" rx="1" fill={config.color} />
+        </svg>
+      )}
+      {type === 'building' && (
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="8" stroke={config.color} strokeWidth="2" strokeDasharray="4 3" />
+        </svg>
+      )}
+
+      {showPopover && profileData && (
+        <span
+          className="absolute left-0 top-full mt-1 p-3 rounded-lg shadow-lg z-50"
+          style={{
+            background: 'var(--color-card)',
+            border: '1px solid var(--color-divider)',
+            minWidth: '160px',
+            fontSize: '11px',
+            display: 'block',
+          }}
+        >
+          <span className="block space-y-1.5">
+            {profileData.review_count != null && (
+              <PopoverRow label="Verified sessions" value={profileData.review_count} />
+            )}
+            {profileData.consistency_score != null && (
+              <PopoverRow label="Consistency" value={Number(profileData.consistency_score).toFixed(2)} />
+            )}
+            {profileData.created_at && (
+              <PopoverRow label="Member since" value={formatMemberSince(profileData.created_at)} />
+            )}
+            <PopoverRow label="Trust level" value={config.label} />
+          </span>
+        </span>
+      )}
     </span>
   )
+}
+
+function PopoverRow({ label, value }) {
+  return (
+    <span className="flex justify-between gap-3" style={{ display: 'flex' }}>
+      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}</span>
+      <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{value}</span>
+    </span>
+  )
+}
+
+function formatMemberSince(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
 /**

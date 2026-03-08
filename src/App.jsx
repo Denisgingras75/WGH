@@ -64,6 +64,7 @@ const ManageRestaurant = lazyWithRetry(() => import('./pages/ManageRestaurant'),
 const MapPage = lazyWithRetry(() => import('./pages/Map'), 'Map')
 const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'HowReviewsWork')
 const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'ForRestaurants')
+const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
 // Prefetch functions for smoother navigation - call on hover/focus
@@ -138,6 +139,7 @@ function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/how-reviews-work" element={<Layout><HowReviewsWork /></Layout>} />
               <Route path="/for-restaurants" element={<ForRestaurants />} />
+              <Route path="/jitter" element={<Layout><JitterLanding /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

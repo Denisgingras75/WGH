@@ -212,7 +212,8 @@ export const dishesApi = {
         .select(`
           id, name, category, avg_rating, total_votes, price, photo_url,
           restaurants!inner (
-            id, name, lat, lng, town, address, is_open
+            id, name, lat, lng, town, address, is_open,
+            phone, website_url, toast_slug, order_url
           )
         `)
         .order('avg_rating', { ascending: false, nullsFirst: false })
@@ -247,6 +248,10 @@ export const dishesApi = {
           restaurant_town: d.restaurants.town,
           restaurant_address: d.restaurants.address,
           restaurant_is_open: d.restaurants.is_open,
+          restaurant_phone: d.restaurants.phone,
+          website_url: d.restaurants.website_url,
+          toast_slug: d.restaurants.toast_slug,
+          order_url: d.restaurants.order_url,
         }))
     } catch (error) {
       logger.error('Error fetching map dishes:', error)
@@ -268,7 +273,8 @@ export const dishesApi = {
           id, name, category, tags, photo_url, price,
           avg_rating, total_votes, value_score, value_percentile,
           restaurants!inner (
-            id, name, is_open, cuisine, town, lat, lng
+            id, name, is_open, cuisine, town, lat, lng,
+            address, phone, website_url, toast_slug, order_url
           )
         `)
         .order('avg_rating', { ascending: false, nullsFirst: false })
@@ -295,6 +301,11 @@ export const dishesApi = {
           restaurant_town: d.restaurants.town,
           restaurant_lat: d.restaurants.lat,
           restaurant_lng: d.restaurants.lng,
+          restaurant_address: d.restaurants.address,
+          restaurant_phone: d.restaurants.phone,
+          website_url: d.restaurants.website_url,
+          toast_slug: d.restaurants.toast_slug,
+          order_url: d.restaurants.order_url,
         }))
     } catch (error) {
       logger.error('Error fetching all searchable dishes:', error)
@@ -445,7 +456,11 @@ export const dishesApi = {
             lat,
             lng,
             cuisine,
-            town
+            town,
+            phone,
+            website_url,
+            toast_slug,
+            order_url
           )
         `)
         .eq('id', dishId)

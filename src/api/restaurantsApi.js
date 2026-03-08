@@ -164,7 +164,7 @@ export const restaurantsApi = {
    * @param {Object} params - Restaurant data
    * @returns {Promise<Object>} Created restaurant
    */
-  async create({ name, address, lat, lng, town, cuisine, googlePlaceId, websiteUrl, menuUrl, facebookUrl, instagramUrl, phone }) {
+  async create({ name, address, lat, lng, town, cuisine, googlePlaceId, websiteUrl, menuUrl, facebookUrl, instagramUrl, phone, toastSlug, orderUrl }) {
     try {
       // Content moderation
       const contentError = validateUserContent(name, 'Restaurant name')
@@ -197,6 +197,8 @@ export const restaurantsApi = {
           facebook_url: facebookUrl || null,
           instagram_url: instagramUrl || null,
           phone: phone || null,
+          toast_slug: toastSlug || null,
+          order_url: orderUrl || null,
           created_by: user.id,
           is_open: true,
         })

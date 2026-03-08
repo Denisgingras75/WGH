@@ -2,6 +2,9 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useDishSearch } from '../hooks/useDishSearch'
+import { useLocationContext } from '../context/LocationContext'
+import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
+import { AddRestaurantModal } from './AddRestaurantModal'
 import { getCategoryNeonImage } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
@@ -30,8 +33,11 @@ const BROWSE_CATEGORIES = [
 
 export function DishSearch({ loading = false, placeholder = "Find What's Good near you", town = null, onSearchChange = null, rightSlot = null, initialQuery = '' }) {
   const navigate = useNavigate()
+  const { location, isUsingDefault } = useLocationContext()
   const [query, setQuery] = useState(initialQuery)
   const [isFocused, setIsFocused] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addModalQuery, setAddModalQuery] = useState('')
   const inputRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -46,6 +52,16 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     MAX_DISH_RESULTS,
     town
   )
+
+  // Restaurant search fallback — shows when dish results are thin (dropdown mode only)
+  const isDropdownMode = !onSearchChange
+  const showRestaurantFallback = isDropdownMode && query.length >= MIN_SEARCH_LENGTH && !hookLoading && hookResults.length < 3
+  const placesLat = isUsingDefault ? null : (location ? location.lat : null)
+  const placesLng = isUsingDefault ? null : (location ? location.lng : null)
+  const restaurantData = useRestaurantSearch(query, placesLat, placesLng, showRestaurantFallback)
+  const restaurantLocal = restaurantData.localResults
+  const restaurantExternal = restaurantData.externalResults
+  const hasRestaurantResults = restaurantLocal.length > 0 || restaurantExternal.length > 0
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -89,7 +105,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     categories: matchingCategories,
   }
 
-  const hasResults = results.dishes.length > 0 || results.categories.length > 0
+  const hasResults = results.dishes.length > 0 || results.categories.length > 0 || hasRestaurantResults
   const showDropdown = !onSearchChange && isFocused && query.length >= MIN_SEARCH_LENGTH
   const isLoading = loading || (hookLoading && !onSearchChange)
 
@@ -210,6 +226,15 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         {rightSlot}
       </div>
 
+      {/* Add Restaurant Modal (dropdown mode only) */}
+      {isDropdownMode && (
+        <AddRestaurantModal
+          isOpen={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          initialQuery={addModalQuery}
+        />
+      )}
+
       {/* Autocomplete Dropdown */}
       {showDropdown && (
         <div
@@ -280,6 +305,57 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       category={category}
                       onClick={() => handleCategorySelect(category)}
                     />
+                  ))}
+                </div>
+              )}
+
+              {/* Restaurant fallback — local DB + Google Places */}
+              {hasRestaurantResults && (
+                <div>
+                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {results.dishes.length > 0 ? 'Restaurants' : 'Not on WGH yet?'}
+                    </span>
+                  </div>
+
+                  {restaurantLocal.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => { setIsFocused(false); setQuery(''); navigate('/restaurants/' + r.id) }}
+                      className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'white' }}>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{r.name}</p>
+                        <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>{r.town || 'On WGH'}</p>
+                      </div>
+                    </button>
+                  ))}
+
+                  {restaurantExternal.map((p) => (
+                    <button
+                      key={p.placeId}
+                      onClick={() => { setIsFocused(false); setQuery(''); setAddModalQuery(p.name); setAddModalOpen(true) }}
+                      className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-gold-muted)', color: 'var(--color-accent-gold)' }}>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{p.name}</p>
+                        <p className="text-xs truncate" style={{ color: 'var(--color-accent-gold)' }}>Add to WGH</p>
+                      </div>
+                    </button>
                   ))}
                 </div>
               )}

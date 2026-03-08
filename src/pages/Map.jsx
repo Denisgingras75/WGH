@@ -10,6 +10,8 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 import { DishListItem } from '../components/DishListItem'
 import { CategoryChips } from '../components/CategoryChips'
 import { EmptyState } from '../components/EmptyState'
+import { LocationBanner } from '../components/LocationBanner'
+import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { ModeFAB } from '../components/ModeFAB'
 import { logger } from '../utils/logger'
 
@@ -22,7 +24,7 @@ var RestaurantMap = lazy(function () {
 export function Map() {
   var navigate = useNavigate()
   var routeLocation = useLocation()
-  var { location, radius, setRadius, permissionState } = useLocationContext()
+  var { location, radius, setRadius, permissionState, requestLocation } = useLocationContext()
 
   var [mode, setMode] = useState('list')
   var [selectedCategory, setSelectedCategory] = useState(null)
@@ -33,6 +35,8 @@ export function Map() {
   var [highlightedDishId, setHighlightedDishId] = useState(null)
   var [pinSelected, setPinSelected] = useState(false)
   var [listLimit, setListLimit] = useState(10)
+  var [addModalOpen, setAddModalOpen] = useState(false)
+  var [addModalQuery, setAddModalQuery] = useState('')
 
   var mapRef = useRef(null)
   var listScrollRef = useRef(null)
@@ -209,6 +213,15 @@ export function Map() {
               </div>
             </div>
 
+            {/* Location banner */}
+            <div className="px-4">
+              <LocationBanner
+                permissionState={permissionState}
+                requestLocation={requestLocation}
+                message="Enable location to find the best food near you"
+              />
+            </div>
+
             {/* Category chips */}
             <CategoryChips
               selected={selectedCategory}
@@ -372,6 +385,26 @@ export function Map() {
         </>
       )}
 
+      {/* Floating Check In button (list mode only) */}
+      {mode === 'list' && (
+        <button
+          onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
+          className="fixed right-4 flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
+          style={{
+            bottom: 'calc(72px + env(safe-area-inset-bottom))',
+            zIndex: 40,
+            background: 'var(--color-accent-gold)',
+            color: 'var(--color-bg)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1)',
+          }}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Check In
+        </button>
+      )}
+
       {/* Toggle FAB (both modes) */}
       <ModeFAB mode={mode} onToggle={handleToggle} />
 
@@ -380,6 +413,13 @@ export function Map() {
         onClose={function () { setRadiusSheetOpen(false) }}
         radius={radius}
         onRadiusChange={setRadius}
+      />
+
+      {/* Add Restaurant Modal */}
+      <AddRestaurantModal
+        isOpen={addModalOpen}
+        onClose={function () { setAddModalOpen(false) }}
+        initialQuery={addModalQuery}
       />
     </div>
   )

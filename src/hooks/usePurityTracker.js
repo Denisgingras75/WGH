@@ -23,6 +23,13 @@ const MIN_CHARS_FOR_SCORE = 20
 const AUTOCORRECT_TOLERANCE = 15
 // Number of fatigue windows to track
 const FATIGUE_WINDOW_COUNT = 4
+// Pause threshold (ms) — gaps longer than this count as cognitive pauses
+const PAUSE_THRESHOLD_MS = 2000
+// Top 10 English keys for per-key dwell tracking
+const TRACKED_KEYS = ['e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'l']
+// Mouse path sampling
+const MOUSE_SAMPLE_INTERVAL = 50
+const MAX_MOUSE_SAMPLES = 50
 
 // Top 30 English bigrams for typing signature
 const TRACKED_BIGRAMS = new Set([
@@ -43,18 +50,48 @@ function calcStd(arr) {
   return Math.sqrt(variance)
 }
 
+function computeMousePath(positions) {
+  if (positions.length < 5) return null
+
+  let totalDist = 0
+  for (let i = 1; i < positions.length; i++) {
+    const dx = positions[i].x - positions[i - 1].x
+    const dy = positions[i].y - positions[i - 1].y
+    totalDist += Math.sqrt(dx * dx + dy * dy)
+  }
+
+  const first = positions[0]
+  const last = positions[positions.length - 1]
+  const straightDist = Math.sqrt(
+    (last.x - first.x) * (last.x - first.x) + (last.y - first.y) * (last.y - first.y)
+  )
+
+  const linearity = totalDist > 0 ? Math.round((straightDist / totalDist) * 1000) / 1000 : 1
+  const totalTime = (last.t - first.t) / 1000
+  const avgSpeed = totalTime > 0 ? Math.round(totalDist / totalTime) : 0
+
+  return { linearity, avgSpeed }
+}
+
 export function usePurityTracker() {
   const dataRef = useRef({
     humanChars: 0,
     alienChars: 0,
     flightTimes: [],
     dwellTimes: [],
+    ddTimes: [],
     bigramTimings: {},
     fatigueWindows: [],
     lastKeyTime: 0,
     lastKeyChar: '',
+    lastKeyDownTime: 0,
     keyDownTimes: {},
+    perKeyDwells: {},
     totalKeystrokes: 0,
+    backspaceCount: 0,
+    pauseCount: 0,
+    mousePositions: [],
+    lastMouseSampleTime: 0,
     sessionStartTime: Date.now(),
   })
   const observerRef = useRef(null)
@@ -87,7 +124,7 @@ export function usePurityTracker() {
   // Compute jitter profile for server submission
   const getJitterProfile = useCallback(() => {
     const data = dataRef.current
-    const { flightTimes, dwellTimes, bigramTimings, fatigueWindows, totalKeystrokes, sessionStartTime } = data
+    const { flightTimes, dwellTimes, ddTimes, bigramTimings, totalKeystrokes } = data
 
     // Need minimum signal
     if (flightTimes.length < 10) {
@@ -99,6 +136,20 @@ export function usePurityTracker() {
 
     const meanDwell = dwellTimes.length > 0 ? Math.round(calcMean(dwellTimes) * 100) / 100 : null
     const stdDwell = dwellTimes.length > 1 ? Math.round(calcStd(dwellTimes) * 100) / 100 : null
+
+    // DD time stats
+    const meanDdTime = ddTimes.length > 0 ? Math.round(calcMean(ddTimes) * 100) / 100 : null
+    const stdDdTime = ddTimes.length > 1 ? Math.round(calcStd(ddTimes) * 100) / 100 : null
+
+    // Per-key dwell averages
+    const perKeyDwell = {}
+    for (let i = 0; i < TRACKED_KEYS.length; i++) {
+      const key = TRACKED_KEYS[i]
+      const times = data.perKeyDwells[key]
+      if (times && times.length >= 2) {
+        perKeyDwell[key] = Math.round(calcMean(times) * 100) / 100
+      }
+    }
 
     // Build bigram signatures — only include bigrams with 2+ samples
     const bigramSignatures = {}
@@ -115,17 +166,15 @@ export function usePurityTracker() {
       }
     }
 
-    // Calculate fatigue drift (slope of fatigue windows)
-    let fatigueDrift = null
-    if (fatigueWindows.length >= 2) {
-      // Simple linear slope: (last - first) / (n - 1)
-      const first = fatigueWindows[0]
-      const last = fatigueWindows[fatigueWindows.length - 1]
-      fatigueDrift = Math.round(((last - first) / (fatigueWindows.length - 1)) * 100) / 100
-    }
+    // Edit ratio: backspaces / total keystrokes
+    const editRatio = totalKeystrokes > 0
+      ? Math.round((data.backspaceCount / (totalKeystrokes + data.backspaceCount)) * 1000) / 1000
+      : 0
 
-    // Hour of day from session start
-    const hourOfDay = new Date(sessionStartTime).getHours()
+    // Pause frequency: pauses per 100 keystrokes
+    const pauseFreq = totalKeystrokes > 0
+      ? Math.round((data.pauseCount / totalKeystrokes) * 100 * 100) / 100
+      : 0
 
     return {
       total_keystrokes: totalKeystrokes,
@@ -133,9 +182,13 @@ export function usePurityTracker() {
       std_inter_key: stdInterKey,
       mean_dwell: meanDwell,
       std_dwell: stdDwell,
+      mean_dd_time: meanDdTime,
+      std_dd_time: stdDdTime,
+      per_key_dwell: perKeyDwell,
       bigram_signatures: bigramSignatures,
-      fatigue_drift: fatigueDrift,
-      hour_of_day: hourOfDay,
+      edit_ratio: editRatio,
+      pause_freq: pauseFreq,
+      mouse_path: computeMousePath(data.mousePositions),
       sample_size: flightTimes.length,
     }
   }, [])
@@ -144,8 +197,15 @@ export function usePurityTracker() {
     const now = performance.now()
     const data = dataRef.current
 
-    // Skip modifier-only keys and editing keys
+    // Skip modifier-only keys
     if (e.ctrlKey || e.metaKey || e.altKey) return
+
+    // Count backspaces for edit ratio (before filtering editing keys)
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      data.backspaceCount++
+      return
+    }
+
     if (EDITING_KEYS.has(e.key)) return
     // Skip non-printable (single char = printable)
     if (e.key.length !== 1) return
@@ -156,13 +216,30 @@ export function usePurityTracker() {
     // Record dwell start time for this key
     data.keyDownTimes[e.key.toLowerCase()] = now
 
+    // Track DD time (keydown to keydown)
+    if (data.lastKeyDownTime > 0) {
+      const dd = now - data.lastKeyDownTime
+      if (dd >= MIN_FLIGHT_MS && dd <= MAX_FLIGHT_MS) {
+        data.ddTimes.push(dd)
+        if (data.ddTimes.length > MAX_FLIGHT_TIMES) {
+          data.ddTimes.shift()
+        }
+      }
+    }
+    data.lastKeyDownTime = now
+
     const currentChar = e.key.toLowerCase()
 
-    // Record flight time
+    // Record flight time — but first check for cognitive pause
     if (data.lastKeyTime > 0) {
-      const flight = now - data.lastKeyTime
-      if (flight >= MIN_FLIGHT_MS && flight <= MAX_FLIGHT_MS) {
-        data.flightTimes.push(flight)
+      const rawFlight = now - data.lastKeyTime
+      // Track cognitive pauses (> 2s = thinking break)
+      if (rawFlight > PAUSE_THRESHOLD_MS) {
+        data.pauseCount++
+      }
+      // Only keep flights within bounds for biometric averaging
+      if (rawFlight >= MIN_FLIGHT_MS && rawFlight <= MAX_FLIGHT_MS) {
+        data.flightTimes.push(rawFlight)
         if (data.flightTimes.length > MAX_FLIGHT_TIMES) {
           data.flightTimes.shift()
         }
@@ -174,17 +251,15 @@ export function usePurityTracker() {
             if (!data.bigramTimings[bigram]) {
               data.bigramTimings[bigram] = []
             }
-            data.bigramTimings[bigram].push(flight)
+            data.bigramTimings[bigram].push(rawFlight)
           }
         }
 
         // Update fatigue windows — every 25 keystrokes, record average flight time
         if (data.totalKeystrokes > 0 && data.totalKeystrokes % 25 === 0) {
-          // Average of the last 25 flight times (or all available if fewer)
           const recentFlights = data.flightTimes.slice(-25)
           const avgFlight = recentFlights.reduce((a, b) => a + b, 0) / recentFlights.length
           data.fatigueWindows.push(Math.round(avgFlight * 100) / 100)
-          // Keep only FATIGUE_WINDOW_COUNT windows
           if (data.fatigueWindows.length > FATIGUE_WINDOW_COUNT) {
             data.fatigueWindows.shift()
           }
@@ -215,6 +290,17 @@ export function usePurityTracker() {
         if (data.dwellTimes.length > MAX_DWELL_TIMES) {
           data.dwellTimes.shift()
         }
+
+        // Track per-key dwell for fingerprint keys
+        if (TRACKED_KEYS.includes(keyLower)) {
+          if (!data.perKeyDwells[keyLower]) {
+            data.perKeyDwells[keyLower] = []
+          }
+          data.perKeyDwells[keyLower].push(dwell)
+          if (data.perKeyDwells[keyLower].length > 50) {
+            data.perKeyDwells[keyLower].shift()
+          }
+        }
       }
       delete data.keyDownTimes[keyLower]
     }
@@ -227,6 +313,17 @@ export function usePurityTracker() {
     }
   }, [])
 
+  const handleMouseMove = useCallback((e) => {
+    const now = performance.now()
+    const data = dataRef.current
+    if (now - data.lastMouseSampleTime < MOUSE_SAMPLE_INTERVAL) return
+    data.lastMouseSampleTime = now
+    data.mousePositions.push({ x: e.clientX, y: e.clientY, t: now })
+    if (data.mousePositions.length > MAX_MOUSE_SAMPLES) {
+      data.mousePositions.shift()
+    }
+  }, [])
+
   // Ref callback to attach/detach listeners
   const attachToTextarea = useCallback((node) => {
     // Cleanup previous
@@ -235,6 +332,7 @@ export function usePurityTracker() {
       el.removeEventListener('keydown', keydown)
       el.removeEventListener('keyup', keyup)
       el.removeEventListener('paste', paste)
+      document.removeEventListener('mousemove', handleMouseMove)
       listenersRef.current = null
     }
     if (observerRef.current) {
@@ -249,10 +347,11 @@ export function usePurityTracker() {
 
     textareaRef.current = node
 
-    // Attach keyboard + paste listeners
+    // Attach keyboard + paste + mouse listeners
     node.addEventListener('keydown', handleKeydown)
     node.addEventListener('keyup', handleKeyup)
     node.addEventListener('paste', handlePaste)
+    document.addEventListener('mousemove', handleMouseMove)
     listenersRef.current = { el: node, keydown: handleKeydown, keyup: handleKeyup, paste: handlePaste }
 
     // MutationObserver for non-keyboard insertions (voice input, drag-drop, etc.)
@@ -275,7 +374,33 @@ export function usePurityTracker() {
       subtree: true,
     })
     observerRef.current = observer
-  }, [handleKeydown, handleKeyup, handlePaste])
+  }, [handleKeydown, handleKeyup, handlePaste, handleMouseMove])
+
+  // Lightweight session stats for live display (SessionBadge)
+  const getSessionStats = useCallback(() => {
+    const data = dataRef.current
+    const total = data.humanChars + data.alienChars
+    const purity = total >= MIN_CHARS_FOR_SCORE
+      ? Math.round((data.humanChars / total) * 100)
+      : null
+    const duration = Math.round((Date.now() - data.sessionStartTime) / 1000)
+    const minutes = duration / 60
+    const wpm = minutes > 0 && data.totalKeystrokes > 0
+      ? Math.round((data.totalKeystrokes / 5) / minutes)
+      : 0
+    const editRatio = data.totalKeystrokes > 0
+      ? Math.round((data.backspaceCount / (data.totalKeystrokes + data.backspaceCount)) * 100)
+      : 0
+
+    return {
+      keystrokes: data.totalKeystrokes,
+      purity,
+      wpm,
+      duration,
+      editRatio,
+      isCapturing: data.totalKeystrokes >= MIN_CHARS_FOR_SCORE,
+    }
+  }, [])
 
   // Reset tracking data (for when review text is cleared)
   const reset = useCallback(() => {
@@ -284,12 +409,19 @@ export function usePurityTracker() {
       alienChars: 0,
       flightTimes: [],
       dwellTimes: [],
+      ddTimes: [],
       bigramTimings: {},
       fatigueWindows: [],
       lastKeyTime: 0,
       lastKeyChar: '',
+      lastKeyDownTime: 0,
       keyDownTimes: {},
+      perKeyDwells: {},
       totalKeystrokes: 0,
+      backspaceCount: 0,
+      pauseCount: 0,
+      mousePositions: [],
+      lastMouseSampleTime: 0,
       sessionStartTime: Date.now(),
     }
   }, [])
@@ -303,11 +435,12 @@ export function usePurityTracker() {
         el.removeEventListener('keyup', keyup)
         el.removeEventListener('paste', paste)
       }
+      document.removeEventListener('mousemove', handleMouseMove)
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
     }
-  }, [])
+  }, [handleMouseMove])
 
-  return { getPurity, getJitterProfile, attachToTextarea, reset }
+  return { getPurity, getJitterProfile, getSessionStats, attachToTextarea, reset }
 }
