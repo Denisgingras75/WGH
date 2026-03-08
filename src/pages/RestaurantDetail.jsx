@@ -10,7 +10,6 @@ import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
 import { useFavorites } from '../hooks/useFavorites'
 import { LoginModal } from '../components/Auth/LoginModal'
-import { AddDishModal } from '../components/AddDishModal'
 import { RestaurantDishes, RestaurantMenu } from '../components/restaurants'
 import { useNearbyRestaurant } from '../hooks/useNearbyRestaurant'
 import { useRestaurantSpecials } from '../hooks/useSpecials'
@@ -31,7 +30,6 @@ export function RestaurantDetail() {
   const [activeTab, setActiveTab] = useState(null) // null = auto-detect
   const [dishSearchQuery, setDishSearchQuery] = useState('')
   const [loginModalOpen, setLoginModalOpen] = useState(false)
-  const [addDishModalOpen, setAddDishModalOpen] = useState(false)
   const [friendsVotesByDish, setFriendsVotesByDish] = useState({})
 
   // Fetch restaurant by ID
@@ -328,42 +326,6 @@ export function RestaurantDetail() {
             </div>
           )}
 
-          {isHere && (
-            <button
-              onClick={() => {
-                if (!user) { setLoginModalOpen(true); return }
-                setAddDishModalOpen(true)
-              }}
-              className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
-              style={{
-                background: 'var(--color-accent-gold)',
-                color: 'var(--color-bg)',
-              }}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-              I&apos;m Here — Rate a Dish
-            </button>
-          )}
-
-          {user && !isHere && (
-            <button
-              onClick={() => setAddDishModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.98]"
-              style={{
-                background: 'var(--color-accent-gold-muted)',
-                color: 'var(--color-accent-gold)',
-                border: '1px solid var(--color-accent-gold)',
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Add a dish
-            </button>
-          )}
         </div>
       </div>
 
@@ -424,7 +386,6 @@ export function RestaurantDetail() {
           user={user}
           searchQuery={dishSearchQuery}
           friendsVotesByDish={friendsVotesByDish}
-          onAddDish={() => setAddDishModalOpen(true)}
         />
       ) : (
         <RestaurantMenu
@@ -473,14 +434,6 @@ export function RestaurantDetail() {
         onClose={() => setLoginModalOpen(false)}
       />
 
-      <AddDishModal
-        isOpen={addDishModalOpen}
-        onClose={() => setAddDishModalOpen(false)}
-        restaurantId={restaurantId}
-        restaurantName={restaurant.name}
-        onDishCreated={() => refetch()}
-        existingDishes={dishes}
-      />
     </div>
   )
 }

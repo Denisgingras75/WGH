@@ -308,7 +308,7 @@ function PlacePopupContent({ place, onAddPlace }) {
 
 // ─── Dish Mode: Build category icon divIcon ─────────────────────────────────
 function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelected, ranks) {
-  var posterImage = getPosterIconSrc(category, dishName)
+  var posterImage = getPosterIconSrc(category)
   var emoji = getCategoryEmoji(category)
   var bestRank = (ranks && ranks.length > 0) ? ranks[0] : null
 
@@ -883,7 +883,7 @@ export function RestaurantMap({
               {rankedDishes.map(function (item) {
                 var dish = item.dish
                 var rank = item.rank
-                var pi = getPosterIconSrc(dish.category, dish.dish_name)
+                var pi = getPosterIconSrc(dish.category)
                 var em = getCategoryEmoji(dish.category)
                 var medalColor = rank === 1 ? 'var(--color-medal-gold)'
                   : rank === 2 ? 'var(--color-medal-silver)'

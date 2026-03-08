@@ -85,7 +85,6 @@ export const STORAGE_KEYS = {
   SOUND_MUTED: 'soundMuted',
   RADIUS: 'wgh_radius',
   TOWN: 'wgh_town',
-  THEME: 'wgh_theme',
   LOCATION_PERMISSION: 'whats-good-here-location-permission',
   EMAIL_CACHE: 'whats-good-here-email',
 }

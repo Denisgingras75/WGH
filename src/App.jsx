@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { LocationProvider } from './context/LocationContext'
-import { ThemeProvider } from './context/ThemeContext'
+
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Layout } from './components/Layout'
 import { BottomNav } from './components/BottomNav'
@@ -114,7 +114,6 @@ function App() {
           },
         }}
       />
-      <ThemeProvider>
       <AuthProvider>
       <LocationProvider>
         <BrowserRouter>
@@ -145,7 +144,6 @@ function App() {
         </BrowserRouter>
       </LocationProvider>
       </AuthProvider>
-      </ThemeProvider>
     </ErrorBoundary>
   )
 }

@@ -49,16 +49,15 @@ These rules are absolute. Violating any of them is a bug.
 
 ### 1.2 Error Handling
 - **Never render error objects directly.** Always `{error?.message || error}`, never `{error}`.
-- **All API errors must use `createClassifiedError()`.** No raw Supabase errors thrown to callers. See `src/api/dishesApi.js` for the canonical pattern.
+- **Supabase/network errors must use `createClassifiedError()`.** Catch blocks in API files wrap unexpected errors: `throw error.type ? error : createClassifiedError(error)`. Early validation guards (auth checks, input validation) can throw plain `new Error('readable message')` — `classifyError()` parses the message downstream. See `src/api/dishesApi.js` for the canonical pattern.
 - **Every page must have a loading state.** No empty `<div>` while fetching. Use skeleton or spinner.
 - **New Supabase fields must be added in two places:** `selectFields` string AND `.map()` transform.
-- **Test:** Grep for `throw error` in API files — each must be wrapped in `createClassifiedError()`.
+- **Test:** Grep for catch blocks in API files — each should have `throw error.type ? error : createClassifiedError(error)`.
 
 ### 1.3 Styling
-- **All colors via CSS variables.** `style={{ color: 'var(--color-text-primary)' }}` not `className="text-gray-900"`.
-- **Never hardcode hex colors in components.** All colors defined in `src/index.css`.
-- **Tailwind is for layout/spacing only.** `className` for flexbox, padding, margin, grid. `style` for colors, backgrounds, borders.
-- **Test:** Grep for `text-gray`, `text-white`, `bg-gray`, `bg-blue`, etc. in JSX — should return zero results.
+- **Brand colors via CSS variables.** Use `var(--color-*)` for primary, rating, text, backgrounds, medals — anything that defines the app's identity. This makes rebranding a one-file change.
+- **Hex is fine for one-off colors.** SVG fills, map markers, illustrations, third-party brand colors (Google logo), rgba overlays — use hex/rgba directly.
+- **No Tailwind color classes.** No `text-gray-*`, `bg-blue-*`, `text-white`, etc. Tailwind is for layout/spacing only (`className` for flexbox, padding, margin, grid).
 
 ### 1.4 Data Access
 - **No direct Supabase calls from components or hooks.** All data access goes through `src/api/`.
@@ -147,7 +146,7 @@ src/
 │   ├── restaurant-admin/ # DishesManager, EventsManager, MenuImportWizard, SpecialsManager
 │   └── restaurants/  # RestaurantMap, RestaurantCard, RestaurantDishes, TopDishesNearYou
 ├── constants/        # App-wide constants (9 files)
-├── context/          # AuthContext, LocationContext, ThemeContext
+├── context/          # AuthContext, LocationContext
 ├── hooks/            # Custom React hooks (23 hooks)
 ├── lib/              # Infrastructure (supabase, analytics, storage, sounds, rateLimiter, reviewBlocklist)
 ├── pages/            # Page components (19 pages, all lazy-loaded)
@@ -240,9 +239,9 @@ export function useFoo(params) {
 | Use "favorites" not "saved" | Database table is `favorites` | `useFavorites`, `isFavorite` |
 
 ### 4.6 Design Tokens (Dual Theme)
-Defined in `src/index.css`. Always use `var(--color-*)` — never hardcode. Light "Appetite" is the default; dark "Island Depths" is toggled via `[data-theme="dark"]`.
+Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rating, text, backgrounds) so rebranding is easy. One-off colors in SVGs, map markers, or illustrations can use hex directly.
 
-**Default — Appetite (Light)**
+**Appetite (Light)**
 | Token | Value | Usage |
 |---|---|---|
 | `--color-primary` | `#E4440A` (Warm Coral) | CTAs, primary actions |
@@ -262,20 +261,6 @@ Defined in `src/index.css`. Always use `var(--color-*)` — never hardcode. Ligh
 | `--color-category-strip` | `#F2CDBC` (Warm Peach) | Category icon area |
 | `--color-danger` | `#DC2626` | Error states |
 | `--color-success` | `#16A34A` | Success states |
-
-**Toggle — Island Depths (Dark)**
-| Token | Value | Usage |
-|---|---|---|
-| `--color-primary` | `#C85A54` (Deep Rust) | CTAs, primary actions |
-| `--color-accent-gold` | `#D9A765` (Warm Gold) | Links, secondary accents |
-| `--color-rating` | `#6BB384` (Muted Green) | Rating displays |
-| `--color-text-primary` | `#F5F1E8` (Soft Cream) | Main text |
-| `--color-text-secondary` | `#B8A99A` (Warm Taupe) | Secondary text |
-| `--color-text-tertiary` | `#7D7168` (Brown Gray) | Tertiary text |
-| `--color-bg` | `#0D1B22` (Deep Charcoal-Navy) | Page background |
-| `--color-surface` | `#0F1F2B` | Slightly lighter surface |
-| `--color-surface-elevated` | `#162B35` | Bottom sheet, modals |
-| `--color-card` | `#1A3A42` (Navy-Teal) | Card backgrounds |
 
 ### 4.7 Constants & Configuration
 - **`MIN_VOTES_FOR_RANKING` = 5** — `src/constants/app.js` — dishes below this show as "Early"
@@ -300,7 +285,6 @@ Defined in `src/index.css`. Always use `var(--color-*)` — never hardcode. Ligh
 | `soundMuted` | `SOUND_MUTED` | Sound preference |
 | `wgh_radius` | `RADIUS` | Radius filter preference |
 | `wgh_town` | `TOWN` | Town filter preference |
-| `wgh_theme` | `THEME` | Theme preference (dark/light) |
 | `whats-good-here-auth` | (Supabase SDK) | Supabase auth session |
 | `whats-good-here-location-permission` | `LOCATION_PERMISSION` | Geolocation permission state |
 | `whats-good-here-email` | `EMAIL_CACHE` | Cached email for auth |
@@ -434,12 +418,12 @@ Defined in `src/index.css`. Always use `var(--color-*)` — never hardcode. Ligh
 - **`supabase/schema.sql` is the source of truth.** Update it first, then run in SQL Editor.
 - **React Query for server state.** `useQuery`/`useMutation` — never raw `useEffect` + `fetch`.
 - **Optimistic updates with rollback.** UI updates before server confirms, reverts on error.
-- **All errors classified.** `createClassifiedError()` on every API boundary.
+- **Unexpected errors classified.** Catch blocks use `createClassifiedError()`. Validation guards throw plain readable errors.
 - **Lazy-loaded pages.** All pages use `lazyWithRetry()` for code splitting with chunk failure recovery.
-- **Dual theme with light default.** "Appetite" (light) is the default. "Island Depths" (dark) is a user toggle. Theme controlled via `ThemeContext` + `[data-theme="dark"]` CSS selector. All colors via CSS variables.
+- **Light theme only.** "Appetite" palette. All brand colors via CSS variables in `src/index.css`.
 - **Vote source weighting.** Votes have a `source` field (`user` or `ai_estimated`). AI votes weighted at 0.5x in all ranking aggregations.
 - **Multi-city ready.** Towns constant covers MV + Nantucket + Cape Cod. Schema supports expansion.
-- **Provider order:** `ThemeProvider > AuthProvider > LocationProvider > BrowserRouter`
+- **Provider order:** `AuthProvider > LocationProvider > BrowserRouter`
 
 ---
 

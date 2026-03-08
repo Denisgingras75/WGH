@@ -518,11 +518,11 @@ export function Dish() {
           <div
             className="flex items-center justify-center"
             style={{
-              height: '120px',
+              height: '72px',
               background: 'var(--color-surface)',
             }}
           >
-            <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={80} />
+            <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={48} />
           </div>
 
           {/* Verdict Card */}
@@ -531,7 +531,7 @@ export function Dish() {
             style={{
               background: 'var(--color-card)',
               border: '1.5px solid var(--color-divider)',
-              marginTop: '12px',
+              marginTop: '8px',
               position: 'relative',
               zIndex: 5,
             }}

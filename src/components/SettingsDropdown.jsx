@@ -51,11 +51,6 @@ export function SettingsDropdown() {
     }
   }, [showDropdown])
 
-  const handleToggleSound = () => {
-    const newMutedState = toggleSoundMute()
-    setSoundMuted(newMutedState)
-  }
-
   const handleSignOut = async () => {
     setShowDropdown(false)
     const confirmed = window.confirm('Are you sure you want to sign out?')
@@ -116,11 +111,11 @@ export function SettingsDropdown() {
           {/* Sound Toggle */}
           <button
             role="menuitem"
-            onClick={handleToggleSound}
+            onClick={() => { const m = toggleSoundMute(); setSoundMuted(m) }}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors border-b"
             style={{ borderColor: 'var(--color-divider)' }}
           >
-            <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Bite Sounds</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Sounds</span>
             <div className="w-10 h-6 rounded-full transition-colors" style={{ background: soundMuted ? 'var(--color-surface)' : 'var(--color-primary)' }}>
               <div
                 className="w-4 h-4 rounded-full shadow-sm transform transition-transform mt-1"

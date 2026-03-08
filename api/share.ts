@@ -40,9 +40,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.redirect(302, '/')
   }
 
+  // Map type to SPA route path (API uses 'restaurant', SPA uses 'restaurants')
+  const routePath = type === 'restaurant' ? 'restaurants' : type
+
   // Validate UUID
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-    return res.redirect(302, `/${type}/${id}`)
+    return res.redirect(302, `/${routePath}/${id}`)
   }
 
   // Check if this is a social crawler
@@ -51,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // For browsers, redirect to SPA
   if (!isBot) {
-    return res.redirect(302, `/${type}/${id}`)
+    return res.redirect(302, `/${routePath}/${id}`)
   }
 
   // For bots, fetch data and serve OG tags
@@ -60,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let title = "What's Good Here"
   let description = 'The best dishes, ranked by locals'
   let imageUrl = `${BASE_URL}/og-image.png`
-  const pageUrl = `${BASE_URL}/${type}/${id}`
+  const pageUrl = `${BASE_URL}/${routePath}/${id}`
 
   try {
     if (type === 'dish') {

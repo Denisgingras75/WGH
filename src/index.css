@@ -102,51 +102,6 @@
   --focus-ring: 0 0 0 3px rgba(228, 68, 10, 0.25);
 }
 
-/* ===========================
-   Island Depths Theme (Dark Mode Toggle)
-   Dark mode with ocean island vibes
-   =========================== */
-[data-theme="dark"] {
-  --color-primary: #C85A54;
-  --color-primary-muted: rgba(200, 90, 84, 0.15);
-  --color-primary-glow: rgba(200, 90, 84, 0.3);
-  --color-rating: #6BB384;
-  --color-accent-gold: #D9A765;
-  --color-accent-gold-muted: rgba(217, 167, 101, 0.15);
-  --color-link-secondary: #D9A765;
-  --color-accent-yellow: #F5B731;
-  --color-accent-orange: #E07856;
-  /* Text — warm cream on dark */
-  --color-text-primary: #F5F1E8;
-  --color-text-secondary: #B8A99A;
-  --color-text-tertiary: #7D7168;
-  /* Surfaces — deep charcoal-navy */
-  --color-bg: #0D1B22;
-  --color-surface: #0F1F2B;
-  --color-surface-elevated: #162B35;
-  --color-divider: rgba(200, 90, 84, 0.10);
-  --color-category-strip: #162B35;
-  /* Cards — navy-teal */
-  --color-card: #1A3A42;
-  --color-card-hover: #243A43;
-  --color-card-border: rgba(200, 90, 84, 0.3);
-  --color-medal-gold: #D9A765;
-  --color-medal-silver: #A8B5BF;
-  --color-medal-bronze: #C4855C;
-  --color-green-deep: #5BA97A;
-  --color-danger: #C85A54;
-  --color-success: #6BB384;
-  --color-success-light: #0D2818;
-  --color-success-muted: rgba(107, 179, 132, 0.10);
-  --color-success-border: rgba(107, 179, 132, 0.30);
-  --color-muted: #6B7680;
-  --color-text-tagline: #C08B7A;
-  --color-text-on-primary: #F5F1E8;
-  --glow-primary: 0 0 20px rgba(200, 90, 84, 0.25), 0 0 40px rgba(200, 90, 84, 0.1);
-  --glow-gold: 0 0 15px rgba(217, 167, 101, 0.2);
-  --focus-ring: 0 0 0 3px rgba(200, 90, 84, 0.25);
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -195,37 +150,23 @@
   }
 
   .glass-header {
-    background: rgba(13, 27, 34, 0.95);
+    background: rgba(232, 212, 200, 0.95);
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
-  }
-
-  [data-theme="light"] .glass-header {
-    background: rgba(232, 212, 200, 0.95);
   }
 
   .card-elevated {
     @apply rounded-2xl transition-all duration-300;
     background: var(--color-card);
-    border: 1px solid rgba(217, 167, 101, 0.1);
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-  }
-
-  .card-elevated:hover {
-    background: var(--color-card-hover);
-    border-color: rgba(224, 120, 86, 0.25);
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(217, 167, 101, 0.1);
-    transform: translateY(-2px);
-  }
-
-  [data-theme="light"] .card-elevated {
     border: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
-  [data-theme="light"] .card-elevated:hover {
+  .card-elevated:hover {
+    background: var(--color-card-hover);
     border-color: transparent;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
   }
 
   .card-subtle {
@@ -246,14 +187,8 @@
   .top-bar {
     position: relative;
     width: 100%;
-    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg));
-    padding-top: env(safe-area-inset-top, 0px);
-    border-bottom: 1px solid rgba(217, 167, 101, 0.12);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  }
-
-  [data-theme="light"] .top-bar {
     background: #FFFFFF;
+    padding-top: env(safe-area-inset-top, 0px);
     border-bottom: 1px solid var(--color-divider);
     box-shadow: none;
   }
@@ -284,13 +219,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, #162B35 0%, #0D1B22 50%, #080F14 100%);
+    background: linear-gradient(145deg, #FFFFFF 0%, #F7F4F1 50%, #F0ECE8 100%);
     opacity: 1;
     transition: opacity 0.4s ease-out;
-  }
-
-  [data-theme="light"] .welcome-splash {
-    background: linear-gradient(145deg, #FFFFFF 0%, #F7F4F1 50%, #F0ECE8 100%);
   }
 
   .welcome-splash--fading {
@@ -563,14 +494,9 @@
   }
 
   .animate-shimmer {
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  [data-theme="light"] .animate-shimmer {
     background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
     background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 
   /* Warm text shadow for hero headlines */
@@ -1436,16 +1362,7 @@ input.outline-none:focus-visible {
   filter: brightness(1.02) contrast(1.05);
 }
 
-[data-theme="dark"] .wgh-map-tiles {
-  filter: sepia(0.35) brightness(0.6) contrast(1.15);
-}
-
 /* Street labels — softened to blend with watercolor */
 .wgh-map-labels {
   opacity: 0.55;
-}
-
-[data-theme="dark"] .wgh-map-labels {
-  filter: invert(1);
-  opacity: 0.45;
 }

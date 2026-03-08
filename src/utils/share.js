@@ -78,7 +78,7 @@ export function buildDishShareData(dish) {
  * @returns {{ url: string, title: string, text: string }}
  */
 export function buildRestaurantShareData(restaurant) {
-  const url = `${window.location.origin}/restaurant/${restaurant.id}`
+  const url = `${window.location.origin}/restaurants/${restaurant.id}`
   return {
     url,
     title: restaurant.name,

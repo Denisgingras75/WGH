@@ -22,7 +22,6 @@ import { CategoryImageCard } from '../components/CategoryImageCard'
 import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
-import { AddRestaurantModal } from '../components/AddRestaurantModal'
 
 // Use centralized browse categories
 const CATEGORIES = BROWSE_CATEGORIES
@@ -67,8 +66,6 @@ export function Browse() {
 
   const { location, radius, setRadius, town, permissionState, requestLocation, isUsingDefault } = useLocationContext()
   const [showRadiusSheet, setShowRadiusSheet] = useState(false)
-  const [addRestaurantOpen, setAddRestaurantOpen] = useState(false)
-  const [addRestaurantQuery, setAddRestaurantQuery] = useState('')
   const { stats: userStats } = useUserVotes(user?.id)
 
   // Search results from API using React Query hook
@@ -386,11 +383,6 @@ export function Browse() {
     } else if (suggestion.type === 'restaurant') {
       // Navigate to restaurant page
       navigate(`/restaurants/${suggestion.id}`)
-    } else if (suggestion.type === 'place') {
-      // Open Add Restaurant modal with this place pre-filled
-      setAddRestaurantQuery(suggestion.name)
-      setAddRestaurantOpen(true)
-      setSearchQuery('')
     }
   }, [navigate, openDishPage])
 
@@ -884,11 +876,6 @@ export function Browse() {
         onClose={() => setLoginModalOpen(false)}
       />
 
-      <AddRestaurantModal
-        isOpen={addRestaurantOpen}
-        onClose={() => setAddRestaurantOpen(false)}
-        initialQuery={addRestaurantQuery}
-      />
 
       {/* Impact feedback toast */}
       <ImpactFeedback

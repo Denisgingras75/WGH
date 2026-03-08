@@ -7,7 +7,6 @@ import { useRestaurants } from '../hooks/useRestaurants'
 import { useNearbyPlaces } from '../hooks/useNearbyPlaces'
 import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
-import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
 import { logger } from '../utils/logger'
@@ -25,8 +24,6 @@ export function Restaurants() {
   var [restaurantTab, setRestaurantTab] = useState('open')
   var [searchQuery, setSearchQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
-  var [addRestaurantModalOpen, setAddRestaurantModalOpen] = useState(false)
-  var [addRestaurantInitialQuery, setAddRestaurantInitialQuery] = useState('')
 
   // Fetch restaurants (distance-filtered when location available)
   var restData = useRestaurants(location, radius, permissionState)
@@ -361,10 +358,6 @@ export function Restaurants() {
                   <NearbyPlaceCard
                     key={place.placeId}
                     place={place}
-                    onAdd={function () {
-                      setAddRestaurantInitialQuery(place.name)
-                      setAddRestaurantModalOpen(true)
-                    }}
                   />
                 )
               })}
@@ -386,27 +379,6 @@ export function Restaurants() {
         )}
       </div>
 
-      {/* Add restaurant floating CTA (authenticated) */}
-      {user && (
-        <button
-          onClick={function () {
-            setAddRestaurantInitialQuery('')
-            setAddRestaurantModalOpen(true)
-          }}
-          className="fixed bottom-20 right-4 z-10 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm shadow-lg transition-all active:scale-95"
-          style={{
-            background: 'var(--color-accent-gold)',
-            color: 'var(--color-bg)',
-            boxShadow: '0 4px 16px rgba(217, 167, 101, 0.4)',
-          }}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Add a restaurant
-        </button>
-      )}
-
       {/* Radius Sheet */}
       <RadiusSheet
         isOpen={showRadiusSheet}
@@ -415,17 +387,12 @@ export function Restaurants() {
         onRadiusChange={setRadius}
       />
 
-      <AddRestaurantModal
-        isOpen={addRestaurantModalOpen}
-        onClose={function () { setAddRestaurantModalOpen(false) }}
-        initialQuery={addRestaurantInitialQuery}
-      />
     </div>
   )
 }
 
 // Card for a discovered Google Place
-function NearbyPlaceCard({ place, onAdd }) {
+function NearbyPlaceCard({ place }) {
   var _details = useState(null)
   var details = _details[0]
   var setDetails = _details[1]
@@ -468,20 +435,6 @@ function NearbyPlaceCard({ place, onAdd }) {
             </p>
           )}
         </div>
-        <button
-          onClick={onAdd}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95"
-          style={{
-            background: 'rgba(217, 167, 101, 0.12)',
-            color: 'var(--color-accent-gold)',
-            border: '1px solid rgba(217, 167, 101, 0.2)',
-          }}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Add to WGH
-        </button>
       </div>
 
       {(details?.googleMapsUrl || details?.websiteUrl) && (

@@ -6,7 +6,7 @@
       "destination": "/api/share?type=dish&id=:id"
     },
     {
-      "source": "/restaurant/:id",
+      "source": "/restaurants/:id",
       "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discordbot|TelegramBot|Applebot|Pinterestbot|redditbot|Googlebot|bingbot|Embedly|vkShare).*" }],
       "destination": "/api/share?type=restaurant&id=:id"
     },
