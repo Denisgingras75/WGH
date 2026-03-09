@@ -13,7 +13,6 @@ import { SectionHeader } from '../components/SectionHeader'
 import { EmptyState } from '../components/EmptyState'
 import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
-import { AddRestaurantModal } from '../components/AddRestaurantModal'
 
 export function Home() {
   var navigate = useNavigate()
@@ -23,8 +22,6 @@ export function Home() {
   var [townPickerOpen, setTownPickerOpen] = useState(false)
   var [searchQuery, setSearchQuery] = useState('')
   var [searchLimit, setSearchLimit] = useState(10)
-  var [addModalOpen, setAddModalOpen] = useState(false)
-  var [addModalQuery, setAddModalQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
 
   var handleSearchChange = useCallback(function (q) {
@@ -194,24 +191,6 @@ export function Home() {
         )}
       </div>
 
-      {/* Floating Check In button */}
-      <button
-        onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
-        className="fixed right-4 flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
-        style={{
-          bottom: 'calc(72px + env(safe-area-inset-bottom))',
-          zIndex: 40,
-          background: 'var(--color-accent-gold)',
-          color: 'var(--color-bg)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1)',
-        }}
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        Check In
-      </button>
-
       {/* Radius Sheet */}
       <RadiusSheet
         isOpen={showRadiusSheet}
@@ -220,12 +199,6 @@ export function Home() {
         onRadiusChange={setRadius}
       />
 
-      {/* Add Restaurant Modal */}
-      <AddRestaurantModal
-        isOpen={addModalOpen}
-        onClose={function () { setAddModalOpen(false) }}
-        initialQuery={addModalQuery}
-      />
     </div>
   )
 }

@@ -434,15 +434,6 @@ export function RestaurantDetail() {
         onClose={() => setLoginModalOpen(false)}
       />
 
-      <AddDishModal
-        isOpen={addDishModalOpen}
-        onClose={() => setAddDishModalOpen(false)}
-        restaurantId={restaurantId}
-        restaurantName={restaurant.name}
-        onDishCreated={() => refetch()}
-        existingDishes={dishes}
-      />
-
       {/* Sticky bottom action bar */}
       <div
         className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"

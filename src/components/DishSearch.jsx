@@ -5,31 +5,12 @@ import { useDishSearch } from '../hooks/useDishSearch'
 import { useLocationContext } from '../context/LocationContext'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
 import { AddRestaurantModal } from './AddRestaurantModal'
-import { getCategoryNeonImage } from '../constants/categories'
+import { getCategoryNeonImage, matchCategories } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
 const MIN_SEARCH_LENGTH = 2
 const MAX_DISH_RESULTS = 5
 const MAX_CATEGORY_RESULTS = 2
-
-// Browse shortcuts - curated high-frequency categories only
-// Categories are shortcuts, NOT containers. All dishes are searchable regardless of category.
-const BROWSE_CATEGORIES = [
-  { id: 'pizza', label: 'Pizza' },
-  { id: 'burger', label: 'Burgers' },
-  { id: 'taco', label: 'Tacos' },
-  { id: 'wings', label: 'Wings' },
-  { id: 'sushi', label: 'Sushi' },
-  { id: 'breakfast', label: 'Breakfast' },
-  { id: 'lobster roll', label: 'Lobster Rolls' },
-  { id: 'seafood', label: 'Seafood' },
-  { id: 'chowder', label: 'Chowder' },
-  { id: 'pasta', label: 'Pasta' },
-  { id: 'steak', label: 'Steak' },
-  { id: 'sandwich', label: 'Sandwiches' },
-  { id: 'salad', label: 'Salads' },
-  { id: 'tendys', label: 'Tenders' },
-]
 
 export function DishSearch({ loading = false, placeholder = "Find What's Good near you", town = null, onSearchChange = null, rightSlot = null, initialQuery = '' }) {
   const navigate = useNavigate()
@@ -89,15 +70,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     }
   }, [query, onSearchChange])
 
-  // Find matching categories (client-side since it's a small constant array)
+  // Find matching categories (client-side, searches ALL_CATEGORIES with fuzzy scoring)
   const matchingCategories = useMemo(() => {
     if (query.length < MIN_SEARCH_LENGTH) return []
-    const searchTerm = query.toLowerCase().trim()
-    return BROWSE_CATEGORIES.filter(cat => {
-      const catId = cat.id.toLowerCase()
-      const catLabel = cat.label.toLowerCase()
-      return catId.includes(searchTerm) || catLabel.includes(searchTerm)
-    }).slice(0, MAX_CATEGORY_RESULTS)
+    return matchCategories(query).slice(0, MAX_CATEGORY_RESULTS)
   }, [query])
 
   const results = {

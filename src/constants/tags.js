@@ -100,6 +100,8 @@ export const TAG_SYNONYMS = {
   'kids':        ['handheld', 'comfort', 'budget-friendly'],
   'crispy':      ['crispy', 'fried'],
   'grilled':     ['grilled', 'smoky'],
+  'savory':      ['savory', 'rich', 'comfort'],
+  'rich':        ['rich', 'savory', 'comfort'],
   'spicy':       ['spicy'],
   'sweet':       ['sweet'],
   'vegetarian':  ['vegetarian', 'vegan'],

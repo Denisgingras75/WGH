@@ -66,6 +66,7 @@ function expandTokenTags(tokens) {
 function scoreDish(dish, tokens, normalizedPhrase, expandedTags) {
   const dishName = (dish.name || '').toLowerCase()
   const dishCategory = (dish.category || '').toLowerCase()
+  const dishCuisine = (dish.restaurant_cuisine || '').toLowerCase()
   const dishTags = dish.tags || []
 
   // Exact phrase in name: 100
@@ -87,10 +88,15 @@ function scoreDish(dish, tokens, normalizedPhrase, expandedTags) {
     return 60
   }
 
+  // All tokens match restaurant cuisine: 50
+  if (dishCuisine && tokens.every(t => dishCuisine.includes(t)) && tokens.length > 0) {
+    return 50
+  }
+
   // Tag overlap with synonym expansion: 40
   // For multi-word queries, also require at least one token in name or category
+  const dishTagSet = new Set(dishTags.map(t => (typeof t === 'string' ? t.toLowerCase() : '')))
   if (expandedTags.size > 0) {
-    const dishTagSet = new Set(dishTags.map(t => (typeof t === 'string' ? t.toLowerCase() : '')))
     let overlap = 0
     expandedTags.forEach(tag => {
       if (dishTagSet.has(tag)) overlap++
@@ -106,6 +112,11 @@ function scoreDish(dish, tokens, normalizedPhrase, expandedTags) {
         return 40
       }
     }
+  }
+
+  // Direct tag match (token matches a tag ID on the dish): 35
+  if (tokens.some(t => dishTagSet.has(t))) {
+    return 35
   }
 
   // Single token partial match on name: 20
