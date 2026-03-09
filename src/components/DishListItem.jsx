@@ -7,8 +7,6 @@ import { RestaurantAvatar } from './RestaurantAvatar'
 import { ThumbsUpIcon } from './ThumbsUpIcon'
 import { ThumbsDownIcon } from './ThumbsDownIcon'
 import { HearingIcon } from './HearingIcon'
-import { ValueBadge } from './browse/ValueBadge'
-
 /**
  * DishListItem — the ONE component for showing a dish in any list.
  *
@@ -179,7 +177,6 @@ export const DishListItem = memo(function DishListItem({
             {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
           </p>
-          {valuePercentile != null && <ValueBadge valuePercentile={valuePercentile} />}
         </div>
       </div>
 

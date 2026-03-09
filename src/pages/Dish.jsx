@@ -18,7 +18,6 @@ import { VariantSelector } from '../components/VariantPicker'
 import { CategoryIcon } from '../components/home/CategoryIcons'
 import { PhotoUploadButton } from '../components/PhotoUploadButton'
 import { TrustBadge, TrustSummary } from '../components/TrustBadge'
-import { ValueBadge } from '../components/browse/ValueBadge'
 import { CATEGORY_INFO } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor, formatScore10 } from '../utils/ranking'
@@ -664,7 +663,6 @@ export function Dish() {
                   <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                     {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'}
                   </p>
-                  <ValueBadge valuePercentile={dish.value_percentile} />
                 </div>
               </div>
             ) : dish.total_votes > 0 ? (
