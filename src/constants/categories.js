@@ -279,7 +279,7 @@ export function getDishNameIcon(dishName) {
   const lower = dishName.toLowerCase()
   for (var i = 0; i < DISH_NAME_ICON_RULES.length; i++) {
     if (lower.includes(DISH_NAME_ICON_RULES[i].keyword)) {
-      return DISH_NAME_ICON_RULES[i].icon
+      return DISH_NAME_ICON_RULES[i].icon + '?v=4'
     }
   }
   return null
@@ -288,7 +288,8 @@ export function getDishNameIcon(dishName) {
 // Get category image path (light mode only)
 export function getCategoryNeonImage(id) {
   if (!id) return null
-  return CATEGORY_IMAGES[id.toLowerCase()] || null
+  var src = CATEGORY_IMAGES[id.toLowerCase()] || null
+  return src ? src + '?v=4' : null
 }
 
 // Preload category images for smooth Browse page loading
