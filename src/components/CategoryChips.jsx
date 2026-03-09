@@ -72,7 +72,7 @@ export function CategoryChips({
                 fontWeight: isActive ? 700 : 500,
               }}
             >
-              <CategoryIcon categoryId={cat.id} size={46} />
+              <CategoryIcon categoryId={cat.id} size={72} />
               <span className="mt-1" style={{ lineHeight: 1.2 }}>{cat.label}</span>
             </button>
           )
