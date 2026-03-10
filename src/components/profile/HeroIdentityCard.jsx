@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 /**
  * Hero Identity Card for the Profile page
  * Centered layout: avatar, name, stats row
@@ -29,6 +31,10 @@ export function HeroIdentityCard({
   setFollowListModal,
   jitterProfile,
 }) {
+  const [jitterExpanded, setJitterExpanded] = useState(false)
+  const jitterData = jitterProfile?.profile_data || {}
+  const hasJitterDetail = !!(jitterProfile && Object.keys(jitterData).length > 0)
+
   return (
     <div
       className="relative px-4 pt-8 pb-5 overflow-hidden"
@@ -168,16 +174,18 @@ export function HeroIdentityCard({
           </div>
         </div>
 
-        {/* Compact Jitter Fingerprint */}
+        {/* Compact Jitter Fingerprint — tap to expand */}
         {jitterProfile && (() => {
           const tier = getTierInfo(jitterProfile.confidence_level, jitterProfile.consistency_score)
           return (
-            <div
-              className="flex-shrink-0 rounded-xl px-3 py-2.5 text-center"
+            <button
+              onClick={hasJitterDetail ? () => setJitterExpanded(!jitterExpanded) : undefined}
+              className={'flex-shrink-0 rounded-xl px-3 py-2.5 text-center transition-all active:scale-95' + (hasJitterDetail ? '' : '')}
               style={{
-                background: 'var(--color-card)',
-                border: '1px solid var(--color-divider)',
+                background: jitterExpanded ? tier.bg : 'var(--color-card)',
+                border: '1px solid ' + (jitterExpanded ? tier.color : 'var(--color-divider)'),
                 minWidth: '90px',
+                cursor: hasJitterDetail ? 'pointer' : 'default',
               }}
             >
               <span
@@ -200,12 +208,87 @@ export function HeroIdentityCard({
                 </div>
                 <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>rhythm</div>
               </div>
-            </div>
+              {hasJitterDetail && (
+                <div className="mt-1.5" style={{ color: 'var(--color-accent-gold)', fontSize: '10px' }}>
+                  {jitterExpanded ? '\u25B2 less' : '\u25BC detail'}
+                </div>
+              )}
+            </button>
           )
         })()}
       </div>
+
+      {/* Expanded Jitter Detail Panel */}
+      {jitterExpanded && hasJitterDetail && (
+        <div
+          className="mx-4 mt-3 rounded-xl overflow-hidden"
+          style={{
+            background: 'var(--color-card)',
+            border: '1px solid var(--color-divider)',
+          }}
+        >
+          <div className="px-4 py-3 space-y-2">
+            <DetailRow label="Typing pace" value={jitterData.mean_inter_key ? Math.round(jitterData.mean_inter_key) + 'ms between keys' : '\u2014'} />
+            <DetailRow label="Key press" value={jitterData.mean_dwell ? Math.round(jitterData.mean_dwell) + 'ms avg hold' : '\u2014'} />
+            <DetailRow label="Typo rate" value={jitterData.edit_ratio != null ? Math.round(jitterData.edit_ratio * 100) + '% corrections' : '\u2014'} />
+            {jitterProfile.created_at && (
+              <DetailRow label="Reviewing since" value={new Date(jitterProfile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} />
+            )}
+          </div>
+
+          {/* Per-key fingerprint visual */}
+          {jitterData.per_key_dwell && Object.keys(jitterData.per_key_dwell).length > 0 && (
+            <div className="px-4 pb-3">
+              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                How long you hold each key
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(jitterData.per_key_dwell)
+                  .slice().sort(function (a, b) { return a[1] - b[1] })
+                  .map(function (entry) {
+                    var maxVal = getMaxDwell(jitterData.per_key_dwell)
+                    return <KeyBar key={entry[0]} letter={entry[0]} ms={entry[1]} max={maxVal} />
+                  })}
+              </div>
+            </div>
+          )}
+
+          <div className="px-4 pb-3">
+            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+              Your typing rhythm builds over time as you write reviews. No two people type alike.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div className="flex justify-between text-xs">
+      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}</span>
+      <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>{value}</span>
+    </div>
+  )
+}
+
+function KeyBar({ letter, ms, max }) {
+  var width = max > 0 ? Math.max(20, (ms / max) * 100) : 50
+  return (
+    <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
+      <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
+      <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
+        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent-gold)' }} />
+      </div>
+      <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
+    </div>
+  )
+}
+
+function getMaxDwell(perKeyDwell) {
+  var values = Object.values(perKeyDwell)
+  return values.length > 0 ? Math.max.apply(null, values) : 0
 }
 
 export default HeroIdentityCard

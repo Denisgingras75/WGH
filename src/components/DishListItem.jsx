@@ -51,6 +51,7 @@ export const DishListItem = memo(function DishListItem({
   // Normalize data shapes between different sources
   const dishName = dish.dish_name || dish.name
   const restaurantName = dish.restaurant_name || (dish.restaurants && dish.restaurants.name)
+  const restaurantId = dish.restaurant_id || (dish.restaurants && dish.restaurants.id)
   const restaurantTown = dish.restaurant_town || (dish.restaurants && dish.restaurants.town)
   const dishId = dish.dish_id || dish.id
   const avgRating = dish.avg_rating
@@ -173,7 +174,15 @@ export const DishListItem = memo(function DishListItem({
               color: 'var(--color-text-tertiary)',
             }}
           >
-            {restaurantName}
+            {restaurantId ? (
+              <span
+                role="link"
+                onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
+                style={{ color: 'var(--color-accent-gold)', fontWeight: 600 }}
+              >
+                {restaurantName}
+              </span>
+            ) : restaurantName}
             {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
           </p>
@@ -268,7 +277,15 @@ export const DishListItem = memo(function DishListItem({
           <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
             <div>
               <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
-                {restaurantName}
+                {restaurantId ? (
+                  <span
+                    role="link"
+                    onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
+                    style={{ color: 'var(--color-accent-gold)' }}
+                  >
+                    {restaurantName}
+                  </span>
+                ) : restaurantName}
               </h3>
               <p className="text-sm truncate" style={{ color: 'var(--color-text-secondary)' }}>
                 {dishName}
