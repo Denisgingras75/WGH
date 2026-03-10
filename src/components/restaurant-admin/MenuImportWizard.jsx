@@ -93,8 +93,8 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
           <button
             onClick={handleParse}
             disabled={!menuText.trim()}
-            className="flex-1 py-2.5 rounded-lg font-semibold text-white text-sm disabled:opacity-40"
-            style={{ background: 'var(--color-primary)' }}
+            className="flex-1 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Parse Menu
           </button>
@@ -170,8 +170,8 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleConfirm} disabled={selectedCount === 0}
-          className="flex-1 py-2.5 rounded-lg font-semibold text-white text-sm disabled:opacity-40"
-          style={{ background: 'var(--color-primary)' }}
+          className="flex-1 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Add {selectedCount} to Menu
         </button>

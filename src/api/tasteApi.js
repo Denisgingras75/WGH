@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 export const tasteApi = {
@@ -8,19 +9,20 @@ export const tasteApi = {
    * @returns {Promise<Array<{user_id, display_name, shared_dishes, compatibility_pct}>>}
    */
   async getSimilarTasteUsers(limit = 5) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
 
-    const { data, error } = await supabase.rpc('get_similar_taste_users', {
-      p_user_id: user.id,
-      p_limit: limit,
-    })
+      const { data, error } = await supabase.rpc('get_similar_taste_users', {
+        p_user_id: user.id,
+        p_limit: limit,
+      })
 
-    if (error) {
+      if (error) throw createClassifiedError(error)
+      return data || []
+    } catch (error) {
       logger.error('Error fetching similar taste users:', error)
-      return []
+      throw error.type ? error : createClassifiedError(error)
     }
-
-    return data || []
   },
 }

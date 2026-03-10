@@ -35,6 +35,13 @@ function getSafeRedirectUrl(redirectUrl) {
 
 export const authApi = {
   /**
+   * Get current auth session
+   */
+  async getSession() {
+    return supabase.auth.getSession()
+  },
+
+  /**
    * Sign in with Google OAuth
    * @param {string|null} redirectUrl - Optional custom redirect URL (must be same-origin)
    * @returns {Promise<Object>} Auth response

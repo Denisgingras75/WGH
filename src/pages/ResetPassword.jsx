@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authApi } from '../api/authApi'
-import { supabase } from '../lib/supabase'
 
 export function ResetPassword() {
   const navigate = useNavigate()
@@ -16,7 +15,7 @@ export function ResetPassword() {
   useEffect(() => {
     const checkSession = async () => {
       // Supabase automatically handles the recovery token from the URL
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await authApi.getSession()
 
       if (session) {
         setIsValidSession(true)

@@ -385,7 +385,7 @@ export function Profile() {
                   boxShadow: 'none',
                 }}
               >
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.2)' }}>
                   <CameraIcon size={28} />
                 </div>
                 <div className="flex-1 text-left">
