@@ -5,14 +5,17 @@ import { useState } from 'react'
  * Celebrates your unique typing rhythm. Every reviewer types differently
  * and that's what makes reviews trustworthy.
  */
-export function ProfileJitterCard({ profile }) {
+export function ProfileJitterCard({ profile, user, userProfile, displayName, isPublic }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!profile) return null
 
   const data = profile.profile_data || {}
+  const hasPrivateData = !isPublic && Object.keys(data).length > 0
   const tierInfo = getTierInfo(profile.confidence_level, profile.consistency_score)
-  const nextTier = getNextTier(profile.confidence_level, profile.review_count, profile.consistency_score)
+  const nextTier = isPublic ? null : getNextTier(profile.confidence_level, profile.review_count, profile.consistency_score)
+  const name = displayName || userProfile?.display_name || ''
+  const initial = name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || '?'
 
   return (
     <div
@@ -22,25 +25,44 @@ export function ProfileJitterCard({ profile }) {
         border: '1px solid var(--color-divider)',
       }}
     >
-      {/* Header */}
+      {/* Header — avatar left, identity right */}
       <div className="p-4 pb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
-            Your Review Fingerprint
-          </span>
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{ background: tierInfo.bg, color: tierInfo.color }}
+        <div className="flex items-start gap-3">
+          {/* Avatar */}
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+              fontSize: '18px',
+            }}
           >
-            {tierInfo.label}
-          </span>
+            {initial}
+          </div>
+
+          {/* Right side — title, tier, description */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
+                Review Fingerprint
+              </span>
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                style={{ background: tierInfo.bg, color: tierInfo.color }}
+              >
+                {tierInfo.label}
+              </span>
+            </div>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>
+              {isPublic
+                ? 'Every reviewer has a unique typing rhythm that verifies they\u2019re real.'
+                : 'Your typing rhythm is unique — like a signature.'}
+            </p>
+          </div>
         </div>
-        <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
-          Your typing rhythm is unique — like a signature. The more you review, the stronger your identity becomes.
-        </p>
 
         {/* Headline stats — friendly labels */}
-        <div className="grid grid-cols-3 gap-3 text-center mt-3">
+        <div className={hasPrivateData ? 'grid grid-cols-3 gap-3 text-center mt-3' : 'grid grid-cols-2 gap-3 text-center mt-3'}>
           <StatCell label="Reviews" value={profile.review_count || 0} />
           <StatCell
             label="Rhythm"
@@ -48,7 +70,9 @@ export function ProfileJitterCard({ profile }) {
               ? getRhythmLabel(Number(profile.consistency_score))
               : '\u2014'}
           />
-          <StatCell label="Words typed" value={formatWordCount(data.total_keystrokes || 0)} />
+          {hasPrivateData && (
+            <StatCell label="Words typed" value={formatWordCount(data.total_keystrokes || 0)} />
+          )}
         </div>
       </div>
 
@@ -65,17 +89,19 @@ export function ProfileJitterCard({ profile }) {
         </div>
       )}
 
-      {/* Expand toggle */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full text-xs text-center py-2"
-        style={{ color: 'var(--color-accent-gold)', borderTop: '1px solid var(--color-divider)' }}
-      >
-        {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
-      </button>
+      {/* Expand toggle — own profile only */}
+      {hasPrivateData && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full text-xs text-center py-2"
+          style={{ color: 'var(--color-accent-gold)', borderTop: '1px solid var(--color-divider)' }}
+        >
+          {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
+        </button>
+      )}
 
-      {/* Expanded details — friendly framing */}
-      {expanded && (
+      {/* Expanded details — own profile only */}
+      {hasPrivateData && expanded && (
         <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
           <div className="pt-3 space-y-2">
             <DetailRow label="Typing pace" value={data.mean_inter_key ? `${Math.round(data.mean_inter_key)}ms between keys` : '\u2014'} />

@@ -11,7 +11,7 @@ import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
 import { FoodMap, ShelfFilter, JournalFeed } from '../components/profile'
-import { TrustBadge } from '../components/jitter'
+import { TrustBadge, ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
 import { profileApi } from '../api/profileApi'
 
@@ -84,6 +84,7 @@ export function UserProfile() {
   const [ratingBias, setRatingBias] = useState(null)
   const [standoutPicks, setStandoutPicks] = useState({})
   const [jitterBadgeType, setJitterBadgeType] = useState(null)
+  const [jitterBadgeData, setJitterBadgeData] = useState(null)
 
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId
@@ -164,6 +165,7 @@ export function UserProfile() {
         .then(({ data }) => {
           if (data && data.length > 0) {
             setJitterBadgeType(jitterApi.getTrustBadgeType(data[0]))
+            setJitterBadgeData(data[0])
           }
         })
         .catch((err) => logger.error('Failed to fetch jitter badge:', err))
@@ -699,6 +701,17 @@ export function UserProfile() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Review Fingerprint — public view */}
+      {jitterBadgeData && (
+        <div className="px-4 pt-3">
+          <ProfileJitterCard
+            profile={jitterBadgeData}
+            displayName={profile.display_name}
+            isPublic
+          />
         </div>
       )}
 

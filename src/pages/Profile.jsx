@@ -21,7 +21,6 @@ import {
   JournalFeed,
   SharePicksButton,
 } from '../components/profile'
-import { ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
 
 const SHELVES = [
@@ -245,6 +244,7 @@ export function Profile() {
             setNameStatus={setNameStatus}
             handleSaveName={handleSaveName}
             setFollowListModal={setFollowListModal}
+            jitterProfile={jitterProfile}
           />
 
           {/* Dashboard cards — side by side */}
@@ -368,12 +368,6 @@ export function Profile() {
             />
           </div>
 
-          {/* Full Typing Identity Card */}
-          {jitterProfile && (
-            <div className="px-4 pt-3">
-              <ProfileJitterCard profile={jitterProfile} />
-            </div>
-          )}
 
           {/* Unrated Photos Banner - shown when user has photos to rate */}
           {unratedCount > 0 && (

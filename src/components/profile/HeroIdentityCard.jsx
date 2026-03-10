@@ -2,6 +2,18 @@
  * Hero Identity Card for the Profile page
  * Centered layout: avatar, name, stats row
  */
+function getRhythmLabel(score) {
+  if (score >= 0.8) return 'Steady'
+  if (score >= 0.5) return 'Forming'
+  return 'New'
+}
+
+function getTierInfo(confidence, consistency) {
+  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(34, 197, 94, 0.18)', color: 'var(--color-rating)' }
+  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-rating)' }
+  return { label: 'Building', bg: 'rgba(156, 163, 175, 0.1)', color: 'var(--color-text-tertiary)' }
+}
+
 export function HeroIdentityCard({
   user,
   profile,
@@ -15,6 +27,7 @@ export function HeroIdentityCard({
   setNameStatus,
   handleSaveName,
   setFollowListModal,
+  jitterProfile,
 }) {
   return (
     <div
@@ -32,10 +45,10 @@ export function HeroIdentityCard({
         }}
       />
 
-      {/* Centered avatar */}
-      <div className="flex flex-col items-center">
+      {/* Avatar + Name row */}
+      <div className="flex items-center gap-4">
         <div
-          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
+          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
@@ -45,35 +58,33 @@ export function HeroIdentityCard({
           {profile?.display_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
         </div>
 
-        {/* Display Name */}
-        <div className="mt-3 text-center">
+        <div className="flex-1 min-w-0">
+          {/* Display Name */}
           {editingName ? (
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value.replace(/\s/g, ''))}
-                    className="w-48 px-3 py-1.5 border rounded-lg text-lg font-bold text-center focus:outline-none pr-8"
-                    style={{
-                      background: 'var(--color-surface-elevated)',
-                      borderColor: nameStatus === 'taken' ? 'var(--color-red)' : nameStatus === 'available' ? 'var(--color-emerald)' : 'var(--color-divider)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                    autoFocus
-                    maxLength={30}
-                  />
-                  {nameStatus && nameStatus !== 'same' && (
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm">
-                      {nameStatus === 'checking' && '\u23F3'}
-                      {nameStatus === 'available' && '\u2713'}
-                      {nameStatus === 'taken' && '\u2717'}
-                    </span>
-                  )}
-                </div>
+            <div className="flex flex-col gap-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value.replace(/\s/g, ''))}
+                  className="w-full px-3 py-1.5 border rounded-lg text-lg font-bold focus:outline-none pr-8"
+                  style={{
+                    background: 'var(--color-surface-elevated)',
+                    borderColor: nameStatus === 'taken' ? 'var(--color-red)' : nameStatus === 'available' ? 'var(--color-emerald)' : 'var(--color-divider)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                  autoFocus
+                  maxLength={30}
+                />
+                {nameStatus && nameStatus !== 'same' && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm">
+                    {nameStatus === 'checking' && '\u23F3'}
+                    {nameStatus === 'available' && '\u2713'}
+                    {nameStatus === 'taken' && '\u2717'}
+                  </span>
+                )}
               </div>
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-2">
                 <button
                   onClick={handleSaveName}
                   disabled={nameStatus === 'taken' || nameStatus === 'checking'}
@@ -95,10 +106,10 @@ export function HeroIdentityCard({
                 </button>
               </div>
               {nameStatus === 'taken' && (
-                <p className="text-xs" style={{ color: 'var(--color-red)' }}>This username is already taken</p>
+                <p className="text-xs" style={{ color: 'var(--color-red)' }}>Username taken</p>
               )}
               {nameStatus === 'available' && (
-                <p className="text-xs" style={{ color: 'var(--color-emerald)' }}>Username available!</p>
+                <p className="text-xs" style={{ color: 'var(--color-emerald)' }}>Available!</p>
               )}
             </div>
           ) : (
@@ -118,41 +129,80 @@ export function HeroIdentityCard({
               </svg>
             </button>
           )}
+
+          {/* Stats row — dishes · restaurants · followers */}
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap" style={{ fontSize: '13px' }}>
+            {stats.totalVotes > 0 && (
+              <>
+                <span style={{ color: 'var(--color-text-secondary)' }}>
+                  <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span> dishes
+                </span>
+                {stats.uniqueRestaurants > 0 && (
+                  <>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span> spots
+                    </span>
+                  </>
+                )}
+              </>
+            )}
+            <button
+              onClick={() => setFollowListModal('followers')}
+              className="hover:underline transition-colors"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {followCounts.followers}
+              </span> followers
+            </button>
+            <button
+              onClick={() => setFollowListModal('following')}
+              className="hover:underline transition-colors"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {followCounts.following}
+              </span> following
+            </button>
+          </div>
         </div>
 
-        {/* Stats row — dishes · restaurants · followers */}
-        <div className="flex items-center gap-3 mt-3" style={{ fontSize: '13px' }}>
-          {stats.totalVotes > 0 && (
-            <>
-              <span style={{ color: 'var(--color-text-secondary)' }}>
-                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span> dishes
+        {/* Compact Jitter Fingerprint */}
+        {jitterProfile && (() => {
+          const tier = getTierInfo(jitterProfile.confidence_level, jitterProfile.consistency_score)
+          return (
+            <div
+              className="flex-shrink-0 rounded-xl px-3 py-2.5 text-center"
+              style={{
+                background: 'var(--color-card)',
+                border: '1px solid var(--color-divider)',
+                minWidth: '90px',
+              }}
+            >
+              <span
+                className="px-2 py-0.5 rounded-full font-medium inline-block"
+                style={{ background: tier.bg, color: tier.color, fontSize: '11px' }}
+              >
+                {tier.label}
               </span>
-              {stats.uniqueRestaurants > 0 && (
-                <span style={{ color: 'var(--color-text-secondary)' }}>
-                  <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span> restaurants
-                </span>
-              )}
-            </>
-          )}
-          <button
-            onClick={() => setFollowListModal('followers')}
-            className="hover:underline transition-colors"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {followCounts.followers}
-            </span> followers
-          </button>
-          <button
-            onClick={() => setFollowListModal('following')}
-            className="hover:underline transition-colors"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              {followCounts.following}
-            </span> following
-          </button>
-        </div>
+              <div className="mt-1.5">
+                <div className="font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '18px', lineHeight: 1 }}>
+                  {jitterProfile.review_count || 0}
+                </div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>reviews</div>
+              </div>
+              <div className="mt-1">
+                <div className="font-semibold" style={{ color: 'var(--color-accent-gold)', fontSize: '12px', lineHeight: 1 }}>
+                  {jitterProfile.consistency_score != null
+                    ? getRhythmLabel(Number(jitterProfile.consistency_score))
+                    : '\u2014'}
+                </div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>rhythm</div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
