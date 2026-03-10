@@ -244,6 +244,7 @@ const DISH_NAME_ICON_RULES = [
   { keyword: 'french toast', icon: '/categories/icons/breakfast.webp' },
   { keyword: 'omelette', icon: '/categories/icons/breakfast.webp' },
   { keyword: 'omelet', icon: '/categories/icons/breakfast.webp' },
+  { keyword: 'nacho', icon: '/categories/icons/nachos.webp' },
   { keyword: 'quesadilla', icon: '/categories/icons/quesadilla.webp' },
   { keyword: 'fries', icon: '/categories/icons/fries.webp' },
   { keyword: 'calamari', icon: '/categories/icons/calamari.webp' },
