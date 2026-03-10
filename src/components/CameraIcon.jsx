@@ -6,7 +6,7 @@ export function CameraIcon({ size = 20, className = '', active = false }) {
   const scaledSize = Math.round(size * 1.6)
   return (
     <img
-      src="/camera.png"
+      src="/camera.webp"
       alt="camera"
       className={`inline-block object-contain ${className}`}
       style={{

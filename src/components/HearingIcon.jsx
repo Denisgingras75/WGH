@@ -6,7 +6,7 @@ export function HearingIcon({ size = 20, className = '', active = false }) {
   const scaledSize = Math.round(size * 1.6)
   return (
     <img
-      src="/hearing.png"
+      src="/hearing.webp"
       alt="heard good here"
       className={`inline-block object-contain transition-all duration-200 ${className}`}
       style={{

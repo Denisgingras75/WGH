@@ -30,7 +30,7 @@ export function WghLogo({ size = 64, color = 'var(--color-primary)', className =
       </svg>
       {/* MV island image — centered in the pin head */}
       <img
-        src="/mv-outline.png"
+        src="/mv-outline.webp"
         alt=""
         style={{
           position: 'absolute',

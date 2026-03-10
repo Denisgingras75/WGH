@@ -7,7 +7,7 @@ export function ThumbsUpIcon({ size = 20, className = '', active = false }) {
   const scaledSize = Math.round(size * 1.6)
   return (
     <img
-      src="/thumbs-up.png"
+      src="/thumbs-up.webp"
       alt="thumbs up"
       className={`inline-block object-contain ${className}`}
       style={{

@@ -741,7 +741,7 @@ export function Browse() {
               </div>
             ) : filteredDishes.length === 0 ? (
               <div className="py-12 text-center">
-                <img src="/search-not-found.png" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
+                <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
                 <p className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
                   {debouncedSearchQuery
                     ? `No dishes found for "${debouncedSearchQuery}"`

@@ -1,5 +1,3 @@
 export { RestaurantDishes } from './RestaurantDishes'
 export { RestaurantMenu } from './RestaurantMenu'
 export { RestaurantMap } from './RestaurantMap'
-export { RestaurantCard } from './RestaurantCard'
-export { TopDishesNearYou } from './TopDishesNearYou'

@@ -74,7 +74,7 @@ export function ResetPassword() {
     >
       {/* Logo */}
       <img
-        src="/logo.png"
+        src="/logo.webp"
         alt="What's Good Here"
         className="w-48 h-auto mb-6"
       />

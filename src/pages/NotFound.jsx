@@ -8,7 +8,7 @@ export function NotFound() {
     >
       <div className="text-center max-w-sm">
         <img
-          src="/empty-plate.png"
+          src="/empty-plate.webp"
           alt=""
           className="w-20 h-20 mx-auto mb-6 rounded-full object-cover"
         />

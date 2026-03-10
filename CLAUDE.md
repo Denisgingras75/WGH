@@ -134,20 +134,19 @@ Never do these. If tempted, stop and reconsider.
 ### 4.1 Project Structure
 ```
 src/
-├── api/              # API layer (25 files) — one file per domain
+├── api/              # API layer (16 modules + barrel) — one file per domain
 │   └── index.js      # Barrel export for all API modules
 ├── components/       # Shared + feature-grouped components
 │   ├── Auth/         # LoginModal, WelcomeModal
-│   ├── browse/       # CategoryGrid, SearchAutocomplete, SortDropdown, ValueBadge
-│   ├── foods/        # 23 food category SVG icons
-│   ├── home/         # CategoryIcons, DishPhotoFade
-│   ├── hub/          # GuideCard
+│   ├── browse/       # CategoryGrid, SearchAutocomplete, SortDropdown
+│   ├── home/         # CategoryIcons
+│   ├── jitter/       # SessionCard, SessionBadge, TrustBadge
 │   ├── profile/      # JournalCard, JournalFeed, ShelfFilter, HeroIdentityCard, FoodMap
 │   ├── restaurant-admin/ # DishesManager, EventsManager, MenuImportWizard, SpecialsManager
-│   └── restaurants/  # RestaurantMap, RestaurantCard, RestaurantDishes, TopDishesNearYou
-├── constants/        # App-wide constants (9 files)
+│   └── restaurants/  # RestaurantMap, RestaurantDishes, RestaurantMenu
+├── constants/        # App-wide constants (10 files)
 ├── context/          # AuthContext, LocationContext
-├── hooks/            # Custom React hooks (23 hooks)
+├── hooks/            # Custom React hooks (20 hooks)
 ├── lib/              # Infrastructure (supabase, analytics, storage, sounds, rateLimiter, reviewBlocklist)
 ├── pages/            # Page components (19 pages, all lazy-loaded)
 ├── utils/            # Pure utilities (errorHandler, ranking, distance, logger, sanitize, etc.)
@@ -238,10 +237,10 @@ export function useFoo(params) {
 | CSS variables | `--color-*` prefix | `var(--color-primary)` |
 | Use "favorites" not "saved" | Database table is `favorites` | `useFavorites`, `isFavorite` |
 
-### 4.6 Design Tokens (Dual Theme)
-Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rating, text, backgrounds) so rebranding is easy. One-off colors in SVGs, map markers, or illustrations can use hex directly.
+### 4.6 Design Tokens
+Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` for brand tokens so rebranding is easy. One-off colors in SVGs, map markers, or illustrations can use hex directly.
 
-**Appetite (Light)**
+
 | Token | Value | Usage |
 |---|---|---|
 | `--color-primary` | `#E4440A` (Warm Coral) | CTAs, primary actions |
@@ -274,12 +273,12 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 - **Event types** — `src/constants/eventTypes.js` — live_music, trivia, comedy, karaoke, open_mic, other
 - **Photo quality** — `src/constants/photoQuality.js` — validation thresholds, tiers (featured/community/hidden)
 - **Feature flags** — `src/constants/features.js` — `FEATURES.RATING_IDENTITY_ENABLED` (env var)
+- **Jitter tiers** — `src/constants/jitter.js` — `JITTER_TIERS`, `getConsumerTier()`
+- **Search suggestions** — `src/constants/searchSuggestions.js` — curated search prompts
 
 ### 4.8 localStorage Keys
 | Key | Constant | Purpose |
 |---|---|---|
-| `wgh_has_seen_splash` | (WelcomeSplash) | Welcome splash shown |
-| `wgh_has_onboarded` | (WelcomeModal) | Welcome modal shown |
 | `whats_good_here_pending_vote` | (storage.js) | Vote saved before auth redirect |
 | `wgh_has_seen_ear_tooltip` | `HAS_SEEN_EAR_TOOLTIP` | Ear icon tooltip shown |
 | `soundMuted` | `SOUND_MUTED` | Sound preference |
@@ -299,8 +298,7 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 | `useEvents` | Active restaurant events |
 | `useFavorites` | Optimistic favorite toggling with rollback |
 | `useFocusTrap` | Keyboard focus trap for modals |
-| `useGuides` | Category guide data (must-try, top per category) |
-| `useMapDishes` | Dishes with coordinates for map display |
+| `useAllDishes` | All dishes cached for client-side search |
 | `useNearbyPlaces` | Google Places discovery (unclaimed restaurants) |
 | `useNearbyRestaurant` | Single closest restaurant within radius |
 | `useNearbyRestaurants` | Restaurants within meters of GPS |
@@ -310,7 +308,6 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 | `useRestaurantSearch` | Combined local DB + Google Places search |
 | `useRestaurants` | Restaurant list with filters |
 | `useSpecials` | Restaurant specials CRUD |
-| `useTrendingDishes` | Most votes last 7 days |
 | `useUnratedDishes` | Dishes photographed but not voted on |
 | `useUserVotes` | User vote history with rating stats |
 | `useVote` | Vote submission with rating, review, duplicate prevention |
@@ -329,13 +326,11 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 | `adminApi` | Admin operations |
 | `notificationsApi` | `getNotifications` |
 | `dishPhotosApi` | `uploadPhoto`, `getUnratedDishesWithPhotos` |
-| `ratingIdentityApi` | `getUserRatingIdentity`, `getUnseenReveals`, `markRevealsSeen` |
 | `specialsApi` | Restaurant specials CRUD |
 | `eventsApi` | `getActiveEvents` |
 | `restaurantManagerApi` | `getMyRestaurant`, `getInviteDetails`, `acceptInvite` |
 | `placesApi` | `autocomplete`, `discoverNearby`, `getDetails` (via Edge Functions) |
-| `menuScrapingApi` | `scrapeMenu` (via Edge Function) |
-| `jitterApi` | `getMyProfile`, `getTrustBadgeType` |
+| `jitterApi` | `getMyProfile`, `getTrustBadgeType`, `attestReview`, `joinWaitlist` |
 
 ### 4.11 Key Supabase RPCs
 - `get_ranked_dishes` — Main Browse feed (ranked by votes, distance, variants, value score)
@@ -372,16 +367,15 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 | `seed-reviews` | AI review generation (dev utility) |
 | `backfill-restaurants` | Data migration tool |
 
-### 4.13 Routes (19 pages, all lazy-loaded via `lazyWithRetry()`)
+### 4.13 Routes (18 pages, all lazy-loaded via `lazyWithRetry()`)
 | Route | Page | Auth |
 |---|---|---|
-| `/` | Home (dual-mode list/map) | No |
+| `/` | Map (dual-mode list/map homepage) | No |
+| `/map` | Redirect → `/` | No |
 | `/browse` | Browse | No |
 | `/dish/:dishId` | Dish | No |
-| `/restaurants` | Restaurants (map) | No |
+| `/restaurants` | Restaurants | No |
 | `/restaurants/:restaurantId` | RestaurantDetail | No |
-| `/hub` | Hub (events + specials) | No |
-| `/discover` | Discover | No |
 | `/profile` | Profile (journal feed) | Yes |
 | `/user/:userId` | UserProfile (public) | No |
 | `/login` | Login | No |
@@ -393,6 +387,7 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 | `/terms` | Terms | No |
 | `/how-reviews-work` | HowReviewsWork | No |
 | `/for-restaurants` | ForRestaurants | No |
+| `/jitter` | JitterLanding | No |
 | `*` | NotFound | No |
 
 ### 4.14 File Organization
@@ -431,7 +426,8 @@ Defined in `src/index.css`. Use `var(--color-*)` for brand tokens (primary, rati
 
 This codebase is a merge of Dan's design direction and Denis's infrastructure. Denis (Denisgingras75) is a collaborator with write access. Branch protection on main requires 1 PR approval.
 
-- **Dan owns:** Design vision, editorial voice, typography, color palette, UX feel
-- **Denis owns:** Schema, RPCs, Edge Functions, E2E tests, scaling infrastructure
-- **Coordinate in Weekly Sync** (Issue #9 on Dan's repo) before either side changes pages
+- **Lanes are flexible.** Both can touch frontend and backend. Some bleed-over is expected.
+- **Dan owns:** Final design direction, visual identity, icon system, brand voice
+- **Denis owns:** Schema deployment, RPCs, Edge Functions, E2E tests, infrastructure
+- **Icon system:** Dan's flat illustrated WebP icons are canonical (`public/categories/icons/`). See `ICON-SPEC.md`.
 - **Agent Phone:** Denisgingras75/wgh-phone — Claude-to-Claude async communication

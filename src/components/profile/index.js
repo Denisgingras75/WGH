@@ -1,8 +1,5 @@
 // Profile components - extracted from Profile.jsx and UserProfile.jsx
 export { HeroIdentityCard } from './HeroIdentityCard'
-export { EditFavoritesSection } from './EditFavoritesSection'
-export { PhotosInfoSection } from './PhotosInfoSection'
-export { MissionSection } from './MissionSection'
 export { FoodMap } from './FoodMap'
 export { ShelfFilter } from './ShelfFilter'
 export { JournalCard } from './JournalCard'
