@@ -155,7 +155,7 @@ export const DishListItem = memo(function DishListItem({
       {/* Name + restaurant + distance */}
       <div className="flex-1 min-w-0" style={{ marginLeft: showPhoto ? '6px' : (isPodium ? '8px' : '6px') }}>
         <p
-          className="font-bold truncate"
+          className="font-bold line-clamp-2"
           style={{
             fontSize: isPodium ? '17px' : '15px',
             fontWeight: isPodium ? 800 : 700,
