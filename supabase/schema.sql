@@ -523,6 +523,26 @@ ALTER TABLE jitter_samples ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read own jitter profile" ON jitter_profiles
   FOR SELECT USING (auth.uid() = user_id);
 
+-- Get the current user's own jitter profile (used on Profile page)
+CREATE OR REPLACE FUNCTION get_my_jitter_profile()
+RETURNS TABLE (
+  confidence_level TEXT,
+  consistency_score NUMERIC,
+  review_count INTEGER,
+  profile_data JSONB,
+  created_at TIMESTAMPTZ,
+  last_updated TIMESTAMPTZ
+)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT jp.confidence_level, jp.consistency_score, jp.review_count,
+         jp.profile_data, jp.created_at, jp.last_updated
+  FROM jitter_profiles jp
+  WHERE jp.user_id = auth.uid();
+$$;
+
 -- Public access to jitter badge data only (not profile_data biometrics)
 -- Use get_jitter_badges() RPC instead of direct table reads for other users' data
 CREATE OR REPLACE FUNCTION get_jitter_badges(p_user_ids UUID[])
