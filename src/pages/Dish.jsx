@@ -17,7 +17,7 @@ import { LoginModal } from '../components/Auth/LoginModal'
 import { VariantSelector } from '../components/VariantPicker'
 import { CategoryIcon } from '../components/home/CategoryIcons'
 import { PhotoUploadButton } from '../components/PhotoUploadButton'
-import { TrustBadge, TrustSummary } from '../components/TrustBadge'
+import { TrustBadge, TrustSummary, JitterExplainer } from '../components/jitter'
 import { CATEGORY_INFO } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor, formatScore10 } from '../utils/ranking'
@@ -114,6 +114,8 @@ export function Dish() {
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
+  const [explainerOpen, setExplainerOpen] = useState(false)
+  const [explainerData, setExplainerData] = useState(null)
   const tooltipChecked = useRef(false)
 
   useEffect(() => {
@@ -414,7 +416,7 @@ export function Dish() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface-elevated)' }}>
         <div className="text-center p-4">
           <img
-            src="/empty-plate.png"
+            src="/empty-plate.webp"
             alt=""
             className="w-16 h-16 mx-auto mb-4 rounded-full object-cover"
           />
@@ -898,46 +900,72 @@ export function Dish() {
                     aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {reviews.map(function (review) {
+                    var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
                     return (
                       <div
                         key={review.id}
                         className="p-4 rounded-xl"
-                        style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+                        style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <Link to={'/user/' + review.user_id} className="flex items-center gap-2 min-w-0">
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
-                              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-                            >
-                              {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-sm font-bold block truncate" style={{ color: 'var(--color-text-primary)' }}>
+                        {/* Row 1: Avatar + Name + Timestamp */}
+                        <Link to={'/user/' + review.user_id} className="flex items-center gap-3 mb-2.5 min-w-0">
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                          >
+                            {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="flex items-center gap-1.5">
+                              <span className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
                                 @{review.profiles?.display_name || 'Anonymous'}
                               </span>
-                              <span className="text-[11px] block" style={{ color: 'var(--color-text-tertiary)' }}>
-                                {formatRelativeTime(review.review_created_at)}
-                              </span>
-                            </div>
-                          </Link>
-                          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                            <span className="font-bold" style={{ fontSize: '18px', color: getRatingColor(review.rating_10) }}>
-                              {review.rating_10 ? formatScore10(review.rating_10) : ''}
+                              <TrustBadge type={review.trust_badge} profileData={review.jitter_profile} />
+                              {review.trust_badge && review.trust_badge !== 'building' && (
+                                <button
+                                  onClick={function (e) {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setExplainerData({ warScore: review.war_score, stats: review.jitter_profile })
+                                    setExplainerOpen(true)
+                                  }}
+                                  className="flex-shrink-0"
+                                  style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', lineHeight: 1 }}
+                                  aria-label="What is this badge?"
+                                >
+                                  ?
+                                </button>
+                              )}
                             </span>
-                            <span>{review.would_order_again ? <ThumbsUpIcon size={22} /> : <ThumbsDownIcon size={22} />}</span>
+                            <span className="text-[11px] block" style={{ color: 'var(--color-text-secondary)' }}>
+                              {formatRelativeTime(review.review_created_at)}{dish.restaurant_town ? ' · ' + dish.restaurant_town : ''}
+                            </span>
                           </div>
+                        </Link>
+
+                        {/* Row 2: Rating pill + sentiment */}
+                        <div className="flex items-center gap-2 mb-2.5">
+                          {review.rating_10 ? (
+                            <span
+                              className="rounded-full px-2.5 py-0.5 font-bold text-sm"
+                              style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
+                            >
+                              {formatScore10(review.rating_10)}
+                            </span>
+                          ) : null}
+                          <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                            {review.would_order_again ? <><ThumbsUpIcon size={18} /> Would order again</> : <><ThumbsDownIcon size={18} /> Would skip</>}
+                          </span>
                         </div>
+
+                        {/* Row 3: Review text */}
                         {review.review_text && (
-                          <p className="text-sm" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6 }}>
+                          <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>
                             {review.review_text}
                           </p>
                         )}
-                        <div className="mt-2">
-                          <TrustBadge type={review.trust_badge} />
-                        </div>
                       </div>
                     )
                   })}
@@ -1090,6 +1118,14 @@ export function Dish() {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
+      />
+
+      {/* Jitter Explainer */}
+      <JitterExplainer
+        open={explainerOpen}
+        onClose={function () { setExplainerOpen(false) }}
+        warScore={explainerData && explainerData.warScore}
+        stats={explainerData && explainerData.stats}
       />
     </div>
   )

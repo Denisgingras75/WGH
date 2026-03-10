@@ -11,6 +11,8 @@ import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
 import { FoodMap, ShelfFilter, JournalFeed } from '../components/profile'
+import { TrustBadge } from '../components/jitter'
+import { jitterApi } from '../api/jitterApi'
 import { profileApi } from '../api/profileApi'
 
 // Known location display names for URL slugs
@@ -81,6 +83,7 @@ export function UserProfile() {
   const [tasteCompat, setTasteCompat] = useState(null)
   const [ratingBias, setRatingBias] = useState(null)
   const [standoutPicks, setStandoutPicks] = useState({})
+  const [jitterBadgeType, setJitterBadgeType] = useState(null)
 
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId
@@ -151,6 +154,20 @@ export function UserProfile() {
   useEffect(() => {
     if (!userId) return
     profileApi.getRatingBias(userId).then(setRatingBias)
+  }, [userId])
+
+  // Fetch jitter trust badge for this user
+  useEffect(() => {
+    if (!userId) return
+    import('../lib/supabase').then(({ supabase }) => {
+      supabase.rpc('get_jitter_badges', { p_user_ids: [userId] })
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setJitterBadgeType(jitterApi.getTrustBadgeType(data[0]))
+          }
+        })
+        .catch((err) => logger.error('Failed to fetch jitter badge:', err))
+    })
   }, [userId])
 
   // Compute standout picks from recent votes + community averages
@@ -393,7 +410,7 @@ export function UserProfile() {
   if (error || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--color-surface)' }}>
-        <img src="/search-not-found.png" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
+        <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
         <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
           User not found
         </h1>
@@ -450,17 +467,20 @@ export function UserProfile() {
 
           <div className="flex-1 min-w-0">
             {/* Display Name */}
-            <h2
-              className="font-bold"
-              style={{
-                color: 'var(--color-text-primary)',
-                fontSize: '22px',
-                letterSpacing: '-0.02em',
-                lineHeight: '1.2',
-              }}
-            >
-              {profile.display_name || 'Anonymous'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2
+                className="font-bold"
+                style={{
+                  color: 'var(--color-text-primary)',
+                  fontSize: '22px',
+                  letterSpacing: '-0.02em',
+                  lineHeight: '1.2',
+                }}
+              >
+                {profile.display_name || 'Anonymous'}
+              </h2>
+              {jitterBadgeType && <TrustBadge type={jitterBadgeType} size="md" />}
+            </div>
 
             {/* Follow Stats */}
             <div className="flex items-center gap-2 mt-1.5" style={{ fontSize: '13px' }}>

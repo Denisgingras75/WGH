@@ -21,6 +21,8 @@ import {
   JournalFeed,
   SharePicksButton,
 } from '../components/profile'
+import { ProfileJitterCard } from '../components/jitter'
+import { jitterApi } from '../api/jitterApi'
 
 const SHELVES = [
   { id: 'all', label: 'All' },
@@ -45,6 +47,21 @@ export function Profile() {
   const { worthItDishes, avoidDishes, stats, loading: votesLoading, refetch: refetchVotes } = useUserVotes(user?.id)
   const { favorites, loading: favoritesLoading, removeFavorite } = useFavorites(user?.id)
   const { dishes: unratedDishes, count: unratedCount, loading: unratedLoading, refetch: refetchUnrated } = useUnratedDishes(user?.id)
+
+  const [jitterProfile, setJitterProfile] = useState(null)
+
+  // Fetch jitter typing identity profile
+  useEffect(() => {
+    if (!user) {
+      setJitterProfile(null)
+      return
+    }
+    jitterApi.getMyProfile()
+      .then(setJitterProfile)
+      .catch((error) => {
+        logger.error('Failed to fetch jitter profile:', error)
+      })
+  }, [user])
 
   const [selectedDish, setSelectedDish] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
@@ -351,6 +368,13 @@ export function Profile() {
             />
           </div>
 
+          {/* Full Typing Identity Card */}
+          {jitterProfile && (
+            <div className="px-4 pt-3">
+              <ProfileJitterCard profile={jitterProfile} />
+            </div>
+          )}
+
           {/* Unrated Photos Banner - shown when user has photos to rate */}
           {unratedCount > 0 && (
             <div className="px-4 py-4" style={{ background: 'var(--color-surface)' }}>
@@ -440,7 +464,7 @@ export function Profile() {
           >
             <div className="text-center mb-7">
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="What's Good Here"
                 className="w-40 h-auto mx-auto mb-5"
               />

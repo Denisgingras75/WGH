@@ -3,7 +3,6 @@ import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
-import { SessionCard } from './jitter'
 import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
@@ -50,7 +49,6 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
   const [awaitingLogin, setAwaitingLogin] = useState(false)
   const [announcement, setAnnouncement] = useState('') // For screen reader announcements
   const [photoAdded, setPhotoAdded] = useState(false)
-  const [sessionCardData, setSessionCardData] = useState(null)
   const reviewTextareaRef = useRef(null)
   // Combined ref: partner's focus ref + Denis's purity tracker ref
   const combinedTextareaRef = (el) => {
@@ -263,15 +261,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
         const badgeHash = attestResult?.badge_hash || null
         return submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
       })
-      .then(async (result) => {
-        if (result.success && sessionStatsData?.isCapturing) {
-          try {
-            const profile = await jitterApi.getMyProfile()
-            setSessionCardData({ sessionStats: sessionStatsData, profileStats: profile })
-          } catch (e) {
-            setSessionCardData({ sessionStats: sessionStatsData, profileStats: null })
-          }
-        }
+      .then((result) => {
         if (!result.success) {
           logger.error('Vote submission failed:', result.error)
         }
@@ -335,14 +325,6 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             </div>
           </div>
         )}
-        {sessionCardData && (
-          <SessionCard
-            sessionStats={sessionCardData.sessionStats}
-            profileStats={sessionCardData.profileStats}
-            onDismiss={() => setSessionCardData(null)}
-          />
-        )}
-
         <button
           onClick={() => {
             setPendingVote(userVote)

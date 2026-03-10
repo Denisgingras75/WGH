@@ -1,17 +1,17 @@
 import { useState } from 'react'
 
 /**
- * Full Jitter identity card for the user's profile page.
- * Shows all cumulative stats, per-key fingerprint, badge progress.
+ * Your Review Fingerprint — personal typing identity card.
+ * Celebrates your unique typing rhythm. Every reviewer types differently
+ * and that's what makes reviews trustworthy.
  */
-export function ProfileJitterCard({ profile, warScore }) {
+export function ProfileJitterCard({ profile }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!profile) return null
 
   const data = profile.profile_data || {}
-  const badgeLabel = getBadgeLabel(profile.confidence_level, profile.consistency_score)
-  const badgeColor = getBadgeColor(profile.confidence_level, profile.consistency_score)
+  const tierInfo = getTierInfo(profile.confidence_level, profile.consistency_score)
   const nextTier = getNextTier(profile.confidence_level, profile.review_count, profile.consistency_score)
 
   return (
@@ -23,43 +23,32 @@ export function ProfileJitterCard({ profile, warScore }) {
       }}
     >
       {/* Header */}
-      <div className="p-4 pb-2">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-4 pb-3">
+        <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
-            Typing Identity
+            Your Review Fingerprint
           </span>
           <span
             className="px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{ background: badgeColor.bg, color: badgeColor.text }}
+            style={{ background: tierInfo.bg, color: tierInfo.color }}
           >
-            {badgeLabel}
+            {tierInfo.label}
           </span>
         </div>
+        <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+          Your typing rhythm is unique — like a signature. The more you review, the stronger your identity becomes.
+        </p>
 
-        {/* WAR hero stat */}
-        {warScore != null && (
-          <div className="text-center mb-4">
-            <div
-              className="text-3xl font-mono font-bold"
-              style={{
-                color: warScore >= 0.80
-                  ? 'var(--color-rating)'
-                  : warScore >= 0.50
-                    ? 'var(--color-accent-orange)'
-                    : 'var(--color-error, #ef4444)',
-              }}
-            >
-              {Number(warScore).toFixed(2)}
-            </div>
-            <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>WAR Score</div>
-          </div>
-        )}
-
-        {/* Headline stats */}
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <StatCell label="Sessions" value={profile.review_count || 0} />
-          <StatCell label="Consistency" value={profile.consistency_score != null ? Number(profile.consistency_score).toFixed(2) : '\u2014'} />
-          <StatCell label="Keystrokes" value={formatNumber(data.total_keystrokes || 0)} />
+        {/* Headline stats — friendly labels */}
+        <div className="grid grid-cols-3 gap-3 text-center mt-3">
+          <StatCell label="Reviews" value={profile.review_count || 0} />
+          <StatCell
+            label="Rhythm"
+            value={profile.consistency_score != null
+              ? getRhythmLabel(Number(profile.consistency_score))
+              : '\u2014'}
+          />
+          <StatCell label="Words typed" value={formatWordCount(data.total_keystrokes || 0)} />
         </div>
       </div>
 
@@ -68,7 +57,7 @@ export function ProfileJitterCard({ profile, warScore }) {
         <div className="px-4 py-2">
           <div className="flex items-center justify-between text-xs mb-1">
             <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.label}</span>
-            <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.current}/{nextTier.target}</span>
+            <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.current} of {nextTier.target}</span>
           </div>
           <div className="w-full overflow-hidden" style={{ height: '4px', borderRadius: '2px', background: 'var(--color-surface)' }}>
             <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', borderRadius: '2px', background: 'var(--color-accent-gold)' }} />
@@ -82,28 +71,28 @@ export function ProfileJitterCard({ profile, warScore }) {
         className="w-full text-xs text-center py-2"
         style={{ color: 'var(--color-accent-gold)', borderTop: '1px solid var(--color-divider)' }}
       >
-        {expanded ? 'Hide deep stats \u25B2' : 'Show deep stats \u25BC'}
+        {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
       </button>
 
-      {/* Deep stats */}
+      {/* Expanded details — friendly framing */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
           <div className="pt-3 space-y-2">
-            <DetailRow label="Avg typing speed" value={`${data.mean_inter_key || '\u2014'}ms between keys`} />
-            <DetailRow label="Avg key hold" value={`${data.mean_dwell || '\u2014'}ms`} />
-            <DetailRow label="DD interval" value={`${data.mean_dd_time || '\u2014'}ms`} />
-            <DetailRow label="Edit ratio" value={data.edit_ratio != null ? `${Math.round(data.edit_ratio * 100)}%` : '\u2014'} />
-            <DetailRow label="Pause frequency" value={data.pause_freq != null ? `${data.pause_freq}/100ks` : '\u2014'} />
+            <DetailRow label="Typing pace" value={data.mean_inter_key ? `${Math.round(data.mean_inter_key)}ms between keys` : '\u2014'} />
+            <DetailRow label="Key press" value={data.mean_dwell ? `${Math.round(data.mean_dwell)}ms avg hold` : '\u2014'} />
+            <DetailRow label="Typo rate" value={data.edit_ratio != null ? `${Math.round(data.edit_ratio * 100)}% corrections` : '\u2014'} />
             {profile.created_at && (
-              <DetailRow label="Member since" value={new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} />
+              <DetailRow label="Reviewing since" value={new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} />
             )}
           </div>
 
-          {/* Per-key fingerprint */}
+          {/* Per-key fingerprint — the fun visual */}
           {data.per_key_dwell && Object.keys(data.per_key_dwell).length > 0 && (
             <div>
-              <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Key fingerprint</span>
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                How long you hold each key — your unique pattern
+              </p>
+              <div className="flex flex-wrap gap-1.5">
                 {Object.entries(data.per_key_dwell)
                   .slice().sort(([, a], [, b]) => a - b)
                   .map(([key, ms]) => (
@@ -112,6 +101,11 @@ export function ProfileJitterCard({ profile, warScore }) {
               </div>
             </div>
           )}
+
+          {/* What this means */}
+          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+            This fingerprint builds over time as you write reviews. It helps verify that reviews come from real people — no two typing rhythms are alike.
+          </p>
         </div>
       )}
     </div>
@@ -137,12 +131,12 @@ function DetailRow({ label, value }) {
 }
 
 function KeyBar({ letter, ms, max }) {
-  const width = max > 0 ? Math.max(20, (ms / max) * 100) : 50
+  var width = max > 0 ? Math.max(20, (ms / max) * 100) : 50
   return (
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
       <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
-        <div style={{ width: `${width}%`, height: '100%', borderRadius: '3px', background: 'var(--color-accent-gold)' }} />
+        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent-gold)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
     </div>
@@ -150,34 +144,36 @@ function KeyBar({ letter, ms, max }) {
 }
 
 function getMaxDwell(perKeyDwell) {
-  const values = Object.values(perKeyDwell)
+  var values = Object.values(perKeyDwell)
   return values.length > 0 ? Math.max.apply(null, values) : 0
 }
 
-function getBadgeLabel(confidence, consistency) {
-  if (confidence === 'high' && consistency >= 0.6) return 'Trusted Reviewer'
-  if (confidence === 'medium' && consistency >= 0.4) return 'Verified Human'
-  if (confidence === 'low') return 'Building Verification'
+// Friendly rhythm label from consistency score
+function getRhythmLabel(score) {
+  if (score >= 0.8) return 'Steady'
+  if (score >= 0.5) return 'Forming'
   return 'New'
 }
 
-function getBadgeColor(confidence, consistency) {
-  if (confidence === 'high' && consistency >= 0.6) return { bg: 'rgba(34, 197, 94, 0.18)', text: 'var(--color-rating)' }
-  if (confidence === 'medium' && consistency >= 0.4) return { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--color-rating)' }
-  return { bg: 'rgba(156, 163, 175, 0.1)', text: 'var(--color-text-tertiary)' }
+// Approximate word count from keystrokes (avg 5 chars per word)
+function formatWordCount(keystrokes) {
+  var words = Math.round(keystrokes / 5)
+  if (words >= 1000) return (words / 1000).toFixed(1) + 'k'
+  return String(words)
+}
+
+function getTierInfo(confidence, consistency) {
+  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(34, 197, 94, 0.18)', color: 'var(--color-rating)' }
+  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-rating)' }
+  return { label: 'Building', bg: 'rgba(156, 163, 175, 0.1)', color: 'var(--color-text-tertiary)' }
 }
 
 function getNextTier(confidence, reviewCount, consistency) {
   if (confidence === 'high' && consistency >= 0.6) return null
   if (confidence === 'medium' || (confidence === 'low' && reviewCount >= 5)) {
-    return { label: 'Next: Trusted Reviewer', current: reviewCount, target: 15 }
+    return { label: 'Trusted status', current: reviewCount, target: 15 }
   }
-  return { label: 'Next: Verified Human', current: reviewCount, target: 5 }
-}
-
-function formatNumber(n) {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
-  return String(n)
+  return { label: 'Verified status', current: reviewCount, target: 5 }
 }
 
 export default ProfileJitterCard
