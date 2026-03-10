@@ -64,15 +64,15 @@ export function CategoryChips({
               onClick={function () { onSelect(isActive ? null : cat.id) }}
               className="flex-shrink-0 flex flex-col items-center justify-center"
               style={{
-                padding: '4px 4px',
-                minWidth: '56px',
+                padding: '4px 0px',
+                minWidth: '48px',
                 fontSize: '11px',
                 background: 'transparent',
                 color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                 fontWeight: isActive ? 700 : 500,
               }}
             >
-              <CategoryIcon categoryId={cat.id} size={72} />
+              <CategoryIcon categoryId={cat.id} size={80} />
               <span className="mt-1" style={{ lineHeight: 1.2 }}>{cat.label}</span>
             </button>
           )
