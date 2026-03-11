@@ -12,6 +12,7 @@ import { CategoryChips } from '../components/CategoryChips'
 import { EmptyState } from '../components/EmptyState'
 import { LocationBanner } from '../components/LocationBanner'
 import { ModeFAB } from '../components/ModeFAB'
+import { LocalListsSection } from '../components/home'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -25,7 +26,11 @@ export function Map() {
   var routeLocation = useLocation()
   var { location, radius, setRadius, permissionState, requestLocation } = useLocationContext()
 
-  var [mode, setMode] = useState('list')
+  var [mode, setMode] = useState(function () {
+    try {
+      return sessionStorage.getItem('wgh_home_mode') || 'list'
+    } catch (e) { return 'list' }
+  })
   var [selectedCategory, setSelectedCategory] = useState(null)
   var [radiusSheetOpen, setRadiusSheetOpen] = useState(false)
   var [searchQuery, setSearchQuery] = useState('')
@@ -46,6 +51,7 @@ export function Map() {
   useEffect(function () {
     if (focusDishFromRoute) {
       setMode('map')
+      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
       setFocusDishId(null)
       // Delay to let map component mount and restaurantGroups populate
       setTimeout(function () { setFocusDishId(focusDishFromRoute) }, 300)
@@ -60,8 +66,10 @@ export function Map() {
         scrollPositionRef.current = listScrollRef.current.scrollTop
       }
       setMode('map')
+      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
     } else {
       setMode('list')
+      try { sessionStorage.setItem('wgh_home_mode', 'list') } catch (e) {}
     }
   }, [mode])
 
@@ -254,41 +262,119 @@ export function Map() {
             {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
               <ListSkeleton />
             ) : activeDishes && activeDishes.length > 0 ? (
-              <>
-                <div className="flex flex-col" style={{ gap: '2px' }}>
-                  {activeDishes.map(function (dish, i) {
+              (!searchQuery && !selectedCategory) ? (
+                <div>
+                  {/* Podium #1-3 — stacked cards with medal borders */}
+                  <div className="flex flex-col" style={{ gap: '6px', marginBottom: '10px' }}>
+                    {activeDishes.slice(0, 3).map(function (dish, i) {
+                      var medalColor = i === 0
+                        ? 'var(--color-medal-gold)'
+                        : i === 1
+                          ? 'var(--color-medal-silver)'
+                          : 'var(--color-medal-bronze)'
+                      return (
+                        <div
+                          key={dish.dish_id}
+                          className="rounded-xl"
+                          style={{
+                            background: 'var(--color-surface-elevated)',
+                            borderLeft: (i === 0 ? '4px' : '3px') + ' solid ' + medalColor,
+                            boxShadow: i === 0 ? '0 4px 20px rgba(0,0,0,0.08)' : 'none',
+                          }}
+                        >
+                          <DishListItem
+                            dish={dish}
+                            rank={i + 1}
+                            showDistance
+                            onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Compact #4+ */}
+                  {activeDishes.length > 3 && (function () {
+                    var compactDishes = activeDishes.slice(3)
                     return (
-                      <DishListItem
-                        key={dish.dish_id}
-                        dish={dish}
-                        rank={i + 1}
-                        showDistance
-                        onClick={function () { navigate('/dish/' + dish.dish_id) }}
-                      />
+                      <div
+                        className="rounded-xl overflow-hidden"
+                        style={{ background: 'var(--color-surface-elevated)' }}
+                      >
+                        {compactDishes.map(function (dish, i) {
+                          return (
+                            <DishListItem
+                              key={dish.dish_id}
+                              dish={dish}
+                              rank={i + 4}
+                              showDistance
+                              onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                              isLast={i === compactDishes.length - 1}
+                            />
+                          )
+                        })}
+                      </div>
                     )
-                  })}
+                  })()}
+
+                  {hasMoreDishes && (
+                    <button
+                      onClick={function () { setListLimit(function (prev) { return prev + 5 }) }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        marginTop: '8px',
+                        background: 'none',
+                        border: '1.5px solid var(--color-divider)',
+                        borderRadius: '10px',
+                        color: 'var(--color-accent-gold)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Show more
+                    </button>
+                  )}
                 </div>
-                {hasMoreDishes && !searchQuery && (
-                  <button
-                    onClick={function () { setListLimit(function (prev) { return prev + 5 }) }}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '12px',
-                      marginTop: '8px',
-                      background: 'none',
-                      border: '1.5px solid var(--color-divider)',
-                      borderRadius: '10px',
-                      color: 'var(--color-accent-gold)',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Show more
-                  </button>
-                )}
-              </>
+              ) : (
+                <>
+                  <div className="flex flex-col" style={{ gap: '2px' }}>
+                    {activeDishes.map(function (dish, i) {
+                      return (
+                        <DishListItem
+                          key={dish.dish_id}
+                          dish={dish}
+                          rank={i + 1}
+                          showDistance
+                          onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                        />
+                      )
+                    })}
+                  </div>
+                  {hasMoreDishes && !searchQuery && (
+                    <button
+                      onClick={function () { setListLimit(function (prev) { return prev + 5 }) }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        marginTop: '8px',
+                        background: 'none',
+                        border: '1.5px solid var(--color-divider)',
+                        borderRadius: '10px',
+                        color: 'var(--color-accent-gold)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Show more
+                    </button>
+                  )}
+                </>
+              )
             ) : searchQuery ? (
               <EmptyState
                 emoji="🔍"
@@ -301,6 +387,9 @@ export function Map() {
               />
             )}
           </div>
+
+          {/* Local Lists — only on default homepage view */}
+          {!searchQuery && !selectedCategory && <LocalListsSection />}
         </div>
         </div>
       )}

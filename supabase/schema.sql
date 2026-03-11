@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   preferred_categories TEXT[] DEFAULT '{}',
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
+  is_local_curator BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -261,7 +262,18 @@ CREATE TABLE IF NOT EXISTS restaurant_invites (
   used_at TIMESTAMPTZ
 );
 
--- 1r. rate_limits
+-- 1r. curator_invites
+CREATE TABLE IF NOT EXISTS curator_invites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  token TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
+  created_by UUID REFERENCES auth.users(id),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+  used_by UUID REFERENCES auth.users(id),
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 1s. rate_limits
 CREATE TABLE IF NOT EXISTS rate_limits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -389,6 +401,10 @@ CREATE INDEX IF NOT EXISTS idx_restaurant_invites_restaurant ON restaurant_invit
 CREATE INDEX IF NOT EXISTS idx_restaurant_invites_created_by ON restaurant_invites(created_by);
 CREATE INDEX IF NOT EXISTS idx_restaurant_invites_used_by ON restaurant_invites(used_by);
 
+-- curator_invites
+CREATE INDEX IF NOT EXISTS idx_curator_invites_token ON curator_invites(token);
+CREATE INDEX IF NOT EXISTS idx_curator_invites_created_by ON curator_invites(created_by);
+
 -- rate_limits
 CREATE INDEX IF NOT EXISTS idx_rate_limits_user_action ON rate_limits(user_id, action, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup ON rate_limits(created_at);
@@ -506,6 +522,10 @@ CREATE POLICY "Admins manage all managers" ON restaurant_managers FOR ALL USING 
 -- restaurant_invites: admins only (public preview via SECURITY DEFINER function)
 CREATE POLICY "Admins manage invites" ON restaurant_invites FOR ALL USING (is_admin());
 
+-- curator_invites: admins only (public preview via SECURITY DEFINER function)
+ALTER TABLE curator_invites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins manage curator invites" ON curator_invites FOR ALL USING (is_admin());
+
 -- rate_limits: users see own
 CREATE POLICY "Users can view own rate limits" ON rate_limits FOR SELECT USING ((select auth.uid()) = user_id);
 
@@ -581,6 +601,15 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
+
+-- Check if current user is a local curator
+CREATE OR REPLACE FUNCTION is_local_curator()
+RETURNS BOOLEAN LANGUAGE SQL SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(
+    (SELECT is_local_curator FROM profiles WHERE id = auth.uid()),
+    false
+  );
+$$;
 
 -- Check if current user is an accepted manager for a restaurant
 CREATE OR REPLACE FUNCTION is_restaurant_manager(p_restaurant_id UUID)
@@ -2242,6 +2271,384 @@ BEGIN
   ORDER BY n.distance_miles ASC;
 END;
 $$ LANGUAGE plpgsql STABLE SET search_path = public;
+
+
+-- =============================================
+-- 13z. LOCAL LISTS (curated dish lists by MV locals)
+-- =============================================
+
+-- 13z-a. local_lists
+CREATE TABLE IF NOT EXISTS local_lists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  curator_tagline TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT local_lists_one_per_user UNIQUE (user_id)
+);
+
+-- 13z-b. local_list_items
+CREATE TABLE IF NOT EXISTS local_list_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  list_id UUID NOT NULL REFERENCES local_lists(id) ON DELETE CASCADE,
+  dish_id UUID NOT NULL REFERENCES dishes(id) ON DELETE CASCADE,
+  position INT NOT NULL,
+  note TEXT,
+  CONSTRAINT local_list_items_unique_dish UNIQUE (list_id, dish_id),
+  CONSTRAINT local_list_items_unique_position UNIQUE (list_id, position),
+  CONSTRAINT local_list_items_position_range CHECK (position >= 1 AND position <= 10)
+);
+
+-- Indexes for local lists
+CREATE INDEX IF NOT EXISTS idx_local_lists_user_id ON local_lists(user_id);
+CREATE INDEX IF NOT EXISTS idx_local_lists_is_active ON local_lists(is_active);
+CREATE INDEX IF NOT EXISTS idx_local_list_items_list_position ON local_list_items(list_id, position);
+
+-- RLS for local_lists
+ALTER TABLE local_lists ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "local_lists_public_read"
+  ON local_lists FOR SELECT
+  USING (is_active = true);
+
+CREATE POLICY "local_lists_admin_insert"
+  ON local_lists FOR INSERT
+  WITH CHECK (is_admin() OR (auth.uid() = user_id AND is_local_curator()));
+
+CREATE POLICY "local_lists_admin_update"
+  ON local_lists FOR UPDATE
+  USING (is_admin() OR (auth.uid() = user_id AND is_local_curator()));
+
+CREATE POLICY "local_lists_admin_delete"
+  ON local_lists FOR DELETE
+  USING (is_admin() OR (auth.uid() = user_id AND is_local_curator()));
+
+-- RLS for local_list_items
+ALTER TABLE local_list_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "local_list_items_public_read"
+  ON local_list_items FOR SELECT
+  USING (true);
+
+CREATE POLICY "local_list_items_admin_insert"
+  ON local_list_items FOR INSERT
+  WITH CHECK (
+    is_admin() OR EXISTS (
+      SELECT 1 FROM local_lists ll
+      WHERE ll.id = list_id AND ll.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "local_list_items_admin_update"
+  ON local_list_items FOR UPDATE
+  USING (
+    is_admin() OR EXISTS (
+      SELECT 1 FROM local_lists ll
+      WHERE ll.id = list_id AND ll.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "local_list_items_admin_delete"
+  ON local_list_items FOR DELETE
+  USING (
+    is_admin() OR EXISTS (
+      SELECT 1 FROM local_lists ll
+      WHERE ll.id = list_id AND ll.user_id = auth.uid()
+    )
+  );
+
+-- RPC: Homepage preview (active lists with dish previews + taste compatibility)
+DROP FUNCTION IF EXISTS get_local_lists_for_homepage();
+DROP FUNCTION IF EXISTS get_local_lists_for_homepage(UUID);
+
+CREATE OR REPLACE FUNCTION get_local_lists_for_homepage(p_viewer_id UUID DEFAULT NULL)
+RETURNS TABLE (
+  list_id UUID,
+  user_id UUID,
+  title TEXT,
+  description TEXT,
+  display_name TEXT,
+  avatar_url TEXT,
+  curator_tagline TEXT,
+  item_count INT,
+  preview_dishes TEXT[],
+  compatibility_pct INT
+)
+LANGUAGE SQL STABLE
+AS $$
+  SELECT
+    ll.id AS list_id,
+    ll.user_id,
+    ll.title,
+    ll.description,
+    p.display_name,
+    p.avatar_url,
+    ll.curator_tagline,
+    (SELECT COUNT(*)::INT FROM local_list_items WHERE list_id = ll.id) AS item_count,
+    (SELECT ARRAY_AGG(d.name ORDER BY li."position")
+     FROM local_list_items li
+     JOIN dishes d ON d.id = li.dish_id
+     WHERE li.list_id = ll.id AND li."position" <= 4) AS preview_dishes,
+    CASE
+      WHEN p_viewer_id IS NOT NULL AND p_viewer_id != ll.user_id THEN (
+        SELECT CASE
+          WHEN COUNT(*) >= 3 THEN ROUND(100 - (AVG(ABS(a.rating_10 - b.rating_10)) / 9.0 * 100))::INT
+          ELSE NULL
+        END
+        FROM votes a
+        JOIN votes b ON a.dish_id = b.dish_id
+        WHERE a.user_id = p_viewer_id AND b.user_id = ll.user_id
+          AND a.rating_10 IS NOT NULL AND b.rating_10 IS NOT NULL
+      )
+      ELSE NULL
+    END AS compatibility_pct
+  FROM local_lists ll
+  JOIN profiles p ON p.id = ll.user_id
+  WHERE ll.is_active = true
+  ORDER BY RANDOM()
+  LIMIT 8;
+$$;
+
+-- RPC: Full list detail by user ID (for profile pages)
+CREATE OR REPLACE FUNCTION get_local_list_by_user(target_user_id UUID)
+RETURNS TABLE (
+  list_id UUID,
+  title TEXT,
+  description TEXT,
+  user_id UUID,
+  display_name TEXT,
+  "position" INT,
+  dish_id UUID,
+  dish_name TEXT,
+  restaurant_name TEXT,
+  restaurant_id UUID,
+  avg_rating NUMERIC,
+  total_votes INT,
+  category TEXT,
+  note TEXT
+)
+LANGUAGE SQL STABLE
+AS $$
+  SELECT
+    ll.id AS list_id,
+    ll.title,
+    ll.description,
+    ll.user_id,
+    p.display_name,
+    li."position",
+    d.id AS dish_id,
+    d.name AS dish_name,
+    r.name AS restaurant_name,
+    r.id AS restaurant_id,
+    d.avg_rating,
+    d.total_votes,
+    d.category,
+    li.note
+  FROM local_lists ll
+  JOIN profiles p ON p.id = ll.user_id
+  JOIN local_list_items li ON li.list_id = ll.id
+  JOIN dishes d ON d.id = li.dish_id
+  JOIN restaurants r ON r.id = d.restaurant_id
+  WHERE ll.user_id = target_user_id
+    AND ll.is_active = true
+  ORDER BY li."position";
+$$;
+
+-- RPC: Admin creates a curator invite link
+CREATE OR REPLACE FUNCTION create_curator_invite()
+RETURNS JSON AS $$
+DECLARE
+  v_invite RECORD;
+BEGIN
+  IF NOT is_admin() THEN
+    RETURN json_build_object('success', false, 'error', 'Admin only');
+  END IF;
+
+  INSERT INTO curator_invites (created_by)
+  VALUES (auth.uid())
+  RETURNING * INTO v_invite;
+
+  RETURN json_build_object(
+    'success', true,
+    'token', v_invite.token,
+    'expires_at', v_invite.expires_at
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- RPC: Validate a curator invite token (public via SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION get_curator_invite_details(p_token TEXT)
+RETURNS JSON AS $$
+DECLARE
+  v_invite RECORD;
+BEGIN
+  SELECT * INTO v_invite FROM curator_invites WHERE token = p_token;
+
+  IF NOT FOUND THEN
+    RETURN json_build_object('valid', false, 'error', 'Invite not found');
+  END IF;
+  IF v_invite.used_by IS NOT NULL THEN
+    RETURN json_build_object('valid', false, 'error', 'Invite already used');
+  END IF;
+  IF v_invite.expires_at < NOW() THEN
+    RETURN json_build_object('valid', false, 'error', 'Invite has expired');
+  END IF;
+
+  RETURN json_build_object('valid', true, 'expires_at', v_invite.expires_at);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- RPC: Accept curator invite — sets flag, creates empty list
+CREATE OR REPLACE FUNCTION accept_curator_invite(p_token TEXT)
+RETURNS JSON AS $$
+DECLARE
+  v_invite RECORD;
+  v_user_id UUID;
+  v_display_name TEXT;
+  v_list_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  SELECT * INTO v_invite FROM curator_invites WHERE token = p_token FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Invite not found');
+  END IF;
+  IF v_invite.used_by IS NOT NULL THEN
+    RETURN json_build_object('success', false, 'error', 'Invite already used');
+  END IF;
+  IF v_invite.expires_at < NOW() THEN
+    RETURN json_build_object('success', false, 'error', 'Invite has expired');
+  END IF;
+
+  -- Set curator flag
+  UPDATE profiles SET is_local_curator = true WHERE id = v_user_id;
+
+  -- Get display name for default title
+  SELECT display_name INTO v_display_name FROM profiles WHERE id = v_user_id;
+
+  -- Create empty list (is_active = false until they add dishes)
+  INSERT INTO local_lists (user_id, title, is_active)
+  VALUES (v_user_id, COALESCE(v_display_name, 'My') || '''s Top 10', false)
+  ON CONFLICT (user_id) DO NOTHING
+  RETURNING id INTO v_list_id;
+
+  -- If list already existed, just get its ID
+  IF v_list_id IS NULL THEN
+    SELECT id INTO v_list_id FROM local_lists WHERE user_id = v_user_id;
+  END IF;
+
+  -- Mark invite as used
+  UPDATE curator_invites SET used_by = v_user_id, used_at = NOW() WHERE id = v_invite.id;
+
+  RETURN json_build_object('success', true, 'list_id', v_list_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- RPC: Get authenticated user's own local list (regardless of is_active)
+CREATE OR REPLACE FUNCTION get_my_local_list()
+RETURNS TABLE (
+  list_id UUID,
+  title TEXT,
+  description TEXT,
+  curator_tagline TEXT,
+  is_active BOOLEAN,
+  "position" INT,
+  dish_id UUID,
+  dish_name TEXT,
+  restaurant_name TEXT,
+  restaurant_id UUID,
+  avg_rating NUMERIC,
+  total_votes INT,
+  category TEXT,
+  note TEXT
+)
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT
+    ll.id AS list_id,
+    ll.title,
+    ll.description,
+    ll.curator_tagline,
+    ll.is_active,
+    li."position",
+    d.id AS dish_id,
+    d.name AS dish_name,
+    r.name AS restaurant_name,
+    r.id AS restaurant_id,
+    d.avg_rating,
+    d.total_votes,
+    d.category,
+    li.note
+  FROM local_lists ll
+  LEFT JOIN local_list_items li ON li.list_id = ll.id
+  LEFT JOIN dishes d ON d.id = li.dish_id
+  LEFT JOIN restaurants r ON r.id = d.restaurant_id
+  WHERE ll.user_id = auth.uid()
+  ORDER BY li."position";
+$$;
+
+-- RPC: Atomic save of curator's own list (replaces all items)
+CREATE OR REPLACE FUNCTION save_my_local_list(
+  p_tagline TEXT DEFAULT NULL,
+  p_items JSONB DEFAULT '[]'::JSONB
+)
+RETURNS JSON AS $$
+DECLARE
+  v_user_id UUID;
+  v_list_id UUID;
+  v_item JSONB;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  -- Check curator status
+  IF NOT is_local_curator() THEN
+    RETURN json_build_object('success', false, 'error', 'Not a local curator');
+  END IF;
+
+  -- Validate item count
+  IF jsonb_array_length(p_items) > 10 THEN
+    RETURN json_build_object('success', false, 'error', 'Maximum 10 dishes allowed');
+  END IF;
+
+  -- Get existing list
+  SELECT id INTO v_list_id FROM local_lists WHERE user_id = v_user_id;
+
+  IF v_list_id IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'No list found — accept an invite first');
+  END IF;
+
+  -- Update list metadata
+  UPDATE local_lists
+  SET curator_tagline = p_tagline,
+      is_active = jsonb_array_length(p_items) > 0
+  WHERE id = v_list_id;
+
+  -- Replace all items
+  DELETE FROM local_list_items WHERE list_id = v_list_id;
+
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    INSERT INTO local_list_items (list_id, dish_id, "position", note)
+    VALUES (
+      v_list_id,
+      (v_item->>'dish_id')::UUID,
+      (v_item->>'position')::INT,
+      v_item->>'note'
+    );
+  END LOOP;
+
+  RETURN json_build_object('success', true, 'list_id', v_list_id, 'item_count', jsonb_array_length(p_items));
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 
 -- =============================================

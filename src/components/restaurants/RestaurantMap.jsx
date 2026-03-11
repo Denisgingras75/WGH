@@ -318,8 +318,8 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
     : bestRank === 2 ? 'var(--color-medal-silver)'
     : bestRank === 3 ? 'var(--color-medal-bronze)'
     : null
-  var size = isSelected ? 60 : (medalBg ? 50 : 44)
-  var imgSize = isSelected ? 42 : (medalBg ? 36 : 32)
+  var size = isSelected ? 56 : (medalBg ? 46 : 40)
+  var imgSize = isSelected ? 52 : (medalBg ? 46 : 42)
 
   var glow = isSelected
     ? 'box-shadow:0 0 14px 6px rgba(228,90,53,0.6);border:3px solid var(--color-primary);z-index:9999 !important;'
@@ -336,7 +336,7 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
 
   var innerContent = posterImage
     ? '<img src="' + posterImage + '" alt="" style="width:' + imgSize + 'px;height:' + imgSize + 'px;object-fit:contain;" />'
-    : '<span style="font-size:' + (isSelected ? 34 : (medalBg ? 30 : 26)) + 'px;">' + emoji + '</span>'
+    : '<span style="font-size:' + (isSelected ? 40 : (medalBg ? 36 : 32)) + 'px;">' + emoji + '</span>'
 
   // Small rank badge top-right for top 10
   var rankBadge = ''
@@ -358,7 +358,7 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
       glow +
     '">' + innerContent + badge + rankBadge + '</div>',
     iconSize: [size, size],
-    iconAnchor: [22, 22],
+    iconAnchor: [23, 23],
   })
 }
 
@@ -883,8 +883,6 @@ export function RestaurantMap({
               {rankedDishes.map(function (item) {
                 var dish = item.dish
                 var rank = item.rank
-                var pi = getPosterIconSrc(dish.category)
-                var em = getCategoryEmoji(dish.category)
                 var medalColor = rank === 1 ? 'var(--color-medal-gold)'
                   : rank === 2 ? 'var(--color-medal-silver)'
                   : rank === 3 ? 'var(--color-medal-bronze)'
@@ -926,13 +924,6 @@ export function RestaurantMap({
                         #{rank}
                       </span>
                     )}
-
-                    {/* Icon */}
-                    <span style={{ fontSize: '18px', flexShrink: 0, paddingTop: '1px' }}>
-                      {pi ? (
-                        <img src={pi} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                      ) : em}
-                    </span>
 
                     {/* Name + progress bar */}
                     <div style={{ flex: 1, minWidth: 0 }}>

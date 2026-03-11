@@ -10,7 +10,8 @@ import { followsApi } from '../api/followsApi'
 import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
-import { FoodMap, ShelfFilter, JournalFeed } from '../components/profile'
+import { FoodMap, ShelfFilter, JournalFeed, LocalListCard } from '../components/profile'
+import { useLocalListDetail } from '../hooks/useLocalListDetail'
 import { TrustBadge, ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
 import { profileApi } from '../api/profileApi'
@@ -85,6 +86,8 @@ export function UserProfile() {
   const [standoutPicks, setStandoutPicks] = useState({})
   const [jitterBadgeType, setJitterBadgeType] = useState(null)
   const [jitterBadgeData, setJitterBadgeData] = useState(null)
+
+  var localList = useLocalListDetail(userId)
 
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId
@@ -647,6 +650,11 @@ export function UserProfile() {
         <div className="px-4 pt-4">
           <FoodMap stats={foodMapStats} title={`${profile.display_name}'s Food Map`} />
         </div>
+      )}
+
+      {/* Local List */}
+      {localList.items.length > 0 && (
+        <LocalListCard items={localList.items} />
       )}
 
       {/* Standout Picks */}

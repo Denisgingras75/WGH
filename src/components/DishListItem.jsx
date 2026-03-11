@@ -45,6 +45,7 @@ export const DishListItem = memo(function DishListItem({
   highlighted = false,
   onClick,
   isLast = false,
+  hideVotes = false,
 }) {
   const navigate = useNavigate()
 
@@ -85,7 +86,7 @@ export const DishListItem = memo(function DishListItem({
           : isPodium
             ? 'var(--color-surface)'
             : 'transparent',
-        padding: isPodium ? '14px 12px' : '10px 12px',
+        padding: isPodium ? '10px 10px' : '8px 10px',
         cursor: 'pointer',
         transition: 'background 1s ease-out',
         borderBottom: !isPodium && !isLast ? '1px solid var(--color-divider)' : 'none',
@@ -97,9 +98,9 @@ export const DishListItem = memo(function DishListItem({
         <span
           className="flex-shrink-0 font-bold"
           style={{
-            width: isPodium ? '36px' : '32px',
+            width: isPodium ? '32px' : '28px',
             textAlign: 'center',
-            fontSize: isPodium ? '26px' : '16px',
+            fontSize: isPodium ? '22px' : '15px',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             color: rank === 1
@@ -119,7 +120,7 @@ export const DishListItem = memo(function DishListItem({
       {!showPhoto && (
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: isPodium ? '88px' : '76px', height: isPodium ? '88px' : '76px', marginLeft: '4px' }}
+          style={{ width: isPodium ? '72px' : '64px', height: isPodium ? '72px' : '64px', marginLeft: '4px' }}
         >
           {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
             <img
@@ -129,7 +130,7 @@ export const DishListItem = memo(function DishListItem({
               loading="lazy"
             />
           ) : (
-            <span style={{ fontSize: isPodium ? '20px' : '16px' }}>{getCategoryEmoji(category)}</span>
+            <span style={{ fontSize: isPodium ? '18px' : '14px' }}>{getCategoryEmoji(category)}</span>
           )}
         </div>
       )}
@@ -157,7 +158,7 @@ export const DishListItem = memo(function DishListItem({
         <p
           className="font-bold line-clamp-2"
           style={{
-            fontSize: isPodium ? '17px' : '15px',
+            fontSize: isPodium ? '15px' : '14px',
             fontWeight: isPodium ? 800 : 700,
             color: 'var(--color-text-primary)',
             lineHeight: 1.3,
@@ -170,7 +171,7 @@ export const DishListItem = memo(function DishListItem({
           <p
             className="truncate"
             style={{
-              fontSize: isPodium ? '13px' : '12px',
+              fontSize: isPodium ? '12px' : '11px',
               color: 'var(--color-text-tertiary)',
             }}
           >
@@ -196,7 +197,7 @@ export const DishListItem = memo(function DishListItem({
             <span
               className="font-bold"
               style={{
-                fontSize: isPodium ? '24px' : '18px',
+                fontSize: isPodium ? '20px' : '16px',
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
                 color: getRatingColor(avgRating),
@@ -204,14 +205,16 @@ export const DishListItem = memo(function DishListItem({
             >
               {avgRating}
             </span>
-            <div style={{
-              fontSize: '11px',
-              color: 'var(--color-text-tertiary)',
-              fontWeight: 500,
-              marginTop: '1px',
-            }}>
-              {totalVotes} vote{totalVotes === 1 ? '' : 's'}
-            </div>
+            {!hideVotes && (
+              <div style={{
+                fontSize: '11px',
+                color: 'var(--color-text-tertiary)',
+                fontWeight: 500,
+                marginTop: '1px',
+              }}>
+                {totalVotes} vote{totalVotes === 1 ? '' : 's'}
+              </div>
+            )}
           </>
         ) : (
           <span

@@ -60,6 +60,8 @@ const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms')
 const UserProfile = lazyWithRetry(() => import('./pages/UserProfile'), 'UserProfile')
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'), 'ResetPassword')
 const AcceptInvite = lazyWithRetry(() => import('./pages/AcceptInvite'), 'AcceptInvite')
+const AcceptCuratorInvite = lazyWithRetry(() => import('./pages/AcceptCuratorInvite'), 'AcceptCuratorInvite')
+const MyList = lazyWithRetry(() => import('./pages/MyList'), 'MyList')
 const ManageRestaurant = lazyWithRetry(() => import('./pages/ManageRestaurant'), 'ManageRestaurant')
 const MapPage = lazyWithRetry(() => import('./pages/Map'), 'Map')
 const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'HowReviewsWork')
@@ -134,6 +136,8 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="/invite/:token" element={<AcceptInvite />} />
+              <Route path="/curator-invite/:token" element={<AcceptCuratorInvite />} />
+              <Route path="/my-list" element={<ProtectedRoute><Layout><MyList /></Layout></ProtectedRoute>} />
               <Route path="/manage" element={<ProtectedRoute><ManageRestaurant /></ProtectedRoute>} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />

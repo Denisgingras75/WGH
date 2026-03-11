@@ -1,0 +1,22 @@
+-- Local Lists Seed Data
+-- Run in Supabase SQL Editor after identifying 6 MV locals
+--
+-- For each local:
+-- 1. Get or create their auth.users UUID
+-- 2. INSERT into local_lists
+-- 3. INSERT 10 rows into local_list_items
+--
+-- Example:
+--
+-- INSERT INTO local_lists (user_id, title, description)
+-- VALUES (
+--   'USER_UUID_HERE',
+--   'Sarah''s MV Essentials',
+--   'What I send every friend to try'
+-- );
+--
+-- INSERT INTO local_list_items (list_id, dish_id, position, note)
+-- VALUES
+--   ((SELECT id FROM local_lists WHERE user_id = 'USER_UUID_HERE'), 'DISH_UUID', 1, 'The best on the island'),
+--   ((SELECT id FROM local_lists WHERE user_id = 'USER_UUID_HERE'), 'DISH_UUID', 2, NULL),
+--   ((SELECT id FROM local_lists WHERE user_id = 'USER_UUID_HERE'), 'DISH_UUID', 3, NULL);
