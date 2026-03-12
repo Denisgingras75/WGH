@@ -63,7 +63,7 @@ export function BottomNav() {
                       borderRadius: 1,
                       background: 'var(--color-primary)',
                       marginBottom: 6,
-                      boxShadow: '0 0 8px rgba(232, 163, 23, 0.4)',
+                      boxShadow: '0 0 8px rgba(244, 208, 63, 0.3)',
                     }}
                   />
                 )}

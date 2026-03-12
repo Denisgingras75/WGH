@@ -10,7 +10,6 @@ import { DishSearch } from '../components/DishSearch'
 import { TownPicker } from '../components/TownPicker'
 import { DishListItem } from '../components/DishListItem'
 import { CategoryChips } from '../components/CategoryChips'
-import { SectionHeader } from '../components/SectionHeader'
 import { EmptyState } from '../components/EmptyState'
 import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
@@ -34,18 +33,15 @@ export function Home() {
     if (q) setSelectedCategory(null)
   }, [])
 
-  // Search results
   var searchData = useDishSearch(searchQuery, searchLimit, town)
   var searchResults = searchData.results
   var searchLoading = searchData.loading
 
-  // Ranked dishes for the list
   var dishData = useDishes(location, radius, null, null, town)
   var dishes = dishData.dishes
   var loading = dishData.loading
   var error = dishData.error
 
-  // Rank-sort function
   var rankSort = function (a, b) {
     var aRanked = (a.total_votes || 0) >= MIN_VOTES_FOR_RANKING
     var bRanked = (b.total_votes || 0) >= MIN_VOTES_FOR_RANKING
@@ -54,7 +50,6 @@ export function Home() {
     return (b.avg_rating || 0) - (a.avg_rating || 0)
   }
 
-  // Filtered + sorted dishes
   var rankedDishes = useMemo(function () {
     if (!dishes || dishes.length === 0) return []
     var filtered = dishes
@@ -77,26 +72,31 @@ export function Home() {
       <>
         {top.length > 0 && (
           <div className="stagger-item" style={{ animationDelay: '100ms' }}>
-            {/* Section label */}
-            <div className="flex items-center gap-3" style={{ marginBottom: '16px' }}>
-              <div style={{
-                width: '3px',
-                height: '16px',
-                borderRadius: '2px',
-                background: 'var(--color-primary)',
-              }} />
+            {/* Chalk section divider */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '14px',
+            }}>
               <span style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                color: 'var(--color-primary)',
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '24px',
                 fontWeight: 700,
+                color: 'var(--color-primary)',
+                letterSpacing: '0.08em',
+                lineHeight: 1,
               }}>
                 The Best
               </span>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: 'linear-gradient(to right, var(--color-primary), transparent)',
+                opacity: 0.2,
+              }} />
             </div>
-            <div className="flex flex-col" style={{ gap: '16px' }}>
+            <div className="flex flex-col" style={{ gap: '14px' }}>
               {top.map(function (dish, i) {
                 return (
                   <div
@@ -117,25 +117,30 @@ export function Home() {
           </div>
         )}
         {rest.length > 0 && (
-          <div className="stagger-item" style={{ marginTop: '28px', animationDelay: '400ms' }}>
-            {/* Section label */}
-            <div className="flex items-center gap-3" style={{ marginBottom: '12px' }}>
-              <div style={{
-                width: '3px',
-                height: '16px',
-                borderRadius: '2px',
-                background: 'var(--color-text-tertiary)',
-              }} />
+          <div className="stagger-item" style={{ marginTop: '24px', animationDelay: '400ms' }}>
+            {/* Chalk section divider */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '12px',
+            }}>
               <span style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                color: 'var(--color-text-tertiary)',
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '22px',
                 fontWeight: 700,
+                color: 'var(--color-text-tertiary)',
+                letterSpacing: '0.08em',
+                lineHeight: 1,
               }}>
                 Also Great
               </span>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: 'linear-gradient(to right, var(--color-text-tertiary), transparent)',
+                opacity: 0.15,
+              }} />
             </div>
             <div style={{
               background: 'var(--color-card)',
@@ -165,48 +170,42 @@ export function Home() {
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
 
-      {/* ── BRAND HEADER ── */}
+      {/* ── CHALKBOARD HEADER ── */}
       <div style={{
-        padding: '28px 20px 12px',
+        padding: '24px 20px 8px',
         textAlign: 'center',
-        position: 'relative',
       }}>
-        {/* Ambient glow behind brand name */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '200px',
-          height: '80px',
-          background: 'radial-gradient(ellipse, rgba(232, 163, 23, 0.08) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
         <h1 style={{
-          fontFamily: "'Cormorant', Georgia, serif",
-          fontSize: '32px',
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '42px',
           fontWeight: 700,
           color: 'var(--color-text-primary)',
-          letterSpacing: '-0.03em',
+          letterSpacing: '0.04em',
           lineHeight: 1,
-          position: 'relative',
         }}>
           What&rsquo;s <span style={{
             color: 'var(--color-primary)',
-            fontStyle: 'italic',
           }}>Good</span> Here
         </h1>
         <p style={{
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: '11px',
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '18px',
+          fontWeight: 700,
           color: 'var(--color-text-tertiary)',
-          marginTop: '6px',
-          letterSpacing: '0.25em',
-          textTransform: 'uppercase',
-          fontWeight: 600,
+          marginTop: '4px',
+          letterSpacing: '0.15em',
         }}>
           Martha&rsquo;s Vineyard
         </p>
+        {/* Chalk underline */}
+        <div style={{
+          width: '60px',
+          height: '2px',
+          background: 'var(--color-primary)',
+          opacity: 0.3,
+          margin: '10px auto 0',
+          borderRadius: '1px',
+        }} />
       </div>
 
       {/* ── SEARCH ── */}
@@ -233,10 +232,11 @@ export function Home() {
         <button
           onClick={function () { setShowRadiusSheet(true) }}
           aria-label={'Search radius: ' + radius + ' miles'}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full"
           style={{
+            fontFamily: "'Outfit', sans-serif",
             fontSize: '12px',
-            fontWeight: 700,
+            fontWeight: 600,
             letterSpacing: '0.02em',
             background: 'var(--color-surface)',
             color: 'var(--color-text-secondary)',
@@ -266,13 +266,20 @@ export function Home() {
       />
 
       {/* ── SECTION HEADER ── */}
-      <div className="px-5 pt-4 pb-3">
-        <SectionHeader
-          title={selectedCategoryLabel
+      <div className="px-5 pt-3 pb-2">
+        <h2 style={{
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '28px',
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
+          letterSpacing: '0.04em',
+          lineHeight: 1.1,
+        }}>
+          {selectedCategoryLabel
             ? (town ? 'Best ' + selectedCategoryLabel.label + ' in ' + town : 'Best ' + selectedCategoryLabel.label)
             : (town ? 'Top Rated in ' + town : 'Top Rated Nearby')
           }
-        />
+        </h2>
       </div>
 
       {/* ── DISH LIST ── */}
@@ -322,14 +329,13 @@ export function Home() {
           fontSize: '14px',
           fontWeight: 700,
           letterSpacing: '0.02em',
-          boxShadow: '0 4px 24px rgba(232, 163, 23, 0.3), 0 0 0 1px rgba(232, 163, 23, 0.1)',
+          boxShadow: '0 4px 20px rgba(244, 208, 63, 0.25)',
         }}
       >
         <Plus size={18} weight="bold" />
         Check In
       </button>
 
-      {/* Radius Sheet */}
       <RadiusSheet
         isOpen={showRadiusSheet}
         onClose={function () { setShowRadiusSheet(false) }}
@@ -337,7 +343,6 @@ export function Home() {
         onRadiusChange={setRadius}
       />
 
-      {/* Add Restaurant Modal */}
       <AddRestaurantModal
         isOpen={addModalOpen}
         onClose={function () { setAddModalOpen(false) }}
@@ -347,47 +352,12 @@ export function Home() {
   )
 }
 
-/* --- Loading skeleton --------------------------------------------------- */
 function ListSkeleton() {
   return (
     <div className="animate-pulse">
-      {/* Hero skeleton */}
-      <div
-        className="rounded-2xl"
-        style={{
-          height: '140px',
-          background: 'var(--color-card)',
-          border: '1px solid var(--color-divider)',
-          marginBottom: '12px',
-        }}
-      />
-      {/* Supporting skeletons */}
+      <div className="rounded-2xl" style={{ height: '140px', background: 'var(--color-card)', border: '1px solid var(--color-divider)', marginBottom: '12px' }} />
       {[0, 1].map(function (i) {
-        return (
-          <div
-            key={i}
-            className="rounded-xl"
-            style={{
-              height: '100px',
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-divider)',
-              marginBottom: '12px',
-            }}
-          />
-        )
-      })}
-      {/* Compact skeletons */}
-      {[0, 1, 2].map(function (i) {
-        return (
-          <div key={'c' + i} className="flex items-center gap-3 py-3 px-3">
-            <div className="w-7 h-5 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="flex-1">
-              <div className="h-4 w-28 rounded mb-1" style={{ background: 'var(--color-divider)' }} />
-              <div className="h-3 w-20 rounded" style={{ background: 'var(--color-divider)' }} />
-            </div>
-            <div className="h-5 w-8 rounded" style={{ background: 'var(--color-divider)' }} />
-          </div>
-        )
+        return <div key={i} className="rounded-xl" style={{ height: '100px', background: 'var(--color-card)', border: '1px solid var(--color-divider)', marginBottom: '12px' }} />
       })}
     </div>
   )

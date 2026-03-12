@@ -27,65 +27,65 @@
 }
 
 /* ===========================
-   What's Good Here — NIGHT MARKET (Dark Default)
-   Warm amber on near-black. Cinematic. Sensory. Bold.
+   What's Good Here — THE CHALKBOARD (Dark Default)
+   Restaurant chalkboard menu. Chalk on slate. Warm. Real.
    =========================== */
 :root {
-  --color-primary: #E8A317;
-  --color-primary-muted: rgba(232, 163, 23, 0.12);
-  --color-primary-glow: rgba(232, 163, 23, 0.25);
-  --color-rating: #00D68F;
-  --color-accent-gold: #D4920A;
-  --color-accent-gold-muted: rgba(212, 146, 10, 0.12);
-  --color-link-secondary: #E8A317;
-  --color-accent-orange: #E07040;
-  --color-accent-yellow: #E8A317;
-  --color-text-primary: #F5E6CC;
-  --color-text-secondary: #A89580;
-  --color-text-tertiary: #6B5D50;
-  --color-bg: #080808;
-  --color-surface: #0E0E0E;
-  --color-surface-elevated: #181818;
-  --color-divider: rgba(232, 163, 23, 0.08);
-  --color-category-strip: #0E0E0E;
-  --color-card: #121212;
-  --color-card-hover: #1A1A1A;
-  --color-card-border: rgba(232, 163, 23, 0.12);
-  --color-medal-gold: #E8A317;
-  --color-medal-silver: #8A9AA8;
-  --color-medal-bronze: #C4855C;
-  --color-danger: #EF4444;
-  --color-success: #00D68F;
+  --color-primary: #F4D03F;
+  --color-primary-muted: rgba(244, 208, 63, 0.12);
+  --color-primary-glow: rgba(244, 208, 63, 0.20);
+  --color-rating: #7DCEA0;
+  --color-accent-gold: #F0C040;
+  --color-accent-gold-muted: rgba(240, 192, 64, 0.12);
+  --color-link-secondary: #F4D03F;
+  --color-accent-orange: #E67E22;
+  --color-accent-yellow: #F4D03F;
+  --color-text-primary: #E8E2D4;
+  --color-text-secondary: #A8A090;
+  --color-text-tertiary: #6B6660;
+  --color-bg: #1B2021;
+  --color-surface: #232B2B;
+  --color-surface-elevated: #2A3333;
+  --color-divider: rgba(244, 208, 63, 0.06);
+  --color-category-strip: #232B2B;
+  --color-card: #243030;
+  --color-card-hover: #2D3838;
+  --color-card-border: rgba(244, 208, 63, 0.10);
+  --color-medal-gold: #F4D03F;
+  --color-medal-silver: #BDC3C7;
+  --color-medal-bronze: #E67E22;
+  --color-danger: #E74C3C;
+  --color-success: #7DCEA0;
   --color-success-light: #0D2818;
-  --color-success-muted: rgba(0, 214, 143, 0.10);
-  --color-success-border: rgba(0, 214, 143, 0.30);
-  --color-muted: #6B5D50;
-  --color-text-tagline: #A89580;
-  --color-text-on-primary: #080808;
+  --color-success-muted: rgba(125, 206, 160, 0.10);
+  --color-success-border: rgba(125, 206, 160, 0.30);
+  --color-muted: #6B6660;
+  --color-text-tagline: #A8A090;
+  --color-text-on-primary: #1B2021;
 
-  --color-emerald: #00D68F;
-  --color-emerald-light: #34EDAA;
-  --color-red: #EF4444;
-  --color-red-light: #F87171;
-  --color-amber: #E8A317;
-  --color-amber-light: #FBBF24;
-  --color-amber-dark: #92400E;
-  --color-orange: #E07040;
-  --color-lime: #84CC16;
-  --color-yellow: #E8A317;
-  --color-green-deep: #00A870;
-  --color-green-dark: #00D68F;
-  --color-blue: #3B82F6;
-  --color-blue-light: #60A5FA;
-  --color-purple: #9333EA;
+  --color-emerald: #7DCEA0;
+  --color-emerald-light: #A3E4BE;
+  --color-red: #E74C3C;
+  --color-red-light: #F1948A;
+  --color-amber: #F4D03F;
+  --color-amber-light: #F9E154;
+  --color-amber-dark: #B7950B;
+  --color-orange: #E67E22;
+  --color-lime: #82E0AA;
+  --color-yellow: #F4D03F;
+  --color-green-deep: #27AE60;
+  --color-green-dark: #7DCEA0;
+  --color-blue: #5DADE2;
+  --color-blue-light: #85C1E9;
+  --color-purple: #BB8FCE;
 
-  --color-tier-featured: #E8A317;
-  --color-tier-community: #3B82F6;
+  --color-tier-featured: #F4D03F;
+  --color-tier-community: #5DADE2;
   --color-tier-hidden: #6B7280;
 
-  --glow-primary: 0 0 20px rgba(232, 163, 23, 0.3), 0 0 60px rgba(232, 163, 23, 0.08);
-  --glow-gold: 0 0 15px rgba(232, 163, 23, 0.25);
-  --focus-ring: 0 0 0 3px rgba(232, 163, 23, 0.3);
+  --glow-primary: 0 0 12px rgba(244, 208, 63, 0.15);
+  --glow-gold: 0 0 10px rgba(244, 208, 63, 0.20);
+  --focus-ring: 0 0 0 3px rgba(244, 208, 63, 0.25);
 }
 
 body::after {
@@ -94,8 +94,8 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 99998;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
 }
@@ -106,44 +106,44 @@ body::after {
 
 /* ===========================
    Daylight Theme (Light Mode Toggle)
-   Warm parchment with deep amber accents
+   Warm kraft paper with deep amber accents
    =========================== */
 [data-theme="light"] {
-  --color-primary: #B87A08;
-  --color-primary-muted: rgba(184, 122, 8, 0.10);
-  --color-primary-glow: rgba(184, 122, 8, 0.15);
-  --color-rating: #0B8A58;
-  --color-accent-gold: #9A6504;
-  --color-accent-gold-muted: rgba(154, 101, 4, 0.10);
-  --color-link-secondary: #B87A08;
-  --color-accent-yellow: #B87A08;
-  --color-accent-orange: #C45A20;
-  --color-text-primary: #1A1408;
-  --color-text-secondary: #5C4E3C;
-  --color-text-tertiary: #8A7D6C;
-  --color-bg: #F5EFE6;
-  --color-surface: #EDE5D8;
+  --color-primary: #B7950B;
+  --color-primary-muted: rgba(183, 149, 11, 0.10);
+  --color-primary-glow: rgba(183, 149, 11, 0.15);
+  --color-rating: #1E8449;
+  --color-accent-gold: #9A7D0A;
+  --color-accent-gold-muted: rgba(154, 125, 10, 0.10);
+  --color-link-secondary: #B7950B;
+  --color-accent-yellow: #B7950B;
+  --color-accent-orange: #CA6F1E;
+  --color-text-primary: #1C1A14;
+  --color-text-secondary: #5C5548;
+  --color-text-tertiary: #8A8478;
+  --color-bg: #F2EDE4;
+  --color-surface: #EAE3D8;
   --color-surface-elevated: #FFFFFF;
-  --color-divider: #D4C8B4;
-  --color-category-strip: #EDE5D8;
+  --color-divider: #D4CCB8;
+  --color-category-strip: #EAE3D8;
   --color-card: #FFFFFF;
   --color-card-hover: #F8F4EE;
-  --color-card-border: #D4C8B4;
-  --color-medal-gold: #B87A08;
+  --color-card-border: #D4CCB8;
+  --color-medal-gold: #B7950B;
   --color-medal-silver: #6B7580;
-  --color-medal-bronze: #8B5A30;
-  --color-green-deep: #0B8A58;
-  --color-danger: #C41E1E;
-  --color-success: #0B8A58;
+  --color-medal-bronze: #A04000;
+  --color-green-deep: #1E8449;
+  --color-danger: #C0392B;
+  --color-success: #1E8449;
   --color-success-light: #F0FFF4;
-  --color-success-muted: rgba(11, 138, 88, 0.10);
-  --color-success-border: rgba(11, 138, 88, 0.30);
-  --color-muted: #8A7D6C;
-  --color-text-tagline: #8A7D6C;
+  --color-success-muted: rgba(30, 132, 73, 0.10);
+  --color-success-border: rgba(30, 132, 73, 0.30);
+  --color-muted: #8A8478;
+  --color-text-tagline: #8A8478;
   --color-text-on-primary: #FFFFFF;
-  --glow-primary: 0 0 10px rgba(184, 122, 8, 0.15);
-  --glow-gold: 0 0 8px rgba(184, 122, 8, 0.20);
-  --focus-ring: 0 0 0 3px rgba(184, 122, 8, 0.25);
+  --glow-primary: 0 0 10px rgba(183, 149, 11, 0.15);
+  --glow-gold: 0 0 8px rgba(183, 149, 11, 0.20);
+  --focus-ring: 0 0 0 3px rgba(183, 149, 11, 0.25);
 }
 
 @tailwind base;
@@ -194,13 +194,13 @@ body::after {
   }
 
   .glass-header {
-    background: rgba(8, 8, 8, 0.95);
+    background: rgba(27, 32, 33, 0.95);
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
   }
 
   [data-theme="light"] .glass-header {
-    background: rgba(245, 239, 230, 0.95);
+    background: rgba(242, 237, 228, 0.95);
   }
 
   .card-elevated {
@@ -283,13 +283,13 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, #0E0E0E 0%, #080808 50%, #050505 100%);
+    background: linear-gradient(145deg, #232B2B 0%, #1B2021 50%, #151A1B 100%);
     opacity: 1;
     transition: opacity 0.4s ease-out;
   }
 
   [data-theme="light"] .welcome-splash {
-    background: linear-gradient(145deg, #FFFFFF 0%, #F5EFE6 50%, #EDE5D8 100%);
+    background: linear-gradient(145deg, #FFFFFF 0%, #F2EDE4 50%, #EAE3D8 100%);
   }
 
   .welcome-splash--fading {

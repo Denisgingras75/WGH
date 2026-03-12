@@ -166,7 +166,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           background: 'var(--color-surface)',
           border: isFocused ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
           minHeight: '48px',
-          boxShadow: isFocused ? '0 0 0 3px rgba(232, 163, 23, 0.1)' : 'none',
+          boxShadow: isFocused ? '0 0 0 3px rgba(244, 208, 63, 0.1)' : 'none',
         }}
       >
         <svg

@@ -103,19 +103,6 @@ export const DishListItem = memo(function DishListItem({
           transition: 'background 1s ease-out',
         }}
       >
-        {/* Spotlight glow for #1 */}
-        {isHero && (
-          <div style={{
-            position: 'absolute',
-            top: '-30%',
-            right: '-10%',
-            width: '60%',
-            height: '160%',
-            background: 'radial-gradient(ellipse at center, rgba(232, 163, 23, 0.06) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-        )}
-
         {/* Background photo (right side, fading in) */}
         {photoUrl && (
           <img
@@ -142,30 +129,17 @@ export const DishListItem = memo(function DishListItem({
           {/* Rank badge — bold graphic */}
           <div className="flex items-start justify-between">
             <div style={{ maxWidth: '65%' }}>
-              {/* Rank number as inline badge */}
-              <div className="flex items-center gap-2" style={{ marginBottom: '8px' }}>
+              {/* Rank — chalk style */}
+              <div className="flex items-center gap-2" style={{ marginBottom: '6px' }}>
                 <span style={{
-                  fontFamily: "'Cormorant', Georgia, serif",
-                  fontSize: isHero ? '14px' : '12px',
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: isHero ? '28px' : '24px',
                   fontWeight: 700,
                   color: medalColor,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
+                  lineHeight: 1,
                 }}>
                   {'#' + rank}
                 </span>
-                {isHero && (
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary)',
-                    opacity: 0.6,
-                  }}>
-                    Top Pick
-                  </span>
-                )}
               </div>
               {/* Dish name */}
               <p style={{
