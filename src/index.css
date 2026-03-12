@@ -31,46 +31,38 @@
    Coral primary, gold accents, quiet chrome, loud votes
    =========================== */
 :root {
-  /* Primary: Coral — brand color, CTAs, ratings */
-  --color-primary: #E4440A;
-  --color-primary-muted: rgba(228, 68, 10, 0.10);
-  --color-primary-glow: rgba(228, 68, 10, 0.20);
-  --color-rating: #16A34A;
-  /* Secondary: Gold — medals, accents, secondary links */
-  --color-accent-gold: #C48A12;
-  --color-accent-gold-muted: rgba(196, 138, 18, 0.12);
-  --color-link-secondary: #C48A12;
-  --color-accent-orange: #E07856;
-  --color-accent-yellow: #C48A12;
-  /* Text — near-black on warm white */
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #555555;
-  --color-text-tertiary: #999999;
-  /* Surfaces — warm white */
-  --color-bg: #F0ECE8;
-  --color-surface: #F7F4F1;
-  --color-surface-elevated: #FFFFFF;
-  --color-divider: #E5E0DB;
-  /* Category strip */
-  --color-category-strip: #F2CDBC;
-  /* Cards */
-  --color-card: #FFFFFF;
-  --color-card-hover: #F9F7F5;
-  --color-card-border: #1A1A1A;
-  --color-medal-gold: #E8B820;
-  --color-medal-silver: #9EAAB2;
-  --color-medal-bronze: #B07340;
-  --color-danger: #DC2626;
-  --color-success: #16A34A;
+  --color-primary: #C2410C;
+  --color-primary-muted: rgba(194, 65, 12, 0.10);
+  --color-primary-glow: rgba(194, 65, 12, 0.20);
+  --color-rating: #15803D;
+  --color-accent-gold: #B8860B;
+  --color-accent-gold-muted: rgba(184, 134, 11, 0.12);
+  --color-link-secondary: #B8860B;
+  --color-accent-orange: #C2410C;
+  --color-accent-yellow: #B8860B;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-tertiary: #A8A29E;
+  --color-bg: #FAF7F2;
+  --color-surface: #F5F0E8;
+  --color-surface-elevated: #FFFBF5;
+  --color-divider: #E7E0D5;
+  --color-category-strip: #F5F0E8;
+  --color-card: #FFFBF5;
+  --color-card-hover: #F5F0E8;
+  --color-card-border: #E7E0D5;
+  --color-medal-gold: #B8860B;
+  --color-medal-silver: #78716C;
+  --color-medal-bronze: #92400E;
+  --color-danger: #B91C1C;
+  --color-success: #15803D;
   --color-success-light: #F0FFF4;
-  --color-success-muted: rgba(22, 163, 74, 0.10);
-  --color-success-border: rgba(22, 163, 74, 0.30);
-  --color-muted: #999999;
-  /* Tagline — muted under headings */
-  --color-text-tagline: #999999;
+  --color-success-muted: rgba(21, 128, 61, 0.10);
+  --color-success-border: rgba(21, 128, 61, 0.30);
+  --color-muted: #A8A29E;
+  --color-text-tagline: #A8A29E;
   --color-text-on-primary: #FFFFFF;
 
-  /* Semantic status colors */
   --color-emerald: #10B981;
   --color-emerald-light: #22C55E;
   --color-red: #EF4444;
@@ -78,26 +70,38 @@
   --color-amber: #F59E0B;
   --color-amber-light: #FBBF24;
   --color-amber-dark: #92400E;
-  --color-orange: #F97316;
+  --color-orange: #C2410C;
   --color-lime: #84CC16;
   --color-yellow: #EAB308;
-  --color-green-deep: #1A7A42;
+  --color-green-deep: #15803D;
   --color-green-dark: #059669;
   --color-blue: #3B82F6;
   --color-blue-light: #60A5FA;
   --color-purple: #9333EA;
 
-  /* Photo tier badges */
   --color-tier-featured: #F59E0B;
   --color-tier-community: #3B82F6;
   --color-tier-hidden: #6B7280;
 
-  /* Glow effects */
-  --glow-primary: 0 0 10px rgba(228, 68, 10, 0.15);
-  --glow-gold: 0 0 8px rgba(196, 138, 18, 0.20);
+  --glow-primary: 0 0 10px rgba(194, 65, 12, 0.15);
+  --glow-gold: 0 0 8px rgba(184, 134, 11, 0.20);
+  --focus-ring: 0 0 0 3px rgba(194, 65, 12, 0.25);
+}
 
-  /* Focus ring */
-  --focus-ring: 0 0 0 3px rgba(228, 68, 10, 0.25);
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99998;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+[data-theme="dark"] body::after {
+  opacity: 0.02;
 }
 
 /* ===========================
@@ -105,30 +109,27 @@
    Dark mode with ocean island vibes
    =========================== */
 [data-theme="dark"] {
-  --color-primary: #C85A54;
-  --color-primary-muted: rgba(200, 90, 84, 0.15);
-  --color-primary-glow: rgba(200, 90, 84, 0.3);
+  --color-primary: #D97706;
+  --color-primary-muted: rgba(217, 119, 6, 0.15);
+  --color-primary-glow: rgba(217, 119, 6, 0.3);
   --color-rating: #6BB384;
-  --color-accent-gold: #D9A765;
-  --color-accent-gold-muted: rgba(217, 167, 101, 0.15);
-  --color-link-secondary: #D9A765;
+  --color-accent-gold: #D4A853;
+  --color-accent-gold-muted: rgba(212, 168, 83, 0.15);
+  --color-link-secondary: #D4A853;
   --color-accent-yellow: #F5B731;
-  --color-accent-orange: #E07856;
-  /* Text — warm cream on dark */
-  --color-text-primary: #F5F1E8;
-  --color-text-secondary: #B8A99A;
-  --color-text-tertiary: #7D7168;
-  /* Surfaces — deep charcoal-navy */
-  --color-bg: #0D1B22;
-  --color-surface: #0F1F2B;
-  --color-surface-elevated: #162B35;
-  --color-divider: rgba(200, 90, 84, 0.10);
-  --color-category-strip: #162B35;
-  /* Cards — navy-teal */
-  --color-card: #1A3A42;
-  --color-card-hover: #243A43;
-  --color-card-border: rgba(200, 90, 84, 0.3);
-  --color-medal-gold: #D9A765;
+  --color-accent-orange: #D97706;
+  --color-text-primary: #F5F0E8;
+  --color-text-secondary: #BDB5A8;
+  --color-text-tertiary: #7D756A;
+  --color-bg: #12100E;
+  --color-surface: #1C1917;
+  --color-surface-elevated: #272420;
+  --color-divider: rgba(212, 168, 83, 0.12);
+  --color-category-strip: #1C1917;
+  --color-card: #272420;
+  --color-card-hover: #332E28;
+  --color-card-border: rgba(212, 168, 83, 0.15);
+  --color-medal-gold: #D4A853;
   --color-medal-silver: #A8B5BF;
   --color-medal-bronze: #C4855C;
   --color-green-deep: #5BA97A;
@@ -139,10 +140,10 @@
   --color-success-border: rgba(107, 179, 132, 0.30);
   --color-muted: #6B7680;
   --color-text-tagline: #C08B7A;
-  --color-text-on-primary: #F5F1E8;
-  --glow-primary: 0 0 20px rgba(200, 90, 84, 0.25), 0 0 40px rgba(200, 90, 84, 0.1);
-  --glow-gold: 0 0 15px rgba(217, 167, 101, 0.2);
-  --focus-ring: 0 0 0 3px rgba(200, 90, 84, 0.25);
+  --color-text-on-primary: #F5F0E8;
+  --glow-primary: 0 0 20px rgba(217, 119, 6, 0.25), 0 0 40px rgba(217, 119, 6, 0.1);
+  --glow-gold: 0 0 15px rgba(212, 168, 83, 0.2);
+  --focus-ring: 0 0 0 3px rgba(217, 119, 6, 0.25);
 }
 
 @tailwind base;
@@ -199,7 +200,7 @@
   }
 
   [data-theme="light"] .glass-header {
-    background: rgba(232, 212, 200, 0.95);
+    background: rgba(250, 247, 242, 0.95);
   }
 
   .card-elevated {
@@ -251,8 +252,8 @@
   }
 
   [data-theme="light"] .top-bar {
-    background: #FFFFFF;
-    border-bottom: 1px solid var(--color-divider);
+    background: #FFFBF5;
+    border-bottom: 1px solid #E7E0D5;
     box-shadow: none;
   }
 
