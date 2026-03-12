@@ -212,9 +212,9 @@ body::after {
 
   .card-elevated:hover {
     background: var(--color-card-hover);
-    border-color: rgba(224, 120, 86, 0.25);
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(217, 167, 101, 0.1);
-    transform: translateY(-2px);
+    border-color: var(--color-divider);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: none;
   }
 
   [data-theme="light"] .card-elevated {
@@ -223,8 +223,8 @@ body::after {
   }
 
   [data-theme="light"] .card-elevated:hover {
-    border-color: transparent;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-divider);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   .card-subtle {
@@ -430,8 +430,7 @@ body::after {
   }
 
   .welcome-splash__btn--primary:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    opacity: 0.85;
   }
 
   .welcome-splash__btn--primary:active {
@@ -552,13 +551,15 @@ body::after {
     transition: transform 0.1s ease;
   }
   .card-press:active {
-    transform: scale(0.98) !important;
+    opacity: 0.85;
+    transform: none !important;
   }
   .card-press-hero {
     transition: transform 0.1s ease;
   }
   .card-press-hero:active {
-    transform: scale(0.98) !important;
+    opacity: 0.85;
+    transform: none !important;
   }
 
   .animate-shimmer {
