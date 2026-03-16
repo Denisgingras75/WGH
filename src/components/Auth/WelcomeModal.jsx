@@ -21,6 +21,13 @@ const STEPS = [
     description: 'Rate 1-10, and watch dishes climb the rankings as the community votes.',
   },
   {
+    id: 'photos',
+    icon: 'camera',
+    title: 'Snap it before you eat it',
+    subtitle: 'Real photos from real people',
+    description: 'No stock photos. When you order something, snap a quick pic — the community will thank you.',
+  },
+  {
     id: 'name',
     emoji: '\uD83D\uDC4B',
     title: 'Enter your name',
@@ -217,7 +224,13 @@ export function WelcomeModal() {
               className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all"
               style={{ background: 'var(--color-primary)' }}
             >
-              {currentStep.icon === 'thumbsUp' ? <ThumbsUpIcon size={52} /> : <span className="text-4xl">{currentStep.emoji}</span>}
+              {currentStep.icon === 'thumbsUp' ? <ThumbsUpIcon size={52} />
+                : currentStep.icon === 'camera' ? (
+                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                  </svg>
+                ) : <span className="text-4xl">{currentStep.emoji}</span>}
             </div>
           )}
 
@@ -250,6 +263,24 @@ export function WelcomeModal() {
               <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
                 <span className="text-2xl mb-1">⭐</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--color-accent-gold)' }}>Rate 1-10</span>
+              </div>
+            </div>
+          )}
+
+          {/* Photos step visual */}
+          {currentStep.id === 'photos' && (
+            <div className="flex justify-center gap-3 mb-6">
+              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+                <span className="text-2xl mb-1">📸</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Snap</span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+                <span className="text-2xl mb-1">⬆️</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Upload</span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+                <span className="text-2xl mb-1">🍽️</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Help others</span>
               </div>
             </div>
           )}
@@ -316,6 +347,7 @@ export function WelcomeModal() {
             <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
               {step === 0 && "Trusted by island food lovers"}
               {step === 1 && "Dishes need 5+ votes to get ranked"}
+              {step === 2 && "Your photos help everyone eat better"}
             </p>
           )}
         </div>

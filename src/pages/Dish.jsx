@@ -516,15 +516,17 @@ export function Dish() {
               Score, consensus, distance. 2 seconds.
               ═══════════════════════════════════════════ */}
 
-          {/* Category Icon Hero */}
+          {/* Category Icon — picture frame style */}
           <div
-            className="flex items-center justify-center"
+            className="flex items-center justify-center mx-3 mt-3 rounded-xl"
             style={{
-              height: '72px',
-              background: 'var(--color-surface)',
+              height: '180px',
+              background: 'var(--color-category-strip)',
+              border: '2px solid var(--color-divider)',
+              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.04)',
             }}
           >
-            <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={48} />
+            <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={96} />
           </div>
 
           {/* Verdict Card */}
