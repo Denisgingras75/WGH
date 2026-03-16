@@ -3,7 +3,7 @@ import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
-import { SessionCard } from './jitter'
+import { SessionCard, SessionBadge } from './jitter'
 import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
@@ -23,7 +23,7 @@ import { PhotoUploadButton } from './PhotoUploadButton'
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
-  const { getPurity, getJitterProfile, attachToTextarea, reset: resetPurity } = usePurityTracker()
+  const { getPurity, getJitterProfile, getSessionStats, attachToTextarea, reset: resetPurity } = usePurityTracker()
   const jitterBoxRef = useRef(null)
   const [userVote, setUserVote] = useState(null)
   const [userRating, setUserRating] = useState(null)
@@ -50,6 +50,16 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     reviewTextareaRef.current = el
     attachToTextarea(el)
   }
+
+  // Live session stats for SessionBadge while typing
+  const [liveStats, setLiveStats] = useState(null)
+  useEffect(() => {
+    if (step !== 2) return
+    const interval = setInterval(() => {
+      setLiveStats(getSessionStats())
+    }, 500)
+    return () => clearInterval(interval)
+  }, [step, getSessionStats])
 
   const yesPercent = localTotalVotes > 0 ? Math.round((localYesVotes / localTotalVotes) * 100) : 0
 
@@ -412,6 +422,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
                 {reviewError}
               </p>
             )}
+            <SessionBadge stats={liveStats} />
           </div>
 
           {/* Photo upload — inline */}

@@ -1,9 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useDishSearch } from '../hooks/useDishSearch'
 import { useLocationContext } from '../context/LocationContext'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
+import { usePurityTracker } from '../hooks/usePurityTracker'
 import { AddRestaurantModal } from './AddRestaurantModal'
 import { getCategoryNeonImage } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
@@ -40,6 +41,11 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   const [addModalQuery, setAddModalQuery] = useState('')
   const inputRef = useRef(null)
   const dropdownRef = useRef(null)
+  const { attachToTextarea } = usePurityTracker()
+  const combinedInputRef = useCallback(function (el) {
+    inputRef.current = el
+    attachToTextarea(el)
+  }, [attachToTextarea])
 
   // Sync internal query when parent clears/changes initialQuery
   useEffect(() => {
@@ -182,7 +188,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         </svg>
 
         <input
-          ref={inputRef}
+          ref={combinedInputRef}
           id="dish-search"
           name="dish-search"
           type="text"

@@ -949,6 +949,26 @@ export function Dish() {
             {/* Reviews feed */}
             {reviews.length > 0 && (
               <div className="mb-4">
+                {/* Jitter verification callout */}
+                <div className="px-3 pb-1">
+                  <div className="flex items-center gap-2" style={{
+                    padding: '8px 12px',
+                    background: 'var(--color-primary-muted)',
+                    border: '1px solid rgba(196, 71, 42, 0.12)',
+                    borderRadius: '4px',
+                  }}>
+                    <span style={{ fontSize: '14px' }}>{'\u{1F6E1}\uFE0F'}</span>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                        Reviews verified by Jitter
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginLeft: '4px' }}>
+                        — typing biometrics prove real people
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2 mb-3">
                   <span style={{ fontFamily: 'var(--font-headline)', fontSize: '15px', fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>What People Are Saying</span>
                   <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
@@ -981,6 +1001,7 @@ export function Dish() {
                                   @{review.profiles?.display_name || 'Anonymous'}
                                 </span>
                               </Link>
+                              <TrustBadge type={review.trust_badge} size="md" />
                               {review.rating_10 && (
                                 <div className="flex items-center gap-1 flex-shrink-0">
                                   <span style={{ fontFamily: 'var(--font-headline)', fontSize: '22px', fontWeight: 900, color: getRatingColor(review.rating_10), lineHeight: 1 }}>
@@ -1001,9 +1022,6 @@ export function Dish() {
                                 {review.review_text}
                               </p>
                             )}
-                            <div style={{ marginTop: '4px' }}>
-                              <TrustBadge type={review.trust_badge} />
-                            </div>
                           </div>
                         </div>
                       </div>
