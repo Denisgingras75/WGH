@@ -274,8 +274,8 @@ export const DishListItem = memo(function DishListItem({
         <p
           className="font-bold truncate"
           style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: '15px',
+            fontFamily: "'Cormorant', Georgia, serif",
+            fontSize: '17px',
             fontWeight: 700,
             color: 'var(--color-text-primary)',
             lineHeight: 1.3,

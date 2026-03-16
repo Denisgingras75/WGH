@@ -178,8 +178,40 @@ export function Map() {
         >
           {/* Fixed header: search + chips */}
           <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
+            {/* Chalkboard header */}
+            <div className="px-4 pt-4 pb-1" style={{ textAlign: 'center' }}>
+              <h2 style={{
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '36px',
+                fontWeight: 700,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+              }}>
+                What&rsquo;s <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
+              </h2>
+              <p style={{
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '16px',
+                fontWeight: 700,
+                color: 'var(--color-text-tertiary)',
+                marginTop: '2px',
+                letterSpacing: '0.15em',
+              }}>
+                Martha&rsquo;s Vineyard
+              </p>
+              <div style={{
+                width: '50px',
+                height: '2px',
+                background: 'var(--color-primary)',
+                opacity: 0.3,
+                margin: '8px auto 0',
+                borderRadius: '1px',
+              }} />
+            </div>
+
             {/* Search bar */}
-            <div className="px-4 pt-3 pb-2" style={{
+            <div className="px-4 pt-2 pb-2" style={{
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}>
               <div style={{
@@ -239,16 +271,27 @@ export function Map() {
               overscrollBehavior: 'contain',
             }}
           >
-            {/* Section title */}
+            {/* Section title — chalk divider */}
             <div className="px-4 pt-2 pb-2">
-              <h2 style={{
-                fontSize: '17px',
-                fontWeight: 800,
-                color: 'var(--color-text-primary)',
-                letterSpacing: '-0.02em',
-              }}>
-                {listTitle}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 style={{
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: '26px',
+                  fontWeight: 700,
+                  color: 'var(--color-primary)',
+                  letterSpacing: '0.06em',
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {listTitle}
+                </h2>
+                <div style={{
+                  flex: 1,
+                  height: '1px',
+                  background: 'linear-gradient(to right, var(--color-primary), transparent)',
+                  opacity: 0.2,
+                }} />
+              </div>
             </div>
 
             {/* Dish list */}
@@ -386,16 +429,19 @@ export function Map() {
       {mode === 'list' && (
         <button
           onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
-          className="fixed right-4 flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
+          className="fixed right-4 flex items-center gap-2 px-5 py-3.5 rounded-full active:scale-95 transition-all"
           style={{
-            bottom: 'calc(72px + env(safe-area-inset-bottom))',
+            bottom: 'calc(80px + env(safe-area-inset-bottom))',
             zIndex: 40,
-            background: 'var(--color-accent-gold)',
-            color: 'var(--color-bg)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1)',
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+            fontSize: '14px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            boxShadow: '0 4px 20px rgba(244, 208, 63, 0.25)',
           }}
         >
-          <Plus size={20} weight="bold" />
+          <Plus size={18} weight="bold" />
           Check In
         </button>
       )}
