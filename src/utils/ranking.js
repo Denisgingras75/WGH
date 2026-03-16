@@ -42,6 +42,42 @@ export function getRatingColor(rating) {
 }
 
 /**
+ * Get color for a percentage (0-100) with intensity gradient.
+ * Higher values = deeper green. Lower values = deeper red. Middle = amber.
+ * @param {number} pct - Percentage value (0-100)
+ * @returns {string} Hex color
+ */
+export function getPercentColor(pct) {
+  if (pct === null || pct === undefined) return '#999999'
+  var p = Number(pct)
+  if (p >= 80) {
+    // Green tier: 80-100. Deeper green as it climbs.
+    // 80% = #3AAE5C (lighter), 100% = #0F6B2E (deepest)
+    var t = (p - 80) / 20
+    var r = Math.round(58 - t * 43)
+    var g = Math.round(174 - t * 67)
+    var b = Math.round(92 - t * 46)
+    return 'rgb(' + r + ',' + g + ',' + b + ')'
+  }
+  if (p >= 60) {
+    // Amber tier: 60-79. Darker amber as it drops.
+    // 79% = #D4A017 (lighter), 60% = #92600E (deepest)
+    var t2 = (79 - p) / 19
+    var r2 = Math.round(212 - t2 * 66)
+    var g2 = Math.round(160 - t2 * 64)
+    var b2 = Math.round(23 - t2 * 9)
+    return 'rgb(' + r2 + ',' + g2 + ',' + b2 + ')'
+  }
+  // Red tier: 0-59. Deeper red as it drops.
+  // 59% = #E05050 (lighter), 0% = #8B1A1A (deepest)
+  var t3 = (59 - p) / 59
+  var r3 = Math.round(224 - t3 * 85)
+  var g3 = Math.round(80 - t3 * 54)
+  var b3 = Math.round(80 - t3 * 54)
+  return 'rgb(' + r3 + ',' + g3 + ',' + b3 + ')'
+}
+
+/**
  * Get Worth-It badge based on score and vote count
  * @param {number} worthItScore10 - Worth-It score on 1-10 scale
  * @param {number} totalVotes - Total number of votes
