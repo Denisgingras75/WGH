@@ -732,68 +732,6 @@ export function Dish() {
               </div>
             )}
 
-            {/* Smart Snippet — the one-liner social proof */}
-            {smartSnippet && smartSnippet.review_text && (
-              <div
-                className="mb-4 p-4 rounded-xl"
-                style={{
-                  background: 'var(--color-surface)',
-                  borderLeft: '3px solid var(--color-accent-gold)',
-                }}
-              >
-                <p className="text-sm italic" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
-                  &ldquo;{smartSnippet.review_text}&rdquo;
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                    — @{smartSnippet.profiles?.display_name || 'Anonymous'}
-                  </span>
-                  {smartSnippet.rating_10 && (
-                    <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
-                      {formatScore10(smartSnippet.rating_10)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Photos grid */}
-            {displayPhotos.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Photos ({displayPhotos.length})
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {displayPhotos.map((photo) => (
-                    <button
-                      key={photo.id}
-                      onClick={() => setLightboxPhoto(photo.photo_url)}
-                      aria-label={'View photo of ' + dish.dish_name}
-                      className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
-                      style={{ border: '1.5px solid var(--color-divider)' }}
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt={dish.dish_name}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                        onError={function (e) { e.target.parentElement.style.display = 'none' }}
-                      />
-                    </button>
-                  ))}
-                </div>
-                {hasMorePhotos && (
-                  <button
-                    onClick={function () { setShowAllPhotos(true) }}
-                    className="mt-3 text-sm font-bold"
-                    style={{ color: 'var(--color-primary)' }}
-                  >
-                    See all {allPhotos.length} photos
-                  </button>
-                )}
-              </div>
-            )}
-
             {/* Friends who rated this — avatar bubble scroll */}
             {friendsVotes.length > 0 && (
               <div className="mb-4">
@@ -862,6 +800,68 @@ export function Dish() {
                     )
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Smart Snippet — the one-liner social proof */}
+            {smartSnippet && smartSnippet.review_text && (
+              <div
+                className="mb-4 p-4 rounded-xl"
+                style={{
+                  background: 'var(--color-surface)',
+                  borderLeft: '3px solid var(--color-accent-gold)',
+                }}
+              >
+                <p className="text-sm italic" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
+                  &ldquo;{smartSnippet.review_text}&rdquo;
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                    — @{smartSnippet.profiles?.display_name || 'Anonymous'}
+                  </span>
+                  {smartSnippet.rating_10 && (
+                    <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
+                      {formatScore10(smartSnippet.rating_10)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Photos grid */}
+            {displayPhotos.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Photos ({displayPhotos.length})
+                </h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {displayPhotos.map((photo) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setLightboxPhoto(photo.photo_url)}
+                      aria-label={'View photo of ' + dish.dish_name}
+                      className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
+                      style={{ border: '1.5px solid var(--color-divider)' }}
+                    >
+                      <img
+                        src={photo.photo_url}
+                        alt={dish.dish_name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                        onError={function (e) { e.target.parentElement.style.display = 'none' }}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {hasMorePhotos && (
+                  <button
+                    onClick={function () { setShowAllPhotos(true) }}
+                    className="mt-3 text-sm font-bold"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    See all {allPhotos.length} photos
+                  </button>
+                )}
               </div>
             )}
 
