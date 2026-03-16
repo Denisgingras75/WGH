@@ -36,7 +36,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
 
   // Restaurant search fallback — shows when dish results are thin (dropdown mode only)
   const isDropdownMode = !onSearchChange
-  const showRestaurantFallback = isDropdownMode && query.length >= MIN_SEARCH_LENGTH && !hookLoading && hookResults.length < 3
+  const showRestaurantFallback = isDropdownMode && query.length >= MIN_SEARCH_LENGTH && !hookLoading
   const placesLat = isUsingDefault ? null : (location ? location.lat : null)
   const placesLng = isUsingDefault ? null : (location ? location.lng : null)
   const restaurantData = useRestaurantSearch(query, placesLat, placesLng, showRestaurantFallback)
@@ -290,7 +290,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                 <div>
                   <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
                     <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
-                      {results.dishes.length > 0 ? 'Restaurants' : 'Not on WGH yet?'}
+                      Restaurants
                     </span>
                   </div>
 
