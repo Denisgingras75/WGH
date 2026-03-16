@@ -459,7 +459,13 @@ export function Dish() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+        <span className="font-bold truncate" style={{
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '22px',
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          color: 'var(--color-text-primary)',
+        }}>
           {dish.dish_name}
         </span>
 
