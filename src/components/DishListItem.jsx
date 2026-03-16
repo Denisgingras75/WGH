@@ -62,10 +62,6 @@ export const DishListItem = memo(function DishListItem({
   const photoUrl = dish.photo_url
   const valuePercentile = dish.value_percentile
   const category = dish.category
-  const toastSlug = dish.toast_slug || (dish.restaurants && dish.restaurants.toast_slug)
-  const orderUrl = dish.order_url || (dish.restaurants && dish.restaurants.order_url)
-  const websiteUrl = dish.website_url || dish.restaurant_website_url || (dish.restaurants && dish.restaurants.website_url)
-  const restaurantAddress = dish.restaurant_address || (dish.restaurants && dish.restaurants.address)
   const restaurantPhone = dish.restaurant_phone || (dish.restaurants && dish.restaurants.phone)
   const restaurantLat = dish.restaurant_lat || (dish.restaurants && dish.restaurants.lat)
   const restaurantLng = dish.restaurant_lng || (dish.restaurants && dish.restaurants.lng)
@@ -95,8 +91,9 @@ export const DishListItem = memo(function DishListItem({
           position: 'relative',
           overflow: 'hidden',
           background: highlighted ? 'var(--color-accent-gold-muted)' : 'var(--color-card)',
-          border: '1px solid var(--color-card-border)',
-          borderRadius: isHero ? '20px' : '16px',
+          border: isHero ? '2.5px solid var(--color-text-primary)' : '1.5px solid var(--color-divider)',
+          borderRadius: '4px',
+          boxShadow: 'none',
           padding: isHero ? '24px' : '18px',
           minHeight: isHero ? '160px' : '110px',
           cursor: 'pointer',
@@ -132,7 +129,7 @@ export const DishListItem = memo(function DishListItem({
               {/* Rank — chalk style */}
               <div className="flex items-center gap-2" style={{ marginBottom: '6px' }}>
                 <span style={{
-                  fontFamily: "'Amatic SC', cursive",
+                  fontFamily: 'var(--font-headline)',
                   fontSize: isHero ? '28px' : '24px',
                   fontWeight: 700,
                   color: medalColor,
@@ -143,7 +140,7 @@ export const DishListItem = memo(function DishListItem({
               </div>
               {/* Dish name */}
               <p style={{
-                fontFamily: "'Cormorant', Georgia, serif",
+                fontFamily: 'var(--font-headline)',
                 fontSize: isHero ? '24px' : '19px',
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
@@ -156,6 +153,7 @@ export const DishListItem = memo(function DishListItem({
                 fontFamily: "'Outfit', sans-serif",
                 fontSize: isHero ? '13px' : '12px',
                 fontWeight: 500,
+                fontStyle: 'italic',
                 color: 'var(--color-text-secondary)',
                 marginTop: '6px',
                 letterSpacing: '0.01em',
@@ -208,12 +206,80 @@ export const DishListItem = memo(function DishListItem({
           </div>
         </div>
 
-        {/* Action buttons row */}
-        {(toastSlug || orderUrl || websiteUrl || restaurantPhone || restaurantName) && (
-          <div className="flex items-center gap-1.5" style={{ marginTop: '8px', position: 'relative', zIndex: 1 }}>
-            {renderActionButtons()}
-          </div>
-        )}
+        {/* Action buttons — Browser money path */}
+        <div className="flex gap-1.5" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--color-divider)', position: 'relative', zIndex: 1 }}>
+          {/* Order/Phone — primary action, shown conditionally */}
+          {dish.order_url || dish.toast_slug ? (
+            <a
+              href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : dish.order_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={function(e) { e.stopPropagation() }}
+              className="flex items-center justify-center gap-1 flex-1"
+              style={{
+                padding: '6px 8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: 700,
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              🛒 Order Now
+            </a>
+          ) : restaurantPhone ? (
+            <a
+              href={'tel:' + restaurantPhone}
+              onClick={function(e) { e.stopPropagation() }}
+              className="flex items-center justify-center gap-1 flex-1"
+              style={{
+                padding: '6px 8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: 700,
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              📞 Call
+            </a>
+          ) : (
+            <button
+              onClick={function(e) { e.stopPropagation(); window.location.href = '/restaurants/' + dish.restaurant_id }}
+              className="flex items-center justify-center gap-1 flex-1"
+              style={{
+                padding: '6px 8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: 700,
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              🌐 Menu
+            </button>
+          )}
+          {/* Distance — secondary action */}
+          {restaurantLat && restaurantLng && (
+            <a
+              href={'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={function(e) { e.stopPropagation() }}
+              className="flex items-center justify-center gap-1 flex-1"
+              style={{
+                padding: '6px 8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: 700,
+                border: '1px solid var(--color-divider)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              📍 {distanceMiles != null ? (Number(distanceMiles) < 1 ? Number(distanceMiles).toFixed(1) + ' mi' : Math.round(Number(distanceMiles)) + ' mi') : 'Directions'}
+            </a>
+          )}
+        </div>
       </button>
     )
   }
@@ -254,16 +320,16 @@ export const DishListItem = memo(function DishListItem({
       {/* Photo thumbnail (restaurant detail only, or rank 4+ inline) */}
       {showPhoto && photoUrl && (
         <div
-          className="flex-shrink-0 rounded-lg overflow-hidden"
-          style={{ width: '48px', height: '48px', marginLeft: '6px', background: 'var(--color-surface)' }}
+          className="flex-shrink-0 overflow-hidden"
+          style={{ width: '48px', height: '48px', marginLeft: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}
         >
           <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
         </div>
       )}
       {showPhoto && !photoUrl && (
         <div
-          className="flex-shrink-0 rounded-lg overflow-hidden relative"
-          style={{ width: '48px', height: '48px', marginLeft: '6px' }}
+          className="flex-shrink-0 overflow-hidden relative"
+          style={{ width: '48px', height: '48px', marginLeft: '6px', borderRadius: '3px' }}
         >
           <RestaurantAvatar name={restaurantName} town={restaurantTown} fill />
         </div>
@@ -274,7 +340,7 @@ export const DishListItem = memo(function DishListItem({
         <p
           className="font-bold truncate"
           style={{
-            fontFamily: "'Cormorant', Georgia, serif",
+            fontFamily: 'var(--font-headline)',
             fontSize: '17px',
             fontWeight: 700,
             color: 'var(--color-text-primary)',
@@ -289,6 +355,7 @@ export const DishListItem = memo(function DishListItem({
             className="truncate"
             style={{
               fontSize: '12px',
+              fontStyle: 'italic',
               color: 'var(--color-text-tertiary)',
             }}
           >
@@ -303,11 +370,12 @@ export const DishListItem = memo(function DishListItem({
       {/* Small photo thumbnail for rank 4+ (before rating) */}
       {!showPhoto && photoUrl && (
         <div
-          className="flex-shrink-0 rounded-lg overflow-hidden"
+          className="flex-shrink-0 overflow-hidden"
           style={{
             width: '40px',
             height: '40px',
             marginLeft: '8px',
+            borderRadius: '3px',
             background: 'var(--color-surface)',
           }}
         >
@@ -362,79 +430,45 @@ export const DishListItem = memo(function DishListItem({
       </div>
       </div>
 
-      {/* Action buttons row — always show at minimum a Directions button */}
-      {(toastSlug || orderUrl || websiteUrl || restaurantPhone || restaurantName) && (
-        <div className="flex items-center gap-1.5" style={{ marginTop: '6px', marginLeft: rank != null ? '38px' : '0' }}>
-          {renderActionButtons()}
-        </div>
-      )}
-    </button>
-  )
-
-  // --- ACTION BUTTONS RENDERER (shared by podium + compact) ---
-  function renderActionButtons() {
-    return (
-      <>
-        {/* Order Now */}
-        {(toastSlug || orderUrl) && (
-          <a
-            href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : orderUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={function (e) { e.stopPropagation() }}
-            className="rounded-md"
-            style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 700, background: 'var(--color-primary)', color: 'white', whiteSpace: 'nowrap', textDecoration: 'none' }}
-          >
-            Order Now
-          </a>
-        )}
-        {/* See Menu */}
-        {!toastSlug && !orderUrl && websiteUrl && (
-          <a
-            href={websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={function (e) { e.stopPropagation() }}
-            className="rounded-md"
-            style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 700, background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-divider)', whiteSpace: 'nowrap', textDecoration: 'none' }}
-          >
-            See Menu
-          </a>
-        )}
-        {/* Directions */}
-        <a
-          href={restaurantLat && restaurantLng
-            ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng
-            : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent((restaurantAddress || (restaurantName + ', ' + (restaurantTown || ''))) + ', Martha\'s Vineyard, MA')
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={function (e) { e.stopPropagation() }}
-          className="rounded-md flex items-center gap-1"
-          style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 600, background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-divider)', whiteSpace: 'nowrap', textDecoration: 'none' }}
-        >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-          </svg>
-          Directions
-        </a>
-        {/* Call */}
+      {/* Compact action row — Order/Phone first, Distance second */}
+      <div className="flex gap-1" style={{ marginTop: '4px', marginLeft: rank != null ? '38px' : '0' }}>
         {restaurantPhone && (
           <a
             href={'tel:' + restaurantPhone}
-            onClick={function (e) { e.stopPropagation() }}
-            className="rounded-md flex items-center gap-1"
-            style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 600, background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-divider)', whiteSpace: 'nowrap', textDecoration: 'none' }}
+            onClick={function(e) { e.stopPropagation() }}
+            style={{
+              padding: '3px 6px',
+              borderRadius: '3px',
+              fontSize: '9px',
+              fontWeight: 600,
+              border: '1px solid var(--color-divider)',
+              color: 'var(--color-text-tertiary)',
+            }}
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-            </svg>
-            Call
+            📞 Call
           </a>
         )}
-      </>
-    )
-  }
+        {restaurantLat && restaurantLng && (
+          <a
+            href={'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={function(e) { e.stopPropagation() }}
+            style={{
+              padding: '3px 6px',
+              borderRadius: '3px',
+              fontSize: '9px',
+              fontWeight: 600,
+              border: '1px solid var(--color-divider)',
+              color: 'var(--color-text-tertiary)',
+            }}
+          >
+            📞
+          </a>
+        )}
+      </div>
+    </button>
+  )
 
   // --- VOTED CARD RENDERER ---
   function renderVotedCard() {
@@ -452,17 +486,19 @@ export const DishListItem = memo(function DishListItem({
     return (
       <CardTag
         {...cardProps}
-        className={'rounded-xl border overflow-hidden' + (isOtherProfile ? ' w-full text-left hover:shadow-md transition-all active:scale-[0.99]' : ' transition-all')}
+        className={'border overflow-hidden' + (isOtherProfile ? ' w-full text-left transition-all active:scale-[0.99]' : ' transition-all')}
         style={{
           background: 'var(--color-card)',
           borderColor: 'var(--color-divider)',
+          borderRadius: '4px',
+          boxShadow: 'none',
         }}
       >
         <div className="flex">
           {/* Image */}
           <div
-            className="relative w-24 h-24 rounded-l-xl flex-shrink-0 overflow-hidden"
-            style={{ background: 'var(--color-surface-elevated)' }}
+            className="relative w-24 h-24 flex-shrink-0 overflow-hidden"
+            style={{ background: 'var(--color-surface-elevated)', borderRadius: '3px 0 0 3px' }}
           >
             {photoUrl ? (
               <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
@@ -474,7 +510,7 @@ export const DishListItem = memo(function DishListItem({
           {/* Info */}
           <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
             <div>
-              <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+              <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)', fontStyle: 'italic' }}>
                 {restaurantName}
               </h3>
               <p className="text-sm truncate" style={{ color: 'var(--color-text-secondary)' }}>

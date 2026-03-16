@@ -21,16 +21,9 @@ export function HeroIdentityCard({
       className="relative px-4 pt-8 pb-5 overflow-hidden"
       style={{
         background: 'var(--color-bg)',
+        borderBottom: '3px double var(--color-text-primary)',
       }}
     >
-      {/* Bottom divider */}
-      <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-        style={{
-          width: '90%',
-          background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-        }}
-      />
 
       {/* Centered avatar */}
       <div className="flex flex-col items-center">
@@ -106,8 +99,10 @@ export function HeroIdentityCard({
               onClick={() => setEditingName(true)}
               className="font-bold transition-colors inline-flex items-center gap-1.5"
               style={{
+                fontFamily: 'var(--font-headline)',
                 color: 'var(--color-text-primary)',
-                fontSize: '22px',
+                fontSize: '20px',
+                fontWeight: 900,
                 letterSpacing: '-0.02em',
                 lineHeight: '1.2',
               }}

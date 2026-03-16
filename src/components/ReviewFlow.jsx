@@ -17,9 +17,8 @@ import {
   clearPendingVoteStorage,
 } from '../lib/storage'
 import { logger } from '../utils/logger'
-import { hapticLight, hapticSuccess } from '../utils/haptics'
+import { hapticSuccess } from '../utils/haptics'
 import { PhotoUploadButton } from './PhotoUploadButton'
-import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
 
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
   const { user } = useAuth()
@@ -33,16 +32,10 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
   const [localTotalVotes, setLocalTotalVotes] = useState(totalVotes)
   const [localYesVotes, setLocalYesVotes] = useState(yesVotes)
 
-  // Flow: 1 = yes/no, 2 = rate + extras (review + photo)
-  // Initialize from localStorage if there's a pending vote for this dish (survives page reload after magic link)
-  const [step, setStep] = useState(() => {
-    const stored = getPendingVoteFromStorage()
-    return (stored && stored.dishId === dishId) ? 2 : 1
-  })
-  const [pendingVote, setPendingVote] = useState(() => {
-    const stored = getPendingVoteFromStorage()
-    return (stored && stored.dishId === dishId) ? stored.vote : null
-  })
+  // Flow: 0 = summary (already voted), 2 = rate + extras (review + photo)
+  // Skip old step 1 (yes/no) — go straight to slider. would_order_again is auto-derived from rating.
+  const [step, setStep] = useState(2)
+  const [pendingVote, setPendingVote] = useState(true) // derived from sliderValue on submit
   const [sliderValue, setSliderValue] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [reviewError, setReviewError] = useState(null)
@@ -58,9 +51,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     attachToTextarea(el)
   }
 
-  const noVotes = localTotalVotes - localYesVotes
   const yesPercent = localTotalVotes > 0 ? Math.round((localYesVotes / localTotalVotes) * 100) : 0
-  const noPercent = localTotalVotes > 0 ? 100 - yesPercent : 0
 
   useEffect(() => {
     setLocalTotalVotes(totalVotes)
@@ -83,6 +74,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
           setUserReviewText(vote.review_text || null)
           if (vote.rating_10) setSliderValue(vote.rating_10)
           if (vote.review_text) setReviewText(vote.review_text)
+          setStep(0) // Show summary for already-voted dishes
         }
       } catch (error) {
         logger.error('Error fetching user vote:', error)
@@ -93,35 +85,29 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
 
   // Continue flow after successful login (including OAuth redirect)
   useEffect(() => {
-    if (user && awaitingLogin && pendingVote !== null) {
-      // User just logged in and we have a pending vote - continue to rating step
+    if (user && awaitingLogin) {
+      // User just logged in — continue to rating step
       setAwaitingLogin(false)
       setStep(2)
       clearPendingVoteStorage()
     }
-  }, [user, awaitingLogin, pendingVote])
+  }, [user, awaitingLogin])
 
   // Check for pending vote in localStorage after OAuth redirect
   useEffect(() => {
-    if (user && step === 1 && pendingVote === null) {
+    if (user) {
       const stored = getPendingVoteFromStorage()
       if (stored && stored.dishId === dishId) {
-        // User just logged in after OAuth redirect - restore their vote and continue
-        setPendingVote(stored.vote)  // Set the pending vote BEFORE changing step
+        // User just logged in after OAuth redirect - restore slider state and continue
+        if (stored.sliderValue != null) setSliderValue(stored.sliderValue)
         setStep(2)
         clearPendingVoteStorage()
       }
     }
-  }, [user, dishId, step, pendingVote])
+  }, [user, dishId])
 
-  // Auth guard: if on step 2 without auth, kick back to step 1
-  useEffect(() => {
-    if (step === 2 && !user) {
-      setStep(1)
-      setAwaitingLogin(true)
-      onLoginRequired?.()
-    }
-  }, [step, user, onLoginRequired])
+  // No auth guard on render — let anyone interact with the slider.
+  // Auth is checked at submit time. If not logged in, save state to storage and prompt login.
 
   // Attach JitterBox to textarea when it mounts (step 2)
   useEffect(() => {
@@ -136,24 +122,6 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     }
   }, [step]) // re-run when step changes (textarea mounts on step 2)
 
-  const handleVoteClick = (wouldOrderAgain) => {
-    setPendingVote(wouldOrderAgain)
-    hapticLight() // Tactile feedback on selection
-
-    // Auth gate: check if user is logged in BEFORE showing confirmation
-    if (!user) {
-      // Save to localStorage so it survives OAuth redirect
-      setPendingVoteToStorage(dishId, wouldOrderAgain)
-      setAwaitingLogin(true)
-      onLoginRequired?.()
-      // Don't show confirmation animation - go straight to login
-      return
-    }
-
-    // User is authenticated — expand rating UI immediately
-    setStep(2)
-  }
-
   const handleSubmit = async () => {
     // Validate review length if they wrote something
     if (reviewText.length > MAX_REVIEW_LENGTH) {
@@ -167,9 +135,11 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
   const doSubmit = async (reviewTextToSubmit) => {
     // Prevent double submission
     if (submitting) return
-    if (pendingVote === null) return
 
     if (!user) {
+      // Save slider state so it survives OAuth redirect
+      setPendingVoteToStorage(dishId, true, sliderValue)
+      setAwaitingLogin(true)
       onLoginRequired?.()
       return
     }
@@ -180,20 +150,24 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       return
     }
 
+    // Auto-derive would_order_again from slider value
+    const wouldOrderAgain = sliderValue > 6.5
+    setPendingVote(wouldOrderAgain)
+
     const previousVote = userVote
 
     if (previousVote === null) {
       setLocalTotalVotes(prev => prev + 1)
-      if (pendingVote) setLocalYesVotes(prev => prev + 1)
-    } else if (previousVote !== pendingVote) {
-      if (pendingVote) {
+      if (wouldOrderAgain) setLocalYesVotes(prev => prev + 1)
+    } else if (previousVote !== wouldOrderAgain) {
+      if (wouldOrderAgain) {
         setLocalYesVotes(prev => prev + 1)
       } else {
         setLocalYesVotes(prev => prev - 1)
       }
     }
 
-    setUserVote(pendingVote)
+    setUserVote(wouldOrderAgain)
     setUserRating(sliderValue)
     if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
 
@@ -205,7 +179,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       restaurant_name: restaurantName,
       category: category,
       price: price != null ? Number(price) : null,
-      would_order_again: pendingVote,
+      would_order_again: wouldOrderAgain,
       rating: sliderValue,
       has_review: !!reviewTextToSubmit,
       has_photo: photoAdded,
@@ -225,8 +199,9 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
 
     // Clear UI state immediately - instant feedback
     clearPendingVoteStorage()
-    setStep(1)
-    setPendingVote(null)
+    setStep(0)
+    setPendingVote(true)
+    setSliderValue(0)
     setReviewText('')
     setReviewError(null)
     setPhotoAdded(false)
@@ -261,7 +236,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     attestPromise
       .then((attestResult) => {
         const badgeHash = attestResult?.badge_hash || null
-        return submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+        return submitVote(dishId, wouldOrderAgain, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
       })
       .then(async (result) => {
         if (result.success && sessionStatsData?.isCapturing) {
@@ -281,32 +256,8 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       })
   }
 
-  // Intercept browser back button during vote flow — navigate between steps instead of leaving.
-  // The interceptor was registered in main.jsx BEFORE React Router, so its popstate listener
-  // fires first (AT_TARGET phase = registration order). It calls stopImmediatePropagation to
-  // prevent React Router from processing the navigation, then pushes the dish URL back.
-  useEffect(() => {
-    if (step <= 1) {
-      clearBackButtonInterceptor()
-      return
-    }
-
-    // Save the dish page URL/state now — by the time popstate fires, the browser
-    // has already changed the URL to the previous page
-    const currentUrl = window.location.href
-    const currentState = window.history.state
-
-    setBackButtonInterceptor(() => {
-      // Restore the dish page in the history stack
-      window.history.pushState(currentState, '', currentUrl)
-      setStep(1)
-    })
-
-    return () => clearBackButtonInterceptor()
-  }, [step])
-
   // Already voted - show summary
-  if (userVote !== null && userRating !== null && step === 1) {
+  if (userVote !== null && userRating !== null && step === 0) {
     return (
       <div className="space-y-3">
         <div className="p-4 rounded-xl" style={{ background: 'var(--color-success-light)', border: '1.5px solid var(--color-success)' }}>
@@ -353,7 +304,7 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             setUserVote(null)
             setUserRating(null)
             setUserReviewText(null)
-            setStep(1)
+            setStep(2)
           }}
           className="w-full py-2 text-sm transition-colors"
           style={{ color: 'var(--color-text-tertiary)' }}
@@ -393,61 +344,23 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     )
   }
 
-  // Show pending selection state when awaiting login
-  const showPendingYes = awaitingLogin && pendingVote === true
-  const showPendingNo = awaitingLogin && pendingVote === false
-  const isYesSelected = step === 2 && pendingVote === true
-  const isNoSelected = step === 2 && pendingVote === false
-
   return (
     <div className="space-y-3">
       {/* Screen reader announcement region */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
-      <p className="text-sm font-medium text-center" style={{ color: 'var(--color-text-tertiary)' }}>Worth ordering again?</p>
 
       {/* Show "sign in to continue" note when awaiting login */}
-      {awaitingLogin && pendingVote !== null && (
+      {awaitingLogin && (
         <div className="p-3 rounded-xl text-center" style={{ background: 'var(--color-primary-muted)' }}>
           <p className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
-            {pendingVote ? <ThumbsUpIcon size={22} /> : <ThumbsDownIcon size={22} />} Vote selected — sign in to save it
+            Sign in to save your rating
           </p>
         </div>
       )}
 
-      {!isRanked && !awaitingLogin && step === 1 ? (
-        <p className="text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
-          {localTotalVotes === 0
-            ? 'Be the first to rank this dish!'
-            : `${localTotalVotes} vote${localTotalVotes === 1 ? '' : 's'} so far \u00B7 ${5 - localTotalVotes} more to rank`
-          }
-        </p>
-      ) : null}
-
-      {/* Yes/No buttons — always visible, selected one stays highlighted */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => handleVoteClick(true)}
-          className="relative overflow-hidden flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ease-out focus-ring active:scale-95"
-          style={isYesSelected || showPendingYes
-            ? { background: 'linear-gradient(to bottom right, var(--color-success), var(--color-green-deep))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-success-border)', transform: 'scale(1.05)' }
-            : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-divider)' }}
-        >
-          <ThumbsUpIcon size={30} /><span>Yes</span>
-        </button>
-        <button
-          onClick={() => handleVoteClick(false)}
-          className="relative overflow-hidden flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ease-out focus-ring active:scale-95"
-          style={isNoSelected || showPendingNo
-            ? { background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-danger))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-primary-glow)', transform: 'scale(1.05)' }
-            : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-divider)' }}
-        >
-          <ThumbsDownIcon size={30} /><span>No</span>
-        </button>
-      </div>
-
-      {/* Step 2: Rating + review + photo — expands inline below yes/no */}
+      {/* Rating + review + photo — shown directly */}
       {step === 2 && (
         <div className="space-y-4 animate-fadeIn">
           <p className="text-sm font-medium text-center" style={{ color: 'var(--color-text-tertiary)' }}>How good was it?</p>

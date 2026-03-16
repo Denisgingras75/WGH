@@ -11,14 +11,14 @@
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://us.posthog.com" />
 
-    <!-- Chalkboard fonts: Amatic SC (chalk headers) + Cormorant (dish names) + Outfit (body) -->
-    <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Vintage Island Press fonts: Playfair Display (editorial headlines) + Amatic SC (zine accents) + Outfit (body) -->
+    <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
 
     <!-- Mobile-first viewport with safe area support -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#F5F0E8" />
     <meta name="description" content="Find the best dishes at restaurants near you. See what's worth ordering and what to avoid." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -46,7 +46,7 @@
 
     <!-- Prevent flash of wrong theme on load -->
     <script>
-      try { var t = localStorage.getItem('wgh_theme'); if (t === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(e) {}
+      try { var t = localStorage.getItem('wgh_theme'); if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch(e) {}
     </script>
 
     <!-- Structured Data -->

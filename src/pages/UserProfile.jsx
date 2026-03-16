@@ -402,8 +402,8 @@ export function UserProfile() {
         </p>
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-2 rounded-lg text-sm font-medium"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          className="px-4 py-2 text-sm font-medium"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
         >
           Go Back
         </button>
@@ -441,7 +441,7 @@ export function UserProfile() {
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
-                boxShadow: '0 0 0 3px var(--color-primary-muted)',
+                border: '3px solid var(--color-primary-muted)',
               }}
             >
               {profile.display_name?.charAt(0).toUpperCase() || '?'}
@@ -457,6 +457,7 @@ export function UserProfile() {
                 fontSize: '22px',
                 letterSpacing: '-0.02em',
                 lineHeight: '1.2',
+                fontFamily: 'var(--font-headline)',
               }}
             >
               {profile.display_name || 'Anonymous'}
@@ -490,8 +491,9 @@ export function UserProfile() {
         {/* Taste Compatibility */}
         {!isOwnProfile && tasteCompat && (
           <div
-            className="mt-4 px-3.5 py-3 rounded-xl"
+            className="mt-4 px-3.5 py-3"
             style={{
+              borderRadius: '4px',
               background: tasteCompat.compatibility_pct != null
                 ? `linear-gradient(135deg, ${getCompatColor(tasteCompat.compatibility_pct)}14 0%, ${getCompatColor(tasteCompat.compatibility_pct)}0A 100%)`
                 : 'var(--color-surface-elevated)',
@@ -530,11 +532,11 @@ export function UserProfile() {
           <div className="mt-4 flex gap-2.5">
             {ratingStyle && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
+                className="flex-1 border px-4 py-3.5"
                 style={{
                   background: 'var(--color-card)',
                   borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
+                  borderRadius: '4px',
                 }}
               >
                 <p
@@ -556,11 +558,11 @@ export function UserProfile() {
             )}
             {ratingBias && ratingBias.votesWithConsensus > 0 && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
+                className="flex-1 border px-4 py-3.5"
                 style={{
                   background: 'var(--color-card)',
                   borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
+                  borderRadius: '4px',
                 }}
               >
                 <p className="text-sm font-bold" style={{
@@ -591,8 +593,8 @@ export function UserProfile() {
           {isOwnProfile ? (
             <Link
               to="/profile"
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-center transition-colors"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+              className="flex-1 py-2.5 text-sm font-semibold text-center transition-colors"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
             >
               Edit Profile
             </Link>
@@ -600,10 +602,11 @@ export function UserProfile() {
             <button
               onClick={handleFollowToggle}
               disabled={followLoading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
               style={{
                 background: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
                 color: isFollowing ? 'var(--color-text-primary)' : 'var(--color-text-on-primary)',
+                borderRadius: '4px',
               }}
             >
               {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
@@ -611,8 +614,8 @@ export function UserProfile() {
           )}
           <button
             onClick={handleShare}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="px-4 py-2.5 text-sm font-semibold transition-colors"
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
           >
             Share
           </button>
@@ -632,10 +635,11 @@ export function UserProfile() {
         <div className="px-4 pt-3 flex flex-col gap-2.5">
           {standoutPicks.bestFind && (
             <div
-              className="rounded-xl border px-3.5 py-3 flex items-center gap-3"
+              className="border px-3.5 py-3 flex items-center gap-3"
               style={{
                 background: 'var(--color-card)',
                 borderColor: 'var(--color-divider)',
+                borderRadius: '4px',
               }}
             >
               <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-accent-gold)' }}>
@@ -657,10 +661,11 @@ export function UserProfile() {
 
           {standoutPicks.harshestTake && (
             <div
-              className="rounded-xl border px-3.5 py-3 flex items-center gap-3"
+              className="border px-3.5 py-3 flex items-center gap-3"
               style={{
                 background: 'var(--color-card)',
                 borderColor: 'var(--color-red-muted, rgba(239, 68, 68, 0.2))',
+                borderRadius: '4px',
               }}
             >
               <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-red)' }}>
@@ -685,10 +690,11 @@ export function UserProfile() {
       {/* Location Filter Banner */}
       {locationFilter && (
         <div
-          className="mx-4 mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between"
+          className="mx-4 mt-3 px-4 py-2.5 flex items-center justify-between"
           style={{
             background: 'var(--color-surface-elevated)',
             border: '1px solid var(--color-divider)',
+            borderRadius: '4px',
           }}
         >
           <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
@@ -723,10 +729,11 @@ export function UserProfile() {
       {/* Signup CTA for visitors */}
       {!currentUser && (
         <div
-          className="mx-4 mt-6 mb-4 rounded-2xl px-5 py-5 text-center"
+          className="mx-4 mt-6 mb-4 px-5 py-5 text-center"
           style={{
             background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
+            border: '1.5px solid var(--color-divider)',
+            borderRadius: '4px',
           }}
         >
           <p className="font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}>
@@ -738,23 +745,25 @@ export function UserProfile() {
           <div className="flex gap-3 mt-4 justify-center">
             <Link
               to="/"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+              className="px-5 py-2.5 font-semibold"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
                 fontSize: '14px',
+                borderRadius: '4px',
               }}
             >
               Explore the Map
             </Link>
             <Link
               to="/login"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+              className="px-5 py-2.5 font-semibold"
               style={{
                 background: 'var(--color-surface-elevated)',
                 color: 'var(--color-text-primary)',
                 border: '1px solid var(--color-divider)',
                 fontSize: '14px',
+                borderRadius: '4px',
               }}
             >
               Sign Up Free

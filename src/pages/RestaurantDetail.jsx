@@ -17,7 +17,7 @@ import { useRestaurantSpecials } from '../hooks/useSpecials'
 import { useRestaurantEvents } from '../hooks/useEvents'
 import { SpecialCard } from '../components/SpecialCard'
 import { EventCard } from '../components/EventCard'
-import { CaretLeft, ShareNetwork, MapPin, ArrowSquareOut, Phone, Globe, FacebookLogo, InstagramLogo, Plus, ShoppingBag } from '@phosphor-icons/react'
+import { CaretLeft, ShareNetwork, MapPin, Phone, Globe, FacebookLogo, InstagramLogo, Plus, ShoppingBag } from '@phosphor-icons/react'
 
 export function RestaurantDetail() {
   const { restaurantId } = useParams()
@@ -150,7 +150,7 @@ export function RestaurantDetail() {
             </div>
           </div>
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 rounded-xl" style={{ background: 'var(--color-card)' }} />
+            <div key={i} className="h-20" style={{ background: 'var(--color-card)', borderRadius: '4px' }} />
           ))}
         </div>
       </div>
@@ -188,24 +188,23 @@ export function RestaurantDetail() {
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          boxShadow: 'none',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: '3px double var(--color-divider)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/restaurants')}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="w-10 h-10 flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ color: 'var(--color-text-primary)' }}
           >
             <CaretLeft size={20} weight="bold" />
           </button>
           <div className="min-w-0 flex-1">
             <h2
-              className="font-bold truncate"
+              className="truncate"
               style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontWeight: 700,
+                fontFamily: 'var(--font-headline)',
+                fontWeight: 900,
                 color: 'var(--color-text-primary)',
                 fontSize: '20px',
                 letterSpacing: '-0.02em',
@@ -213,12 +212,18 @@ export function RestaurantDetail() {
             >
               {restaurant.name}
             </h2>
-            <p className="font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
-              {dishesLoading ? '…' : `${dishes.length} dish${dishes.length === 1 ? '' : 'es'}`}
-              {restaurant.distance_miles != null && (
-                <span> · {restaurant.distance_miles} mi away</span>
-              )}
-            </p>
+            {restaurant.town && (
+              <p style={{
+                fontStyle: 'italic',
+                color: 'var(--color-text-secondary)',
+                fontSize: '13px',
+              }}>
+                {restaurant.town}
+                {restaurant.distance_miles != null && (
+                  <span> &middot; {restaurant.distance_miles} mi away</span>
+                )}
+              </p>
+            )}
           </div>
           <button
             onClick={async () => {
@@ -229,8 +234,8 @@ export function RestaurantDetail() {
               })
               capture('restaurant_shared', { restaurant_id: restaurantId, method: result.method })
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }}
+            className="w-10 h-10 flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ color: 'var(--color-text-secondary)' }}
             aria-label="Share restaurant"
           >
             <ShareNetwork size={20} weight="duotone" />
@@ -238,40 +243,122 @@ export function RestaurantDetail() {
         </div>
       </div>
 
-      {/* Restaurant Details Card */}
-      <div className="px-4 py-4 relative" style={{ background: 'var(--color-bg)' }}>
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-          style={{
-            width: '90%',
-            background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-          }}
-        />
+      {/* Stats Bar */}
+      <div style={{
+        display: 'flex',
+        borderTop: '2px solid var(--color-text-primary)',
+        borderBottom: '1px solid var(--color-divider)',
+      }}>
+        <div style={{
+          flex: 1,
+          textAlign: 'center',
+          padding: '10px 0',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-headline)',
+            fontSize: '22px',
+            fontWeight: 900,
+            color: 'var(--color-text-primary)',
+          }}>
+            {dishesLoading ? '\u2026' : dishes.length}
+          </div>
+          <div style={{
+            fontSize: '8px',
+            color: 'var(--color-text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+          }}>
+            Dishes
+          </div>
+        </div>
+        {(() => {
+          const rated = dishes.filter(d => d.avg_rating && d.avg_rating > 0)
+          if (rated.length > 0) {
+            const avg = rated.reduce((sum, d) => sum + d.avg_rating, 0) / rated.length
+            return (
+              <div style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: '10px 0',
+                borderLeft: '1px solid var(--color-divider)',
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '22px',
+                  fontWeight: 900,
+                  color: 'var(--color-rating)',
+                }}>
+                  {avg.toFixed(1)}
+                </div>
+                <div style={{
+                  fontSize: '8px',
+                  color: 'var(--color-text-tertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}>
+                  Avg Rating
+                </div>
+              </div>
+            )
+          }
+          return null
+        })()}
+        {restaurant.cuisine && (
+          <div style={{
+            flex: 1,
+            textAlign: 'center',
+            padding: '10px 0',
+            borderLeft: '1px solid var(--color-divider)',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-headline)',
+              fontSize: '14px',
+              fontWeight: 900,
+              color: 'var(--color-text-primary)',
+              marginTop: '4px',
+            }}>
+              {restaurant.cuisine}
+            </div>
+            <div style={{
+              fontSize: '8px',
+              color: 'var(--color-text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+            }}>
+              Cuisine
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Restaurant Info Section */}
+      <div className="px-4 py-4" style={{ background: 'var(--color-bg)' }}>
         <div className="space-y-3">
+          {/* Address */}
           {restaurant.address && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-3 hover:text-orange-400 transition-colors group"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <MapPin size={20} weight="fill" className="mt-0.5 flex-shrink-0 group-hover:opacity-80" style={{ color: 'var(--color-text-tertiary)' }} />
-              <span className="text-sm">{restaurant.address}</span>
-              <ArrowSquareOut size={16} weight="duotone" className="mt-0.5 flex-shrink-0" style={{ color: 'var(--color-divider)' }} />
-            </a>
+            <p style={{
+              fontSize: '13px',
+              color: 'var(--color-text-secondary)',
+            }}>
+              <MapPin size={14} weight="fill" style={{ display: 'inline', verticalAlign: '-2px', marginRight: '6px', color: 'var(--color-text-tertiary)' }} />
+              {restaurant.address}
+            </p>
           )}
 
-          {/* Contact info row */}
+          {/* Contact links — small text, left-aligned */}
           {(restaurant.phone || restaurant.website_url || restaurant.facebook_url || restaurant.instagram_url) && (
-            <div className="flex items-center gap-3 flex-wrap">
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}>
               {restaurant.phone && (
                 <a
                   href={`tel:${restaurant.phone}`}
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <Phone size={16} weight="duotone" />
+                  <Phone size={14} weight="duotone" />
                   {restaurant.phone}
                 </a>
               )}
@@ -280,10 +367,10 @@ export function RestaurantDetail() {
                   href={restaurant.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <Globe size={16} weight="duotone" />
+                  <Globe size={14} weight="duotone" />
                   Website
                 </a>
               )}
@@ -292,10 +379,10 @@ export function RestaurantDetail() {
                   href={restaurant.facebook_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <FacebookLogo size={16} weight="duotone" />
+                  <FacebookLogo size={14} weight="duotone" />
                   Facebook
                 </a>
               )}
@@ -304,15 +391,92 @@ export function RestaurantDetail() {
                   href={restaurant.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <InstagramLogo size={16} weight="duotone" />
+                  <InstagramLogo size={14} weight="duotone" />
                   Instagram
                 </a>
               )}
             </div>
           )}
+
+          {/* Action buttons — Directions / Call / Website */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {restaurant.address && (
+              <a
+                href={restaurant.lat && restaurant.lng
+                  ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurant.lat + ',' + restaurant.lng
+                  : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(restaurant.address)
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <MapPin size={14} weight="fill" />
+                Directions
+              </a>
+            )}
+            {restaurant.phone && (
+              <a
+                href={`tel:${restaurant.phone}`}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <Phone size={14} weight="duotone" />
+                Call
+              </a>
+            )}
+            {restaurant.website_url && (
+              <a
+                href={restaurant.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <Globe size={14} weight="duotone" />
+                Website
+              </a>
+            )}
+          </div>
 
           {isHere && (
             <button
@@ -320,10 +484,11 @@ export function RestaurantDetail() {
                 if (!user) { setLoginModalOpen(true); return }
                 setAddDishModalOpen(true)
               }}
-              className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+              className="flex items-center gap-2 w-full px-4 py-3 text-sm font-bold transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-gold)',
                 color: 'var(--color-bg)',
+                borderRadius: '4px',
               }}
             >
               <MapPin size={20} weight="fill" />
@@ -334,11 +499,12 @@ export function RestaurantDetail() {
           {user && !isHere && (
             <button
               onClick={() => setAddDishModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.98]"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-gold-muted)',
                 color: 'var(--color-accent-gold)',
                 border: '1px solid var(--color-accent-gold)',
+                borderRadius: '4px',
               }}
             >
               <Plus size={16} weight="bold" />
@@ -348,13 +514,34 @@ export function RestaurantDetail() {
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="px-4 pt-4">
+      {/* Editorial Dish Section Divider */}
+      <div className="px-4 pt-5 pb-1">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '12px',
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+          <span style={{
+            fontFamily: 'var(--font-headline)',
+            fontSize: '14px',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            color: 'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}>
+            Their Best Dishes
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+        </div>
+
+        {/* Tab Switcher — Editorial */}
         <div
-          className="flex rounded-xl p-1"
+          className="flex"
           style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
+            border: '1.5px solid var(--color-text-primary)',
+            borderRadius: '4px',
           }}
           role="tablist"
           aria-label="Restaurant view"
@@ -363,11 +550,11 @@ export function RestaurantDetail() {
             role="tab"
             aria-selected={activeTab === 'top'}
             onClick={() => setActiveTab('top')}
-            className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm font-bold transition-all"
             style={{
-              background: activeTab === 'top' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'top' ? 'white' : 'var(--color-text-secondary)',
-              boxShadow: 'none',
+              background: activeTab === 'top' ? 'var(--color-text-primary)' : 'transparent',
+              color: activeTab === 'top' ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+              borderRadius: '2px 0 0 2px',
             }}
           >
             Top Rated
@@ -376,20 +563,17 @@ export function RestaurantDetail() {
             role="tab"
             aria-selected={activeTab === 'menu'}
             onClick={() => setActiveTab('menu')}
-            className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm font-bold transition-all"
             style={{
-              background: activeTab === 'menu' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'menu' ? 'white' : 'var(--color-text-secondary)',
-              boxShadow: activeTab === 'menu' ? '0 2px 8px -2px rgba(200, 90, 84, 0.4)' : 'none',
+              background: activeTab === 'menu' ? 'var(--color-text-primary)' : 'transparent',
+              color: activeTab === 'menu' ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+              borderRadius: '0 2px 2px 0',
+              borderLeft: '1.5px solid var(--color-text-primary)',
             }}
           >
             Menu
           </button>
         </div>
-        <div
-          className="mt-3 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, var(--color-accent-gold), transparent)' }}
-        />
       </div>
 
       {/* Dish Content */}
@@ -469,7 +653,7 @@ export function RestaurantDetail() {
         style={{
           background: 'var(--color-bg)',
           backdropFilter: 'blur(12px)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+          borderTop: '1.5px solid var(--color-divider)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -479,10 +663,11 @@ export function RestaurantDetail() {
               href={'https://order.toasttab.com/online/' + restaurant.toast_slug}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-orange)',
                 color: 'var(--color-bg)',
+                borderRadius: '4px',
               }}
             >
               <ShoppingBag size={18} weight="duotone" />
@@ -496,10 +681,11 @@ export function RestaurantDetail() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
+            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 font-bold text-sm transition-all active:scale-[0.98]'}
             style={{
               background: 'var(--color-accent-gold)',
               color: 'var(--color-bg)',
+              borderRadius: '4px',
             }}
           >
             <MapPin size={20} weight="fill" />

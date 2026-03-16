@@ -27,123 +27,128 @@
 }
 
 /* ===========================
-   What's Good Here — THE CHALKBOARD (Dark Default)
-   Restaurant chalkboard menu. Chalk on slate. Warm. Real.
+   What's Good Here — VINTAGE ISLAND PRESS (Light Default)
+   Artisan food zine. Letterpress editorial. Ink on parchment.
    =========================== */
 :root {
-  --color-primary: #F4D03F;
-  --color-primary-muted: rgba(244, 208, 63, 0.12);
-  --color-primary-glow: rgba(244, 208, 63, 0.20);
-  --color-rating: #7DCEA0;
-  --color-accent-gold: #F0C040;
-  --color-accent-gold-muted: rgba(240, 192, 64, 0.12);
-  --color-link-secondary: #F4D03F;
-  --color-accent-orange: #E67E22;
-  --color-accent-yellow: #F4D03F;
-  --color-text-primary: #E8E2D4;
-  --color-text-secondary: #A8A090;
-  --color-text-tertiary: #6B6660;
-  --color-bg: #1B2021;
-  --color-surface: #232B2B;
-  --color-surface-elevated: #2A3333;
-  --color-divider: rgba(244, 208, 63, 0.06);
-  --color-category-strip: #232B2B;
-  --color-card: #243030;
-  --color-card-hover: #2D3838;
-  --color-card-border: rgba(244, 208, 63, 0.10);
-  --color-medal-gold: #F4D03F;
-  --color-medal-silver: #BDC3C7;
-  --color-medal-bronze: #E67E22;
-  --color-danger: #E74C3C;
-  --color-success: #7DCEA0;
-  --color-success-light: #0D2818;
-  --color-success-muted: rgba(125, 206, 160, 0.10);
-  --color-success-border: rgba(125, 206, 160, 0.30);
-  --color-muted: #6B6660;
-  --color-text-tagline: #A8A090;
-  --color-text-on-primary: #1B2021;
+  --color-primary: #C4472A;
+  --color-primary-muted: rgba(196, 71, 42, 0.10);
+  --color-primary-glow: rgba(196, 71, 42, 0.15);
+  --color-rating: #4A6741;
+  --color-accent-gold: #8B7355;
+  --color-accent-gold-muted: rgba(139, 115, 85, 0.10);
+  --color-link-secondary: #8B7355;
+  --color-accent-orange: #A0926D;
+  --color-accent-yellow: #C4472A;
+  --color-text-primary: #2C2416;
+  --color-text-secondary: #5C5548;
+  --color-text-tertiary: #8B7355;
+  --color-bg: #F5F0E8;
+  --color-surface: #EDE7DC;
+  --color-surface-elevated: #FFFFFF;
+  --color-divider: #D4C9B4;
+  --color-category-strip: #EDE7DC;
+  --color-card: #FFFFFF;
+  --color-card-hover: #F8F4EE;
+  --color-card-border: #D4C9B4;
+  --color-medal-gold: #C4472A;
+  --color-medal-silver: #8B7355;
+  --color-medal-bronze: #A0926D;
+  --color-danger: #C4472A;
+  --color-success: #4A6741;
+  --color-success-light: #F0FFF4;
+  --color-success-muted: rgba(74, 103, 65, 0.10);
+  --color-success-border: rgba(74, 103, 65, 0.30);
+  --color-muted: #8B7355;
+  --color-text-tagline: #8B7355;
+  --color-text-on-primary: #F5F0E8;
 
-  --color-emerald: #7DCEA0;
-  --color-emerald-light: #A3E4BE;
-  --color-red: #E74C3C;
-  --color-red-light: #F1948A;
-  --color-amber: #F4D03F;
-  --color-amber-light: #F9E154;
-  --color-amber-dark: #B7950B;
-  --color-orange: #E67E22;
-  --color-lime: #82E0AA;
-  --color-yellow: #F4D03F;
-  --color-green-deep: #27AE60;
-  --color-green-dark: #7DCEA0;
-  --color-blue: #5DADE2;
-  --color-blue-light: #85C1E9;
-  --color-purple: #BB8FCE;
+  --color-emerald: #4A6741;
+  --color-emerald-light: #7DAF72;
+  --color-red: #C4472A;
+  --color-red-light: #D4654E;
+  --color-amber: #A0926D;
+  --color-amber-light: #B8A99A;
+  --color-amber-dark: #8B7355;
+  --color-orange: #A0926D;
+  --color-lime: #7DAF72;
+  --color-yellow: #C4472A;
+  --color-green-deep: #4A6741;
+  --color-green-dark: #4A6741;
+  --color-blue: #5C7A8A;
+  --color-blue-light: #7A9AAA;
+  --color-purple: #8B6E7A;
 
-  --color-tier-featured: #F4D03F;
-  --color-tier-community: #5DADE2;
-  --color-tier-hidden: #6B7280;
+  --color-tier-featured: #C4472A;
+  --color-tier-community: #5C7A8A;
+  --color-tier-hidden: #8B7355;
 
-  --glow-primary: 0 0 12px rgba(244, 208, 63, 0.15);
-  --glow-gold: 0 0 10px rgba(244, 208, 63, 0.20);
-  --focus-ring: 0 0 0 3px rgba(244, 208, 63, 0.25);
+  --glow-primary: 0 0 12px rgba(196, 71, 42, 0.15);
+  --glow-gold: 0 0 10px rgba(139, 115, 85, 0.20);
+  --focus-ring: 0 0 0 3px rgba(196, 71, 42, 0.25);
+
+  --font-headline: 'Playfair Display', Georgia, serif;
+  --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-accent: 'Amatic SC', cursive;
 }
 
+/* Halftone dot texture — letterpress/newsprint feel */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 99998;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
+  opacity: 0.08;
+  background-image: radial-gradient(circle, #c4b99a 0.5px, transparent 0.5px);
+  background-size: 6px 6px;
 }
 
-[data-theme="light"] body::after {
-  opacity: 0.03;
+[data-theme="dark"] body::after {
+  opacity: 0.05;
+  background-image: radial-gradient(circle, rgba(196, 185, 154, 0.4) 0.5px, transparent 0.5px);
 }
 
 /* ===========================
-   Daylight Theme (Light Mode Toggle)
-   Warm kraft paper with deep amber accents
+   Island Depths (Dark Mode Toggle)
+   Deep paper with faded red accents
    =========================== */
-[data-theme="light"] {
-  --color-primary: #B7950B;
-  --color-primary-muted: rgba(183, 149, 11, 0.10);
-  --color-primary-glow: rgba(183, 149, 11, 0.15);
-  --color-rating: #1E8449;
-  --color-accent-gold: #9A7D0A;
-  --color-accent-gold-muted: rgba(154, 125, 10, 0.10);
-  --color-link-secondary: #B7950B;
-  --color-accent-yellow: #B7950B;
-  --color-accent-orange: #CA6F1E;
-  --color-text-primary: #1C1A14;
-  --color-text-secondary: #5C5548;
-  --color-text-tertiary: #8A8478;
-  --color-bg: #F2EDE4;
-  --color-surface: #EAE3D8;
-  --color-surface-elevated: #FFFFFF;
-  --color-divider: #D4CCB8;
-  --color-category-strip: #EAE3D8;
-  --color-card: #FFFFFF;
-  --color-card-hover: #F8F4EE;
-  --color-card-border: #D4CCB8;
-  --color-medal-gold: #B7950B;
-  --color-medal-silver: #6B7580;
-  --color-medal-bronze: #A04000;
-  --color-green-deep: #1E8449;
-  --color-danger: #C0392B;
-  --color-success: #1E8449;
-  --color-success-light: #F0FFF4;
-  --color-success-muted: rgba(30, 132, 73, 0.10);
-  --color-success-border: rgba(30, 132, 73, 0.30);
-  --color-muted: #8A8478;
-  --color-text-tagline: #8A8478;
-  --color-text-on-primary: #FFFFFF;
-  --glow-primary: 0 0 10px rgba(183, 149, 11, 0.15);
-  --glow-gold: 0 0 8px rgba(183, 149, 11, 0.20);
-  --focus-ring: 0 0 0 3px rgba(183, 149, 11, 0.25);
+[data-theme="dark"] {
+  --color-primary: #D4654E;
+  --color-primary-muted: rgba(212, 101, 78, 0.12);
+  --color-primary-glow: rgba(212, 101, 78, 0.18);
+  --color-rating: #7DAF72;
+  --color-accent-gold: #A0926D;
+  --color-accent-gold-muted: rgba(160, 146, 109, 0.12);
+  --color-link-secondary: #A0926D;
+  --color-accent-yellow: #D4654E;
+  --color-accent-orange: #B8A99A;
+  --color-text-primary: #F5F0E8;
+  --color-text-secondary: #B8A99A;
+  --color-text-tertiary: #7D7168;
+  --color-bg: #1A1612;
+  --color-surface: #1F1B16;
+  --color-surface-elevated: #242018;
+  --color-divider: #3A3428;
+  --color-category-strip: #1F1B16;
+  --color-card: #242018;
+  --color-card-hover: #2D2820;
+  --color-card-border: #3A3428;
+  --color-medal-gold: #D4654E;
+  --color-medal-silver: #A0926D;
+  --color-medal-bronze: #7D7168;
+  --color-green-deep: #7DAF72;
+  --color-danger: #D4654E;
+  --color-success: #7DAF72;
+  --color-success-light: #1A2418;
+  --color-success-muted: rgba(125, 175, 114, 0.10);
+  --color-success-border: rgba(125, 175, 114, 0.30);
+  --color-muted: #7D7168;
+  --color-text-tagline: #7D7168;
+  --color-text-on-primary: #F5F0E8;
+  --glow-primary: 0 0 10px rgba(212, 101, 78, 0.15);
+  --glow-gold: 0 0 8px rgba(160, 146, 109, 0.20);
+  --focus-ring: 0 0 0 3px rgba(212, 101, 78, 0.25);
 }
 
 @tailwind base;
@@ -194,43 +199,44 @@ body::after {
   }
 
   .glass-header {
-    background: rgba(27, 32, 33, 0.95);
+    background: rgba(245, 240, 232, 0.95);
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
   }
 
-  [data-theme="light"] .glass-header {
-    background: rgba(242, 237, 228, 0.95);
+  [data-theme="dark"] .glass-header {
+    background: rgba(26, 22, 18, 0.95);
   }
 
   .card-elevated {
-    @apply rounded-2xl transition-all duration-300;
+    @apply transition-all duration-300;
     background: var(--color-card);
-    border: 1px solid var(--color-card-border);
-    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.5);
+    border: 1.5px solid var(--color-card-border);
+    border-radius: 4px;
+    box-shadow: none;
   }
 
   .card-elevated:hover {
     background: var(--color-card-hover);
-    border-color: var(--color-card-border);
-    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.6);
+    border-color: var(--color-text-tertiary);
+    box-shadow: none;
     transform: none;
   }
 
-  [data-theme="light"] .card-elevated {
-    border: 1px solid var(--color-divider);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  [data-theme="dark"] .card-elevated {
+    border: 1.5px solid var(--color-divider);
+    box-shadow: none;
   }
 
-  [data-theme="light"] .card-elevated:hover {
-    border-color: var(--color-divider);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  [data-theme="dark"] .card-elevated:hover {
+    border-color: var(--color-text-tertiary);
+    box-shadow: none;
   }
 
   .card-subtle {
-    @apply rounded-xl;
     background: var(--color-card);
-    border: 2px solid var(--color-card-border, #1A1A1A);
+    border: 1.5px solid var(--color-card-border);
+    border-radius: 4px;
   }
 
   .image-zoom {
@@ -241,19 +247,19 @@ body::after {
     transform: scale(1.05);
   }
 
-  /* TopBar - Subtle brand anchor in safe-area region */
+  /* TopBar - Editorial masthead anchor in safe-area region */
   .top-bar {
     position: relative;
     width: 100%;
-    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg));
+    background: var(--color-bg);
     padding-top: env(safe-area-inset-top, 0px);
-    border-bottom: 1px solid rgba(217, 167, 101, 0.12);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border-bottom: 3px double var(--color-text-primary);
+    box-shadow: none;
   }
 
-  [data-theme="light"] .top-bar {
-    background: #FFFFFF;
-    border-bottom: 1px solid #D4C8B4;
+  [data-theme="dark"] .top-bar {
+    background: var(--color-bg);
+    border-bottom: 3px double var(--color-divider);
     box-shadow: none;
   }
 
@@ -283,13 +289,13 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, #232B2B 0%, #1B2021 50%, #151A1B 100%);
+    background: linear-gradient(145deg, #FFFFFF 0%, #F5F0E8 50%, #EDE7DC 100%);
     opacity: 1;
     transition: opacity 0.4s ease-out;
   }
 
-  [data-theme="light"] .welcome-splash {
-    background: linear-gradient(145deg, #FFFFFF 0%, #F2EDE4 50%, #EAE3D8 100%);
+  [data-theme="dark"] .welcome-splash {
+    background: linear-gradient(145deg, #242018 0%, #1A1612 50%, #151210 100%);
   }
 
   .welcome-splash--fading {
@@ -369,7 +375,7 @@ body::after {
     width: 88px;
     height: 88px;
     border-radius: 50%;
-    background: linear-gradient(145deg, var(--color-primary), #D4920A);
+    background: linear-gradient(145deg, var(--color-primary), #8B3A1E);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -416,7 +422,7 @@ body::after {
   .welcome-splash__btn {
     flex: 1;
     padding: 14px 24px;
-    border-radius: 12px;
+    border-radius: 4px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -568,7 +574,7 @@ body::after {
     animation: shimmer 1.5s infinite;
   }
 
-  [data-theme="light"] .animate-shimmer {
+  [data-theme="dark"] .animate-shimmer {
     background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
     background-size: 200% 100%;
   }

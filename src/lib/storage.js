@@ -116,11 +116,12 @@ export function getPendingVoteFromStorage() {
 /**
  * Save pending vote to storage
  */
-export function setPendingVoteToStorage(dishId, vote) {
+export function setPendingVoteToStorage(dishId, vote, sliderValue) {
   try {
     localStorage.setItem(PENDING_VOTE_KEY, JSON.stringify({
       dishId,
       vote,
+      sliderValue: sliderValue != null ? sliderValue : undefined,
       timestamp: Date.now()
     }))
   } catch (error) {

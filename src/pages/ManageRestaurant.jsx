@@ -196,7 +196,7 @@ export function ManageRestaurant() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
             <span className="text-2xl">🔒</span>
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
             Access Denied
           </h1>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
@@ -204,8 +204,8 @@ export function ManageRestaurant() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="px-6 py-3 font-semibold"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
           >
             Go Home
           </button>
@@ -227,7 +227,7 @@ export function ManageRestaurant() {
             <CaretLeft size={24} weight="bold" />
           </button>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
               {restaurant.name}
             </h1>
             <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Restaurant Manager</p>
@@ -257,10 +257,10 @@ export function ManageRestaurant() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all"
+              className="flex-1 py-2.5 font-semibold text-sm transition-all"
               style={activeTab === tab
-                ? { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }
-                : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }
+                ? { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }
+                : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)', borderRadius: '4px' }
               }
             >
               {tab === 'specials' ? `Specials${!dataLoading && specials.filter(s => s.is_active).length ? ` (${specials.filter(s => s.is_active).length})` : ''}` : tab === 'events' ? `Events${!dataLoading && events.filter(e => e.is_active).length ? ` (${events.filter(e => e.is_active).length})` : ''}` : tab === 'menu' ? `Menu${!dataLoading && dishes.length ? ` (${dishes.length})` : ''}` : 'Info'}
@@ -274,7 +274,7 @@ export function ManageRestaurant() {
         {dataLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--color-surface-elevated)' }} />
+              <div key={i} className="h-16 animate-pulse" style={{ background: 'var(--color-surface-elevated)', borderRadius: '4px' }} />
             ))}
           </div>
         ) : activeTab === 'specials' ? (

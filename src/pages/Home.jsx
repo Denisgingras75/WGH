@@ -72,7 +72,7 @@ export function Home() {
       <>
         {top.length > 0 && (
           <div className="stagger-item" style={{ animationDelay: '100ms' }}>
-            {/* Chalk section divider */}
+            {/* Section divider */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -80,9 +80,10 @@ export function Home() {
               marginBottom: '14px',
             }}>
               <span style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '24px',
+                fontFamily: 'var(--font-headline)',
+                fontSize: '18px',
                 fontWeight: 700,
+                fontStyle: 'italic',
                 color: 'var(--color-primary)',
                 letterSpacing: '0.08em',
                 lineHeight: 1,
@@ -92,8 +93,7 @@ export function Home() {
               <div style={{
                 flex: 1,
                 height: '1px',
-                background: 'linear-gradient(to right, var(--color-primary), transparent)',
-                opacity: 0.2,
+                background: 'var(--color-divider)',
               }} />
             </div>
             <div className="flex flex-col" style={{ gap: '14px' }}>
@@ -118,7 +118,7 @@ export function Home() {
         )}
         {rest.length > 0 && (
           <div className="stagger-item" style={{ marginTop: '24px', animationDelay: '400ms' }}>
-            {/* Chalk section divider */}
+            {/* Section divider */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -126,20 +126,19 @@ export function Home() {
               marginBottom: '12px',
             }}>
               <span style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '22px',
+                fontFamily: 'var(--font-accent)',
+                fontSize: '20px',
                 fontWeight: 700,
                 color: 'var(--color-text-tertiary)',
                 letterSpacing: '0.08em',
                 lineHeight: 1,
               }}>
-                Also Great
+                Also Worth Ordering
               </span>
               <div style={{
                 flex: 1,
                 height: '1px',
-                background: 'linear-gradient(to right, var(--color-text-tertiary), transparent)',
-                opacity: 0.15,
+                background: 'var(--color-divider)',
               }} />
             </div>
             <div style={{
@@ -170,42 +169,40 @@ export function Home() {
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
 
-      {/* ── CHALKBOARD HEADER ── */}
+      {/* ── EDITORIAL MASTHEAD ── */}
       <div style={{
-        padding: '24px 20px 8px',
+        padding: '20px 20px 14px',
         textAlign: 'center',
+        borderBottom: '3px double var(--color-text-primary)',
       }}>
+        <p style={{
+          fontSize: '9px',
+          letterSpacing: '0.4em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-tertiary)',
+          marginBottom: '6px',
+        }}>
+          Est. 2026 &middot; Martha&rsquo;s Vineyard
+        </p>
         <h1 style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '42px',
-          fontWeight: 700,
+          fontFamily: 'var(--font-headline)',
+          fontSize: '28px',
+          fontWeight: 900,
+          letterSpacing: '-0.02em',
           color: 'var(--color-text-primary)',
-          letterSpacing: '0.04em',
           lineHeight: 1,
         }}>
-          What&rsquo;s <span style={{
-            color: 'var(--color-primary)',
-          }}>Good</span> Here
+          What&rsquo;s Good Here
         </h1>
         <p style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '18px',
-          fontWeight: 700,
+          fontSize: '9px',
+          letterSpacing: '0.4em',
+          textTransform: 'uppercase',
           color: 'var(--color-text-tertiary)',
-          marginTop: '4px',
-          letterSpacing: '0.15em',
+          marginTop: '6px',
         }}>
-          Martha&rsquo;s Vineyard
+          A Dish-Level Food Guide
         </p>
-        {/* Chalk underline */}
-        <div style={{
-          width: '60px',
-          height: '2px',
-          background: 'var(--color-primary)',
-          opacity: 0.3,
-          margin: '10px auto 0',
-          borderRadius: '1px',
-        }} />
       </div>
 
       {/* ── SEARCH ── */}
@@ -232,12 +229,14 @@ export function Home() {
         <button
           onClick={function () { setShowRadiusSheet(true) }}
           aria-label={'Search radius: ' + radius + ' miles'}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full"
+          className="flex items-center gap-1.5 px-3.5 py-1.5"
           style={{
             fontFamily: "'Outfit', sans-serif",
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 600,
-            letterSpacing: '0.02em',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            borderRadius: '2px',
             background: 'var(--color-surface)',
             color: 'var(--color-text-secondary)',
             border: '1px solid var(--color-divider)',
@@ -268,9 +267,10 @@ export function Home() {
       {/* ── SECTION HEADER ── */}
       <div className="px-5 pt-3 pb-2">
         <h2 style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '28px',
+          fontFamily: 'var(--font-headline)',
+          fontSize: '20px',
           fontWeight: 700,
+          fontStyle: 'italic',
           color: 'var(--color-text-primary)',
           letterSpacing: '0.04em',
           lineHeight: 1.1,
@@ -320,16 +320,17 @@ export function Home() {
       {/* ── CHECK IN FAB ── */}
       <button
         onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
-        className="fixed right-5 flex items-center gap-2 px-5 py-3.5 rounded-full font-semibold active:scale-95 transition-all"
+        className="fixed right-5 flex items-center gap-2 px-5 py-3.5 font-semibold active:scale-95 transition-all"
         style={{
           bottom: 'calc(80px + env(safe-area-inset-bottom))',
           zIndex: 40,
+          borderRadius: '4px',
           background: 'var(--color-primary)',
           color: 'var(--color-text-on-primary)',
           fontSize: '14px',
           fontWeight: 700,
           letterSpacing: '0.02em',
-          boxShadow: '0 4px 20px rgba(244, 208, 63, 0.25)',
+          boxShadow: '0 4px 12px rgba(196, 71, 42, 0.3)',
         }}
       >
         <Plus size={18} weight="bold" />

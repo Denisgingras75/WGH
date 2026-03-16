@@ -38,7 +38,7 @@ export function CategoryChips({
           WebkitOverflowScrolling: 'touch',
           minHeight: '68px',
           touchAction: 'pan-x pan-y',
-          gap: '0',
+          gap: '8px',
         }}
       >
         {townPicker && (
@@ -52,44 +52,24 @@ export function CategoryChips({
             <button
               key={cat.id}
               onClick={function () { onSelect(isActive ? null : cat.id) }}
-              className="flex-shrink-0 flex flex-col items-center justify-center"
+              className="flex-shrink-0 flex items-center justify-center"
               style={{
-                padding: '6px 10px',
-                minWidth: '56px',
-                background: 'transparent',
-                transition: 'opacity 0.15s ease',
+                padding: '6px 12px',
+                borderRadius: '2px',
+                background: isActive ? 'var(--color-text-primary)' : 'transparent',
+                border: isActive ? '1.5px solid var(--color-text-primary)' : '1.5px solid var(--color-divider)',
+                color: isActive ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+                fontSize: '10px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
                 opacity: selected && !isActive ? 0.4 : 1,
               }}
             >
-              {/* Emoji icon */}
-              <span style={{
-                fontSize: '28px',
-                lineHeight: 1,
-                display: 'block',
-              }}>
-                {cat.emoji || '🍽️'}
-              </span>
-              {/* Label */}
-              <span style={{
-                marginTop: '4px',
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: '10px',
-                fontWeight: isActive ? 700 : 500,
-                letterSpacing: '0.02em',
-                color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                lineHeight: 1.2,
-                whiteSpace: 'nowrap',
-              }}>{cat.label}</span>
-              {/* Active indicator dot */}
-              {isActive && (
-                <div style={{
-                  width: '4px',
-                  height: '4px',
-                  borderRadius: '50%',
-                  background: 'var(--color-primary)',
-                  marginTop: '3px',
-                }} />
-              )}
+              {cat.label}
             </button>
           )
         })}

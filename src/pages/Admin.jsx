@@ -302,7 +302,7 @@ export function Admin() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
             <span className="text-2xl">🔒</span>
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
             Access Denied
           </h1>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
@@ -313,8 +313,8 @@ export function Admin() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="px-6 py-3 font-semibold"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
           >
             Go Home
           </button>
@@ -336,7 +336,7 @@ export function Admin() {
             >
               <CaretLeft size={24} weight="bold" />
             </button>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
               Admin - {editingDishId ? 'Edit Dish' : 'Add Dishes'}
             </h1>
           </div>
@@ -636,8 +636,8 @@ export function Admin() {
             )}
             {inviteDropdownOpen && !inviteRestaurantId && (
               <div
-                className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto border"
+                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)', borderRadius: '4px', border: '1.5px solid var(--color-divider)' }}
               >
                 {restaurants
                   .filter((r) => {

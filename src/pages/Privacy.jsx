@@ -17,7 +17,7 @@ export function Privacy() {
             <CaretLeft size={20} weight="bold" />
             Back
           </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
             Privacy Policy
           </h1>
         </div>
@@ -25,7 +25,7 @@ export function Privacy() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="rounded-2xl p-6 space-y-6" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}>
+        <div className="p-6 space-y-6" style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}>
           <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Last updated: January 2025</p>
 
           <section>

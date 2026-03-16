@@ -196,9 +196,20 @@ export function Login() {
               <div style={{ marginBottom: '-14px', position: 'relative', zIndex: 2 }}>
                 <WghLogo size={56} />
               </div>
+              <p
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.4em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-text-tertiary)',
+                  marginBottom: '4px',
+                }}
+              >
+                Est. 2026 &middot; Martha's Vineyard
+              </p>
               <h1
                 style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontFamily: 'var(--font-headline)',
                   fontSize: '32px',
                   fontWeight: 700,
                   color: 'var(--color-primary)',
@@ -257,7 +268,7 @@ export function Login() {
             </div>
 
             {/* How It Works Section */}
-            <div className="w-full max-w-sm mb-8 p-4 rounded-2xl" style={{ background: 'var(--color-bg)' }}>
+            <div className="w-full max-w-sm mb-8 p-4" style={{ background: 'var(--color-bg)', borderRadius: '4px' }}>
               <h3 className="font-semibold text-center mb-4" style={{ color: 'var(--color-text-primary)' }}>
                 How We Rate
               </h3>
@@ -280,8 +291,8 @@ export function Login() {
             {/* Get Started Button - goes to homepage */}
             <button
               onClick={() => navigate('/')}
-              className="w-full max-w-sm px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              className="w-full max-w-sm px-6 py-4 font-bold text-lg active:scale-[0.98] transition-all"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
             >
               Get Started
             </button>
@@ -292,8 +303,8 @@ export function Login() {
                 setShowLogin(true)
                 setMode('signup')
               }}
-              className="w-full max-w-sm mt-3 px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+              className="w-full max-w-sm mt-3 px-6 py-4 font-bold text-lg active:scale-[0.98] transition-all"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)', borderRadius: '4px' }}
             >
               Create Account
             </button>
@@ -333,10 +344,10 @@ export function Login() {
             {/* Messages */}
             {message && (
               <div
-                className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
+                className="w-full max-w-sm mb-4 p-4 text-sm font-medium"
                 style={message.type === 'error'
-                  ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }
-                  : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }
+                  ? { borderRadius: '4px', background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }
+                  : { borderRadius: '4px', background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }
                 }
               >
                 {message.text}
@@ -350,8 +361,8 @@ export function Login() {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
+                  style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)', borderRadius: '4px' }}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -372,8 +383,8 @@ export function Login() {
                 {/* Email Sign In */}
                 <button
                   onClick={() => setMode('signin')}
-                  className="w-full px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full px-6 py-4 font-semibold active:scale-[0.98] transition-all"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
                 >
                   Sign in with Email
                 </button>
@@ -406,8 +417,8 @@ export function Login() {
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none transition-colors"
+                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
                   />
                 </div>
 
@@ -421,16 +432,16 @@ export function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none transition-colors"
+                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full px-6 py-4 font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -481,16 +492,16 @@ export function Login() {
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none transition-colors"
+                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full px-6 py-4 font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
@@ -523,11 +534,12 @@ export function Login() {
                       autoFocus
                       minLength={2}
                       maxLength={30}
-                      className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors pr-10"
+                      className="w-full px-4 py-3 focus:outline-none transition-colors pr-10"
                       style={{
                         background: 'var(--color-bg)',
                         border: `2px solid ${usernameStatus === 'taken' ? 'var(--color-danger)' : usernameStatus === 'available' ? 'var(--color-success)' : 'var(--color-divider)'}`,
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--color-text-primary)',
+                        borderRadius: '4px',
                       }}
                     />
                     {usernameStatus && (
@@ -556,8 +568,8 @@ export function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none transition-colors"
+                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
                   />
                 </div>
 
@@ -572,16 +584,16 @@ export function Login() {
                     placeholder="At least 6 characters"
                     required
                     minLength={6}
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none transition-colors"
+                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full px-6 py-4 font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>

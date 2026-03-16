@@ -486,41 +486,46 @@ export function Browse() {
 
       {/* Main Content */}
       {!showingDishes ? (
-        /* Category Grid - Plates on a dining table */
+        /* Category Grid - Editorial table of contents */
         <div
           className="px-6 pt-5 pb-6 relative"
           style={{
-            background: 'linear-gradient(180deg, var(--color-card) 0%, var(--color-surface) 50%, var(--color-bg) 100%)',
+            background: 'var(--color-bg)',
             minHeight: 'calc(100vh - 80px)',
           }}
         >
-          {/* Table edge */}
+          {/* Top rule */}
           <div
-            className="absolute top-0 left-0 right-0 h-[2px]"
+            className="absolute top-0 left-0 right-0"
             style={{
-              background: 'linear-gradient(90deg, transparent 0%, var(--color-divider) 20%, var(--color-divider) 80%, transparent 100%)',
+              height: '1px',
+              background: 'var(--color-divider)',
             }}
           />
 
-          {/* Section title - anchors the grid */}
-          <div className="flex justify-center pt-4 pb-10">
+          {/* Section title */}
+          <div className="flex justify-center pt-4 pb-8">
             <span
-              className="text-[11px] font-semibold tracking-[0.2em] uppercase"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: 'var(--color-text-tertiary)',
+              }}
             >
-              Categories
+              Browse by Category
             </span>
           </div>
 
-          {/* Category grid - 12 items, 4 rows of 3, shelf-like rhythm */}
-          <div className="grid grid-cols-3 gap-x-4 gap-y-7 justify-items-center">
+          {/* Category grid - editorial tiles */}
+          <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map((category) => (
               <CategoryImageCard
                 key={category.id}
                 category={category}
                 isActive={selectedCategory === category.id}
                 onClick={() => handleCategoryChange(category.id)}
-                size={72}
               />
             ))}
           </div>
@@ -529,10 +534,11 @@ export function Browse() {
           <div className="mt-auto pt-10">
             <div className="relative">
               <div
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+                className="flex items-center gap-3 px-4 py-3 transition-all duration-200"
                 style={{
                   background: 'var(--color-bg)',
                   border: searchFocused ? '2px solid var(--color-primary)' : '2px solid var(--color-divider)',
+                  borderRadius: '4px',
                 }}
               >
                 <MagnifyingGlass size={20} weight="duotone" className="flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }} />
@@ -583,8 +589,8 @@ export function Browse() {
             {autocompleteOpen && autocompleteSuggestions.length > 0 && (
               <div
                 ref={autocompleteRef}
-                className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border overflow-hidden z-50"
-                style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)', border: '1.5px solid var(--color-divider)' }}
+                className="absolute bottom-full left-0 right-0 mb-1 overflow-hidden z-50"
+                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
               >
                 {autocompleteSuggestions.map((suggestion, index) => (
                   <button
@@ -609,7 +615,7 @@ export function Browse() {
 
                     {/* Type badge */}
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      className="text-[10px] px-1.5 py-0.5 flex-shrink-0"
                       style={{
                         background: suggestion.type === 'dish'
                           ? 'var(--color-primary-muted)'
@@ -639,7 +645,7 @@ export function Browse() {
           <div className="px-4 py-4 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <h2 style={{ fontFamily: 'var(--font-headline)', fontSize: '18px', fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>
                   {debouncedSearchQuery
                     ? `Best ${formatSearchQuery(debouncedSearchQuery)} ${town ? `in ${town}` : 'near you'}`
                     : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'}${town ? ` in ${town}` : ''}`
@@ -659,11 +665,14 @@ export function Browse() {
                 <button
                   onClick={() => setShowRadiusSheet(true)}
                   aria-label={`Search radius: ${radius} miles. Tap to change`}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all"
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border transition-all"
                   style={{
                     background: 'var(--color-surface-elevated)',
                     borderColor: 'var(--color-divider)',
                     color: 'var(--color-text-secondary)',
+                    borderRadius: '2px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
                   }}
                 >
                   <span>{radius} mi</span>

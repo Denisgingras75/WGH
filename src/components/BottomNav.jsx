@@ -29,7 +29,7 @@ export function BottomNav() {
       aria-label="Main navigation"
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
-        background: 'var(--color-surface)',
+        background: 'var(--color-bg)',
         borderTop: '1px solid var(--color-divider)',
       }}
     >
@@ -58,12 +58,11 @@ export function BottomNav() {
                 {isActive && (
                   <div
                     style={{
-                      width: 24,
+                      width: 20,
                       height: 2,
                       borderRadius: 1,
                       background: 'var(--color-primary)',
                       marginBottom: 6,
-                      boxShadow: '0 0 8px rgba(244, 208, 63, 0.3)',
                     }}
                   />
                 )}

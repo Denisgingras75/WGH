@@ -14,7 +14,7 @@ export function NotFound() {
         />
         <h1
           className="text-2xl font-bold mb-2"
-          style={{ color: 'var(--color-text-primary)' }}
+          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}
         >
           Page not found
         </h1>
@@ -26,8 +26,8 @@ export function NotFound() {
         </p>
         <Link
           to="/"
-          className="block w-full py-3 px-6 rounded-xl font-semibold text-center transition-all hover:opacity-90"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          className="block w-full py-3 px-6 font-semibold text-center transition-all hover:opacity-90"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
         >
           Explore the Map
         </Link>

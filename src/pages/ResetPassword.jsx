@@ -80,7 +80,7 @@ export function ResetPassword() {
       />
 
       {/* Heading */}
-      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--color-text-primary)' }}>
+      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
         Set New Password
       </h1>
       <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
@@ -90,10 +90,10 @@ export function ResetPassword() {
       {/* Messages */}
       {message && (
         <div
-          className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
+          className="w-full max-w-sm mb-4 p-4 text-sm font-medium"
           style={message.type === 'error'
-            ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }
-            : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }
+            ? { borderRadius: '4px', background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }
+            : { borderRadius: '4px', background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }
           }
         >
           {message.text}
@@ -123,8 +123,8 @@ export function ResetPassword() {
               required
               autoFocus
               minLength={6}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+              className="w-full px-4 py-3 focus:outline-none transition-colors"
+              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
             />
           </div>
 
@@ -139,16 +139,16 @@ export function ResetPassword() {
               placeholder="Enter password again"
               required
               minLength={6}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+              className="w-full px-4 py-3 focus:outline-none transition-colors"
+              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="w-full px-6 py-4 font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
           >
             {loading ? 'Updating...' : 'Update Password'}
           </button>
@@ -157,8 +157,8 @@ export function ResetPassword() {
         <div className="w-full max-w-sm">
           <button
             onClick={() => navigate('/login')}
-            className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="w-full px-6 py-4 font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', borderRadius: '4px' }}
           >
             Back to Sign In
           </button>

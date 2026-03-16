@@ -178,45 +178,38 @@ export function Map() {
         >
           {/* Fixed header: search + chips */}
           <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
-            {/* Chalkboard header */}
-            <div className="px-4 pt-4 pb-1" style={{ textAlign: 'center' }}>
-              <h2 style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '36px',
-                fontWeight: 700,
-                color: 'var(--color-text-primary)',
-                letterSpacing: '0.04em',
-                lineHeight: 1,
-              }}>
-                What&rsquo;s <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-              </h2>
-              <p style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '16px',
-                fontWeight: 700,
-                color: 'var(--color-text-tertiary)',
-                marginTop: '2px',
-                letterSpacing: '0.15em',
-              }}>
-                Martha&rsquo;s Vineyard
-              </p>
+            {/* Editorial masthead */}
+            <div style={{
+              textAlign: 'center',
+              padding: '16px 16px 12px',
+              borderBottom: '3px double var(--color-text-primary)',
+            }}>
               <div style={{
-                width: '50px',
-                height: '2px',
-                background: 'var(--color-primary)',
-                opacity: 0.3,
-                margin: '8px auto 0',
-                borderRadius: '1px',
-              }} />
+                fontSize: '8px',
+                letterSpacing: '0.4em',
+                textTransform: 'uppercase',
+                color: 'var(--color-text-tertiary)',
+                marginBottom: '2px',
+              }}>
+                Est. 2026 &bull; Martha&rsquo;s Vineyard
+              </div>
+              <h2 style={{
+                fontFamily: 'var(--font-headline)',
+                fontSize: '24px',
+                fontWeight: 900,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+                margin: 0,
+              }}>
+                What&rsquo;s Good Here
+              </h2>
             </div>
 
             {/* Search bar */}
-            <div className="px-4 pt-2 pb-2" style={{
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            }}>
+            <div className="px-4 pt-2 pb-2">
               <div style={{
-                borderRadius: '14px',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+                borderRadius: '4px',
               }}>
                 <DishSearch
                   loading={false}
@@ -227,12 +220,15 @@ export function Map() {
                     <button
                       onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
                       aria-label={'Search radius: ' + radius + ' miles'}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                      className="flex items-center gap-1 px-2 py-1 font-bold flex-shrink-0"
                       style={{
                         fontSize: '12px',
                         background: 'var(--color-bg)',
                         color: 'var(--color-text-secondary)',
                         border: '1px solid var(--color-divider)',
+                        borderRadius: '2px',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
                         cursor: 'pointer',
                       }}
                     >
@@ -271,16 +267,15 @@ export function Map() {
               overscrollBehavior: 'contain',
             }}
           >
-            {/* Section title — chalk divider */}
+            {/* Section title — editorial divider */}
             <div className="px-4 pt-2 pb-2">
               <div className="flex items-center gap-3">
                 <h2 style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '26px',
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '18px',
                   fontWeight: 700,
-                  color: 'var(--color-primary)',
-                  letterSpacing: '0.06em',
-                  lineHeight: 1,
+                  fontStyle: 'italic',
+                  color: 'var(--color-text-primary)',
                   whiteSpace: 'nowrap',
                 }}>
                   {listTitle}
@@ -288,8 +283,7 @@ export function Map() {
                 <div style={{
                   flex: 1,
                   height: '1px',
-                  background: 'linear-gradient(to right, var(--color-primary), transparent)',
-                  opacity: 0.2,
+                  background: 'var(--color-divider)',
                 }} />
               </div>
             </div>
@@ -323,8 +317,8 @@ export function Map() {
                       marginTop: '8px',
                       background: 'none',
                       border: '1.5px solid var(--color-divider)',
-                      borderRadius: '10px',
-                      color: 'var(--color-accent-gold)',
+                      borderRadius: '4px',
+                      color: 'var(--color-text-secondary)',
                       fontSize: '14px',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -392,8 +386,7 @@ export function Map() {
             <div className="flex items-center gap-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
               <MapZoomButton label="Zoom in" direction="in" mapRef={mapRef} />
               <div className="flex-1" style={{
-                borderRadius: '14px',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+                borderRadius: '4px',
               }}>
                 <DishSearch
                   loading={false}
@@ -404,12 +397,15 @@ export function Map() {
                     <button
                       onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
                       aria-label={'Search radius: ' + radius + ' miles'}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                      className="flex items-center gap-1 px-2 py-1 font-bold flex-shrink-0"
                       style={{
                         fontSize: '12px',
                         background: 'var(--color-bg)',
                         color: 'var(--color-text-secondary)',
                         border: '1px solid var(--color-divider)',
+                        borderRadius: '2px',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
                         cursor: 'pointer',
                       }}
                     >
@@ -429,16 +425,17 @@ export function Map() {
       {mode === 'list' && (
         <button
           onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
-          className="fixed right-4 flex items-center gap-2 px-5 py-3.5 rounded-full active:scale-95 transition-all"
+          className="fixed right-4 flex items-center gap-2 px-5 py-3.5 active:scale-95 transition-all"
           style={{
             bottom: 'calc(80px + env(safe-area-inset-bottom))',
             zIndex: 40,
+            borderRadius: '4px',
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: '14px',
             fontWeight: 700,
             letterSpacing: '0.02em',
-            boxShadow: '0 4px 20px rgba(244, 208, 63, 0.25)',
+            boxShadow: '0 4px 12px rgba(196, 71, 42, 0.3)',
           }}
         >
           <Plus size={18} weight="bold" />
@@ -484,10 +481,9 @@ function MapZoomButton({ label, direction, mapRef }) {
       style={{
         width: '40px',
         height: '40px',
-        borderRadius: '12px',
+        borderRadius: '4px',
         background: 'var(--color-surface-elevated)',
-        border: 'none',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.10)',
+        border: '1.5px solid var(--color-divider)',
         fontSize: '20px',
         fontWeight: 700,
         color: 'var(--color-text-primary)',

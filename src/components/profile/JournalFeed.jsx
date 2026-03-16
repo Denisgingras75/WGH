@@ -27,14 +27,18 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
 
   if (loading) {
     return (
-      <div className="space-y-3 p-4">
+      <div className="px-4">
         {[0, 1, 2].map(function (i) {
           return (
             <div
               key={i}
               data-testid="journal-skeleton"
-              className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-surface-elevated)' }}
+              className="animate-pulse"
+              style={{
+                height: '60px',
+                borderBottom: '1px solid var(--color-divider)',
+                background: 'var(--color-surface-elevated)',
+              }}
             />
           )
         })}
@@ -73,30 +77,22 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
 
   if (entries.length === 0) {
     return (
-      <div className="p-4">
-        <div
-          className="rounded-2xl border p-8 text-center"
-          style={{
-            background: 'var(--color-card)',
-            borderColor: 'var(--color-divider)',
-          }}
+      <div className="px-4 py-8 text-center">
+        <p
+          className="font-semibold"
+          style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}
         >
-          <p
-            className="font-semibold"
-            style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}
-          >
-            No dishes here yet
-          </p>
-          <p
-            className="mt-1"
-            style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}
-          >
-            {activeShelf === 'good-here' && "Dishes you'd order again will show up here"}
-            {activeShelf === 'not-good-here' && "Dishes that weren't good will show up here"}
-            {activeShelf === 'heard' && "Save dishes you want to try later"}
-            {activeShelf === 'all' && "Start rating dishes to build your food journal"}
-          </p>
-        </div>
+          No dishes here yet
+        </p>
+        <p
+          className="mt-1"
+          style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}
+        >
+          {activeShelf === 'good-here' && "Dishes you'd order again will show up here"}
+          {activeShelf === 'not-good-here' && "Dishes that weren't good will show up here"}
+          {activeShelf === 'heard' && "Save dishes you want to try later"}
+          {activeShelf === 'all' && "Start rating dishes to build your food journal"}
+        </p>
       </div>
     )
   }
@@ -106,7 +102,7 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
   var remaining = entries.length - visibleCount
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="px-4">
       {visibleEntries.map(function (entry) {
         var key = entry.variant + '-' + (entry.dish.dish_id || entry.dish.id)
         return (
@@ -121,12 +117,12 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
       {hasMore && (
         <button
           onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
-          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+          className="w-full py-3 font-semibold text-center transition-all active:scale-[0.98]"
           style={{
             fontSize: '14px',
             color: 'var(--color-accent-gold)',
-            background: 'var(--color-card)',
-            border: '1.5px solid var(--color-divider)',
+            background: 'transparent',
+            borderBottom: '1px solid var(--color-divider)',
           }}
         >
           Show More ({remaining > PAGE_SIZE ? PAGE_SIZE : remaining} more)
