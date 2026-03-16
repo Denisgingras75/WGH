@@ -803,9 +803,6 @@ export function Dish() {
                         }}>
                           {formatScore10(vote.rating_10)}
                         </span>
-                        <span style={{ fontSize: thumbSize + 'px', marginTop: '-2px' }}>
-                          {vote.would_order_again ? '👍' : '👎'}
-                        </span>
                       </Link>
                     )
                   })}
@@ -876,12 +873,19 @@ export function Dish() {
               </div>
             )}
 
-            {/* Reviews feed */}
-            {reviews.length > 0 && (
+            {/* Reviews feed — exclude friends (shown in bubbles) and own review */}
+            {(function () {
+              var friendIds = new Set(friendsVotes.map(function (v) { return v.user_id }))
+              var filteredReviews = reviews.filter(function (r) {
+                if (user && r.user_id === user.id) return false
+                if (friendIds.has(r.user_id)) return false
+                return true
+              })
+              return filteredReviews.length > 0 && (
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-bold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    Reviews ({reviews.length})
+                    Reviews ({filteredReviews.length})
                   </h3>
                   <TrustSummary
                     verifiedCount={reviews.filter(function (r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }).length}
@@ -889,7 +893,7 @@ export function Dish() {
                   />
                 </div>
                 <div className="space-y-4">
-                  {reviews.map(function (review) {
+                  {filteredReviews.map(function (review) {
                     var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
                     return (
                       <div
@@ -959,7 +963,8 @@ export function Dish() {
                   })}
                 </div>
               </div>
-            )}
+              )
+            })()}
 
             {/* No reviews message */}
             {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
