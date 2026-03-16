@@ -203,9 +203,11 @@ export function RestaurantDetail() {
             <h2
               className="font-bold truncate"
               style={{
+                fontFamily: "'Amatic SC', cursive",
                 color: 'var(--color-text-primary)',
-                fontSize: '20px',
-                letterSpacing: '-0.02em',
+                fontSize: '32px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
               }}
             >
               {restaurant.name}
@@ -405,8 +407,8 @@ export function RestaurantDetail() {
             style={{ background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)' }}
           />
           <h3
-            className="text-sm font-semibold mb-3 uppercase tracking-wider"
-            style={{ color: 'var(--color-text-tertiary)' }}
+            className="font-semibold mb-3"
+            style={{ fontFamily: "'Amatic SC', cursive", fontSize: '24px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}
           >
             Happening Here
           </h3>

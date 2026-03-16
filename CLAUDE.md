@@ -237,7 +237,22 @@ export function useFoo(params) {
 | CSS variables | `--color-*` prefix | `var(--color-primary)` |
 | Use "favorites" not "saved" | Database table is `favorites` | `useFavorites`, `isFavorite` |
 
-### 4.6 Design Tokens
+### 4.6 Typography
+Two-font system loaded via Google Fonts in `index.html`. Amatic SC for display, Outfit for body.
+
+| Font | Role | Weights | CSS |
+|------|------|---------|-----|
+| **Amatic SC** | Display: brand name, section headers, page titles, menu sections | 700 | `'Amatic SC', cursive` |
+| **Outfit** | Body: dish names, ratings, buttons, inputs, all body text | 400-800 | Inherited from `body` in `index.css` |
+| **SF Mono** | Technical: Jitter badges only | 700 | `'SF Mono', 'Fira Code', monospace` |
+
+**Rule:** Amatic SC = section/page headings (things that name a place, category, or section). Outfit = data, actions, body text (things you read to make decisions or interact with).
+
+**Brand header pattern:** `What's <span gold>Good</span> Here` — all in Amatic SC, "Good" gets `var(--color-accent-gold)`.
+
+**Removed:** DM Sans, Cormorant, Aglet Sans (Typekit). Do not re-introduce these fonts.
+
+### 4.7 Design Tokens
 Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` for brand tokens so rebranding is easy. One-off colors in SVGs, map markers, or illustrations can use hex directly.
 
 
@@ -261,7 +276,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `--color-danger` | `#DC2626` | Error states |
 | `--color-success` | `#16A34A` | Success states |
 
-### 4.7 Constants & Configuration
+### 4.8 Constants & Configuration
 - **`MIN_VOTES_FOR_RANKING` = 5** — `src/constants/app.js` — dishes below this show as "Early"
 - **`MAX_REVIEW_LENGTH` = 200** — `src/constants/app.js` — enforced client + DB constraint
 - **`MIN_VOTES_FOR_VALUE` = 8** — `src/constants/app.js` — value score eligibility
@@ -276,7 +291,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 - **Jitter tiers** — `src/constants/jitter.js` — `JITTER_TIERS`, `getConsumerTier()`
 - **Search suggestions** — `src/constants/searchSuggestions.js` — curated search prompts
 
-### 4.8 localStorage Keys
+### 4.9 localStorage Keys
 | Key | Constant | Purpose |
 |---|---|---|
 | `whats_good_here_pending_vote` | (storage.js) | Vote saved before auth redirect |
@@ -288,7 +303,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `whats-good-here-location-permission` | `LOCATION_PERMISSION` | Geolocation permission state |
 | `whats-good-here-email` | `EMAIL_CACHE` | Cached email for auth |
 
-### 4.9 All Hooks (check before building new ones)
+### 4.10 All Hooks (check before building new ones)
 | Hook | Purpose |
 |---|---|
 | `useDish` | Single dish by ID |
@@ -312,7 +327,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `useUserVotes` | User vote history with rating stats |
 | `useVote` | Vote submission with rating, review, duplicate prevention |
 
-### 4.10 All API Modules
+### 4.11 All API Modules
 | Module | Key methods |
 |---|---|
 | `dishesApi` | `getRankedDishes`, `getDishesForRestaurant`, `search`, `getMapDishes`, `getVariants`, `getTrending`, `createDish` |
@@ -332,7 +347,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `placesApi` | `autocomplete`, `discoverNearby`, `getDetails` (via Edge Functions) |
 | `jitterApi` | `getMyProfile`, `getTrustBadgeType`, `attestReview`, `joinWaitlist` |
 
-### 4.11 Key Supabase RPCs
+### 4.12 Key Supabase RPCs
 - `get_ranked_dishes` — Main Browse feed (ranked by votes, distance, variants, value score)
 - `get_restaurant_dishes` — Dishes for a specific restaurant
 - `get_dish_variants` — Variants/sizes for a dish
@@ -353,7 +368,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 - `get_jitter_badges` — Jitter Protocol trust badges
 - `get_unseen_reveals` / `mark_reveals_seen` — Rating identity reveal system
 
-### 4.12 Supabase Edge Functions (10)
+### 4.13 Supabase Edge Functions (10)
 | Function | Purpose |
 |---|---|
 | `discover-restaurants` | Google Places discovery pipeline |
@@ -367,7 +382,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `seed-reviews` | AI review generation (dev utility) |
 | `backfill-restaurants` | Data migration tool |
 
-### 4.13 Routes (18 pages, all lazy-loaded via `lazyWithRetry()`)
+### 4.14 Routes (18 pages, all lazy-loaded via `lazyWithRetry()`)
 | Route | Page | Auth |
 |---|---|---|
 | `/` | Map (dual-mode list/map homepage) | No |
@@ -390,14 +405,14 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 | `/jitter` | JitterLanding | No |
 | `*` | NotFound | No |
 
-### 4.14 File Organization
+### 4.15 File Organization
 - **Storage helpers go in `src/lib/storage.js`** — not scattered in components
 - **Extract components when files exceed ~400 lines** — keep pages focused on orchestration
 - **Use barrel exports** — import from `'../components/home'` not individual files
 - **Delete unused code immediately** — don't let dead code accumulate
 - **Component subdirectories match pages** — `components/browse/` for Browse page components
 
-### 4.15 Deployment
+### 4.16 Deployment
 - **CSP in `vercel.json`** — external resources need `connect-src` too. Add new external domains to both `img-src` and `connect-src`.
 - **OG images** — `api/og-image.ts` generates social share images server-side.
 - **Share handler** — `api/share.ts` redirects social bot crawlers.

@@ -499,7 +499,7 @@ export function Browse() {
           <div className="flex justify-center pt-4 pb-10">
             <span
               className="text-[11px] font-semibold tracking-[0.2em] uppercase"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}
             >
               Categories
             </span>
@@ -650,7 +650,7 @@ export function Browse() {
           <div className="px-4 py-4 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}>
                   {debouncedSearchQuery
                     ? `Best ${formatSearchQuery(debouncedSearchQuery)} ${town ? `in ${town}` : 'near you'}`
                     : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'}${town ? ` in ${town}` : ''}`

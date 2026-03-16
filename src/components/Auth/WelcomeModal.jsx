@@ -119,17 +119,17 @@ export function WelcomeModal() {
           {/* Brand name */}
           <h1
             style={{
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Amatic SC', cursive",
               fontSize: '42px',
               fontWeight: 700,
-              color: 'var(--color-primary)',
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em',
+              color: 'var(--color-text-primary)',
+              lineHeight: 1,
+              letterSpacing: '0.04em',
               position: 'relative',
               zIndex: 1,
             }}
           >
-            What's Good Here
+            What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
           </h1>
 
           {/* Welcome line */}

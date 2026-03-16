@@ -127,9 +127,11 @@ export function Restaurants() {
           <h2
             className="font-bold"
             style={{
+              fontFamily: "'Amatic SC', cursive",
               color: 'var(--color-primary)',
-              fontSize: '22px',
-              letterSpacing: '-0.01em',
+              fontSize: '32px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
             }}
           >
             Restaurants
@@ -342,9 +344,11 @@ export function Restaurants() {
             <h2
               className="font-bold mb-3"
               style={{
+                fontFamily: "'Amatic SC', cursive",
                 color: 'var(--color-text-primary)',
-                fontSize: '16px',
-                letterSpacing: '-0.01em',
+                fontSize: '28px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
               }}
             >
               Discover more restaurants

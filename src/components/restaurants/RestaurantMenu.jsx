@@ -247,9 +247,11 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
           <h3
             className="font-bold"
             style={{
+              fontFamily: "'Amatic SC', cursive",
               color: 'var(--color-text-primary)',
-              fontSize: '16px',
-              letterSpacing: '-0.02em',
+              fontSize: '22px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
             }}
           >
             {activeSection}

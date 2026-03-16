@@ -76,16 +76,16 @@ export function WelcomeSplash({ onComplete }) {
         <WghLogo size={52} color="#FFFFFF" />
         <h1
           style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: '36px',
+            fontFamily: "'Amatic SC', cursive",
+            fontSize: '42px',
             fontWeight: 700,
             color: 'var(--color-text-on-primary)',
-            letterSpacing: '-0.02em',
+            letterSpacing: '0.04em',
             lineHeight: 1,
             whiteSpace: 'nowrap',
           }}
         >
-          What's Good Here
+          What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
         </h1>
       </div>
     </div>

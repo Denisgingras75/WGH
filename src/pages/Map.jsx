@@ -180,10 +180,35 @@ export function Map() {
             zIndex: 1,
           }}
         >
-          {/* Fixed header: search + chips */}
+          {/* Fixed header: brand + search + chips */}
           <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
+            {/* Brand header */}
+            <div className="text-center pt-4 pb-1">
+              <h2 style={{
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '42px',
+                fontWeight: 700,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+                margin: 0,
+              }}>
+                What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
+              </h2>
+              <p style={{
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '16px',
+                fontWeight: 700,
+                color: 'var(--color-text-tertiary)',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                margin: '2px 0 0',
+              }}>
+                Martha's Vineyard
+              </p>
+            </div>
             {/* Search bar */}
-            <div className="px-4 pt-3 pb-2" style={{
+            <div className="px-4 pt-2 pb-2" style={{
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}>
               <div style={{
@@ -248,10 +273,11 @@ export function Map() {
             {/* Section title */}
             <div className="px-4 pt-2 pb-2">
               <h2 style={{
-                fontSize: '17px',
-                fontWeight: 800,
+                fontFamily: "'Amatic SC', cursive",
+                fontSize: '28px',
+                fontWeight: 700,
                 color: 'var(--color-text-primary)',
-                letterSpacing: '-0.02em',
+                letterSpacing: '0.02em',
               }}>
                 {listTitle}
               </h2>

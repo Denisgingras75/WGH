@@ -261,9 +261,11 @@ export function Profile() {
                 <h2
                   className="font-bold mb-2.5"
                   style={{
+                    fontFamily: "'Amatic SC', cursive",
                     color: 'var(--color-text-primary)',
-                    fontSize: '14px',
-                    letterSpacing: '-0.01em',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
                   }}
                 >
                   Recent
@@ -300,9 +302,11 @@ export function Profile() {
                 <h2
                   className="font-bold mb-2.5"
                   style={{
+                    fontFamily: "'Amatic SC', cursive",
                     color: 'var(--color-text-primary)',
-                    fontSize: '14px',
-                    letterSpacing: '-0.01em',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
                   }}
                 >
                   Highlights
@@ -465,9 +469,11 @@ export function Profile() {
               <h2
                 className="font-bold"
                 style={{
+                  fontFamily: "'Amatic SC', cursive",
                   color: 'var(--color-text-primary)',
-                  fontSize: '22px',
-                  letterSpacing: '-0.02em',
+                  fontSize: '32px',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
                 }}
               >
                 Sign in <span style={{ color: 'var(--color-accent-gold)' }}>to vote</span>

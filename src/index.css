@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+/* Fonts loaded via index.html link tag for faster rendering */
 
 /* ===========================
    NProgress Route Transition Bar
@@ -126,7 +126,7 @@
     min-height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
     background: var(--color-surface);
     color: var(--color-text-primary);
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overscroll-behavior-y: none;
   }
 
