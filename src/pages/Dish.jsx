@@ -732,8 +732,18 @@ export function Dish() {
               </div>
             )}
 
-            {/* Friends who rated this — avatar bubble scroll */}
-            {friendsVotes.length > 0 && (
+            {/* Friends who rated this — avatar bubble scroll, scales with count */}
+            {friendsVotes.length > 0 && (function () {
+              var count = friendsVotes.length
+              // Scale down as more friends vote: 1-3 big, 4-5 medium, 6+ compact
+              var avatarSize = count <= 3 ? 64 : count <= 5 ? 48 : 40
+              var avatarFont = count <= 3 ? 24 : count <= 5 ? 18 : 15
+              var nameSize = count <= 3 ? 13 : 11
+              var scoreSize = count <= 3 ? 20 : count <= 5 ? 16 : 14
+              var thumbSize = count <= 3 ? 14 : 12
+              var minWidth = count <= 3 ? 80 : count <= 5 ? 64 : 56
+              var gap = count <= 3 ? 20 : count <= 5 ? 16 : 12
+              return (
               <div className="mb-4">
                 <h3 style={{
                   fontFamily: "'Amatic SC', cursive",
@@ -746,8 +756,8 @@ export function Dish() {
                   Friends Who Rated This
                 </h3>
                 <div
-                  className="flex gap-4 overflow-x-auto pb-2"
-                  style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+                  className={'flex overflow-x-auto pb-2' + (count <= 3 ? ' justify-center' : '')}
+                  style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
                 >
                   {friendsVotes.map(function (vote) {
                     var avatarColors = ['#E4440A', '#3B82F6', '#9333EA', '#16A34A', '#F59E0B', '#EC4899', '#06B6D4']
@@ -757,26 +767,26 @@ export function Dish() {
                         key={vote.user_id}
                         to={'/user/' + vote.user_id}
                         className="flex flex-col items-center flex-shrink-0"
-                        style={{ minWidth: '64px' }}
+                        style={{ minWidth: minWidth + 'px' }}
                       >
                         <div
                           className="rounded-full flex items-center justify-center font-bold"
                           style={{
-                            width: '48px',
-                            height: '48px',
+                            width: avatarSize + 'px',
+                            height: avatarSize + 'px',
                             background: avatarColors[colorIndex],
                             color: 'white',
-                            fontSize: '18px',
+                            fontSize: avatarFont + 'px',
                           }}
                         >
                           {vote.display_name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <span style={{
-                          fontSize: '11px',
+                          fontSize: nameSize + 'px',
                           fontWeight: 600,
                           color: 'var(--color-text-secondary)',
                           marginTop: '4px',
-                          maxWidth: '64px',
+                          maxWidth: minWidth + 'px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -785,7 +795,7 @@ export function Dish() {
                           {vote.display_name || 'Anon'}
                         </span>
                         <span style={{
-                          fontSize: '16px',
+                          fontSize: scoreSize + 'px',
                           fontWeight: 800,
                           letterSpacing: '-0.02em',
                           color: getRatingColor(vote.rating_10),
@@ -793,7 +803,7 @@ export function Dish() {
                         }}>
                           {formatScore10(vote.rating_10)}
                         </span>
-                        <span style={{ fontSize: '12px', marginTop: '-2px' }}>
+                        <span style={{ fontSize: thumbSize + 'px', marginTop: '-2px' }}>
                           {vote.would_order_again ? '👍' : '👎'}
                         </span>
                       </Link>
@@ -801,7 +811,8 @@ export function Dish() {
                   })}
                 </div>
               </div>
-            )}
+              )
+            })()}
 
             {/* Smart Snippet — the one-liner social proof */}
             {smartSnippet && smartSnippet.review_text && (
