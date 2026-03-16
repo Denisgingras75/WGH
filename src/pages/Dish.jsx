@@ -788,67 +788,70 @@ export function Dish() {
               </div>
             )}
 
-            {/* Friends who rated this */}
+            {/* Friends who rated this — avatar bubble scroll */}
             {friendsVotes.length > 0 && (
-              <div
-                className="mb-4 p-4 rounded-xl"
-                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-              >
-                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Friends who rated this
+              <div className="mb-4">
+                <h3 style={{
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: '12px',
+                }}>
+                  Friends Who Rated This
                 </h3>
-                <div className="space-y-3">
+                <div
+                  className="flex gap-4 overflow-x-auto pb-2"
+                  style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+                >
                   {friendsVotes.map(function (vote) {
-                    var categoryLabel = CATEGORY_INFO[dish.category]?.label || dish.category
-                    var expertiseLabel = vote.category_expertise === 'authority'
-                      ? categoryLabel + ' Authority'
-                      : vote.category_expertise === 'specialist'
-                        ? categoryLabel + ' Specialist'
-                        : null
-
+                    var avatarColors = ['#E4440A', '#3B82F6', '#9333EA', '#16A34A', '#F59E0B', '#EC4899', '#06B6D4']
+                    var colorIndex = (vote.display_name || '').charCodeAt(0) % avatarColors.length
                     return (
                       <Link
                         key={vote.user_id}
                         to={'/user/' + vote.user_id}
-                        className="flex items-center gap-3 p-2 -mx-2 rounded-lg"
+                        className="flex flex-col items-center flex-shrink-0"
+                        style={{ minWidth: '64px' }}
                       >
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                          className="rounded-full flex items-center justify-center font-bold"
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            background: avatarColors[colorIndex],
+                            color: 'white',
+                            fontSize: '18px',
+                          }}
                         >
                           {vote.display_name?.charAt(0).toUpperCase() || '?'}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                              {vote.display_name || 'Anonymous'}
-                            </p>
-                            {expertiseLabel && (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
-                                style={{
-                                  background: vote.category_expertise === 'authority' ? 'var(--color-primary-muted)' : 'var(--color-success-muted)',
-                                  color: vote.category_expertise === 'authority' ? 'var(--color-purple)' : 'var(--color-blue)',
-                                }}
-                              >
-                                {expertiseLabel}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                            {vote.would_order_again ? <><ThumbsUpIcon size={20} /> Would order again</> : <><ThumbsDownIcon size={20} /> Would skip</>}
-                            {friendsCompat[vote.user_id] != null && (
-                              <span className="ml-1.5 font-medium" style={{ color: getCompatColor(friendsCompat[vote.user_id]) }}>
-                                &middot; {friendsCompat[vote.user_id]}% match
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold" style={{ color: getRatingColor(vote.rating_10) }}>
-                            {formatScore10(vote.rating_10)}
-                          </span>
-                        </div>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: 'var(--color-text-secondary)',
+                          marginTop: '4px',
+                          maxWidth: '64px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          textAlign: 'center',
+                        }}>
+                          {vote.display_name || 'Anon'}
+                        </span>
+                        <span style={{
+                          fontSize: '16px',
+                          fontWeight: 800,
+                          letterSpacing: '-0.02em',
+                          color: getRatingColor(vote.rating_10),
+                          marginTop: '2px',
+                        }}>
+                          {formatScore10(vote.rating_10)}
+                        </span>
+                        <span style={{ fontSize: '12px', marginTop: '-2px' }}>
+                          {vote.would_order_again ? '👍' : '👎'}
+                        </span>
                       </Link>
                     )
                   })}
