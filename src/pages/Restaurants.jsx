@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
@@ -12,6 +12,12 @@ import { placesApi } from '../api/placesApi'
 import { logger } from '../utils/logger'
 import { MagnifyingGlass, CaretDown, Plus } from '@phosphor-icons/react'
 
+var RestaurantMap = lazy(function () {
+  return import('../components/restaurants/RestaurantMap').then(function (m) {
+    return { default: m.RestaurantMap }
+  })
+})
+
 export function Restaurants() {
   var user = useAuth().user
   var navigate = useNavigate()
@@ -22,6 +28,8 @@ export function Restaurants() {
   var permissionState = ctx.permissionState
   var requestLocation = ctx.requestLocation
 
+  var [mapCollapsed, setMapCollapsed] = useState(false)
+  var mapRef = useRef(null)
   var [restaurantTab, setRestaurantTab] = useState('open')
   var [searchQuery, setSearchQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
@@ -106,6 +114,55 @@ export function Restaurants() {
           Martha&rsquo;s Vineyard Dining Guide
         </div>
       </div>
+
+      {/* Map */}
+      <div style={{
+        height: mapCollapsed ? '0px' : '220px',
+        overflow: 'hidden',
+        transition: 'height 0.3s ease',
+        background: 'var(--color-surface)',
+      }}>
+        {!mapCollapsed && (
+          <Suspense fallback={
+            <div style={{ height: '220px', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>Loading map...</span>
+            </div>
+          }>
+            <RestaurantMap
+              mode="restaurant"
+              restaurants={filteredRestaurants}
+              userLocation={location}
+              radiusMi={radius}
+              permissionGranted={permissionState === 'granted'}
+              compact
+              mapRef={mapRef}
+              onSelectRestaurant={function(restaurantId) {
+                navigate('/restaurants/' + restaurantId)
+              }}
+            />
+          </Suspense>
+        )}
+      </div>
+
+      {/* Map toggle */}
+      <button
+        onClick={function() { setMapCollapsed(!mapCollapsed) }}
+        className="w-full flex items-center justify-center gap-1"
+        style={{
+          padding: '6px 0',
+          borderBottom: '1px solid var(--color-divider)',
+          background: 'var(--color-bg)',
+          fontSize: '10px',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-tertiary)',
+          cursor: 'pointer',
+          border: 'none',
+        }}
+      >
+        {mapCollapsed ? '\u25BC Show Map' : '\u25B2 Hide Map'}
+      </button>
 
       {/* Search + Radius */}
       <div className="px-4 pt-4 pb-3">
