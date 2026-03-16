@@ -63,6 +63,10 @@ export const DishListItem = memo(function DishListItem({
   const photoUrl = dish.photo_url
   const valuePercentile = dish.value_percentile
   const category = dish.category
+  const toastSlug = dish.toast_slug
+  const orderUrl = dish.order_url
+  const restaurantLat = dish.restaurant_lat || dish.lat
+  const restaurantLng = dish.restaurant_lng || dish.lng
 
   var handleClick = onClick || function () { navigate('/dish/' + dishId) }
 
@@ -188,6 +192,43 @@ export const DishListItem = memo(function DishListItem({
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
           </p>
         </div>
+        {/* Action buttons — Order / Directions */}
+        {(toastSlug || orderUrl || restaurantLat) && (
+          <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
+            {(toastSlug || orderUrl) && (
+              <a
+                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : orderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={function (e) { e.stopPropagation() }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'white',
+                  fontSize: '10px',
+                }}
+              >
+                Order Now
+              </a>
+            )}
+            {restaurantLat && restaurantLng && (
+              <a
+                href={'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={function (e) { e.stopPropagation() }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                style={{
+                  border: '1px solid var(--color-divider)',
+                  color: 'var(--color-text-secondary)',
+                  fontSize: '10px',
+                }}
+              >
+                Directions
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Rating + votes */}

@@ -9,6 +9,7 @@ import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
 import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
+import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { logger } from '../utils/logger'
 
 export function Restaurants() {
@@ -24,6 +25,7 @@ export function Restaurants() {
   var [restaurantTab, setRestaurantTab] = useState('open')
   var [searchQuery, setSearchQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
+  var [addModalOpen, setAddModalOpen] = useState(false)
 
   // Fetch restaurants (distance-filtered when location available)
   var restData = useRestaurants(location, radius, permissionState)
@@ -389,6 +391,29 @@ export function Restaurants() {
         onClose={function () { setShowRadiusSheet(false) }}
         radius={radius}
         onRadiusChange={setRadius}
+      />
+
+      {/* Floating Add Restaurant button */}
+      <button
+        onClick={function () { setAddModalOpen(true) }}
+        className="fixed right-4 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
+        style={{
+          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          zIndex: 40,
+          background: 'var(--color-accent-gold)',
+          color: 'white',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        }}
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Restaurant
+      </button>
+
+      <AddRestaurantModal
+        isOpen={addModalOpen}
+        onClose={function () { setAddModalOpen(false) }}
       />
 
     </div>
