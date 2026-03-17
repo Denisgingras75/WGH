@@ -12,7 +12,7 @@ import { CategoryChips } from '../components/CategoryChips'
 import { EmptyState } from '../components/EmptyState'
 import { LocationBanner } from '../components/LocationBanner'
 import { ModeFAB } from '../components/ModeFAB'
-import { LocalListsSection, Top10Scroll, CategoryExpand } from '../components/home'
+import { LocalListsSection, Top10Scroll, CategoryExpand, CategoryIcon } from '../components/home'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -235,7 +235,7 @@ export function Map() {
                 lineHeight: 1,
                 margin: 0,
               }}>
-                What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
+                What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
               </h2>
               <p style={{
                 fontFamily: "'Amatic SC', cursive",
@@ -348,7 +348,7 @@ export function Map() {
                     fontFamily: "'Amatic SC', cursive",
                     fontSize: '26px',
                     fontWeight: 700,
-                    color: 'var(--color-text-primary)',
+                    color: 'var(--color-primary)',
                   }}>
                     Top Rated Nearby
                   </h2>
@@ -358,6 +358,68 @@ export function Map() {
                 </div>
                 <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
+                {/* Editorial callout — rotates by time of day */}
+                {(function () {
+                  var hour = new Date().getHours()
+                  var callout = hour < 11
+                    ? { category: 'breakfast', tag: 'Good Morning, MV', headline: 'The island runs on breakfast. Here\u2019s where to start your day.', cta: 'See the best breakfasts' }
+                    : hour < 16
+                      ? { category: 'lobster roll', tag: 'Top Searched', headline: 'The #1 food search on Martha\u2019s Vineyard? Best lobster roll.', cta: 'Check them all out' }
+                      : { category: 'pizza', tag: 'Tonight', headline: 'Everyone\u2019s asking the same thing tonight: where\u2019s the best pizza?', cta: 'Find the best pizza' }
+
+                  return (
+                    <button
+                      onClick={function () {
+                        setExpandedCategory(callout.category)
+                        setTimeout(function () {
+                          var el = document.getElementById('category-expand')
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }, 100)
+                      }}
+                      className="mx-4 mt-4 text-left active:scale-[0.98] transition-transform"
+                      style={{
+                        background: 'linear-gradient(135deg, #FFF9EE 0%, #FEF3E2 100%)',
+                        border: '1.5px solid rgba(196, 138, 18, 0.25)',
+                        borderRadius: '16px',
+                        padding: '14px 18px',
+                        width: 'calc(100% - 32px)',
+                      }}
+                    >
+                      <p style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-accent-gold)',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                          <polyline points="16 7 22 7 22 13" />
+                        </svg>
+                        {callout.tag}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <CategoryIcon categoryId={callout.category} size={56} />
+                        </div>
+                        <p style={{
+                          fontFamily: "'Amatic SC', cursive",
+                          fontSize: '24px',
+                          fontWeight: 700,
+                          color: 'var(--color-text-primary)',
+                          lineHeight: 1.15,
+                        }}>
+                          {callout.headline} <span style={{ color: 'var(--color-primary)', fontSize: '20px' }}>{callout.cta} &rarr;</span>
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })()}
+
                 {/* Category pills with expand */}
                 <div className="pt-4 pb-2">
                   <div className="flex items-baseline justify-between px-4 pb-2">
@@ -365,26 +427,33 @@ export function Map() {
                       fontFamily: "'Amatic SC', cursive",
                       fontSize: '26px',
                       fontWeight: 700,
-                      color: 'var(--color-text-primary)',
+                      color: 'var(--color-primary)',
                     }}>
                       Browse by Category
                     </h2>
                   </div>
                   <CategoryChips
+                    categories={BROWSE_CATEGORIES.filter(function (c) {
+                      var hour = new Date().getHours()
+                      var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+                      return c.id !== hideId
+                    })}
                     selected={expandedCategory}
                     onSelect={function (cat) {
                       setExpandedCategory(function (prev) { return prev === cat ? null : cat })
                     }}
-                    maxVisible={23}
+                    maxVisible={22}
                   />
                 </div>
 
                 {/* Category Expand — inline top 10 */}
                 {expandedCategory && (
+                  <div id="category-expand">
                   <CategoryExpand
                     categoryId={expandedCategory}
                     onClose={function () { setExpandedCategory(null) }}
                   />
+                  </div>
                 )}
 
                 {/* Local Lists */}

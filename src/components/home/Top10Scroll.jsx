@@ -14,7 +14,7 @@ export function Top10Scroll({ dishes }) {
     <div
       className="flex gap-2.5 overflow-x-auto pb-1"
       style={{
-        padding: '0 14px 4px',
+        padding: '6px 14px 6px 20px',
         WebkitOverflowScrolling: 'touch',
         scrollSnapType: 'x mandatory',
         scrollbarWidth: 'none',
