@@ -659,70 +659,7 @@ export function Dish() {
           </div>
 
           {/* ═══════════════════════════════════════════
-              LAYER 2: THE ACTION
-              Get there or order online. 3 seconds.
-              ═══════════════════════════════════════════ */}
-          <div className="px-3 pt-3">
-            <div className="flex gap-2">
-              {/* Order online button */}
-              {dish.website_url && (
-                <a
-                  href={dish.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => capture('order_link_clicked', {
-                    dish_id: dish.dish_id,
-                    dish_name: dish.dish_name,
-                    restaurant_id: dish.restaurant_id,
-                    restaurant_name: dish.restaurant_name,
-                  })}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                  }}
-                >
-                  Order Online
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* Review Flow */}
-          <div className="p-4">
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              <ReviewFlow
-                dishId={dish.dish_id}
-                dishName={dish.dish_name}
-                restaurantId={dish.restaurant_id}
-                restaurantName={dish.restaurant_name}
-                category={dish.category}
-                price={dish.price}
-                totalVotes={dish.total_votes}
-                yesVotes={dish.yes_votes}
-                percentWorthIt={dish.percent_worth_it}
-                isRanked={isRanked}
-                hasPhotos={allPhotos.length > 0}
-                onVote={handleVote}
-                onLoginRequired={handleLoginRequired}
-                onPhotoUploaded={handlePhotoUploaded}
-                onToggleFavorite={handleToggleSave}
-                isFavorite={isFavorite?.(dishId)}
-              />
-            </div>
-          </div>
-
-          {/* ═══════════════════════════════════════════
-              LAYER 3: THE EVIDENCE
+              LAYER 2: THE EVIDENCE
               Photos, reviews, social proof. For context.
               Lazy-loaded when user scrolls near.
               ═══════════════════════════════════════════ */}
@@ -1000,6 +937,68 @@ export function Dish() {
               </div>
             )}
 
+          </div>
+
+          {/* ═══════════════════════════════════════════
+              LAYER 3: THE ACTION
+              Order, directions, and vote — after evidence.
+              ═══════════════════════════════════════════ */}
+          <div className="px-3 pt-3">
+            <div className="flex gap-2">
+              {dish.website_url && (
+                <a
+                  href={dish.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => capture('order_link_clicked', {
+                    dish_id: dish.dish_id,
+                    dish_name: dish.dish_name,
+                    restaurant_id: dish.restaurant_id,
+                    restaurant_name: dish.restaurant_name,
+                  })}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: 'var(--color-text-on-primary)',
+                  }}
+                >
+                  Order Online
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Vote Flow — at the bottom, for people who've tried it */}
+          <div className="p-4">
+            <div
+              className="p-4 rounded-xl"
+              style={{
+                background: 'var(--color-surface-elevated)',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <ReviewFlow
+                dishId={dish.dish_id}
+                dishName={dish.dish_name}
+                restaurantId={dish.restaurant_id}
+                restaurantName={dish.restaurant_name}
+                category={dish.category}
+                price={dish.price}
+                totalVotes={dish.total_votes}
+                yesVotes={dish.yes_votes}
+                percentWorthIt={dish.percent_worth_it}
+                isRanked={isRanked}
+                hasPhotos={allPhotos.length > 0}
+                onVote={handleVote}
+                onLoginRequired={handleLoginRequired}
+                onPhotoUploaded={handlePhotoUploaded}
+                onToggleFavorite={handleToggleSave}
+                isFavorite={isFavorite?.(dishId)}
+              />
+            </div>
           </div>
         </>
       )}
