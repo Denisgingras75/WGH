@@ -1,6 +1,7 @@
 // WGH Icon System v2.0 — Flat vector food icons
 // Consistent outline weight, flat color fills, transparent backgrounds
 // See ICON-SPEC.md for the full system spec
+import { getDishNameIcon as getDishNameIconFn } from '../../constants/categories'
 
 const categoryIcons = {
   // === BROWSE CATEGORIES (19 of 23 have icons) ===
@@ -67,10 +68,9 @@ const defaultIcon = (
  * @param {string} color - fill color for SVG fallback (default 'currentColor')
  */
 export function CategoryIcon({ categoryId, dishName, size = 32, color = 'currentColor' }) {
-  var { getDishNameIcon } = require('../../constants/categories')
   var key = categoryId?.toLowerCase()
   // Try dish-name-specific icon first, then category icon
-  var iconSrc = getDishNameIcon(dishName) || categoryIcons[key]
+  var iconSrc = getDishNameIconFn(dishName) || categoryIcons[key]
 
   // Prefer webp/image icon when available
   if (iconSrc) {
