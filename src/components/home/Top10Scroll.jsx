@@ -14,12 +14,13 @@ export function Top10Scroll({ dishes }) {
     <div
       className="flex gap-2.5 overflow-x-auto pb-1"
       style={{
-        padding: '6px 14px 6px 20px',
+        padding: '8px 0',
         WebkitOverflowScrolling: 'touch',
-        scrollSnapType: 'x mandatory',
+        scrollSnapType: 'x proximity',
         scrollbarWidth: 'none',
       }}
     >
+      <div className="flex-shrink-0" style={{ minWidth: '2px' }} />
       {dishes.map(function (dish, i) {
         var rank = i + 1
         var rating = dish.avg_rating
@@ -48,7 +49,6 @@ export function Top10Scroll({ dishes }) {
               boxShadow: isChampion
                 ? '0 4px 16px rgba(196, 138, 18, 0.20)'
                 : 'none',
-              scrollSnapAlign: 'start',
               position: 'relative',
             }}
           >
@@ -116,6 +116,7 @@ export function Top10Scroll({ dishes }) {
           </button>
         )
       })}
+      <div className="flex-shrink-0" style={{ minWidth: '2px' }} />
     </div>
   )
 }
