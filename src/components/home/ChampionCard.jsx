@@ -19,13 +19,13 @@ export function ChampionCard({ dish }) {
       onClick={function () { navigate('/dish/' + dish.dish_id) }}
       className="w-full text-left active:scale-[0.98] transition-transform"
       style={{
-        background: 'var(--color-card)',
+        background: 'linear-gradient(135deg, #FFFDF8 0%, #FFF9EE 100%)',
         borderRadius: '20px',
         padding: '20px',
         position: 'relative',
         overflow: 'hidden',
-        border: '2.5px solid var(--color-medal-gold)',
-        boxShadow: '0 6px 28px rgba(196, 138, 18, 0.18), inset 0 0 0 1px rgba(232, 184, 32, 0.08)',
+        border: '3px solid var(--color-medal-gold)',
+        boxShadow: '0 8px 32px rgba(196, 138, 18, 0.25), 0 2px 8px rgba(0,0,0,0.06)',
       }}
     >
       {/* Subtle gold shimmer top-right */}
@@ -45,13 +45,13 @@ export function ChampionCard({ dish }) {
           fontFamily: "'Amatic SC', cursive",
           fontSize: '20px',
           fontWeight: 700,
-          color: 'var(--color-medal-gold)',
+          color: 'var(--color-primary)',
           letterSpacing: '0.06em',
           lineHeight: 1,
         }}>
-          #1 on the Island
+          #1 Nearby
         </span>
-        <div style={{ flex: 1, height: '1.5px', background: 'linear-gradient(to right, var(--color-medal-gold), transparent)', opacity: 0.3 }} />
+        <div style={{ flex: 1, height: '1.5px', background: 'linear-gradient(to right, var(--color-primary), transparent)', opacity: 0.3 }} />
       </div>
 
       {/* Icon + Info row */}

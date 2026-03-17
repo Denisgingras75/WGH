@@ -559,7 +559,7 @@ export function Dish() {
               {/* Category icon inline — only when no hero photo */}
               {!allPhotos.length && !dish.photo_url && (
                 <div className="flex-shrink-0">
-                  <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={72} />
+                  <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={88} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
@@ -821,9 +821,11 @@ export function Dish() {
             {/* Reviews feed — exclude friends (shown in bubbles) and own review */}
             {(function () {
               var friendIds = new Set(friendsVotes.map(function (v) { return v.user_id }))
+              var snippetId = smartSnippet && smartSnippet.id ? smartSnippet.id : null
               var filteredReviews = reviews.filter(function (r) {
                 if (user && r.user_id === user.id) return false
                 if (friendIds.has(r.user_id)) return false
+                if (snippetId && r.id === snippetId) return false
                 return true
               })
               return filteredReviews.length > 0 && (
