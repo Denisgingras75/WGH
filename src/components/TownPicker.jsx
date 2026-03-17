@@ -1,12 +1,17 @@
-import { ALL_TOWNS } from '../constants/towns'
+import { getTownsForRegion } from '../constants/towns'
+import { useLocationContext } from '../context/LocationContext'
 
 /**
  * TownPicker — lives inline in the category chips strip.
+ * Auto-detects region from GPS and shows relevant towns/neighborhoods.
  * Closed: soft rectangle with pin + town name inside.
  * Open: row of soft rectangles with town names inside.
  */
 export function TownPicker({ town, onTownChange, isOpen, onToggle }) {
-  var currentLabel = ALL_TOWNS.find(function (t) { return t.value === town })?.label || 'All Areas'
+  var { region } = useLocationContext()
+  var towns = getTownsForRegion(region)
+
+  var currentLabel = towns.find(function (t) { return t.value === town })?.label || towns[0]?.label || 'Nearby'
 
   var handleSelect = function (value) {
     onTownChange(value)
@@ -16,7 +21,7 @@ export function TownPicker({ town, onTownChange, isOpen, onToggle }) {
   if (isOpen) {
     return (
       <div className="flex items-center gap-2">
-        {ALL_TOWNS.map(function (option) {
+        {towns.map(function (option) {
           var isActive = option.value === town
           return (
             <button

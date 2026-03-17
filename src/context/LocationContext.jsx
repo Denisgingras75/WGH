@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { capture } from '../lib/analytics'
 import { logger } from '../utils/logger'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
+import { detectRegion, REGIONS } from '../constants/towns'
 
 // Default location: Martha's Vineyard center (between Vineyard Haven, Oak Bluffs, Edgartown)
 const DEFAULT_LOCATION = {
@@ -63,6 +64,16 @@ export function LocationProvider({ children }) {
       return newTown
     })
   }, [])
+  // Auto-detect region from coordinates
+  const [region, setRegion] = useState(() => detectRegion(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng))
+
+  // Update region whenever location changes
+  useEffect(() => {
+    if (location) {
+      setRegion(detectRegion(location.lat, location.lng))
+    }
+  }, [location])
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [permissionState, setPermissionState] = useState('prompt') // 'prompt' | 'granted' | 'denied' | 'unsupported'
@@ -186,6 +197,7 @@ export function LocationProvider({ children }) {
       setRadius,
       town,
       setTown,
+      region,
       loading,
       error,
       permissionState,
