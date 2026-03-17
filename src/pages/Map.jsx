@@ -174,6 +174,43 @@ export function Map() {
     return ranks
   }, [searchQuery, searchResults, mapDishes])
 
+  // Editorial: top rated restaurant (highest avg across ranked dishes, min 2 dishes)
+  var topRestaurant = useMemo(function () {
+    if (!allRanked || allRanked.length === 0) return null
+    var restaurants = {}
+    allRanked.forEach(function (d) {
+      if (!d.restaurant_name || !d.avg_rating) return
+      var rid = d.restaurant_id
+      if (!restaurants[rid]) {
+        restaurants[rid] = { name: d.restaurant_name, id: rid, ratings: [], count: 0 }
+      }
+      restaurants[rid].ratings.push(Number(d.avg_rating))
+      restaurants[rid].count++
+    })
+    var best = null
+    Object.keys(restaurants).forEach(function (rid) {
+      var r = restaurants[rid]
+      if (r.count < 2) return
+      var avg = r.ratings.reduce(function (a, b) { return a + b }, 0) / r.ratings.length
+      if (!best || avg > best.avg) {
+        best = { name: r.name, id: r.id, avg: Math.round(avg * 10) / 10, count: r.count }
+      }
+    })
+    return best
+  }, [allRanked])
+
+  // Editorial: most talked about dish (highest vote count)
+  var mostVotedDish = useMemo(function () {
+    if (!allRanked || allRanked.length === 0) return null
+    var top = null
+    allRanked.forEach(function (d) {
+      if (!top || (d.total_votes || 0) > (top.total_votes || 0)) {
+        top = d
+      }
+    })
+    return top
+  }, [allRanked])
+
   var rankingContext = useMemo(function () {
     if (searchQuery) return 'for \u201c' + searchQuery + '\u201d'
     if (activeLocalListName) return activeLocalListName + '\u2019s picks'
@@ -358,65 +395,125 @@ export function Map() {
                 </div>
                 <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
-                {/* Editorial callout — rotates by time of day */}
+                {/* Editorial stories — horizontal scroll */}
                 {(function () {
                   var hour = new Date().getHours()
-                  var callout = hour < 11
+                  var timeCallout = hour < 11
                     ? { category: 'breakfast', tag: 'Good Morning, MV', headline: 'The island runs on breakfast. Here\u2019s where to start your day.', cta: 'See the best breakfasts' }
                     : hour < 16
                       ? { category: 'lobster roll', tag: 'Top Searched', headline: 'The #1 food search on Martha\u2019s Vineyard? Best lobster roll.', cta: 'Check them all out' }
                       : { category: 'pizza', tag: 'Tonight', headline: 'Everyone\u2019s asking the same thing tonight: where\u2019s the best pizza?', cta: 'Find the best pizza' }
 
+                  var cardStyle = {
+                    flexShrink: 0,
+                    width: '280px',
+                    background: 'linear-gradient(135deg, #FFF9EE 0%, #FEF3E2 100%)',
+                    border: '1.5px solid rgba(196, 138, 18, 0.25)',
+                    borderRadius: '16px',
+                    padding: '14px 16px',
+                  }
+
+                  var tagStyle = {
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: 'var(--color-accent-gold)',
+                    marginBottom: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }
+
+                  var headlineStyle = {
+                    fontFamily: "'Amatic SC', cursive",
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    color: 'var(--color-text-primary)',
+                    lineHeight: 1.15,
+                  }
+
                   return (
-                    <button
-                      onClick={function () {
-                        setExpandedCategory(callout.category)
-                        setTimeout(function () {
-                          var el = document.getElementById('category-expand')
-                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }, 100)
-                      }}
-                      className="mx-4 mt-4 text-left active:scale-[0.98] transition-transform"
+                    <div
+                      className="flex gap-3 overflow-x-auto mt-4"
                       style={{
-                        background: 'linear-gradient(135deg, #FFF9EE 0%, #FEF3E2 100%)',
-                        border: '1.5px solid rgba(196, 138, 18, 0.25)',
-                        borderRadius: '16px',
-                        padding: '14px 18px',
-                        width: 'calc(100% - 32px)',
+                        padding: '0 16px 4px',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'none',
                       }}
                     >
-                      <p style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        color: 'var(--color-accent-gold)',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                          <polyline points="16 7 22 7 22 13" />
-                        </svg>
-                        {callout.tag}
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          <CategoryIcon categoryId={callout.category} size={56} />
-                        </div>
-                        <p style={{
-                          fontFamily: "'Amatic SC', cursive",
-                          fontSize: '24px',
-                          fontWeight: 700,
-                          color: 'var(--color-text-primary)',
-                          lineHeight: 1.15,
-                        }}>
-                          {callout.headline} <span style={{ color: 'var(--color-primary)', fontSize: '20px' }}>{callout.cta} &rarr;</span>
+                      {/* Card 1: Time of day */}
+                      <button
+                        onClick={function () {
+                          setExpandedCategory(timeCallout.category)
+                          setTimeout(function () {
+                            var el = document.getElementById('category-expand')
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          }, 100)
+                        }}
+                        className="text-left active:scale-[0.97] transition-transform"
+                        style={cardStyle}
+                      >
+                        <p style={tagStyle}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                            <polyline points="16 7 22 7 22 13" />
+                          </svg>
+                          {timeCallout.tag}
                         </p>
-                      </div>
-                    </button>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <CategoryIcon categoryId={timeCallout.category} size={48} />
+                          </div>
+                          <p style={headlineStyle}>
+                            {timeCallout.headline} <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>{timeCallout.cta} &rarr;</span>
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Card 2: Top Rated Restaurant */}
+                      {topRestaurant && (
+                        <button
+                          onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
+                          className="text-left active:scale-[0.97] transition-transform"
+                          style={cardStyle}
+                        >
+                          <p style={tagStyle}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            Where Everything Is Good
+                          </p>
+                          <p style={headlineStyle}>
+                            {topRestaurant.name} has {topRestaurant.count} ranked dishes averaging {topRestaurant.avg}. <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>See the menu &rarr;</span>
+                          </p>
+                        </button>
+                      )}
+
+                      {/* Card 3: Most Talked About */}
+                      {mostVotedDish && (
+                        <button
+                          onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
+                          className="text-left active:scale-[0.97] transition-transform"
+                          style={cardStyle}
+                        >
+                          <p style={tagStyle}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                            Most Talked About
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              <CategoryIcon categoryId={mostVotedDish.category} size={48} />
+                            </div>
+                            <p style={headlineStyle}>
+                              {mostVotedDish.dish_name || mostVotedDish.name} at {mostVotedDish.restaurant_name} — {mostVotedDish.total_votes} votes and counting. <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>See why &rarr;</span>
+                            </p>
+                          </div>
+                        </button>
+                      )}
+                    </div>
                   )
                 })()}
 
