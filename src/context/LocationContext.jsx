@@ -17,9 +17,10 @@ export function LocationProvider({ children }) {
   const [location, setLocation] = useState(DEFAULT_LOCATION)
   const [radius, setRadiusState] = useState(() => {
     const saved = getStorageItem(STORAGE_KEYS.RADIUS)
-    if (saved) {
+    if (saved !== null && saved !== undefined) {
       const parsed = parseInt(saved, 10)
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 50) {
+      // 0 = Anywhere (no distance limit), 1-250 = miles
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 250) {
         return parsed
       }
     }

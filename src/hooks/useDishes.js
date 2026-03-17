@@ -23,7 +23,8 @@ export function useDishes(location, radius, category = null, restaurantId = null
       return dishesApi.getRankedDishes({
         lat: location.lat,
         lng: location.lng,
-        radiusMiles: radius,
+        // 0 = "Anywhere" — use 25000 miles (global) so the RPC bounding box includes everything
+        radiusMiles: radius === 0 ? 25000 : radius,
         category,
         town,
       })

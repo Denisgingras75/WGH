@@ -1,4 +1,4 @@
-import { MV_TOWNS } from '../constants/towns'
+import { ALL_TOWNS } from '../constants/towns'
 
 /**
  * TownPicker — lives inline in the category chips strip.
@@ -6,7 +6,7 @@ import { MV_TOWNS } from '../constants/towns'
  * Open: row of soft rectangles with town names inside.
  */
 export function TownPicker({ town, onTownChange, isOpen, onToggle }) {
-  var currentLabel = MV_TOWNS.find(function (t) { return t.value === town })?.label || 'All Island'
+  var currentLabel = ALL_TOWNS.find(function (t) { return t.value === town })?.label || 'All Areas'
 
   var handleSelect = function (value) {
     onTownChange(value)
@@ -16,7 +16,7 @@ export function TownPicker({ town, onTownChange, isOpen, onToggle }) {
   if (isOpen) {
     return (
       <div className="flex items-center gap-2">
-        {MV_TOWNS.map(function (option) {
+        {ALL_TOWNS.map(function (option) {
           var isActive = option.value === town
           return (
             <button

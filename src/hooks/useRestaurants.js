@@ -18,7 +18,8 @@ export function useRestaurants(location, radius, permissionState) {
     queryKey,
     queryFn: async () => {
       if (hasLocation) {
-        return restaurantsApi.getByDistance(location.lat, location.lng, radius)
+        // 0 = "Anywhere" — use 25000 miles (global) so the RPC bounding box includes everything
+        return restaurantsApi.getByDistance(location.lat, location.lng, radius === 0 ? 25000 : radius)
       }
       return restaurantsApi.getAll()
     },
