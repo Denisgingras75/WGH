@@ -3,8 +3,8 @@ import { getRatingColor } from '../../utils/ranking'
 import { CategoryIcon } from './CategoryIcons'
 
 /**
- * Top10Scroll — horizontal card carousel for dishes #2-10.
- * Each card: rank, icon, dish name, restaurant, rating, votes.
+ * Top10Scroll — horizontal card carousel for dishes #1-10.
+ * #1 gets a gold border + subtle gold glow. All cards same size.
  */
 export function Top10Scroll({ dishes }) {
   var navigate = useNavigate()
@@ -21,10 +21,12 @@ export function Top10Scroll({ dishes }) {
       }}
     >
       {dishes.map(function (dish, i) {
-        var rank = i + 2
+        var rank = i + 1
         var rating = dish.avg_rating
         var votes = dish.total_votes || 0
-        var medalColor = rank === 2 ? 'var(--color-medal-silver)'
+        var isChampion = rank === 1
+        var medalColor = rank === 1 ? 'var(--color-medal-gold)'
+          : rank === 2 ? 'var(--color-medal-silver)'
           : rank === 3 ? 'var(--color-medal-bronze)'
           : 'var(--color-text-primary)'
 
@@ -34,11 +36,18 @@ export function Top10Scroll({ dishes }) {
             onClick={function () { navigate('/dish/' + dish.dish_id) }}
             className="flex-shrink-0 text-left active:scale-[0.97] transition-transform"
             style={{
-              width: '140px',
-              background: 'var(--color-card)',
+              width: '120px',
+              background: isChampion
+                ? 'linear-gradient(135deg, #FFFDF8 0%, #FFF9EE 100%)'
+                : 'var(--color-card)',
               borderRadius: '16px',
-              padding: '14px 12px 12px',
-              border: '1.5px solid var(--color-divider)',
+              padding: '10px 8px 10px',
+              border: isChampion
+                ? '2.5px solid var(--color-medal-gold)'
+                : '1.5px solid var(--color-divider)',
+              boxShadow: isChampion
+                ? '0 4px 16px rgba(196, 138, 18, 0.20)'
+                : 'none',
               scrollSnapAlign: 'start',
               position: 'relative',
             }}
@@ -46,9 +55,9 @@ export function Top10Scroll({ dishes }) {
             {/* Rank badge */}
             <span style={{
               position: 'absolute',
-              top: '10px',
-              left: '10px',
-              fontSize: '14px',
+              top: '8px',
+              left: '8px',
+              fontSize: isChampion ? '16px' : '14px',
               fontWeight: 800,
               color: medalColor,
             }}>
@@ -58,9 +67,9 @@ export function Top10Scroll({ dishes }) {
             {/* Icon */}
             <div
               className="mx-auto flex items-center justify-center"
-              style={{ width: '64px', height: '64px', marginBottom: '8px' }}
+              style={{ width: '72px', height: '72px', marginBottom: '4px' }}
             >
-              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={64} />
+              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={72} />
             </div>
 
             {/* Dish name */}
@@ -84,23 +93,24 @@ export function Top10Scroll({ dishes }) {
                 fontSize: '10px',
                 color: 'var(--color-accent-gold)',
                 fontWeight: 600,
-                marginBottom: '6px',
+                marginBottom: '4px',
               }}
             >
               {dish.restaurant_name}
             </p>
 
-            {/* Rating + votes */}
-            <div className="flex justify-center items-baseline gap-1">
+            {/* Rating — BIG and bold */}
+            <div className="flex flex-col items-center">
               <span style={{
-                fontSize: '16px',
+                fontSize: '20px',
                 fontWeight: 800,
                 color: getRatingColor(rating),
+                letterSpacing: '-0.02em',
               }}>
                 {rating ? Number(rating).toFixed(1) : '—'}
               </span>
-              <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)' }}>
-                {votes}v
+              <span style={{ fontSize: '9px', color: 'var(--color-text-tertiary)', marginTop: '-2px' }}>
+                {votes} vote{votes === 1 ? '' : 's'}
               </span>
             </div>
           </button>

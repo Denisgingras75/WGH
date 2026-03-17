@@ -656,6 +656,28 @@ export function Dish() {
                 </p>
               </div>
             ) : null}
+
+            {/* Jitter trust line */}
+            {dish.total_votes > 0 && (
+              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
+                <div className="flex items-center gap-2">
+                  <TrustBadge type="human_verified" size="sm" />
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                    Ratings verified by Jitter
+                  </span>
+                </div>
+                <Link
+                  to="/jitter"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: 'var(--color-primary)',
+                  }}
+                >
+                  What's this?
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* ═══════════════════════════════════════════

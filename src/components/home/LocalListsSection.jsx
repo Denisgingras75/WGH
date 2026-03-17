@@ -1,14 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useLocalLists } from '../../hooks/useLocalLists'
 import { useLocalListDetail } from '../../hooks/useLocalListDetail'
 import { DishListItem } from '../DishListItem'
 
-function ExpandableListCard({ list }) {
+function ExpandableListCard({ list, onListExpanded }) {
   var [expanded, setExpanded] = useState(false)
   var navigate = useNavigate()
   var { items, loading } = useLocalListDetail(expanded ? list.user_id : null)
+
+  // Notify parent when list expands/collapses so map can show these dishes
+  useEffect(function () {
+    if (onListExpanded) {
+      if (expanded && items.length > 0) {
+        onListExpanded(items, list.display_name)
+      } else if (!expanded) {
+        onListExpanded(null, null)
+      }
+    }
+  }, [expanded, items])
 
   var initial = (list.display_name || '?').charAt(0).toUpperCase()
   var previewText = list.preview_dishes
@@ -180,7 +191,7 @@ function ExpandableListCard({ list }) {
   )
 }
 
-export function LocalListsSection() {
+export function LocalListsSection({ onListExpanded }) {
   var { user } = useAuth()
   var { lists, loading } = useLocalLists(user ? user.id : null)
 
@@ -210,7 +221,7 @@ export function LocalListsSection() {
       {/* Expandable cards */}
       <div className="px-4 flex flex-col" style={{ gap: '10px' }}>
         {lists.map(function (list) {
-          return <ExpandableListCard key={list.list_id} list={list} />
+          return <ExpandableListCard key={list.list_id} list={list} onListExpanded={onListExpanded} />
         })}
       </div>
     </div>

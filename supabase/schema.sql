@@ -2427,7 +2427,9 @@ RETURNS TABLE (
   avg_rating NUMERIC,
   total_votes INT,
   category TEXT,
-  note TEXT
+  note TEXT,
+  restaurant_lat FLOAT,
+  restaurant_lng FLOAT
 )
 LANGUAGE SQL STABLE
 AS $$
@@ -2445,7 +2447,9 @@ AS $$
     d.avg_rating,
     d.total_votes,
     d.category,
-    li.note
+    li.note,
+    r.lat AS restaurant_lat,
+    r.lng AS restaurant_lng
   FROM local_lists ll
   JOIN profiles p ON p.id = ll.user_id
   JOIN local_list_items li ON li.list_id = ll.id

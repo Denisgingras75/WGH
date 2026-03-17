@@ -12,7 +12,7 @@ import { CategoryChips } from '../components/CategoryChips'
 import { EmptyState } from '../components/EmptyState'
 import { LocationBanner } from '../components/LocationBanner'
 import { ModeFAB } from '../components/ModeFAB'
-import { LocalListsSection, ChampionCard, Top10Scroll, CategoryExpand } from '../components/home'
+import { LocalListsSection, Top10Scroll, CategoryExpand } from '../components/home'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -40,6 +40,8 @@ export function Map() {
   var [pinSelected, setPinSelected] = useState(false)
   var [listLimit, setListLimit] = useState(10)
   var [expandedCategory, setExpandedCategory] = useState(null)
+  var [activeLocalList, setActiveLocalList] = useState(null)
+  var [activeLocalListName, setActiveLocalListName] = useState(null)
 
   var mapRef = useRef(null)
   var listScrollRef = useRef(null)
@@ -87,6 +89,28 @@ export function Map() {
     if (q) setSelectedCategory(null)
   }, [])
 
+  var handleLocalListExpanded = useCallback(function (items, name) {
+    if (items) {
+      setActiveLocalList(items.map(function (item) {
+        return {
+          dish_id: item.dish_id,
+          dish_name: item.dish_name,
+          restaurant_name: item.restaurant_name,
+          restaurant_id: item.restaurant_id,
+          avg_rating: item.avg_rating,
+          total_votes: item.total_votes,
+          category: item.category,
+          restaurant_lat: item.restaurant_lat,
+          restaurant_lng: item.restaurant_lng,
+        }
+      }))
+      setActiveLocalListName(name)
+    } else {
+      setActiveLocalList(null)
+      setActiveLocalListName(null)
+    }
+  }, [])
+
   // Search results (no town filter — shows whole island)
   var searchData = useDishSearch(searchQuery, searchLimit, null)
   var searchResults = searchData.results
@@ -118,13 +142,19 @@ export function Map() {
     return d.restaurant_lat != null && d.restaurant_lng != null
   })
 
+  var localListWithCoords = activeLocalList
+    ? activeLocalList.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
+    : []
+
   var displayedOnMap = focusDishId
     ? dishesWithCoords.filter(function (d) { return d.dish_id === focusDishId })
     : (searchQuery && searchResults && searchResults.length > 0)
       ? searchResults.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
-      : expandedCategory && expandedDishes.length > 0
-        ? expandedDishes.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
-        : dishesWithCoords
+      : activeLocalList && localListWithCoords.length > 0
+        ? localListWithCoords
+        : expandedCategory && expandedDishes.length > 0
+          ? expandedDishes.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
+          : dishesWithCoords
 
   var listTitle = searchQuery
     ? 'Results'
@@ -146,10 +176,11 @@ export function Map() {
 
   var rankingContext = useMemo(function () {
     if (searchQuery) return 'for \u201c' + searchQuery + '\u201d'
+    if (activeLocalListName) return activeLocalListName + '\u2019s picks'
     var categoryLabel = selectedCategoryLabel ? selectedCategoryLabel.label : null
     if (categoryLabel) return categoryLabel + ' nearby'
     return 'nearby'
-  }, [searchQuery, selectedCategoryLabel])
+  }, [searchQuery, selectedCategoryLabel, activeLocalListName])
 
   // Map pin tap: show mini-card, hide floating controls
   var handlePinTap = useCallback(function (dishId) {
@@ -311,30 +342,21 @@ export function Map() {
             ) : activeDishes && activeDishes.length > 0 ? (
               /* Homepage v3 layout */
               <>
-                {/* Champion Card — #1 dish */}
-                <div className="px-3 pt-2">
-                  <ChampionCard dish={activeDishes[0]} />
+                {/* Top 10 Nearby — unified horizontal scroll */}
+                <div className="flex items-baseline justify-between px-4 pt-3 pb-2">
+                  <h2 style={{
+                    fontFamily: "'Amatic SC', cursive",
+                    fontSize: '26px',
+                    fontWeight: 700,
+                    color: 'var(--color-text-primary)',
+                  }}>
+                    Top Rated Nearby
+                  </h2>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+                    #1 – {Math.min(activeDishes.length, 10)}
+                  </span>
                 </div>
-
-                {/* Top 10 Horizontal Scroll — #2-10 */}
-                {activeDishes.length > 1 && (
-                  <>
-                    <div className="flex items-baseline justify-between px-4 pt-4 pb-2">
-                      <h2 style={{
-                        fontFamily: "'Amatic SC', cursive",
-                        fontSize: '26px',
-                        fontWeight: 700,
-                        color: 'var(--color-text-primary)',
-                      }}>
-                        The Contenders
-                      </h2>
-                      <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-                        #2 – {Math.min(activeDishes.length, 10)}
-                      </span>
-                    </div>
-                    <Top10Scroll dishes={activeDishes.slice(1, 10)} />
-                  </>
-                )}
+                <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
                 {/* Category pills with expand */}
                 <div className="pt-4 pb-2">
@@ -366,7 +388,7 @@ export function Map() {
                 )}
 
                 {/* Local Lists */}
-                <LocalListsSection />
+                <LocalListsSection onListExpanded={handleLocalListExpanded} />
               </>
             ) : (
               <div className="px-4 pt-4">
