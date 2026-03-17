@@ -571,31 +571,25 @@ export function Dish() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <h1
-                    style={{
-                      fontFamily: "'Amatic SC', cursive",
-                      fontWeight: 700,
-                      fontSize: '28px',
-                      letterSpacing: '0.02em',
-                      color: 'var(--color-text-primary)',
-                      lineHeight: 1.1,
-                      margin: 0,
-                    }}
-                  >
-                    {dish.dish_name}
-                  </h1>
-                  {dish.price ? (
-                    <span className="flex-shrink-0 font-bold" style={{ color: 'var(--color-text-secondary)', fontSize: '16px' }}>
-                      ${Number(dish.price).toFixed(0)}
-                    </span>
-                  ) : null}
-                </div>
+                <h1
+                  style={{
+                    fontFamily: "'Amatic SC', cursive",
+                    fontWeight: 700,
+                    fontSize: '28px',
+                    letterSpacing: '0.02em',
+                    color: 'var(--color-text-primary)',
+                    lineHeight: 1.1,
+                    margin: 0,
+                  }}
+                >
+                  {dish.dish_name}
+                </h1>
 
-                {/* Restaurant link */}
+                {/* Restaurant + Price row */}
+                <div className="flex items-center justify-between mt-1">
                 <button
                   onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
-                  className="flex items-center gap-1 mt-1"
+                  className="flex items-center gap-1"
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,
@@ -616,6 +610,12 @@ export function Dish() {
                     </span>
                   )}
                 </button>
+                {dish.price ? (
+                  <span className="flex-shrink-0" style={{ color: 'var(--color-text-primary)', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                    ${Number(dish.price).toFixed(0)}
+                  </span>
+                ) : null}
+                </div>
               </div>
             </div>
 

@@ -460,7 +460,6 @@ export function Map() {
             }}
           >
             <div className="flex items-center gap-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
-              <MapZoomButton label="Zoom in" direction="in" mapRef={mapRef} />
               <div className="flex-1" style={{
                 borderRadius: '14px',
                 boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
@@ -491,7 +490,6 @@ export function Map() {
                   }
                 />
               </div>
-              <MapZoomButton label="Zoom out" direction="out" mapRef={mapRef} />
             </div>
           </div>
         </>
