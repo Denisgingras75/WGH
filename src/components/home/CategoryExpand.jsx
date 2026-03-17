@@ -37,7 +37,7 @@ export function CategoryExpand({ categoryId, onClose }) {
     >
       <div className="px-3">
         {/* Header */}
-        <div className="flex items-center justify-between" style={{ padding: '12px 0 8px' }}>
+        <div className="flex items-center justify-between" style={{ padding: '6px 0 6px' }}>
           <h3 style={{
             fontFamily: "'Amatic SC', cursive",
             fontSize: '24px',
