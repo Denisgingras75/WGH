@@ -82,7 +82,7 @@ export function AcceptInvite() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
             <span className="text-2xl">!</span>
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
             Invalid Invite
           </h1>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
@@ -90,8 +90,8 @@ export function AcceptInvite() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            className="px-6 py-3 font-semibold"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
           >
             Go Home
           </button>
@@ -106,7 +106,7 @@ export function AcceptInvite() {
         <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-primary) 20%, var(--color-bg))' }}>
           <span className="text-2xl">🏪</span>
         </div>
-        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}>
           Restaurant Invite
         </h1>
         <p className="text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
@@ -120,16 +120,16 @@ export function AcceptInvite() {
           <button
             onClick={handleAccept}
             disabled={accepting}
-            className="w-full px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            className="w-full px-6 py-3 font-semibold transition-all disabled:opacity-50"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
           >
             {accepting ? 'Accepting...' : 'Accept Invitation'}
           </button>
         ) : (
           <button
             onClick={handleSignIn}
-            className="w-full px-6 py-3 rounded-xl font-semibold transition-all"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)' }}
+            className="w-full px-6 py-3 font-semibold transition-all"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-primary)', borderRadius: '4px' }}
           >
             Sign In to Accept
           </button>

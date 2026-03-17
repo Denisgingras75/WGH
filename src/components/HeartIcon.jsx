@@ -1,20 +1,14 @@
-/**
- * HeartIcon - Neon heart icon to replace emoji
- */
+import { Heart } from '@phosphor-icons/react'
 
-export function HeartIcon({ size = 20, className = '', active = false }) {
+export default function HeartIcon({ active, size = 24, className = '' }) {
   return (
-    <img
-      src="/heart.png"
-      alt="heart"
-      className={`inline-block object-contain ${className}`}
-      style={{
-        width: size,
-        height: size,
-        filter: active ? 'brightness(1.3) drop-shadow(0 0 3px white)' : 'none',
-      }}
+    <Heart
+      size={size}
+      weight={active ? 'fill' : 'duotone'}
+      className={className}
+      style={{ color: active ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
     />
   )
 }
 
-export default HeartIcon
+export { HeartIcon }

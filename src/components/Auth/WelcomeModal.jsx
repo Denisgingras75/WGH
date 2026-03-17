@@ -119,7 +119,7 @@ export function WelcomeModal() {
           {/* Brand name */}
           <h1
             style={{
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Playfair Display', Georgia, serif",
               fontSize: '42px',
               fontWeight: 700,
               color: 'var(--color-primary)',

@@ -1,19 +1,9 @@
 import { useRef, useEffect } from 'react'
 import { BROWSE_CATEGORIES } from '../constants/categories'
-import { CategoryIcon } from './home/CategoryIcons'
 
 /**
  * CategoryChips — horizontal scrollable category filter.
- *
- * Props:
- *   categories      - array of { id, label, emoji } (default: BROWSE_CATEGORIES)
- *   selected        - currently selected category id (null = "All")
- *   onSelect        - callback(categoryId | null)
- *   showAll         - show "All" chip (default: true)
- *   sticky          - add sticky positioning (default: false)
- *   maxVisible      - max categories to show (default: 12)
- *   townPicker      - optional ReactNode rendered as first item
- *   townPickerOpen  - when true, hides category chips (town pills take over the row)
+ * Uses emoji icons for clean, universal rendering on any theme.
  */
 export function CategoryChips({
   categories = BROWSE_CATEGORIES,
@@ -28,7 +18,6 @@ export function CategoryChips({
   var visibleCategories = categories.slice(0, maxVisible)
   var scrollRef = useRef(null)
 
-  // Scroll back to start when town picker closes
   useEffect(function () {
     if (!townPickerOpen && scrollRef.current) {
       scrollRef.current.scrollLeft = 0
@@ -42,13 +31,14 @@ export function CategoryChips({
     >
       <div
         ref={scrollRef}
-        className="flex px-3 overflow-x-auto"
+        className="flex px-4 overflow-x-auto"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           minHeight: '68px',
           touchAction: 'pan-x pan-y',
+          gap: '8px',
         }}
       >
         {townPicker && (
@@ -62,18 +52,24 @@ export function CategoryChips({
             <button
               key={cat.id}
               onClick={function () { onSelect(isActive ? null : cat.id) }}
-              className="flex-shrink-0 flex flex-col items-center justify-center"
+              className="flex-shrink-0 flex items-center justify-center"
               style={{
-                padding: '4px 6px',
-                minWidth: '56px',
-                fontSize: '11px',
-                background: 'transparent',
-                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                fontWeight: isActive ? 700 : 500,
+                padding: '6px 12px',
+                borderRadius: '2px',
+                background: isActive ? 'var(--color-text-primary)' : 'transparent',
+                border: isActive ? '1.5px solid var(--color-text-primary)' : '1.5px solid var(--color-divider)',
+                color: isActive ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+                fontSize: '10px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+                opacity: selected && !isActive ? 0.4 : 1,
               }}
             >
-              <CategoryIcon categoryId={cat.id} size={46} />
-              <span className="mt-1" style={{ lineHeight: 1.2 }}>{cat.label}</span>
+              {cat.label}
             </button>
           )
         })}

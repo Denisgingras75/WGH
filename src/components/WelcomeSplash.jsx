@@ -76,7 +76,7 @@ export function WelcomeSplash({ onComplete }) {
         <WghLogo size={52} color="#FFFFFF" />
         <h1
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Playfair Display', Georgia, serif",
             fontSize: '36px',
             fontWeight: 700,
             color: 'var(--color-text-on-primary)',

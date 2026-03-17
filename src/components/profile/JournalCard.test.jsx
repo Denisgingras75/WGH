@@ -29,15 +29,13 @@ describe('JournalCard', () => {
     expect(screen.getByText('9.2')).toBeTruthy()
   })
 
-  it('shows community avg next to user rating', () => {
+  it('shows rating number prominently', () => {
     render(
       <MemoryRouter>
         <JournalCard dish={mockDish} variant="good-here" />
       </MemoryRouter>
     )
-    var card = screen.getByTestId('journal-card')
-    expect(card.textContent).toContain('Crowd:')
-    expect(card.textContent).toContain('8.4')
+    expect(screen.getByText('9.2')).toBeTruthy()
   })
 
   it('shows review text inline when present', () => {
@@ -49,13 +47,13 @@ describe('JournalCard', () => {
     expect(screen.getByText(/Best on the island/)).toBeTruthy()
   })
 
-  it('shows town in location line', () => {
+  it('shows restaurant name in italic line', () => {
     render(
       <MemoryRouter>
         <JournalCard dish={mockDish} variant="good-here" />
       </MemoryRouter>
     )
-    expect(screen.getByText(/Oak Bluffs/)).toBeTruthy()
+    expect(screen.getByText(/Nancy's/)).toBeTruthy()
   })
 
   it('navigates to dish page on click', () => {
@@ -76,7 +74,7 @@ describe('JournalCard', () => {
     )
     expect(screen.getByText('Lobster Roll')).toBeTruthy()
     var card = screen.getByTestId('journal-card')
-    expect(card.style.opacity).toBe('0.75')
+    expect(card.style.opacity).toBe('0.7')
   })
 
   it('renders heard variant with no rating and Tried it button', () => {

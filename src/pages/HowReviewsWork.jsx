@@ -16,7 +16,7 @@ export function HowReviewsWork() {
         </button>
         <h1
           className="font-bold"
-          style={{ color: 'var(--color-text-primary)', fontSize: '26px', letterSpacing: '-0.02em' }}
+          style={{ color: 'var(--color-text-primary)', fontSize: '26px', letterSpacing: '-0.02em', fontFamily: 'var(--font-headline)' }}
         >
           How Our Reviews Work
         </h1>
@@ -101,8 +101,8 @@ export function HowReviewsWork() {
 
         {/* Section 4: Privacy */}
         <section
-          className="rounded-2xl p-4"
-          style={{ border: '1px solid var(--color-divider)' }}
+          className="p-4"
+          style={{ border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
         >
           <h2
             className="font-bold mb-2"

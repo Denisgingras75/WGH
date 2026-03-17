@@ -1,3 +1,4 @@
+import { CaretLeft, CaretRight, ShareNetwork, MapPin, ArrowSquareOut, ShoppingBag, BookOpenText, Phone } from '@phosphor-icons/react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { capture } from '../lib/analytics'
@@ -90,8 +91,14 @@ export function Dish() {
   const [reviews, setReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [smartSnippet, setSmartSnippet] = useState(null)
+  const [showReviewForm, setShowReviewForm] = useState(false)
 
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
+
+  // Auto-expand review form for logged-in users (they may have an existing vote)
+  useEffect(function () {
+    if (user) setShowReviewForm(true)
+  }, [user])
 
   // Lazy-load evidence section — only fetch when user scrolls near it
   const [shouldLoadEvidence, setShouldLoadEvidence] = useState(false)
@@ -391,8 +398,8 @@ export function Dish() {
         <div className="animate-pulse">
           <div className="aspect-[4/3] w-full" style={{ background: 'var(--color-divider)' }} />
           <div
-            className="mx-4 -mt-5 rounded-xl p-5 space-y-3"
-            style={{ background: 'var(--color-surface-elevated)', boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)' }}
+            className="mx-4 -mt-5 rounded p-5 space-y-3"
+            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
           >
             <div className="h-6 w-48 rounded" style={{ background: 'var(--color-divider)' }} />
             <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
@@ -447,7 +454,7 @@ export function Dish() {
     ? distanceMiles < 0.2 ? 'Right here' : distanceMiles < 1 ? distanceMiles.toFixed(1) + ' mi walk' : distanceMiles.toFixed(1) + ' mi'
     : null
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-6" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
       <header
         className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 top-bar"
@@ -462,9 +469,7 @@ export function Dish() {
           className="w-9 h-9 rounded-full flex items-center justify-center"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <CaretLeft size={20} weight="bold" />
         </button>
         <span className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
           {dish.dish_name}
@@ -477,11 +482,7 @@ export function Dish() {
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
             style={{ color: 'var(--color-text-primary)' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
+            <ShareNetwork size={18} weight="duotone" />
           </button>
           <div className="relative">
             <button
@@ -517,20 +518,41 @@ export function Dish() {
               Score, consensus, distance. 2 seconds.
               ═══════════════════════════════════════════ */}
 
-          {/* Category Icon Hero */}
-          <div
-            className="flex items-center justify-center"
-            style={{
-              height: '120px',
-              background: 'var(--color-surface)',
-            }}
-          >
-            <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={80} />
-          </div>
+          {/* Photo Hero — full width, or skip if no photos */}
+          {allPhotos.length > 0 && (
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '4 / 3',
+                overflow: 'hidden',
+                position: 'relative',
+                background: 'var(--color-surface)',
+              }}
+            >
+              <img
+                src={allPhotos[0].photo_url}
+                alt={dish.dish_name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+                onError={function(e) { e.target.parentElement.style.display = 'none' }}
+              />
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '80px',
+                background: 'linear-gradient(transparent, var(--color-bg))',
+              }} />
+            </div>
+          )}
 
           {/* Verdict Card */}
           <div
-            className="mx-3 rounded-xl px-4 py-4"
+            className="mx-3 rounded px-4 py-4"
             style={{
               background: 'var(--color-card)',
               border: '1.5px solid var(--color-divider)',
@@ -546,28 +568,29 @@ export function Dish() {
                 className="flex items-center gap-1 text-xs font-bold mb-3"
                 style={{ color: 'var(--color-primary)' }}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+                <CaretLeft size={16} weight="bold" />
                 {parentDish.name}
               </button>
             )}
 
             {/* Name + Price */}
             <div className="flex items-start justify-between gap-3">
-              <h1
-                style={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 800,
-                  fontSize: '22px',
-                  letterSpacing: '-0.02em',
-                  color: 'var(--color-text-primary)',
-                  lineHeight: 1.15,
-                  margin: 0,
-                }}
-              >
-                {dish.dish_name}
-              </h1>
+              <div className="flex items-center gap-2">
+                <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={24} />
+                <h1
+                  style={{
+                    fontFamily: 'var(--font-headline)',
+                    fontWeight: 900,
+                    fontSize: '22px',
+                    letterSpacing: '-0.02em',
+                    color: 'var(--color-text-primary)',
+                    lineHeight: 1.15,
+                    margin: 0,
+                  }}
+                >
+                  {dish.dish_name}
+                </h1>
+              </div>
               {dish.price ? (
                 <span className="flex-shrink-0 font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}>
                   ${Number(dish.price).toFixed(0)}
@@ -593,9 +616,7 @@ export function Dish() {
                 }}
               >
                 {dish.restaurant_name}
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <CaretRight size={12} weight="bold" />
               </button>
               {(dish.restaurant_lat && dish.restaurant_lng) ? (
                 <button
@@ -613,10 +634,7 @@ export function Dish() {
                     color: 'var(--color-accent-gold)',
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
+                  <MapPin size={12} weight="fill" />
                   {distanceLabel ? distanceLabel + ' \u00b7 ' : ''}{dish.restaurant_town || 'See on map'}
                 </button>
               ) : dish.restaurant_town ? (
@@ -626,44 +644,45 @@ export function Dish() {
               ) : null}
             </div>
 
-            {/* Score Block — the whole point */}
+            {/* Score Block — editorial verdict */}
             {isRanked && dish.avg_rating ? (
-              <div className="flex items-end justify-between mt-4 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
-                <div className="flex items-baseline gap-2">
+              <div className="mt-4 pt-4 pb-3" style={{ borderTop: '2px solid var(--color-text-primary)', borderBottom: '1px solid var(--color-divider)' }}>
+                <div className="text-center">
                   <span
                     style={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: 800,
-                      fontSize: '40px',
+                      fontFamily: 'var(--font-headline)',
+                      fontWeight: 900,
+                      fontSize: '56px',
                       lineHeight: 1,
                       color: getRatingColor(dish.avg_rating),
                       fontVariantNumeric: 'tabular-nums',
+                      display: 'block',
                     }}
                   >
                     {formatScore10(dish.avg_rating)}
                   </span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--color-text-tertiary)',
+                      display: 'block',
+                      marginTop: '4px',
+                    }}
+                  >
+                    out of 10
+                  </span>
                 </div>
-                <div className="text-right space-y-1" style={{ minWidth: '120px' }}>
-                  <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <div className="flex items-center justify-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
+                  <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
                     {dish.percent_worth_it}% would reorder
-                  </p>
-                  <div style={{
-                    height: '4px',
-                    borderRadius: '2px',
-                    background: 'var(--color-divider, #e5e7eb)',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      height: '100%',
-                      width: dish.percent_worth_it + '%',
-                      borderRadius: '2px',
-                      background: getRatingColor(dish.avg_rating),
-                      transition: 'width 0.4s ease',
-                    }} />
-                  </div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  </span>
+                  <span style={{ color: 'var(--color-text-tertiary)', fontSize: '10px' }}>&middot;</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                     {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'}
-                  </p>
+                  </span>
                   <ValueBadge valuePercentile={dish.value_percentile} />
                 </div>
               </div>
@@ -682,66 +701,235 @@ export function Dish() {
               ═══════════════════════════════════════════ */}
           <div className="px-3 pt-3">
             <div className="flex gap-2">
-              {/* Order online button */}
-              {dish.website_url && (
+              {/* Order Now (Toast or order_url) or See Menu (website) */}
+              {(dish.toast_slug || dish.order_url) ? (
                 <a
-                  href={dish.website_url}
+                  href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : dish.order_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => capture('order_link_clicked', {
+                  onClick={function () { capture('order_clicked', {
                     dish_id: dish.dish_id,
                     dish_name: dish.dish_name,
                     restaurant_id: dish.restaurant_id,
                     restaurant_name: dish.restaurant_name,
-                  })}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                    source: dish.toast_slug ? 'toast' : 'order_url',
+                  }) }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded font-bold text-sm transition-all active:scale-[0.97]"
                   style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
+                    background: 'var(--color-accent-orange)',
+                    color: 'white',
                   }}
                 >
-                  Order Online
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <ShoppingBag size={16} weight="duotone" />
+                  Order Now
+                </a>
+              ) : dish.website_url ? (
+                <a
+                  href={dish.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded font-bold text-sm transition-all active:scale-[0.97]"
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: 'white',
+                  }}
+                >
+                  <BookOpenText size={16} weight="duotone" />
+                  See Menu
+                </a>
+              ) : null}
+
+              {/* Directions */}
+              <a
+                href={dish.restaurant_lat && dish.restaurant_lng
+                  ? 'https://www.google.com/maps/dir/?api=1&destination=' + dish.restaurant_lat + ',' + dish.restaurant_lng
+                  : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent((dish.restaurant_address || (dish.restaurant_name + ', ' + (dish.restaurant_town || "Martha's Vineyard") + ', MA')))
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded font-bold text-sm transition-all active:scale-[0.97]"
+                style={{
+                  background: 'var(--color-accent-gold)',
+                  color: 'var(--color-bg)',
+                }}
+              >
+                <MapPin size={16} weight="fill" />
+                Directions
+              </a>
+
+              {/* Call */}
+              {dish.restaurant_phone && (
+                <a
+                  href={'tel:' + dish.restaurant_phone}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded font-bold text-sm transition-all active:scale-[0.97]"
+                  style={{
+                    background: 'var(--color-emerald)',
+                    color: 'white',
+                  }}
+                >
+                  <Phone size={16} weight="duotone" />
+                  Call
                 </a>
               )}
             </div>
           </div>
 
-          {/* Review Flow */}
-          <div className="p-4">
+          {/* Smart Snippet — editorial pull-quote */}
+          {smartSnippet && smartSnippet.review_text && (
             <div
-              className="p-4 rounded-xl"
+              className="mx-3 mt-4 p-4 rounded"
               style={{
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+                background: 'rgba(44,36,22,0.04)',
+                borderLeft: '3px solid var(--color-primary)',
               }}
             >
-              <ReviewFlow
-                dishId={dish.dish_id}
-                dishName={dish.dish_name}
-                restaurantId={dish.restaurant_id}
-                restaurantName={dish.restaurant_name}
-                category={dish.category}
-                price={dish.price}
-                totalVotes={dish.total_votes}
-                yesVotes={dish.yes_votes}
-                percentWorthIt={dish.percent_worth_it}
-                isRanked={isRanked}
-                hasPhotos={allPhotos.length > 0}
-                onVote={handleVote}
-                onLoginRequired={handleLoginRequired}
-                onPhotoUploaded={handlePhotoUploaded}
-                onToggleFavorite={handleToggleSave}
-                isFavorite={isFavorite?.(dishId)}
-              />
+              <p className="text-sm" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5, fontFamily: 'var(--font-headline)', fontStyle: 'italic' }}>
+                &ldquo;{smartSnippet.review_text}&rdquo;
+              </p>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  — @{smartSnippet.profiles?.display_name || 'Anonymous'}
+                </span>
+                {smartSnippet.rating_10 && (
+                  <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
+                    {formatScore10(smartSnippet.rating_10)}
+                  </span>
+                )}
+              </div>
             </div>
+          )}
+
+          {/* Friends who rated this — social proof */}
+          {friendsVotes.length > 0 && (
+            <>
+            <div className="px-3 pt-4 pb-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontFamily: 'var(--font-headline)', fontSize: '15px', fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>Friends' Takes</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+            </div>
+            <div
+              className="mx-3 p-4 rounded"
+              style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+            >
+              <div className="space-y-3">
+                {friendsVotes.map(function (vote) {
+                  var categoryLabel = CATEGORY_INFO[dish.category]?.label || dish.category
+                  var expertiseLabel = vote.category_expertise === 'authority'
+                    ? categoryLabel + ' Authority'
+                    : vote.category_expertise === 'specialist'
+                      ? categoryLabel + ' Specialist'
+                      : null
+
+                  return (
+                    <Link
+                      key={vote.user_id}
+                      to={'/user/' + vote.user_id}
+                      className="flex items-center gap-3 p-2 -mx-2 rounded-lg"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      >
+                        {vote.display_name?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                            {vote.display_name || 'Anonymous'}
+                          </p>
+                          {expertiseLabel && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
+                              style={{
+                                background: vote.category_expertise === 'authority' ? 'var(--color-primary-muted)' : 'var(--color-success-muted)',
+                                color: vote.category_expertise === 'authority' ? 'var(--color-purple)' : 'var(--color-blue)',
+                              }}
+                            >
+                              {expertiseLabel}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                          {vote.would_order_again ? <><ThumbsUpIcon size={20} /> Would order again</> : <><ThumbsDownIcon size={20} /> Would skip</>}
+                          {friendsCompat[vote.user_id] != null && (
+                            <span className="ml-1.5 font-medium" style={{ color: getCompatColor(friendsCompat[vote.user_id]) }}>
+                              &middot; {friendsCompat[vote.user_id]}% match
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-bold" style={{ color: getRatingColor(vote.rating_10) }}>
+                          {formatScore10(vote.rating_10)}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+            </>
+          )}
+
+          {/* ═══════════════════════════════════════════
+              LAYER 3: YOUR REVIEW + EVIDENCE
+              Rate this dish, then reviews/photos.
+              Lazy-loaded when user scrolls near.
+              ═══════════════════════════════════════════ */}
+
+          {/* Rate This Dish — collapsible */}
+          <div className="px-3 pt-3">
+            {!showReviewForm ? (
+              <button
+                onClick={function() { setShowReviewForm(true) }}
+                className="w-full"
+                style={{
+                  padding: '14px',
+                  background: 'var(--color-text-primary)',
+                  color: 'var(--color-bg)',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Rate This Dish
+              </button>
+            ) : (
+              <div
+                className="p-4 rounded"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                }}
+              >
+                <ReviewFlow
+                  dishId={dish.dish_id}
+                  dishName={dish.dish_name}
+                  restaurantId={dish.restaurant_id}
+                  restaurantName={dish.restaurant_name}
+                  category={dish.category}
+                  price={dish.price}
+                  totalVotes={dish.total_votes}
+                  yesVotes={dish.yes_votes}
+                  percentWorthIt={dish.percent_worth_it}
+                  isRanked={isRanked}
+                  hasPhotos={allPhotos.length > 0}
+                  onVote={handleVote}
+                  onLoginRequired={handleLoginRequired}
+                  onPhotoUploaded={handlePhotoUploaded}
+                  onToggleFavorite={handleToggleSave}
+                  isFavorite={isFavorite?.(dishId)}
+                />
+              </div>
+            )}
           </div>
 
           {/* ═══════════════════════════════════════════
-              LAYER 3: THE EVIDENCE
-              Photos, reviews, social proof. For context.
+              LAYER 4: THE EVIDENCE
+              Reviews, photos. Supporting context.
               Lazy-loaded when user scrolls near.
               ═══════════════════════════════════════════ */}
           <div ref={evidenceSentinelRef} aria-hidden="true" />
@@ -750,45 +938,118 @@ export function Dish() {
             {/* Evidence skeleton while secondary data loads */}
             {!shouldLoadEvidence && (
               <div className="space-y-3 animate-pulse" role="status" aria-label="Loading details">
-                <div className="h-20 rounded-xl" style={{ background: 'var(--color-divider)' }} />
+                <div className="h-20 rounded" style={{ background: 'var(--color-divider)' }} />
                 <div className="grid grid-cols-4 gap-2">
                   {[0, 1, 2, 3].map(function (i) { return <div key={i} className="aspect-square rounded-lg" style={{ background: 'var(--color-divider)' }} /> })}
                 </div>
-                <div className="h-16 rounded-xl" style={{ background: 'var(--color-divider)' }} />
+                <div className="h-16 rounded" style={{ background: 'var(--color-divider)' }} />
               </div>
             )}
 
-            {/* Smart Snippet — the one-liner social proof */}
-            {smartSnippet && smartSnippet.review_text && (
-              <div
-                className="mb-4 p-4 rounded-xl"
-                style={{
-                  background: 'var(--color-surface)',
-                  borderLeft: '3px solid var(--color-accent-gold)',
-                }}
-              >
-                <p className="text-sm italic" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
-                  &ldquo;{smartSnippet.review_text}&rdquo;
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                    — @{smartSnippet.profiles?.display_name || 'Anonymous'}
-                  </span>
-                  {smartSnippet.rating_10 && (
-                    <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
-                      {formatScore10(smartSnippet.rating_10)}
-                    </span>
-                  )}
+            {/* Reviews feed */}
+            {reviews.length > 0 && (
+              <div className="mb-4">
+                {/* Jitter verification callout */}
+                <div className="px-3 pb-1">
+                  <div className="flex items-center gap-2" style={{
+                    padding: '8px 12px',
+                    background: 'var(--color-primary-muted)',
+                    border: '1px solid rgba(196, 71, 42, 0.12)',
+                    borderRadius: '4px',
+                  }}>
+                    <span style={{ fontSize: '14px' }}>{'\u{1F6E1}\uFE0F'}</span>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                        Reviews verified by Jitter
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginLeft: '4px' }}>
+                        — typing biometrics prove real people
+                      </span>
+                    </div>
+                  </div>
                 </div>
+
+                <div className="flex items-center gap-2 mb-3">
+                  <span style={{ fontFamily: 'var(--font-headline)', fontSize: '15px', fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>What People Are Saying</span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+                  <TrustSummary
+                    verifiedCount={reviews.filter(function (r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }).length}
+                    aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
+                  />
+                </div>
+                <div>
+                  {reviews.map(function (review) {
+                    return (
+                      <div
+                        key={review.id}
+                        className="py-4"
+                        style={{ borderBottom: '1px solid var(--color-divider)' }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Link to={'/user/' + review.user_id} className="flex-shrink-0">
+                            <div
+                              className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"
+                              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                            >
+                              {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
+                            </div>
+                          </Link>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Link to={'/user/' + review.user_id} className="min-w-0">
+                                <span className="block truncate" style={{ fontFamily: 'var(--font-headline)', fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                                  @{review.profiles?.display_name || 'Anonymous'}
+                                </span>
+                              </Link>
+                              <TrustBadge type={review.trust_badge} size="md" />
+                              {review.rating_10 && (
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <span style={{ fontFamily: 'var(--font-headline)', fontSize: '22px', fontWeight: 900, color: getRatingColor(review.rating_10), lineHeight: 1 }}>
+                                    {formatScore10(review.rating_10)}
+                                  </span>
+                                  <span style={{ opacity: 0.5 }}>{review.would_order_again ? <ThumbsUpIcon size={14} /> : <ThumbsDownIcon size={14} />}</span>
+                                </div>
+                              )}
+                              {!review.rating_10 && (
+                                <span style={{ opacity: 0.5 }}>{review.would_order_again ? <ThumbsUpIcon size={14} /> : <ThumbsDownIcon size={14} />}</span>
+                              )}
+                            </div>
+                            <span className="block" style={{ fontSize: '10px', fontStyle: 'italic', color: 'var(--color-text-tertiary)', marginTop: '1px' }}>
+                              {formatRelativeTime(review.review_created_at)}
+                            </span>
+                            {review.review_text && (
+                              <p className="mt-2 mb-0" style={{ fontFamily: 'var(--font-headline)', fontStyle: 'italic', fontSize: '14px', lineHeight: 1.6, color: 'var(--color-text-primary)', borderLeft: '2px solid var(--color-divider)', paddingLeft: '12px', margin: '8px 0 0 0' }}>
+                                {review.review_text}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* No reviews message */}
+            {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
+              <div
+                className="mb-4 p-4 rounded text-center"
+                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+                  No written reviews yet — be the first to share your thoughts!
+                </p>
               </div>
             )}
 
             {/* Photos grid */}
             {displayPhotos.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Photos ({displayPhotos.length})
-                </h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <span style={{ fontFamily: 'var(--font-headline)', fontSize: '15px', fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>Photos</span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {displayPhotos.map((photo) => (
                     <button
@@ -817,145 +1078,6 @@ export function Dish() {
                     See all {allPhotos.length} photos
                   </button>
                 )}
-              </div>
-            )}
-
-            {/* Friends who rated this */}
-            {friendsVotes.length > 0 && (
-              <div
-                className="mb-4 p-4 rounded-xl"
-                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-              >
-                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Friends who rated this
-                </h3>
-                <div className="space-y-3">
-                  {friendsVotes.map(function (vote) {
-                    var categoryLabel = CATEGORY_INFO[dish.category]?.label || dish.category
-                    var expertiseLabel = vote.category_expertise === 'authority'
-                      ? categoryLabel + ' Authority'
-                      : vote.category_expertise === 'specialist'
-                        ? categoryLabel + ' Specialist'
-                        : null
-
-                    return (
-                      <Link
-                        key={vote.user_id}
-                        to={'/user/' + vote.user_id}
-                        className="flex items-center gap-3 p-2 -mx-2 rounded-lg"
-                      >
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-                        >
-                          {vote.display_name?.charAt(0).toUpperCase() || '?'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                              {vote.display_name || 'Anonymous'}
-                            </p>
-                            {expertiseLabel && (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
-                                style={{
-                                  background: vote.category_expertise === 'authority' ? 'var(--color-primary-muted)' : 'var(--color-success-muted)',
-                                  color: vote.category_expertise === 'authority' ? 'var(--color-purple)' : 'var(--color-blue)',
-                                }}
-                              >
-                                {expertiseLabel}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                            {vote.would_order_again ? <><ThumbsUpIcon size={20} /> Would order again</> : <><ThumbsDownIcon size={20} /> Would skip</>}
-                            {friendsCompat[vote.user_id] != null && (
-                              <span className="ml-1.5 font-medium" style={{ color: getCompatColor(friendsCompat[vote.user_id]) }}>
-                                &middot; {friendsCompat[vote.user_id]}% match
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold" style={{ color: getRatingColor(vote.rating_10) }}>
-                            {formatScore10(vote.rating_10)}
-                          </span>
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Reviews feed */}
-            {reviews.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-bold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    Reviews ({reviews.length})
-                  </h3>
-                  <TrustSummary
-                    verifiedCount={reviews.filter(function (r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }).length}
-                    aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
-                  />
-                </div>
-                <div className="space-y-2">
-                  {reviews.map(function (review) {
-                    return (
-                      <div
-                        key={review.id}
-                        className="p-4 rounded-xl"
-                        style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <Link to={'/user/' + review.user_id} className="flex items-center gap-2 min-w-0">
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
-                              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-                            >
-                              {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-sm font-bold block truncate" style={{ color: 'var(--color-text-primary)' }}>
-                                @{review.profiles?.display_name || 'Anonymous'}
-                              </span>
-                              <span className="text-[11px] block" style={{ color: 'var(--color-text-tertiary)' }}>
-                                {formatRelativeTime(review.review_created_at)}
-                              </span>
-                            </div>
-                          </Link>
-                          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                            <span className="font-bold" style={{ fontSize: '18px', color: getRatingColor(review.rating_10) }}>
-                              {review.rating_10 ? formatScore10(review.rating_10) : ''}
-                            </span>
-                            <span>{review.would_order_again ? <ThumbsUpIcon size={22} /> : <ThumbsDownIcon size={22} />}</span>
-                          </div>
-                        </div>
-                        {review.review_text && (
-                          <p className="text-sm" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6 }}>
-                            {review.review_text}
-                          </p>
-                        )}
-                        <div className="mt-2">
-                          <TrustBadge type={review.trust_badge} />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* No reviews message */}
-            {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
-              <div
-                className="mb-4 p-4 rounded-xl text-center"
-                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-              >
-                <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                  No written reviews yet — be the first to share your thoughts!
-                </p>
               </div>
             )}
 
@@ -1005,104 +1127,6 @@ export function Dish() {
           />
         </div>
       )}
-
-      {/* Floating action bar */}
-      <div
-        className="fixed left-0 right-0 px-3"
-        style={{
-          bottom: 'calc(64px + env(safe-area-inset-bottom))',
-          zIndex: 40,
-        }}
-      >
-        <div
-          className="flex gap-2 p-2 rounded-2xl"
-          style={{
-            background: 'var(--color-card)',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.15), 0 0 0 1px var(--color-divider)',
-            backdropFilter: 'blur(16px)',
-          }}
-        >
-          {/* Order Now (Toast or order_url) or See Menu (website) */}
-          {(dish.toast_slug || dish.order_url) ? (
-            <a
-              href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : dish.order_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={function () { capture('order_clicked', {
-                dish_id: dish.dish_id,
-                dish_name: dish.dish_name,
-                restaurant_id: dish.restaurant_id,
-                restaurant_name: dish.restaurant_name,
-                source: dish.toast_slug ? 'toast' : 'order_url',
-              }) }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
-              style={{
-                background: 'var(--color-accent-orange)',
-                color: 'white',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
-              </svg>
-              Order Now
-            </a>
-          ) : dish.website_url ? (
-            <a
-              href={dish.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
-              style={{
-                background: 'var(--color-primary)',
-                color: 'white',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-              </svg>
-              See Menu
-            </a>
-          ) : null}
-
-          {/* Directions */}
-          <a
-            href={dish.restaurant_lat && dish.restaurant_lng
-              ? 'https://www.google.com/maps/dir/?api=1&destination=' + dish.restaurant_lat + ',' + dish.restaurant_lng
-              : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent((dish.restaurant_address || (dish.restaurant_name + ', ' + (dish.restaurant_town || "Martha's Vineyard") + ', MA')))
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
-            style={{
-              background: 'var(--color-accent-gold)',
-              color: 'var(--color-bg)',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-            </svg>
-            Directions
-          </a>
-
-          {/* Call */}
-          {dish.restaurant_phone && (
-            <a
-              href={'tel:' + dish.restaurant_phone}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
-              style={{
-                background: 'var(--color-emerald)',
-                color: 'white',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-              </svg>
-              Call
-            </a>
-          )}
-        </div>
-      </div>
 
       {/* Login Modal */}
       <LoginModal

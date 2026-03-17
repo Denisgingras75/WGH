@@ -17,6 +17,7 @@ import { useRestaurantSpecials } from '../hooks/useSpecials'
 import { useRestaurantEvents } from '../hooks/useEvents'
 import { SpecialCard } from '../components/SpecialCard'
 import { EventCard } from '../components/EventCard'
+import { CaretLeft, ShareNetwork, MapPin, Phone, Globe, FacebookLogo, InstagramLogo, Plus, ShoppingBag } from '@phosphor-icons/react'
 
 export function RestaurantDetail() {
   const { restaurantId } = useParams()
@@ -149,7 +150,7 @@ export function RestaurantDetail() {
             </div>
           </div>
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 rounded-xl" style={{ background: 'var(--color-card)' }} />
+            <div key={i} className="h-20" style={{ background: 'var(--color-card)', borderRadius: '4px' }} />
           ))}
         </div>
       </div>
@@ -187,24 +188,23 @@ export function RestaurantDetail() {
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          boxShadow: 'none',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: '3px double var(--color-divider)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/restaurants')}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="w-10 h-10 flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ color: 'var(--color-text-primary)' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-            </svg>
+            <CaretLeft size={20} weight="bold" />
           </button>
           <div className="min-w-0 flex-1">
             <h2
-              className="font-bold truncate"
+              className="truncate"
               style={{
+                fontFamily: 'var(--font-headline)',
+                fontWeight: 900,
                 color: 'var(--color-text-primary)',
                 fontSize: '20px',
                 letterSpacing: '-0.02em',
@@ -212,12 +212,18 @@ export function RestaurantDetail() {
             >
               {restaurant.name}
             </h2>
-            <p className="font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
-              {dishesLoading ? '…' : `${dishes.length} dish${dishes.length === 1 ? '' : 'es'}`}
-              {restaurant.distance_miles != null && (
-                <span> · {restaurant.distance_miles} mi away</span>
-              )}
-            </p>
+            {restaurant.town && (
+              <p style={{
+                fontStyle: 'italic',
+                color: 'var(--color-text-secondary)',
+                fontSize: '13px',
+              }}>
+                {restaurant.town}
+                {restaurant.distance_miles != null && (
+                  <span> &middot; {restaurant.distance_miles} mi away</span>
+                )}
+              </p>
+            )}
           </div>
           <button
             onClick={async () => {
@@ -228,58 +234,131 @@ export function RestaurantDetail() {
               })
               capture('restaurant_shared', { restaurant_id: restaurantId, method: result.method })
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }}
+            className="w-10 h-10 flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ color: 'var(--color-text-secondary)' }}
             aria-label="Share restaurant"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-            </svg>
+            <ShareNetwork size={20} weight="duotone" />
           </button>
         </div>
       </div>
 
-      {/* Restaurant Details Card */}
-      <div className="px-4 py-4 relative" style={{ background: 'var(--color-bg)' }}>
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-          style={{
-            width: '90%',
-            background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-          }}
-        />
+      {/* Stats Bar */}
+      <div style={{
+        display: 'flex',
+        borderTop: '2px solid var(--color-text-primary)',
+        borderBottom: '1px solid var(--color-divider)',
+      }}>
+        <div style={{
+          flex: 1,
+          textAlign: 'center',
+          padding: '10px 0',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-headline)',
+            fontSize: '22px',
+            fontWeight: 900,
+            color: 'var(--color-text-primary)',
+          }}>
+            {dishesLoading ? '\u2026' : dishes.length}
+          </div>
+          <div style={{
+            fontSize: '8px',
+            color: 'var(--color-text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+          }}>
+            Dishes
+          </div>
+        </div>
+        {(() => {
+          const rated = dishes.filter(d => d.avg_rating && d.avg_rating > 0)
+          if (rated.length > 0) {
+            const avg = rated.reduce((sum, d) => sum + d.avg_rating, 0) / rated.length
+            return (
+              <div style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: '10px 0',
+                borderLeft: '1px solid var(--color-divider)',
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '22px',
+                  fontWeight: 900,
+                  color: 'var(--color-rating)',
+                }}>
+                  {avg.toFixed(1)}
+                </div>
+                <div style={{
+                  fontSize: '8px',
+                  color: 'var(--color-text-tertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}>
+                  Avg Rating
+                </div>
+              </div>
+            )
+          }
+          return null
+        })()}
+        {restaurant.cuisine && (
+          <div style={{
+            flex: 1,
+            textAlign: 'center',
+            padding: '10px 0',
+            borderLeft: '1px solid var(--color-divider)',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-headline)',
+              fontSize: '14px',
+              fontWeight: 900,
+              color: 'var(--color-text-primary)',
+              marginTop: '4px',
+            }}>
+              {restaurant.cuisine}
+            </div>
+            <div style={{
+              fontSize: '8px',
+              color: 'var(--color-text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+            }}>
+              Cuisine
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Restaurant Info Section */}
+      <div className="px-4 py-4" style={{ background: 'var(--color-bg)' }}>
         <div className="space-y-3">
+          {/* Address */}
           {restaurant.address && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-3 hover:text-orange-400 transition-colors group"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mt-0.5 flex-shrink-0 group-hover:opacity-80" style={{ color: 'var(--color-text-tertiary)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-              <span className="text-sm">{restaurant.address}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mt-0.5 flex-shrink-0 group-hover:text-orange-400" style={{ color: 'var(--color-divider)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-            </a>
+            <p style={{
+              fontSize: '13px',
+              color: 'var(--color-text-secondary)',
+            }}>
+              <MapPin size={14} weight="fill" style={{ display: 'inline', verticalAlign: '-2px', marginRight: '6px', color: 'var(--color-text-tertiary)' }} />
+              {restaurant.address}
+            </p>
           )}
 
-          {/* Contact info row */}
+          {/* Contact links — small text, left-aligned */}
           {(restaurant.phone || restaurant.website_url || restaurant.facebook_url || restaurant.instagram_url) && (
-            <div className="flex items-center gap-3 flex-wrap">
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}>
               {restaurant.phone && (
                 <a
                   href={`tel:${restaurant.phone}`}
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                  </svg>
+                  <Phone size={14} weight="duotone" />
                   {restaurant.phone}
                 </a>
               )}
@@ -288,12 +367,10 @@ export function RestaurantDetail() {
                   href={restaurant.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
-                  </svg>
+                  <Globe size={14} weight="duotone" />
                   Website
                 </a>
               )}
@@ -302,12 +379,10 @@ export function RestaurantDetail() {
                   href={restaurant.facebook_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                  </svg>
+                  <FacebookLogo size={14} weight="duotone" />
                   Facebook
                 </a>
               )}
@@ -316,17 +391,92 @@ export function RestaurantDetail() {
                   href={restaurant.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-accent-gold)' }}
+                  className="transition-opacity hover:opacity-80"
+                  style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                  </svg>
+                  <InstagramLogo size={14} weight="duotone" />
                   Instagram
                 </a>
               )}
             </div>
           )}
+
+          {/* Action buttons — Directions / Call / Website */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {restaurant.address && (
+              <a
+                href={restaurant.lat && restaurant.lng
+                  ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurant.lat + ',' + restaurant.lng
+                  : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(restaurant.address)
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <MapPin size={14} weight="fill" />
+                Directions
+              </a>
+            )}
+            {restaurant.phone && (
+              <a
+                href={`tel:${restaurant.phone}`}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <Phone size={14} weight="duotone" />
+                Call
+              </a>
+            )}
+            {restaurant.website_url && (
+              <a
+                href={restaurant.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '10px 0',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                }}
+              >
+                <Globe size={14} weight="duotone" />
+                Website
+              </a>
+            )}
+          </div>
 
           {isHere && (
             <button
@@ -334,16 +484,14 @@ export function RestaurantDetail() {
                 if (!user) { setLoginModalOpen(true); return }
                 setAddDishModalOpen(true)
               }}
-              className="flex items-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+              className="flex items-center gap-2 w-full px-4 py-3 text-sm font-bold transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-gold)',
                 color: 'var(--color-bg)',
+                borderRadius: '4px',
               }}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
+              <MapPin size={20} weight="fill" />
               I&apos;m Here — Rate a Dish
             </button>
           )}
@@ -351,29 +499,49 @@ export function RestaurantDetail() {
           {user && !isHere && (
             <button
               onClick={() => setAddDishModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.98]"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-gold-muted)',
                 color: 'var(--color-accent-gold)',
                 border: '1px solid var(--color-accent-gold)',
+                borderRadius: '4px',
               }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus size={16} weight="bold" />
               Add a dish
             </button>
           )}
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="px-4 pt-4">
+      {/* Editorial Dish Section Divider */}
+      <div className="px-4 pt-5 pb-1">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '12px',
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+          <span style={{
+            fontFamily: 'var(--font-headline)',
+            fontSize: '14px',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            color: 'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}>
+            Their Best Dishes
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+        </div>
+
+        {/* Tab Switcher — Editorial */}
         <div
-          className="flex rounded-xl p-1"
+          className="flex"
           style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
+            border: '1.5px solid var(--color-text-primary)',
+            borderRadius: '4px',
           }}
           role="tablist"
           aria-label="Restaurant view"
@@ -382,11 +550,11 @@ export function RestaurantDetail() {
             role="tab"
             aria-selected={activeTab === 'top'}
             onClick={() => setActiveTab('top')}
-            className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm font-bold transition-all"
             style={{
-              background: activeTab === 'top' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'top' ? 'white' : 'var(--color-text-secondary)',
-              boxShadow: 'none',
+              background: activeTab === 'top' ? 'var(--color-text-primary)' : 'transparent',
+              color: activeTab === 'top' ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+              borderRadius: '2px 0 0 2px',
             }}
           >
             Top Rated
@@ -395,20 +563,17 @@ export function RestaurantDetail() {
             role="tab"
             aria-selected={activeTab === 'menu'}
             onClick={() => setActiveTab('menu')}
-            className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm font-bold transition-all"
             style={{
-              background: activeTab === 'menu' ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === 'menu' ? 'white' : 'var(--color-text-secondary)',
-              boxShadow: activeTab === 'menu' ? '0 2px 8px -2px rgba(200, 90, 84, 0.4)' : 'none',
+              background: activeTab === 'menu' ? 'var(--color-text-primary)' : 'transparent',
+              color: activeTab === 'menu' ? 'var(--color-bg)' : 'var(--color-text-tertiary)',
+              borderRadius: '0 2px 2px 0',
+              borderLeft: '1.5px solid var(--color-text-primary)',
             }}
           >
             Menu
           </button>
         </div>
-        <div
-          className="mt-3 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, var(--color-accent-gold), transparent)' }}
-        />
       </div>
 
       {/* Dish Content */}
@@ -488,7 +653,7 @@ export function RestaurantDetail() {
         style={{
           background: 'var(--color-bg)',
           backdropFilter: 'blur(12px)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+          borderTop: '1.5px solid var(--color-divider)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -498,15 +663,14 @@ export function RestaurantDetail() {
               href={'https://order.toasttab.com/online/' + restaurant.toast_slug}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-accent-orange)',
                 color: 'var(--color-bg)',
+                borderRadius: '4px',
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
-              </svg>
+              <ShoppingBag size={18} weight="duotone" />
               Order Now
             </a>
           )}
@@ -517,15 +681,14 @@ export function RestaurantDetail() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
+            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 font-bold text-sm transition-all active:scale-[0.98]'}
             style={{
               background: 'var(--color-accent-gold)',
               color: 'var(--color-bg)',
+              borderRadius: '4px',
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-            </svg>
+            <MapPin size={20} weight="fill" />
             Directions
           </a>
         </div>

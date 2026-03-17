@@ -1,9 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useDishSearch } from '../hooks/useDishSearch'
 import { useLocationContext } from '../context/LocationContext'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
+import { usePurityTracker } from '../hooks/usePurityTracker'
 import { AddRestaurantModal } from './AddRestaurantModal'
 import { getCategoryNeonImage } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
@@ -40,6 +41,11 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   const [addModalQuery, setAddModalQuery] = useState('')
   const inputRef = useRef(null)
   const dropdownRef = useRef(null)
+  const { attachToTextarea } = usePurityTracker()
+  const combinedInputRef = useCallback(function (el) {
+    inputRef.current = el
+    attachToTextarea(el)
+  }, [attachToTextarea])
 
   // Sync internal query when parent clears/changes initialQuery
   useEffect(() => {
@@ -161,11 +167,13 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     <div className="relative w-full">
       {/* Search Input */}
       <div
-        className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+        className="relative flex items-center gap-3 px-4 py-3 transition-all duration-200"
         style={{
-          background: 'var(--color-surface-elevated)',
-          border: isFocused ? '2px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
+          background: 'var(--color-surface)',
+          border: isFocused ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
+          borderRadius: '4px',
           minHeight: '48px',
+          boxShadow: isFocused ? '0 0 0 3px var(--color-primary-muted)' : 'none',
         }}
       >
         <svg
@@ -180,7 +188,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         </svg>
 
         <input
-          ref={inputRef}
+          ref={combinedInputRef}
           id="dish-search"
           name="dish-search"
           type="text"
@@ -242,10 +250,11 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           id="dish-search-dropdown"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          className="absolute top-full left-0 right-0 mt-2 overflow-hidden z-50"
           style={{
             background: 'var(--color-surface)',
             border: '1.5px solid var(--color-divider)',
+            borderRadius: '4px',
           }}
         >
           {isLoading ? (
@@ -270,7 +279,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {results.dishes.length > 0 && (
                 <div>
                   <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                       {town ? `Best in ${town}` : 'Best Matches'}
                     </span>
                   </div>
@@ -295,7 +304,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       background: results.dishes.length > 0 ? 'var(--color-surface)' : 'transparent',
                     }}
                   >
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                       Categories
                     </span>
                   </div>
@@ -313,7 +322,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {hasRestaurantResults && (
                 <div>
                   <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                       {results.dishes.length > 0 ? 'Restaurants' : 'Not on WGH yet?'}
                     </span>
                   </div>

@@ -1,78 +1,47 @@
 /**
- * CategoryImageCard - Category selector using PlateIcon
+ * CategoryImageCard - Editorial category tile
  *
  * Design Philosophy:
- * - PlateIcon provides the realistic matte ceramic plate
- * - Food image glows (alive), plate stays quiet (neutral)
- * - Consistent grid spacing with centered labels
- * - Images load eagerly (above fold) with smooth fade-in
+ * - Sharp-cornered bordered card with emoji + Playfair Display label
+ * - Vintage Island Press: like a chapter heading in a food zine
+ * - Active state = ink fill with parchment text
  */
-
-import { useState } from 'react'
-import { PlateIcon } from './PlateIcon'
-import { getCategoryNeonImage } from '../constants/categories'
 
 export function CategoryImageCard({
   category,
   isActive = false,
   onClick,
-  size = 80,
 }) {
-  const imageSrc = getCategoryNeonImage(category.id)
-  const [imageLoaded, setImageLoaded] = useState(false)
-
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center transition-all duration-200 active:scale-[0.97]"
-      style={{ gap: '18px' }}
+      className="flex flex-col items-center justify-center transition-all duration-200 active:opacity-85"
+      style={{
+        padding: '16px 4px 12px',
+        background: isActive ? 'var(--color-text-primary)' : 'var(--color-card)',
+        border: isActive ? '1.5px solid var(--color-text-primary)' : '1.5px solid var(--color-divider)',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        width: '100%',
+      }}
     >
-      {/* Plate with food icon */}
-      <div className="transition-all duration-200" style={{ filter: 'drop-shadow(0 0 0px transparent)' }} onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08))'} onMouseLeave={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 0px transparent)'}>
-        <PlateIcon size={size}>
-          {imageSrc ? (
-            <div
-              className="w-full h-full rounded-full overflow-hidden"
-              style={{
-                // Food glow - warm gold glow for appetite appeal
-                boxShadow: isActive
-                  ? '0 0 14px rgba(232, 102, 60, 0.15), 0 0 6px rgba(232, 102, 60, 0.1)'
-                  : '0 0 8px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-            <img
-              src={imageSrc}
-              alt={category.label}
-              // No lazy loading - these are above the fold
-              className="w-full h-full object-cover transition-opacity duration-300"
-              style={{
-                opacity: imageLoaded ? 1 : 0,
-                transform: category.id === 'breakfast' ? 'scale(1.3)' : 'none',
-              }}
-              onLoad={() => setImageLoaded(true)}
-              onError={(e) => {
-                e.target.style.display = 'none'
-              }}
-            />
-          </div>
-        ) : (
-          <div
-            className="w-full h-full rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-bg)' }}
-          >
-            {category.emoji && (
-              <span style={{ fontSize: '40px', lineHeight: 1 }}>{category.emoji}</span>
-            )}
-          </div>
-        )}
-        </PlateIcon>
-      </div>
+      {/* Emoji */}
+      {category.emoji && (
+        <span style={{ fontSize: '28px', lineHeight: 1, marginBottom: '4px' }}>
+          {category.emoji}
+        </span>
+      )}
 
-      {/* Label - secondary to plate */}
+      {/* Label */}
       <span
-        className="text-[12px] font-medium text-center leading-none transition-all duration-200 group-hover:brightness-125"
         style={{
-          color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+          fontFamily: 'var(--font-headline)',
+          fontSize: '11px',
+          fontWeight: 700,
+          color: isActive ? 'var(--color-bg)' : 'var(--color-text-primary)',
+          letterSpacing: '0.02em',
+          lineHeight: 1.2,
+          textAlign: 'center',
         }}
       >
         {category.label}

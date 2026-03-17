@@ -13,14 +13,14 @@ export function ForRestaurants() {
       {/* Hero */}
       <div className="px-6 pt-12 pb-8 text-center">
         <div
-          className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-6"
-          style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}
+          className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold mb-6"
+          style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)', borderRadius: '4px' }}
         >
           FREE FOR RESTAURANTS
         </div>
         <h1
           className="font-bold leading-tight"
-          style={{ fontSize: '32px', color: 'var(--color-text-primary)' }}
+          style={{ fontSize: '32px', color: 'var(--color-text-primary)', fontFamily: 'var(--font-headline)' }}
         >
           Your best dishes,{' '}
           <span style={{ color: 'var(--color-primary)' }}>ranked by locals</span>
@@ -68,8 +68,8 @@ export function ForRestaurants() {
             return (
               <div
                 key={step.num}
-                className="flex items-start gap-4 p-4 rounded-xl"
-                style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+                className="flex items-start gap-4 p-4"
+                style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
               >
                 <span
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold"
@@ -109,8 +109,8 @@ export function ForRestaurants() {
             return (
               <div
                 key={prop.label}
-                className="p-4 rounded-xl text-center"
-                style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+                className="p-4 text-center"
+                style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
               >
                 <p className="font-bold" style={{ fontSize: '24px', color: 'var(--color-primary)' }}>
                   {prop.icon}
@@ -130,8 +130,8 @@ export function ForRestaurants() {
       {/* What you get */}
       <div className="px-6 pb-8">
         <div
-          className="rounded-xl p-5"
-          style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+          className="p-5"
+          style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}
         >
           <h3 className="font-bold mb-3" style={{ fontSize: '16px', color: 'var(--color-text-primary)' }}>
             Your restaurant gets:
@@ -166,11 +166,12 @@ export function ForRestaurants() {
       <div className="px-6 pb-12 text-center">
         <button
           onClick={function () { navigate('/restaurants') }}
-          className="w-full py-4 rounded-xl font-bold text-base transition-all active:scale-[0.98]"
+          className="w-full py-4 font-bold text-base transition-all active:scale-[0.98]"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             border: '2px solid var(--color-primary)',
+            borderRadius: '4px',
           }}
         >
           See Restaurants on WGH

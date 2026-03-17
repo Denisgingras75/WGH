@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
@@ -21,6 +21,9 @@ import {
   JournalFeed,
   SharePicksButton,
 } from '../components/profile'
+import { CaretRight } from '@phosphor-icons/react'
+import { getLists, createList, deleteList, addDishToList, removeDishFromList } from '../lib/lists'
+import { useDishSearch } from '../hooks/useDishSearch'
 
 const SHELVES = [
   { id: 'all', label: 'All' },
@@ -55,6 +58,14 @@ export function Profile() {
   })
   const [followListModal, setFollowListModal] = useState(null) // 'followers' | 'following' | null
 
+  const [lists, setLists] = useState(function() { return getLists() })
+  const [showCreateList, setShowCreateList] = useState(false)
+  const [newListName, setNewListName] = useState('')
+  const listNameRef = useRef(null)
+  const [expandedListId, setExpandedListId] = useState(null)
+  const [listSearchQuery, setListSearchQuery] = useState('')
+  const listSearchData = useDishSearch(listSearchQuery, 10)
+  const listSearchResults = listSearchData.results
 
   // Set initial name for editing
   useEffect(() => {
@@ -230,114 +241,87 @@ export function Profile() {
             setFollowListModal={setFollowListModal}
           />
 
-          {/* Dashboard cards — side by side */}
+          {/* Newspaper-style stats bar */}
           {stats.totalVotes > 0 && (
-            <div className="px-4 pt-4 flex gap-3">
-              {/* Left card — Recent Meals */}
-              <div
-                className="flex-1 min-w-0 rounded-2xl px-3.5 py-3.5"
-                style={{
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-divider)',
-                }}
-              >
-                <h2
-                  className="font-bold mb-2.5"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontSize: '14px',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  Recent
-                </h2>
-                <div className="space-y-2.5">
-                  {stats.recentMeals.map(function (meal, i) {
-                    return (
-                      <div key={i}>
-                        <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                          {meal.dish_name}
-                        </p>
-                        <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                          {meal.restaurant_name} &middot; <span className="font-semibold" style={{ color: 'var(--color-rating)' }}>{meal.rating}/10</span>
-                        </p>
-                      </div>
-                    )
-                  })}
-                  {stats.recentMeals.length === 0 && (
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
-                      Rate some dishes to see them here
-                    </p>
-                  )}
+            <div
+              className="mx-4 mt-4 flex"
+              style={{
+                borderTop: '1px solid var(--color-divider)',
+                borderBottom: '1px solid var(--color-divider)',
+              }}
+            >
+              {/* Rated */}
+              <div className="flex-1 py-3 text-center">
+                <div style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '28px',
+                  fontWeight: 900,
+                  color: 'var(--color-text-primary)',
+                  lineHeight: 1,
+                }}>
+                  {stats.totalVotes}
+                </div>
+                <div style={{
+                  fontSize: '7px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: 'var(--color-text-tertiary)',
+                  marginTop: '4px',
+                }}>
+                  Rated
                 </div>
               </div>
 
-              {/* Right card — Loyal Spot + Best Find */}
+              {/* Spots */}
               <div
-                className="flex-1 min-w-0 rounded-2xl px-3.5 py-3.5"
+                className="flex-1 py-3 text-center"
                 style={{
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-divider)',
+                  borderLeft: '1px solid var(--color-divider)',
+                  borderRight: '1px solid var(--color-divider)',
                 }}
               >
-                <h2
-                  className="font-bold mb-2.5"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontSize: '14px',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  Highlights
-                </h2>
-                <div className="space-y-2.5">
-                  {/* Most loyal spot */}
-                  {stats.favoriteRestaurant && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\uD83C\uDFE0'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Most loyal</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.favoriteRestaurant}
-                      </p>
-                      <p style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'} rated
-                      </p>
-                    </div>
-                  )}
+                <div style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '28px',
+                  fontWeight: 900,
+                  color: 'var(--color-text-primary)',
+                  lineHeight: 1,
+                }}>
+                  {stats.uniqueRestaurants || 0}
+                </div>
+                <div style={{
+                  fontSize: '7px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: 'var(--color-text-tertiary)',
+                  marginTop: '4px',
+                }}>
+                  Spots
+                </div>
+              </div>
 
-                  {/* Best find */}
-                  {stats.standoutPicks.bestFind && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\u2B50'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Best find</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.standoutPicks.bestFind.dish_name}
-                      </p>
-                      <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        {stats.standoutPicks.bestFind.restaurant_name} &middot; <span className="font-semibold" style={{ color: 'var(--color-accent-gold)' }}>{stats.standoutPicks.bestFind.userRating}/10</span>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Controversial pick */}
-                  {stats.standoutPicks.harshestTake && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\uD83C\uDF36\uFE0F'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Hot take</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.standoutPicks.harshestTake.dish_name}
-                      </p>
-                      <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {stats.standoutPicks.harshestTake.communityAvg.toFixed(1)}
-                      </p>
-                    </div>
-                  )}
+              {/* Avg */}
+              <div className="flex-1 py-3 text-center">
+                <div style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontSize: '28px',
+                  fontWeight: 900,
+                  color: 'var(--color-primary)',
+                  lineHeight: 1,
+                }}>
+                  {stats.avgRating != null ? stats.avgRating.toFixed(1) : '\u2014'}
+                </div>
+                <div style={{
+                  fontSize: '7px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: 'var(--color-text-tertiary)',
+                  marginTop: '4px',
+                }}>
+                  Avg
                 </div>
               </div>
             </div>
@@ -361,29 +345,371 @@ export function Profile() {
                     handleUnratedDishClick(unratedDishes[0])
                   }
                 }}
-                className="w-full rounded-2xl p-4 flex items-center gap-4 transition-all hover:scale-[0.99] active:scale-[0.98]"
+                className="w-full p-4 flex items-center gap-4 transition-all hover:scale-[0.99] active:scale-[0.98]"
                 style={{
                   background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-orange) 100%)',
-                  boxShadow: 'none',
+                  border: '1.5px solid var(--color-divider)',
+                  borderRadius: '4px',
                 }}
               >
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                   <CameraIcon size={28} />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-bold" style={{ fontSize: '17px', letterSpacing: '-0.01em', color: 'var(--color-text-on-primary)' }}>
+                  <h3 className="font-bold" style={{ fontFamily: 'var(--font-headline)', fontSize: '17px', letterSpacing: '-0.01em', color: 'var(--color-text-on-primary)' }}>
                     {unratedCount} photo{unratedCount === 1 ? '' : 's'} to rate
                   </h3>
                   <p style={{ fontSize: '13px', color: 'var(--color-text-on-primary-muted, rgba(255, 255, 255, 0.7))' }}>
                     Tap to rate your dishes
                   </p>
                 </div>
-                <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-on-primary-muted, rgba(255, 255, 255, 0.6))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <CaretRight size={20} weight="bold" className="flex-shrink-0" style={{ color: 'var(--color-text-on-primary-muted, rgba(255, 255, 255, 0.6))' }} />
               </button>
             </div>
           )}
+
+          {/* Your Lists section header — editorial divider */}
+          <div className="px-4 pt-5 pb-1">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-headline)',
+                fontSize: '18px',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                color: 'var(--color-primary)',
+                letterSpacing: '0.08em',
+                lineHeight: 1,
+                whiteSpace: 'nowrap',
+              }}>
+                Your Lists
+              </span>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: 'var(--color-divider)',
+              }} />
+            </div>
+          </div>
+
+          {/* Create a List button */}
+          <div className="px-4 pt-2">
+            <button
+              onClick={function() { setShowCreateList(true) }}
+              className="w-full transition-all"
+              style={{
+                padding: '14px',
+                border: '2px dashed var(--color-divider)',
+                borderRadius: '4px',
+                background: 'transparent',
+                color: 'var(--color-text-secondary)',
+                fontFamily: 'var(--font-headline)',
+                fontSize: '15px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)'
+                e.currentTarget.style.color = 'var(--color-primary)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-divider)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+              }}
+              onTouchStart={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)'
+                e.currentTarget.style.color = 'var(--color-primary)'
+              }}
+              onTouchEnd={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-divider)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+              }}
+            >
+              + Create a List
+            </button>
+
+            {showCreateList && (
+              <div style={{ marginTop: '8px', padding: '12px', border: '1.5px solid var(--color-divider)', borderRadius: '4px' }}>
+                <input
+                  ref={listNameRef}
+                  type="text"
+                  placeholder="List name (e.g. Best Seafood 2026)"
+                  value={newListName}
+                  onChange={function(e) { setNewListName(e.target.value) }}
+                  maxLength={50}
+                  className="w-full"
+                  style={{
+                    padding: '10px 12px',
+                    border: '1.5px solid var(--color-divider)',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-headline)',
+                    color: 'var(--color-text-primary)',
+                    background: 'var(--color-surface-elevated)',
+                  }}
+                />
+                <div className="flex gap-2" style={{ marginTop: '8px' }}>
+                  <button
+                    onClick={function() {
+                      if (!newListName.trim()) return
+                      createList(newListName.trim())
+                      setLists(getLists())
+                      setNewListName('')
+                      setShowCreateList(false)
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '4px',
+                      background: 'var(--color-primary)',
+                      color: 'var(--color-text-on-primary)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={function() { setShowCreateList(false); setNewListName('') }}
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: '4px',
+                      border: '1.5px solid var(--color-divider)',
+                      color: 'var(--color-text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* List previews */}
+          <div className="px-4" style={{ marginTop: '12px' }}>
+            {/* Heard it was Good Here list */}
+            {favorites && favorites.length > 0 && (
+              <div style={{
+                padding: '12px 0',
+                borderBottom: '1px solid var(--color-divider)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-headline)', fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                    Heard it was Good Here
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                    Your saved dishes &middot; Want to try
+                  </div>
+                </div>
+                <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)' }}>&rarr;</span>
+              </div>
+            )}
+
+            {/* User-created lists */}
+            {lists.map(function(list) {
+              return (
+                <div key={list.id} style={{
+                  borderBottom: '1px solid var(--color-divider)',
+                }}>
+                  <button
+                    onClick={function() {
+                      setExpandedListId(expandedListId === list.id ? null : list.id)
+                      setListSearchQuery('')
+                    }}
+                    className="w-full flex items-center"
+                    style={{
+                      padding: '12px 0',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontFamily: 'var(--font-headline)', fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                        {list.emoji} {list.name}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                        {list.dishes.length} dish{list.dishes.length === 1 ? '' : 'es'}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', transform: expandedListId === list.id ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s ease' }}>&rarr;</span>
+                  </button>
+
+                  {expandedListId === list.id && (
+                    <div style={{ padding: '8px 0' }}>
+                      {/* Search to add */}
+                      <div style={{ position: 'relative', marginBottom: '8px' }}>
+                        <input
+                          type="text"
+                          placeholder="Search dishes to add..."
+                          value={listSearchQuery}
+                          onChange={function(e) { setListSearchQuery(e.target.value) }}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: '1.5px solid var(--color-divider)',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                            color: 'var(--color-text-primary)',
+                            background: 'var(--color-surface-elevated)',
+                          }}
+                        />
+                        {/* Search results dropdown */}
+                        {listSearchQuery.length >= 2 && listSearchResults.length > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            marginTop: '2px',
+                            background: 'var(--color-surface-elevated)',
+                            border: '1.5px solid var(--color-divider)',
+                            borderRadius: '4px',
+                            zIndex: 50,
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                          }}>
+                            {listSearchResults.map(function(dish) {
+                              var alreadyInList = list.dishes.some(function(d) { return d.dish_id === dish.dish_id })
+                              return (
+                                <button
+                                  key={dish.dish_id}
+                                  onClick={function() {
+                                    if (!alreadyInList) {
+                                      addDishToList(list.id, dish)
+                                      setLists(getLists())
+                                    }
+                                    setListSearchQuery('')
+                                  }}
+                                  disabled={alreadyInList}
+                                  className="w-full flex items-center gap-2 text-left"
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderBottom: '1px solid var(--color-divider)',
+                                    opacity: alreadyInList ? 0.4 : 1,
+                                    cursor: alreadyInList ? 'default' : 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    borderBottomWidth: '1px',
+                                    borderBottomStyle: 'solid',
+                                    borderBottomColor: 'var(--color-divider)',
+                                  }}
+                                >
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ fontFamily: 'var(--font-headline)', fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                                      {dish.dish_name}
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                                      {dish.restaurant_name}
+                                    </div>
+                                  </div>
+                                  {dish.avg_rating && (
+                                    <span style={{ fontFamily: 'var(--font-headline)', fontSize: '14px', fontWeight: 900, color: 'var(--color-rating)' }}>
+                                      {Number(dish.avg_rating).toFixed(1)}
+                                    </span>
+                                  )}
+                                  {alreadyInList && (
+                                    <span style={{ fontSize: '9px', color: 'var(--color-text-tertiary)' }}>Added</span>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Current dishes in list */}
+                      {list.dishes.length > 0 ? (
+                        list.dishes.map(function(dish) {
+                          return (
+                            <div key={dish.dish_id} className="flex items-center gap-2" style={{
+                              padding: '8px 0',
+                              borderBottom: '1px solid var(--color-divider)',
+                            }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontFamily: 'var(--font-headline)', fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                                  {dish.dish_name}
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                                  {dish.restaurant_name}
+                                </div>
+                              </div>
+                              {dish.avg_rating && (
+                                <span style={{ fontFamily: 'var(--font-headline)', fontSize: '14px', fontWeight: 900, color: 'var(--color-rating)' }}>
+                                  {Number(dish.avg_rating).toFixed(1)}
+                                </span>
+                              )}
+                              <button
+                                onClick={function() {
+                                  removeDishFromList(list.id, dish.dish_id)
+                                  setLists(getLists())
+                                }}
+                                style={{
+                                  padding: '2px 6px',
+                                  fontSize: '10px',
+                                  color: 'var(--color-danger)',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <div style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                          No dishes yet — search above to add some
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Journal section header — editorial divider */}
+          <div className="px-4 pt-5 pb-1">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-headline)',
+                fontSize: '18px',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                color: 'var(--color-primary)',
+                letterSpacing: '0.08em',
+                lineHeight: 1,
+                whiteSpace: 'nowrap',
+              }}>
+                My Tasting Notes
+              </span>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: 'var(--color-divider)',
+              }} />
+            </div>
+          </div>
 
           {/* Shelf Filters */}
           <ShelfFilter
@@ -431,11 +757,11 @@ export function Profile() {
         /* Sign In Card */
         <div className="p-5 pt-8">
           <div
-            className="rounded-2xl border p-7"
+            className="p-7"
             style={{
               background: 'var(--color-card)',
-              borderColor: 'var(--color-divider)',
-              boxShadow: 'none',
+              border: '1.5px solid var(--color-divider)',
+              borderRadius: '4px',
             }}
           >
             <div className="text-center mb-7">
@@ -447,6 +773,7 @@ export function Profile() {
               <h2
                 className="font-bold"
                 style={{
+                  fontFamily: 'var(--font-headline)',
                   color: 'var(--color-text-primary)',
                   fontSize: '22px',
                   letterSpacing: '-0.02em',
@@ -482,12 +809,12 @@ export function Profile() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={authLoading}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border rounded-xl font-semibold text-[color:var(--color-text-primary)] hover:bg-[color:var(--color-surface-elevated)] active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 font-semibold text-[color:var(--color-text-primary)] hover:bg-[color:var(--color-surface-elevated)] active:scale-[0.98] transition-all disabled:opacity-50"
                 style={{
                   background: 'var(--color-surface-elevated)',
-                  borderColor: 'var(--color-divider)',
+                  border: '1.5px solid var(--color-divider)',
                   fontSize: '14px',
-                  boxShadow: 'none',
+                  borderRadius: '4px',
                 }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -514,21 +841,23 @@ export function Profile() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none transition-all mb-3"
+                  className="w-full px-4 py-3 focus:outline-none transition-all mb-3"
                   style={{
                     background: 'var(--color-surface-elevated)',
-                    borderColor: 'var(--color-divider)',
+                    border: '1.5px solid var(--color-divider)',
                     color: 'var(--color-text-primary)',
                     fontSize: '14px',
+                    borderRadius: '4px',
                   }}
                 />
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full px-4 py-3 text-[color:var(--color-text-primary)] font-semibold rounded-xl active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="w-full px-4 py-3 text-[color:var(--color-text-primary)] font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
                   style={{
                     background: 'var(--color-surface-elevated)',
                     fontSize: '14px',
+                    borderRadius: '4px',
                   }}
                 >
                   {authLoading ? 'Sending...' : 'Sign in with email'}

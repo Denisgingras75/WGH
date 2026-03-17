@@ -1,24 +1,14 @@
-/**
- * HearingIcon - Illustrated hearing icon for "Heard Good Here" section
- */
+import { Ear } from '@phosphor-icons/react'
 
-export function HearingIcon({ size = 20, className = '', active = false }) {
-  const scaledSize = Math.round(size * 1.6)
+export default function HearingIcon({ size = 24, className = '' }) {
   return (
-    <img
-      src="/hearing.png"
-      alt="heard good here"
-      className={`inline-block object-contain transition-all duration-200 ${className}`}
-      style={{
-        width: scaledSize,
-        height: scaledSize,
-        margin: -Math.round(size * 0.3),
-        filter: active
-          ? 'brightness(1.15) drop-shadow(0 0 4px rgba(232, 102, 60, 0.4))'
-          : 'brightness(0.9) opacity(0.85)',
-      }}
+    <Ear
+      size={size}
+      weight="duotone"
+      className={className}
+      style={{ color: 'var(--color-text-secondary)' }}
     />
   )
 }
 
-export default HearingIcon
+export { HearingIcon }

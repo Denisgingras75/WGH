@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { getRatingColor, formatScore10 } from '../../utils/ranking'
-import { CategoryIcon } from '../home/CategoryIcons'
+import { formatScore10 } from '../../utils/ranking'
 
 /**
  * JournalCard — a single entry in the food journal feed.
+ * Styled as a flat diary entry: dish name (Playfair bold) + restaurant (italic)
+ * + relative date, with big rating number on the right.
  *
  * Props:
  *   dish     - dish data object
@@ -13,10 +14,7 @@ import { CategoryIcon } from '../home/CategoryIcons'
 export function JournalCard({ dish, variant = 'good-here', onTriedIt }) {
   var dishName = dish.dish_name || dish.name
   var restaurantName = dish.restaurant_name
-  var town = dish.restaurant_town
   var dishId = dish.dish_id || dish.id
-  var categoryId = dish.category
-  var photoUrl = dish.photo_url
 
   // Timestamp formatting
   var timestamp = dish.voted_at || dish.saved_at
@@ -37,45 +35,44 @@ export function JournalCard({ dish, variant = 'good-here', onTriedIt }) {
     }
   }
 
-  // Heard variant — no link wrapper, CTA is primary action
+  // Heard variant — flat entry with CTA
   if (variant === 'heard') {
     return (
       <div
         data-testid="journal-card"
-        className="flex items-start gap-3 p-3 rounded-xl"
+        className="flex items-start justify-between gap-3"
         style={{
-          background: 'var(--color-card)',
-          border: '1px solid var(--color-divider)',
+          padding: '12px 0',
+          borderBottom: '1px solid var(--color-divider)',
         }}
       >
-        {/* Thumbnail */}
-        <div
-          className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
-          style={{ background: 'var(--color-category-strip)' }}
-        >
-          {photoUrl ? (
-            <img src={photoUrl} alt="" className="w-full h-full object-cover rounded-lg" />
-          ) : (
-            <CategoryIcon categoryId={categoryId} dishName={dishName} size={28} />
-          )}
-        </div>
-
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div
-            className="font-bold truncate"
-            style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}
+            className="truncate"
+            style={{
+              fontFamily: 'var(--font-headline)',
+              fontWeight: 700,
+              color: 'var(--color-text-primary)',
+              fontSize: '15px',
+              lineHeight: 1.3,
+            }}
           >
             {dishName}
           </div>
           <div
             className="truncate"
-            style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}
+            style={{
+              fontStyle: 'italic',
+              color: 'var(--color-text-secondary)',
+              fontSize: '13px',
+              marginTop: '2px',
+            }}
           >
-            {restaurantName} · {town}
+            {restaurantName}
           </div>
           {timeLabel && (
-            <div style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }} className="mt-0.5">
+            <div style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', marginTop: '2px' }}>
               {timeLabel}
             </div>
           )}
@@ -101,74 +98,70 @@ export function JournalCard({ dish, variant = 'good-here', onTriedIt }) {
   // Good Here / Not Good Here variants
   var isMuted = variant === 'not-good-here'
   var rating = dish.rating_10
-  var communityAvg = dish.community_avg
   var reviewText = dish.review_text
+
+  // Rating color: var(--color-rating) for 7+, var(--color-primary) for under 7
+  var ratingColorVar = rating != null && rating >= 7 ? 'var(--color-rating)' : 'var(--color-primary)'
 
   return (
     <Link
       to={'/dish/' + dishId}
       data-testid="journal-card"
-      className="flex items-start gap-3 p-3 rounded-xl no-underline"
+      className="flex items-start justify-between gap-3 no-underline"
       style={{
-        background: 'var(--color-card)',
-        border: '1px solid var(--color-divider)',
-        opacity: isMuted ? '0.75' : '1',
+        padding: '12px 0',
+        borderBottom: '1px solid var(--color-divider)',
+        opacity: isMuted ? '0.7' : '1',
         display: 'flex',
         textDecoration: 'none',
       }}
     >
-      {/* Thumbnail */}
-      <div
-        className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
-        style={{ background: 'var(--color-category-strip)' }}
-      >
-        {photoUrl ? (
-          <img src={photoUrl} alt="" className="w-full h-full object-cover rounded-lg" />
-        ) : (
-          <CategoryIcon categoryId={categoryId} dishName={dishName} size={28} />
-        )}
-      </div>
-
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2">
-          <div
-            className="font-bold truncate"
-            style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}
-          >
-            {dishName}
-          </div>
-          {rating != null && (
-            <div className="flex items-baseline gap-1.5 flex-shrink-0">
-              <span
-                className="font-bold"
-                style={{ color: getRatingColor(rating), fontSize: '18px' }}
-              >
-                {formatScore10(rating)}
-              </span>
-              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>/10</span>
-            </div>
-          )}
-        </div>
         <div
           className="truncate"
-          style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}
+          style={{
+            fontFamily: 'var(--font-headline)',
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            fontSize: '15px',
+            lineHeight: 1.3,
+          }}
         >
-          {restaurantName} · {town}
+          {dishName}
         </div>
-        {communityAvg != null && (
-          <div style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }} className="mt-0.5">
-            Crowd: {formatScore10(communityAvg)}
-          </div>
-        )}
-        {reviewText && (
-          <div
-            className="mt-1"
+        <div className="flex items-baseline gap-1.5" style={{ marginTop: '2px' }}>
+          <span
+            className="truncate"
             style={{
+              fontStyle: 'italic',
               color: 'var(--color-text-secondary)',
               fontSize: '13px',
+            }}
+          >
+            {restaurantName}
+          </span>
+          {timeLabel && (
+            <>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>&middot;</span>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', flexShrink: 0 }}>
+                {timeLabel}
+              </span>
+            </>
+          )}
+        </div>
+        {reviewText && (
+          <div
+            style={{
+              marginTop: '6px',
+              paddingLeft: '10px',
+              borderLeft: '2px solid var(--color-divider)',
+              fontStyle: 'italic',
+              color: 'var(--color-text-secondary)',
+              fontSize: '13px',
+              lineHeight: 1.5,
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
             }}
@@ -176,12 +169,24 @@ export function JournalCard({ dish, variant = 'good-here', onTriedIt }) {
             {reviewText}
           </div>
         )}
-        {timeLabel && (
-          <div style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }} className="mt-1">
-            {timeLabel}
-          </div>
-        )}
       </div>
+
+      {/* Big rating number */}
+      {rating != null && (
+        <div className="flex-shrink-0 flex items-center" style={{ paddingTop: '2px' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-headline)',
+              fontSize: '26px',
+              fontWeight: 900,
+              color: ratingColorVar,
+              lineHeight: 1,
+            }}
+          >
+            {formatScore10(rating)}
+          </span>
+        </div>
+      )}
     </Link>
   )
 }

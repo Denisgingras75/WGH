@@ -1,23 +1,14 @@
-/**
- * ThumbsUpIcon - 3D illustrated thumbs up icon
- */
+import { ThumbsUp } from '@phosphor-icons/react'
 
-export function ThumbsUpIcon({ size = 20, className = '', active = false }) {
-  // New images have more padding around the hand, scale up to compensate
-  const scaledSize = Math.round(size * 1.6)
+export default function ThumbsUpIcon({ active, size = 28, className = '' }) {
   return (
-    <img
-      src="/thumbs-up.png"
-      alt="thumbs up"
-      className={`inline-block object-contain ${className}`}
-      style={{
-        width: scaledSize,
-        height: scaledSize,
-        margin: -Math.round(size * 0.3),
-        filter: active ? 'brightness(1.15) drop-shadow(0 0 4px rgba(232, 102, 60, 0.4))' : 'none',
-      }}
+    <ThumbsUp
+      size={size}
+      weight={active ? 'fill' : 'duotone'}
+      className={className}
+      style={{ color: active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }}
     />
   )
 }
 
-export default ThumbsUpIcon
+export { ThumbsUpIcon }

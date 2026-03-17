@@ -16,8 +16,8 @@ export default {
         'xl': 'var(--shadow-xl)',
       },
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['Libre Baskerville', 'Georgia', 'serif'],
+        sans: ['Outfit', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['Cormorant', 'Georgia', 'serif'],
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
