@@ -26,7 +26,7 @@ export function Top10Scroll({ dishes }) {
         var votes = dish.total_votes || 0
         var medalColor = rank === 2 ? 'var(--color-medal-silver)'
           : rank === 3 ? 'var(--color-medal-bronze)'
-          : 'var(--color-text-tertiary)'
+          : 'var(--color-text-primary)'
 
         return (
           <button

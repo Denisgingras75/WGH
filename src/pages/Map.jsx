@@ -106,6 +106,14 @@ export function Map() {
   var mapDishes = allRanked.slice(0, 10)
   var hasMoreDishes = selectedCategory && allRanked.length > listLimit
 
+  // Expanded category dishes for map — uses same data source as CategoryExpand
+  var expandedCategoryData = useDishes(
+    location, radius,
+    expandedCategory || '__none__',
+    null, null
+  )
+  var expandedDishes = expandedCategory ? (expandedCategoryData.dishes || []) : []
+
   var dishesWithCoords = mapDishes.filter(function (d) {
     return d.restaurant_lat != null && d.restaurant_lng != null
   })
@@ -114,7 +122,9 @@ export function Map() {
     ? dishesWithCoords.filter(function (d) { return d.dish_id === focusDishId })
     : (searchQuery && searchResults && searchResults.length > 0)
       ? searchResults.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
-      : dishesWithCoords
+      : expandedCategory && expandedDishes.length > 0
+        ? expandedDishes.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
+        : dishesWithCoords
 
   var listTitle = searchQuery
     ? 'Results'
