@@ -3,8 +3,8 @@ import { getRatingColor, getPercentColor } from '../../utils/ranking'
 import { CategoryIcon } from './CategoryIcons'
 
 /**
- * ChampionCard — dark hero card for the #1 ranked dish.
- * Always visible at top of homepage. Dark bg, gold accents.
+ * ChampionCard — the #1 ranked dish on the island.
+ * Gold border, big icon, Amatic SC headline, prominent score.
  */
 export function ChampionCard({ dish }) {
   var navigate = useNavigate()
@@ -21,126 +21,103 @@ export function ChampionCard({ dish }) {
       style={{
         background: 'var(--color-card)',
         borderRadius: '20px',
-        padding: '18px',
+        padding: '20px',
         position: 'relative',
         overflow: 'hidden',
-        border: '2px solid var(--color-medal-gold)',
-        boxShadow: '0 4px 24px rgba(196, 138, 18, 0.15)',
+        border: '2.5px solid var(--color-medal-gold)',
+        boxShadow: '0 6px 28px rgba(196, 138, 18, 0.18), inset 0 0 0 1px rgba(232, 184, 32, 0.08)',
       }}
     >
-      {/* Gold glow */}
+      {/* Subtle gold shimmer top-right */}
       <div style={{
         position: 'absolute',
-        top: '-40px',
-        right: '-40px',
-        width: '140px',
-        height: '140px',
-        background: 'radial-gradient(circle, rgba(232,184,32,0.08) 0%, transparent 70%)',
+        top: '-30px',
+        right: '-30px',
+        width: '120px',
+        height: '120px',
+        background: 'radial-gradient(circle, rgba(232,184,32,0.10) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Badge */}
-      <div style={{
-        fontSize: '10px',
-        fontWeight: 800,
-        color: 'var(--color-medal-gold)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.14em',
-        marginBottom: '12px',
-      }}>
-        #1 on the Island
+      {/* "#1 ON THE ISLAND" banner */}
+      <div className="flex items-center gap-2" style={{ marginBottom: '14px' }}>
+        <span style={{
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '20px',
+          fontWeight: 700,
+          color: 'var(--color-medal-gold)',
+          letterSpacing: '0.06em',
+          lineHeight: 1,
+        }}>
+          #1 on the Island
+        </span>
+        <div style={{ flex: 1, height: '1.5px', background: 'linear-gradient(to right, var(--color-medal-gold), transparent)', opacity: 0.3 }} />
       </div>
 
-      {/* Body */}
-      <div className="flex items-center gap-3">
-        {/* Big faded rank number */}
-        <span style={{
-          fontSize: '60px',
-          fontWeight: 800,
-          color: 'var(--color-medal-gold)',
-          lineHeight: 1,
-          letterSpacing: '-0.04em',
-          opacity: 0.25,
-          flexShrink: 0,
-        }}>
-          1
-        </span>
-
-        {/* Icon */}
-        <div
-          className="flex-shrink-0 flex items-center justify-center rounded-2xl"
-          style={{
-            width: '72px',
-            height: '72px',
-            background: 'var(--color-category-strip)',
-          }}
-        >
-          <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={56} />
+      {/* Icon + Info row */}
+      <div className="flex items-center gap-4">
+        {/* Big icon — no background */}
+        <div className="flex-shrink-0">
+          <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={80} />
         </div>
 
-        {/* Info */}
+        {/* Text block */}
         <div className="flex-1 min-w-0">
-          <p style={{
-            fontSize: '19px',
-            fontWeight: 800,
+          {/* Dish name — Amatic SC, big */}
+          <h2 style={{
+            fontFamily: "'Amatic SC', cursive",
+            fontSize: '30px',
+            fontWeight: 700,
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.2,
-            marginBottom: '3px',
+            letterSpacing: '0.02em',
+            lineHeight: 1.05,
+            margin: 0,
           }}>
             {dish.dish_name || dish.name}
-          </p>
+          </h2>
+
+          {/* Restaurant */}
           <p style={{
             fontSize: '13px',
             color: 'var(--color-accent-gold)',
-            fontWeight: 500,
-            marginBottom: '8px',
+            fontWeight: 600,
+            marginTop: '3px',
           }}>
             {dish.restaurant_name}
           </p>
-          <div className="flex items-baseline gap-3">
-            <span style={{
-              fontSize: '26px',
-              fontWeight: 800,
-              color: getRatingColor(rating),
-              letterSpacing: '-0.02em',
-            }}>
-              {rating ? Number(rating).toFixed(1) : '—'}
-              <small style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', fontWeight: 500, marginLeft: '2px' }}>/10</small>
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-              {votes} vote{votes === 1 ? '' : 's'}
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* Reorder bar */}
-      {pct > 0 && (
-        <div style={{ marginTop: '12px' }}>
-          <div style={{
-            height: '3px',
-            background: 'var(--color-category-strip)',
-            borderRadius: '2px',
-            overflow: 'hidden',
+      {/* Score row — big rating + reorder % */}
+      <div className="flex items-end justify-between" style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1.5px solid var(--color-divider)' }}>
+        <div className="flex items-baseline gap-1">
+          <span style={{
+            fontSize: '36px',
+            fontWeight: 800,
+            color: getRatingColor(rating),
+            letterSpacing: '-0.03em',
+            lineHeight: 1,
           }}>
-            <div style={{
-              height: '100%',
-              width: pct + '%',
-              background: 'linear-gradient(90deg, var(--color-medal-gold), ' + getRatingColor(rating) + ')',
-              borderRadius: '2px',
-            }} />
-          </div>
-          <p style={{
-            fontSize: '10px',
-            color: 'var(--color-text-tertiary)',
-            marginTop: '4px',
-            textAlign: 'right',
-          }}>
-            {pct}% would reorder
+            {rating ? Number(rating).toFixed(1) : '—'}
+          </span>
+          <span style={{ fontSize: '14px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>/10</span>
+        </div>
+
+        <div className="text-right">
+          {pct > 0 && (
+            <p style={{
+              fontSize: '14px',
+              fontWeight: 700,
+              color: getPercentColor(pct),
+            }}>
+              {pct}% would reorder
+            </p>
+          )}
+          <p style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
+            {votes} vote{votes === 1 ? '' : 's'}
           </p>
         </div>
-      )}
+      </div>
     </button>
   )
 }
