@@ -459,15 +459,7 @@ export function Dish() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="font-bold truncate" style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '22px',
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-          color: 'var(--color-text-primary)',
-        }}>
-          {dish.dish_name}
-        </span>
+        <div className="flex-1" />
 
         <div className="ml-auto flex items-center gap-1">
           <button
@@ -563,11 +555,11 @@ export function Dish() {
             )}
 
             {/* Name + Icon + Price */}
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-2">
               {/* Category icon inline — only when no hero photo */}
               {!allPhotos.length && !dish.photo_url && (
-                <div className="flex-shrink-0" style={{ marginTop: '2px' }}>
-                  <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={52} />
+                <div className="flex-shrink-0">
+                  <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={72} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
@@ -584,37 +576,36 @@ export function Dish() {
                 >
                   {dish.dish_name}
                 </h1>
-
-                {/* Restaurant + Price row */}
-                <div className="flex items-center justify-between mt-1">
-                <button
-                  onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
-                  className="flex items-center gap-1"
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: 'var(--color-accent-gold)',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {dish.restaurant_name}
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                  {dish.restaurant_town && (
-                    <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, marginLeft: '4px' }}>
-                      {dish.restaurant_town}
+                {/* Restaurant + Price */}
+                <div className="flex items-center justify-between" style={{ marginTop: '2px' }}>
+                  <button
+                    onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
+                    className="flex items-center gap-1"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: 'var(--color-accent-gold)',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {dish.restaurant_name}
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                    {dish.restaurant_town && (
+                      <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, marginLeft: '4px' }}>
+                        {dish.restaurant_town}
+                      </span>
+                    )}
+                  </button>
+                  {dish.price ? (
+                    <span className="flex-shrink-0" style={{ color: 'var(--color-text-primary)', fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                      ${Number(dish.price).toFixed(0)}
                     </span>
-                  )}
-                </button>
-                {dish.price ? (
-                  <span className="flex-shrink-0" style={{ color: 'var(--color-text-primary)', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>
-                    ${Number(dish.price).toFixed(0)}
-                  </span>
-                ) : null}
+                  ) : null}
                 </div>
               </div>
             </div>

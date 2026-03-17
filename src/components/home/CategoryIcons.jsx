@@ -67,26 +67,29 @@ const defaultIcon = (
  * @param {string} color - fill color for SVG fallback (default 'currentColor')
  */
 export function CategoryIcon({ categoryId, dishName, size = 32, color = 'currentColor' }) {
-  const key = categoryId?.toLowerCase()
-  const iconSrc = categoryIcons[key]
+  var { getDishNameIcon } = require('../../constants/categories')
+  var key = categoryId?.toLowerCase()
+  // Try dish-name-specific icon first, then category icon
+  var iconSrc = getDishNameIcon(dishName) || categoryIcons[key]
 
-  // Prefer webp icon when available
+  // Prefer webp/image icon when available
   if (iconSrc) {
     return (
       <img
-        src={iconSrc + '?v=4'}
+        src={iconSrc + (iconSrc.includes('?') ? '' : '?v=4')}
         alt=""
         width={size}
         height={size}
         loading="lazy"
         style={{ display: 'block', flexShrink: 0, objectFit: 'contain' }}
         aria-hidden="true"
+        onError={function (e) { e.target.style.display = 'none' }}
       />
     )
   }
 
   // Fall back to inline SVG
-  const icon = svgFallbacks[key] || defaultIcon
+  var icon = svgFallbacks[key] || defaultIcon
   return (
     <svg
       width={size}
