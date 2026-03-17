@@ -557,8 +557,8 @@ export function Map() {
                 })()}
 
                 {/* Category pills with expand */}
-                <div className="pt-4 pb-2">
-                  <div className="flex items-baseline justify-between px-4 pb-2">
+                <div className="pt-3 pb-1">
+                  <div className="flex items-baseline justify-between px-4 pb-1">
                     <h2 style={{
                       fontFamily: "'Amatic SC', cursive",
                       fontSize: '26px',
