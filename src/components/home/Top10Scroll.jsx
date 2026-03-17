@@ -57,15 +57,10 @@ export function Top10Scroll({ dishes }) {
 
             {/* Icon */}
             <div
-              className="mx-auto flex items-center justify-center rounded-xl"
-              style={{
-                width: '52px',
-                height: '52px',
-                background: 'var(--color-category-strip)',
-                marginBottom: '8px',
-              }}
+              className="mx-auto flex items-center justify-center"
+              style={{ width: '64px', height: '64px', marginBottom: '8px' }}
             >
-              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={40} />
+              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name || dish.name} size={64} />
             </div>
 
             {/* Dish name */}

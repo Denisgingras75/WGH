@@ -1,16 +1,16 @@
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useDishes } from '../../hooks/useDishes'
 import { useLocationContext } from '../../context/LocationContext'
 import { DishListItem } from '../DishListItem'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 
 /**
- * CategoryExpand — inline top-10 list for a selected category.
- * Animated expand/collapse. "Show all" links to Browse page.
+ * CategoryExpand — inline ranked list for a selected category.
+ * Shows 10 initially, "Show more" expands all. No page navigation.
  */
 export function CategoryExpand({ categoryId, onClose }) {
-  var navigate = useNavigate()
   var { location, radius } = useLocationContext()
+  var [showAll, setShowAll] = useState(false)
 
   var categoryLabel = ''
   for (var i = 0; i < BROWSE_CATEGORIES.length; i++) {
@@ -22,14 +22,16 @@ export function CategoryExpand({ categoryId, onClose }) {
 
   var { dishes, loading } = useDishes(location, radius, categoryId, null, null)
 
-  var top10 = dishes ? dishes.slice(0, 10) : []
+  var allDishes = dishes || []
+  var displayed = showAll ? allDishes : allDishes.slice(0, 10)
+  var hasMore = allDishes.length > 10 && !showAll
 
   return (
     <div
       style={{
         overflow: 'hidden',
         transition: 'max-height 0.4s ease, opacity 0.3s ease',
-        maxHeight: '1200px',
+        maxHeight: showAll ? '4000px' : '1200px',
         opacity: 1,
       }}
     >
@@ -70,16 +72,16 @@ export function CategoryExpand({ categoryId, onClose }) {
         )}
 
         {/* Dish list */}
-        {!loading && top10.length > 0 && (
+        {!loading && displayed.length > 0 && (
           <div>
-            {top10.map(function (dish, idx) {
+            {displayed.map(function (dish, idx) {
               return (
                 <DishListItem
                   key={dish.dish_id}
                   dish={dish}
                   rank={idx + 1}
                   showDistance
-                  isLast={idx === top10.length - 1}
+                  isLast={idx === displayed.length - 1}
                 />
               )
             })}
@@ -87,16 +89,16 @@ export function CategoryExpand({ categoryId, onClose }) {
         )}
 
         {/* Empty state */}
-        {!loading && top10.length === 0 && (
+        {!loading && allDishes.length === 0 && (
           <p className="py-6 text-center text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
             No {categoryLabel.toLowerCase()} rated yet
           </p>
         )}
 
-        {/* Show all link */}
-        {!loading && top10.length > 0 && (
+        {/* Show more — expands inline, no page nav */}
+        {!loading && hasMore && (
           <button
-            onClick={function () { navigate('/browse?category=' + encodeURIComponent(categoryId)) }}
+            onClick={function () { setShowAll(true) }}
             className="w-full py-3 mt-1 mb-2 text-center font-bold text-sm active:scale-[0.98] transition-transform"
             style={{
               color: 'var(--color-primary)',
@@ -104,7 +106,7 @@ export function CategoryExpand({ categoryId, onClose }) {
               borderRadius: '12px',
             }}
           >
-            Show all {categoryLabel} &rsaquo;
+            Show all {allDishes.length} {categoryLabel} &rsaquo;
           </button>
         )}
       </div>

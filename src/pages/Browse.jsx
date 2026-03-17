@@ -652,8 +652,8 @@ export function Browse() {
               <div>
                 <h2 className="text-lg font-bold" style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}>
                   {debouncedSearchQuery
-                    ? `Best ${formatSearchQuery(debouncedSearchQuery)} ${town ? `in ${town}` : 'near you'}`
-                    : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'}${town ? ` in ${town}` : ''}`
+                    ? `Best ${formatSearchQuery(debouncedSearchQuery)} Nearby`
+                    : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'} Nearby`
                   }
                 </h2>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
