@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEve
 import 'leaflet/dist/leaflet.css'
 import { placesApi } from '../../api/placesApi'
 import { logger } from '../../utils/logger'
-import { getCategoryEmoji } from '../../constants/categories'
+import { getCategoryEmoji, getDishNameIcon } from '../../constants/categories'
 import { getPosterIconSrc } from '../home/CategoryIcons'
 import { calculateDistance } from '../../utils/distance'
 
@@ -308,7 +308,7 @@ function PlacePopupContent({ place, onAddPlace }) {
 
 // ─── Dish Mode: Build category icon divIcon ─────────────────────────────────
 function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelected, ranks) {
-  var posterImage = getPosterIconSrc(category)
+  var posterImage = getDishNameIcon(dishName) || getPosterIconSrc(category)
   var emoji = getCategoryEmoji(category)
   var bestRank = (ranks && ranks.length > 0) ? ranks[0] : null
 
