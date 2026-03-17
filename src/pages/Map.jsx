@@ -12,7 +12,7 @@ import { CategoryChips } from '../components/CategoryChips'
 import { EmptyState } from '../components/EmptyState'
 import { LocationBanner } from '../components/LocationBanner'
 import { ModeFAB } from '../components/ModeFAB'
-import { LocalListsSection } from '../components/home'
+import { LocalListsSection, ChampionCard, Top10Scroll, CategoryExpand } from '../components/home'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -39,6 +39,7 @@ export function Map() {
   var [highlightedDishId, setHighlightedDishId] = useState(null)
   var [pinSelected, setPinSelected] = useState(false)
   var [listLimit, setListLimit] = useState(10)
+  var [expandedCategory, setExpandedCategory] = useState(null)
 
   var mapRef = useRef(null)
   var listScrollRef = useRef(null)
@@ -252,12 +253,6 @@ export function Map() {
               />
             </div>
 
-            {/* Category chips */}
-            <CategoryChips
-              selected={selectedCategory}
-              onSelect={function (cat) { setSelectedCategory(cat); setSearchQuery(''); setListLimit(10) }}
-              maxVisible={23}
-            />
           </div>
 
           {/* Scrollable content */}
@@ -270,102 +265,22 @@ export function Map() {
               overscrollBehavior: 'contain',
             }}
           >
-            {/* Section title */}
-            <div className="px-4 pt-2 pb-2">
-              <h2 style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '28px',
-                fontWeight: 700,
-                color: 'var(--color-text-primary)',
-                letterSpacing: '0.02em',
-              }}>
-                {listTitle}
-              </h2>
-            </div>
-
-            {/* Dish list */}
-            <div className="px-4 pb-4">
             {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
-              <ListSkeleton />
-            ) : activeDishes && activeDishes.length > 0 ? (
-              (!searchQuery && !selectedCategory) ? (
-                <div>
-                  {/* Podium #1-3 — stacked cards with medal borders */}
-                  <div className="flex flex-col" style={{ gap: '6px', marginBottom: '10px' }}>
-                    {activeDishes.slice(0, 3).map(function (dish, i) {
-                      var medalColor = i === 0
-                        ? 'var(--color-medal-gold)'
-                        : i === 1
-                          ? 'var(--color-medal-silver)'
-                          : 'var(--color-medal-bronze)'
-                      return (
-                        <div
-                          key={dish.dish_id}
-                          className="rounded-xl"
-                          style={{
-                            background: 'var(--color-surface-elevated)',
-                            borderLeft: (i === 0 ? '4px' : '3px') + ' solid ' + medalColor,
-                            boxShadow: i === 0 ? '0 4px 20px rgba(0,0,0,0.08)' : 'none',
-                          }}
-                        >
-                          <DishListItem
-                            dish={dish}
-                            rank={i + 1}
-                            showDistance
-                            onClick={function () { navigate('/dish/' + dish.dish_id) }}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Compact #4+ */}
-                  {activeDishes.length > 3 && (function () {
-                    var compactDishes = activeDishes.slice(3)
-                    return (
-                      <div
-                        className="rounded-xl overflow-hidden"
-                        style={{ background: 'var(--color-surface-elevated)' }}
-                      >
-                        {compactDishes.map(function (dish, i) {
-                          return (
-                            <DishListItem
-                              key={dish.dish_id}
-                              dish={dish}
-                              rank={i + 4}
-                              showDistance
-                              onClick={function () { navigate('/dish/' + dish.dish_id) }}
-                              isLast={i === compactDishes.length - 1}
-                            />
-                          )
-                        })}
-                      </div>
-                    )
-                  })()}
-
-                  {hasMoreDishes && (
-                    <button
-                      onClick={function () { setListLimit(function (prev) { return prev + 5 }) }}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '12px',
-                        marginTop: '8px',
-                        background: 'none',
-                        border: '1.5px solid var(--color-divider)',
-                        borderRadius: '10px',
-                        color: 'var(--color-accent-gold)',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Show more
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <>
+              <div className="px-4 pt-4"><ListSkeleton /></div>
+            ) : searchQuery ? (
+              /* Search results — flat list */
+              <div className="px-4 pt-2 pb-4">
+                <h2 style={{
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: 'var(--color-text-primary)',
+                  letterSpacing: '0.02em',
+                  marginBottom: '8px',
+                }}>
+                  Results
+                </h2>
+                {activeDishes && activeDishes.length > 0 ? (
                   <div className="flex flex-col" style={{ gap: '2px' }}>
                     {activeDishes.map(function (dish, i) {
                       return (
@@ -379,44 +294,76 @@ export function Map() {
                       )
                     })}
                   </div>
-                  {hasMoreDishes && !searchQuery && (
-                    <button
-                      onClick={function () { setListLimit(function (prev) { return prev + 5 }) }}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '12px',
-                        marginTop: '8px',
-                        background: 'none',
-                        border: '1.5px solid var(--color-divider)',
-                        borderRadius: '10px',
-                        color: 'var(--color-accent-gold)',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Show more
-                    </button>
-                  )}
-                </>
-              )
-            ) : searchQuery ? (
-              <EmptyState
-                emoji="🔍"
-                title={'No dishes found for \u201c' + searchQuery + '\u201d'}
-              />
+                ) : (
+                  <EmptyState emoji="🔍" title={'No dishes found for \u201c' + searchQuery + '\u201d'} />
+                )}
+              </div>
+            ) : activeDishes && activeDishes.length > 0 ? (
+              /* Homepage v3 layout */
+              <>
+                {/* Champion Card — #1 dish */}
+                <div className="px-3 pt-2">
+                  <ChampionCard dish={activeDishes[0]} />
+                </div>
+
+                {/* Top 10 Horizontal Scroll — #2-10 */}
+                {activeDishes.length > 1 && (
+                  <>
+                    <div className="flex items-baseline justify-between px-4 pt-4 pb-2">
+                      <h2 style={{
+                        fontFamily: "'Amatic SC', cursive",
+                        fontSize: '26px',
+                        fontWeight: 700,
+                        color: 'var(--color-text-primary)',
+                      }}>
+                        The Contenders
+                      </h2>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+                        #2 – {Math.min(activeDishes.length, 10)}
+                      </span>
+                    </div>
+                    <Top10Scroll dishes={activeDishes.slice(1, 10)} />
+                  </>
+                )}
+
+                {/* Category pills with expand */}
+                <div className="pt-4 pb-2">
+                  <div className="flex items-baseline justify-between px-4 pb-2">
+                    <h2 style={{
+                      fontFamily: "'Amatic SC', cursive",
+                      fontSize: '26px',
+                      fontWeight: 700,
+                      color: 'var(--color-text-primary)',
+                    }}>
+                      Browse by Category
+                    </h2>
+                  </div>
+                  <CategoryChips
+                    selected={expandedCategory}
+                    onSelect={function (cat) {
+                      setExpandedCategory(function (prev) { return prev === cat ? null : cat })
+                    }}
+                    maxVisible={23}
+                  />
+                </div>
+
+                {/* Category Expand — inline top 10 */}
+                {expandedCategory && (
+                  <CategoryExpand
+                    categoryId={expandedCategory}
+                    onClose={function () { setExpandedCategory(null) }}
+                  />
+                )}
+
+                {/* Local Lists */}
+                <LocalListsSection />
+              </>
             ) : (
-              <EmptyState
-                emoji="🍽️"
-                title="No dishes found nearby"
-              />
+              <div className="px-4 pt-4">
+                <EmptyState emoji="🍽️" title="No dishes found nearby" />
+              </div>
             )}
           </div>
-
-          {/* Local Lists — only on default homepage view */}
-          {!searchQuery && !selectedCategory && <LocalListsSection />}
-        </div>
         </div>
       )}
 
