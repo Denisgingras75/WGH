@@ -60,15 +60,32 @@ export function Restaurants() {
   var nearbyLoading = nearbyData.loading
   var nearbyError = nearbyData.error
 
+  // Count open vs closed restaurants (for off-season detection)
+  var openCount = useMemo(function () {
+    return restaurants.filter(function (r) { return r.is_open !== false }).length
+  }, [restaurants])
+
+  var closedCount = useMemo(function () {
+    return restaurants.filter(function (r) { return r.is_open === false }).length
+  }, [restaurants])
+
+  // Auto-switch to "Closed" tab if no open restaurants exist (off-season)
+  useEffect(function () {
+    if (!loading && restaurants.length > 0 && openCount === 0 && closedCount > 0 && restaurantTab === 'open') {
+      setRestaurantTab('closed')
+    }
+  }, [loading, restaurants.length, openCount, closedCount, restaurantTab])
+
   // Filter by open/closed tab + search, sort alphabetically
+  // When searching, search across ALL restaurants regardless of tab
   var filteredRestaurants = useMemo(function () {
-    var filtered = restaurants
-      .filter(function (r) {
-        return restaurantTab === 'open' ? r.is_open !== false : r.is_open === false
-      })
-      .filter(function (r) {
-        return r.name.toLowerCase().includes(searchQuery.toLowerCase())
-      })
+    var filtered = searchQuery
+      ? restaurants.filter(function (r) {
+          return r.name.toLowerCase().includes(searchQuery.toLowerCase())
+        })
+      : restaurants.filter(function (r) {
+          return restaurantTab === 'open' ? r.is_open !== false : r.is_open === false
+        })
 
     if (!isDistanceFiltered) {
       return filtered.slice().sort(function (a, b) { return a.name.localeCompare(b.name) })
@@ -389,13 +406,22 @@ export function Restaurants() {
                   color: 'var(--color-text-tertiary)',
                 }}>
                   {searchQuery
-                    ? 'No restaurants found'
+                    ? 'No restaurants match \u201C' + searchQuery + '\u201D'
                     : restaurantTab === 'open'
-                      ? 'No open restaurants found'
+                      ? 'No restaurants are open right now'
                       : 'No closed restaurants'
                   }
                 </p>
-                {isDistanceFiltered && (
+                {!searchQuery && restaurantTab === 'open' && closedCount > 0 && (
+                  <button
+                    onClick={function () { setRestaurantTab('closed') }}
+                    className="mt-3 text-sm font-semibold"
+                    style={{ color: 'var(--color-accent-gold)', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    View {closedCount} closed-for-season restaurant{closedCount === 1 ? '' : 's'}
+                  </button>
+                )}
+                {isDistanceFiltered && !searchQuery && (
                   <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
                     Try increasing your search radius
                   </p>
