@@ -39,11 +39,27 @@ export const CAPE_COD_TOWNS = [
 ]
 
 /**
- * All towns across islands + Cape
+ * Boston neighborhoods
+ */
+export const BOSTON_TOWNS = [
+  { value: null, label: 'All Boston', shortLines: ['All', 'Boston'] },
+  { value: 'Back Bay', label: 'Back Bay', shortLines: ['Back', 'Bay'] },
+  { value: 'South End', label: 'South End', shortLines: ['South', 'End'] },
+  { value: 'North End', label: 'North End', shortLines: ['North', 'End'] },
+  { value: 'Seaport', label: 'Seaport', shortLines: ['Sea-', 'port'] },
+  { value: 'Cambridge', label: 'Cambridge', shortLines: ['Cam-', 'bridge'] },
+  { value: 'Somerville', label: 'Somerville', shortLines: ['Somer-', 'ville'] },
+  { value: 'Brookline', label: 'Brookline', shortLines: ['Brook-', 'line'] },
+  { value: 'Jamaica Plain', label: 'JP', shortLines: ['Jam.', 'Plain'] },
+]
+
+/**
+ * All towns across all regions
  */
 export const ALL_TOWNS = [
   { value: null, label: 'All Areas', shortLines: ['All', 'Areas'] },
   ...MV_TOWNS.slice(1),
   ...NANTUCKET_TOWNS.slice(1),
   ...CAPE_COD_TOWNS.slice(1),
+  ...BOSTON_TOWNS.slice(1),
 ]
