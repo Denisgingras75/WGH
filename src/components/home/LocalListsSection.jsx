@@ -28,7 +28,7 @@ function ExpandableListCard({ list, onListExpanded }) {
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
+      className="rounded-lg overflow-hidden"
       style={{
         background: 'var(--color-surface-elevated)',
         border: '1px solid var(--color-divider)',

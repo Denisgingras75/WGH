@@ -41,7 +41,7 @@ export function Top10Scroll({ dishes }) {
               background: isChampion
                 ? 'linear-gradient(135deg, #FFFDF8 0%, #FFF9EE 100%)'
                 : 'var(--color-card)',
-              borderRadius: '16px',
+              borderRadius: '11px',
               padding: '10px 8px 10px',
               border: isChampion
                 ? '2.5px solid var(--color-medal-gold)'

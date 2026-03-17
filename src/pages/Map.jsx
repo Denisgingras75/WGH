@@ -415,33 +415,57 @@ export function Map() {
                       ? { category: 'lobster roll', tag: 'Top Searched', headline: 'The #1 food search on Martha\u2019s Vineyard? Best lobster roll.', cta: 'Check them all out' }
                       : { category: 'pizza', tag: 'Tonight', headline: 'Everyone\u2019s asking the same thing tonight: where\u2019s the best pizza?', cta: 'Find the best pizza' }
 
-                  var cardStyle = {
+                  // Chalkboard base style
+                  var chalkBase = {
                     flexShrink: 0,
-                    width: '280px',
-                    background: 'linear-gradient(135deg, #FFF9EE 0%, #FEF3E2 100%)',
-                    border: '1.5px solid rgba(196, 138, 18, 0.25)',
-                    borderRadius: '16px',
-                    padding: '14px 16px',
+                    width: '270px',
+                    borderRadius: '12px',
+                    padding: '16px 18px',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }
 
-                  var tagStyle = {
-                    fontSize: '11px',
+                  // Three different chalkboard surfaces
+                  var greenBoard = Object.assign({}, chalkBase, {
+                    background: '#2C3E2C',
+                    backgroundImage: 'radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.03) 0%, transparent 60%)',
+                  })
+                  var slateBoard = Object.assign({}, chalkBase, {
+                    background: '#2D3742',
+                    backgroundImage: 'radial-gradient(ellipse at 30% 60%, rgba(255,255,255,0.03) 0%, transparent 60%)',
+                  })
+                  var walnutBoard = Object.assign({}, chalkBase, {
+                    background: '#3D2E24',
+                    backgroundImage: 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.03) 0%, transparent 50%)',
+                  })
+
+                  var chalkTagStyle = {
+                    fontSize: '9px',
                     fontWeight: 700,
-                    letterSpacing: '0.06em',
+                    letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: 'var(--color-accent-gold)',
-                    marginBottom: '4px',
+                    color: 'rgba(255,255,255,0.45)',
+                    marginBottom: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '5px',
                   }
 
-                  var headlineStyle = {
+                  var chalkHeadlineStyle = {
                     fontFamily: "'Amatic SC', cursive",
-                    fontSize: '22px',
+                    fontSize: '24px',
                     fontWeight: 700,
-                    color: 'var(--color-text-primary)',
-                    lineHeight: 1.15,
+                    color: 'rgba(255,255,255,0.92)',
+                    lineHeight: 1.12,
+                    textShadow: '0 0 2px rgba(255,255,255,0.1)',
+                  }
+
+                  var chalkCtaStyle = {
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: 'var(--color-primary)',
+                    marginTop: '10px',
+                    display: 'inline-block',
                   }
 
                   return (
@@ -453,7 +477,7 @@ export function Map() {
                         scrollbarWidth: 'none',
                       }}
                     >
-                      {/* Card 1: Time of day */}
+                      {/* Card 1: Time of day — Green chalkboard */}
                       <button
                         onClick={function () {
                           setExpandedCategory(timeCallout.category)
@@ -463,9 +487,9 @@ export function Map() {
                           }, 100)
                         }}
                         className="text-left active:scale-[0.97] transition-transform"
-                        style={cardStyle}
+                        style={greenBoard}
                       >
-                        <p style={tagStyle}>
+                        <p style={chalkTagStyle}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
                             <polyline points="16 7 22 7 22 13" />
@@ -473,55 +497,59 @@ export function Map() {
                           {timeCallout.tag}
                         </p>
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            <CategoryIcon categoryId={timeCallout.category} size={48} />
-                          </div>
-                          <p style={headlineStyle}>
-                            {timeCallout.headline} <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>{timeCallout.cta} &rarr;</span>
+                          <span style={{ fontSize: '40px', flexShrink: 0, filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.15))' }}>
+                            {timeCallout.category === 'breakfast' ? '\uD83E\uDD5E' : timeCallout.category === 'pizza' ? '\uD83C\uDF55' : '\uD83E\uDD9E'}
+                          </span>
+                          <p style={chalkHeadlineStyle}>
+                            {timeCallout.headline}
                           </p>
                         </div>
+                        <span style={chalkCtaStyle}>{timeCallout.cta} &rarr;</span>
                       </button>
 
-                      {/* Card 2: Top Rated Restaurant */}
+                      {/* Card 2: Top Rated Restaurant — Slate board */}
                       {topRestaurant && (
                         <button
                           onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
                           className="text-left active:scale-[0.97] transition-transform"
-                          style={cardStyle}
+                          style={slateBoard}
                         >
-                          <p style={tagStyle}>
+                          <p style={chalkTagStyle}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                             </svg>
                             Where Everything Is Good
                           </p>
-                          <p style={headlineStyle}>
-                            {topRestaurant.name} has {topRestaurant.count} ranked dishes averaging {topRestaurant.avg}. <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>See the menu &rarr;</span>
+                          <p style={chalkHeadlineStyle}>
+                            {topRestaurant.name} has {topRestaurant.count} ranked dishes averaging {topRestaurant.avg}
                           </p>
+                          <div style={{ height: '1px', background: 'rgba(255,255,255,0.12)', margin: '10px 0' }} />
+                          <span style={chalkCtaStyle}>See the menu &rarr;</span>
                         </button>
                       )}
 
-                      {/* Card 3: Most Talked About */}
+                      {/* Card 3: Most Talked About — Walnut board */}
                       {mostVotedDish && (
                         <button
                           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
                           className="text-left active:scale-[0.97] transition-transform"
-                          style={cardStyle}
+                          style={walnutBoard}
                         >
-                          <p style={tagStyle}>
+                          <p style={chalkTagStyle}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                             </svg>
                             Most Talked About
                           </p>
                           <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0">
-                              <CategoryIcon categoryId={mostVotedDish.category} size={48} />
-                            </div>
-                            <p style={headlineStyle}>
-                              {mostVotedDish.dish_name || mostVotedDish.name} at {mostVotedDish.restaurant_name} — {mostVotedDish.total_votes} votes and counting. <span style={{ color: 'var(--color-primary)', fontSize: '18px' }}>See why &rarr;</span>
+                            <span style={{ fontSize: '40px', flexShrink: 0, filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.15))' }}>
+                              {mostVotedDish.category === 'breakfast' ? '\uD83E\uDD5E' : mostVotedDish.category === 'pizza' ? '\uD83C\uDF55' : '\uD83C\uDF7D\uFE0F'}
+                            </span>
+                            <p style={chalkHeadlineStyle}>
+                              {mostVotedDish.dish_name || mostVotedDish.name} at {mostVotedDish.restaurant_name} — {mostVotedDish.total_votes} votes and counting
                             </p>
                           </div>
+                          <span style={chalkCtaStyle}>See why &rarr;</span>
                         </button>
                       )}
                     </div>
