@@ -11,7 +11,7 @@ export function useGuides(location, radius) {
       const allDishes = await dishesApi.getRankedDishes({
         lat: location?.lat || 41.43,
         lng: location?.lng || -70.56,
-        radiusMiles: radius || 50,
+        radiusMiles: radius === 0 ? 25000 : (radius || 50),
         category: null,
         town: null,
       })
