@@ -198,7 +198,7 @@ export function Restaurants() {
           {/* Radius chip */}
           <button
             onClick={function () { setShowRadiusSheet(true) }}
-            aria-label={'Search radius: ' + radius + ' miles'}
+            aria-label={radius === 0 ? 'Showing all restaurants. Tap to change' : 'Search radius: ' + radius + ' miles'}
             className="flex items-center gap-1 px-3 py-1.5 font-bold flex-shrink-0"
             style={{
               fontSize: '13px',
@@ -208,7 +208,7 @@ export function Restaurants() {
               borderRadius: '4px',
             }}
           >
-            {radius} mi
+            {radius === 0 ? 'All' : radius + ' mi'}
             <CaretDown size={10} weight="bold" />
           </button>
         </div>

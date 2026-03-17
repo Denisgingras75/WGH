@@ -421,13 +421,13 @@ export function Map() {
         </>
       )}
 
-      {/* Floating Check In button (list mode only) */}
+      {/* Floating Check In button (list mode only) — stacked above ModeFAB */}
       {mode === 'list' && (
         <button
           onClick={function () { setAddModalQuery(''); setAddModalOpen(true) }}
           className="fixed right-4 flex items-center gap-2 px-5 py-3.5 active:scale-95 transition-all"
           style={{
-            bottom: 'calc(80px + env(safe-area-inset-bottom))',
+            bottom: 'calc(136px + env(safe-area-inset-bottom))',
             zIndex: 40,
             borderRadius: '4px',
             background: 'var(--color-primary)',
