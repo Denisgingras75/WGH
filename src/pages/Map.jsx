@@ -219,23 +219,34 @@ export function Map() {
     return 'nearby'
   }, [searchQuery, selectedCategoryLabel, activeLocalListName])
 
+  var [selectedDishLocation, setSelectedDishLocation] = useState(null)
+
   // Map pin tap: show mini-card, hide floating controls
   var handlePinTap = useCallback(function (dishId) {
     logger.debug('Pin tapped, dishId:', dishId)
     setPinSelected(true)
     setHighlightedDishId(dishId)
+    // Find the dish's location for the "how far" button
+    var allDishes = displayedOnMap || []
+    var dish = allDishes.find(function (d) { return d.dish_id === dishId })
+    if (dish && dish.restaurant_lat && dish.restaurant_lng) {
+      setSelectedDishLocation({ lat: Number(dish.restaurant_lat), lng: Number(dish.restaurant_lng) })
+    } else {
+      setSelectedDishLocation(null)
+    }
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current)
     }
     highlightTimerRef.current = setTimeout(function () {
       setHighlightedDishId(null)
     }, 1500)
-  }, [])
+  }, [displayedOnMap])
 
   // Map background tap: dismiss mini-card, restore all pins, show controls
   var handleMapClick = useCallback(function () {
     setPinSelected(false)
     setFocusDishId(null)
+    setSelectedDishLocation(null)
   }, [])
 
   useEffect(function () {
@@ -639,6 +650,45 @@ export function Map() {
           </div>
         </>
       )}
+
+      {/* "How far?" button — appears above FAB when a pin is selected */}
+      {mode === 'map' && pinSelected && selectedDishLocation && location && (function () {
+        var zoomed = false
+        return (
+          <button
+            onClick={function () {
+              var map = mapRef.current
+              if (!map) return
+              var bounds = [
+                [location.lat, location.lng],
+                [selectedDishLocation.lat, selectedDishLocation.lng],
+              ]
+              map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 })
+            }}
+            className="fixed z-40 active:scale-90 transition-transform flex items-center justify-center"
+            style={{
+              bottom: '148px',
+              right: '20px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'var(--color-card)',
+              border: '1.5px solid var(--color-divider)',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            }}
+            aria-label="Show distance to dish"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="3" />
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+            </svg>
+          </button>
+        )
+      })()}
 
       {/* Toggle FAB (both modes) */}
       <ModeFAB mode={mode} onToggle={handleToggle} />
