@@ -406,67 +406,181 @@ export function Map() {
                 </div>
                 <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
-                {/* Editorial stories — horizontal scroll */}
+                {/* Editorial stories — Guest Check horizontal scroll */}
                 {(function () {
                   var hour = new Date().getHours()
                   var timeCallout = hour < 11
-                    ? { category: 'breakfast', tag: 'Good Morning, MV', headline: 'The island runs on breakfast. Here\u2019s where to start your day.', cta: 'See the best breakfasts' }
+                    ? { category: 'breakfast', tag: 'Good Morning MV \u2014 Start Your Day Right', emoji: '\u2600\uFE0F', headline: 'Best breakfasts nearby', sub: 'The island runs on breakfast', cta: 'Best breakfasts', checkNum: '0742' }
                     : hour < 16
-                      ? { category: 'lobster roll', tag: 'Top Searched', headline: 'The #1 food search on Martha\u2019s Vineyard? Best lobster roll.', cta: 'Check them all out' }
-                      : { category: 'pizza', tag: 'Tonight', headline: 'Everyone\u2019s asking the same thing tonight: where\u2019s the best pizza?', cta: 'Find the best pizza' }
+                      ? { category: 'lobster roll', tag: 'Top Searched \u2014 Best Lobster Roll', emoji: '\uD83E\uDD9E', headline: 'Best lobster rolls nearby', sub: 'The #1 food search on MV', cta: 'Check them all out', checkNum: '0101' }
+                      : { category: 'pizza', tag: 'Tonight \u2014 Best Pizza on the Island', emoji: '\uD83C\uDF55', headline: 'Best pizza tonight', sub: 'Everyone\u2019s asking the same thing', cta: 'Find the best pizza', checkNum: '0630' }
 
-                  // Chalkboard base style
-                  var chalkBase = {
+                  // Guest check shared styles
+                  var gcOuter = {
                     flexShrink: 0,
-                    width: '270px',
-                    borderRadius: '12px',
-                    padding: '16px 18px',
-                    position: 'relative',
+                    width: '258px',
+                    background: '#FFFCF7',
+                    border: '3px solid var(--color-primary)',
+                    borderRadius: '8px',
                     overflow: 'hidden',
                   }
-
-                  // Three different chalkboard surfaces
-                  var greenBoard = Object.assign({}, chalkBase, {
-                    background: '#2C3E2C',
-                    backgroundImage: 'radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.03) 0%, transparent 60%)',
-                  })
-                  var slateBoard = Object.assign({}, chalkBase, {
-                    background: '#2D3742',
-                    backgroundImage: 'radial-gradient(ellipse at 30% 60%, rgba(255,255,255,0.03) 0%, transparent 60%)',
-                  })
-                  var walnutBoard = Object.assign({}, chalkBase, {
-                    background: '#3D2E24',
-                    backgroundImage: 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.03) 0%, transparent 50%)',
-                  })
-
-                  var chalkTagStyle = {
-                    fontSize: '9px',
+                  var gcHeader = {
+                    background: '#FFFCF7',
+                    padding: '8px 10px 0',
+                    textAlign: 'center',
+                  }
+                  var gcTitle = {
+                    fontFamily: "'Amatic SC', cursive",
+                    fontSize: '34px',
                     fontWeight: 700,
-                    letterSpacing: '0.12em',
+                    color: 'var(--color-primary)',
+                    margin: 0,
+                    lineHeight: 1,
+                  }
+                  var gcFieldsRow = {
+                    display: 'flex',
+                    margin: '6px 0 0',
+                    position: 'relative',
+                  }
+                  var gcFieldBox = {
+                    flex: 1,
+                    border: '1px solid rgba(228, 68, 10, 0.3)',
+                    padding: '1px 4px 3px',
+                    textAlign: 'center',
+                    background: '#FFFCF7',
+                  }
+                  var gcFieldLabel = {
+                    fontSize: '7px',
+                    fontWeight: 700,
+                    color: '#B0946E',
                     textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.45)',
-                    marginBottom: '8px',
+                    letterSpacing: '0.06em',
+                    margin: 0,
+                  }
+                  var gcFieldVal = {
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '13px',
+                    color: 'rgba(80, 50, 20, 0.55)',
+                    margin: 0,
+                    lineHeight: 1.1,
+                  }
+                  var gcCheckNum = {
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '54px',
+                    background: '#FFFCF7',
+                    border: '1px solid rgba(228, 68, 10, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    justifyContent: 'center',
                   }
-
-                  var chalkHeadlineStyle = {
-                    fontFamily: "'Amatic SC', cursive",
-                    fontSize: '24px',
+                  var gcCheckNumText = {
+                    fontSize: '17px',
+                    fontWeight: 800,
+                    color: 'var(--color-accent-gold)',
+                    letterSpacing: '0.5px',
+                  }
+                  var gcCategories = {
+                    fontSize: '7px',
                     fontWeight: 700,
-                    color: 'rgba(255,255,255,0.92)',
-                    lineHeight: 1.12,
-                    textShadow: '0 0 2px rgba(255,255,255,0.1)',
+                    color: '#999',
+                    textAlign: 'center',
+                    padding: '5px 6px 4px',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    borderBottom: '1.5px solid rgba(228, 68, 10, 0.25)',
                   }
-
-                  var chalkCtaStyle = {
+                  var gcLinedArea = {
+                    background: '#F7F2EB',
+                  }
+                  var gcRow = {
+                    display: 'flex',
+                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
+                    minHeight: '24px',
+                    alignItems: 'center',
+                  }
+                  var gcRowQty = {
+                    width: '28px',
+                    borderRight: '1px solid rgba(180, 160, 130, 0.3)',
+                    textAlign: 'center',
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '14px',
+                    color: 'rgba(80, 50, 20, 0.5)',
+                    padding: '2px 0',
+                    flexShrink: 0,
+                  }
+                  var gcRowItem = {
+                    flex: 1,
+                    padding: '2px 8px',
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '15px',
+                    color: 'rgba(80, 50, 20, 0.55)',
+                  }
+                  var gcRowPrice = {
+                    width: '48px',
+                    borderLeft: '1px solid rgba(180, 160, 130, 0.3)',
+                    textAlign: 'center',
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '14px',
+                    color: 'rgba(80, 50, 20, 0.5)',
+                    padding: '2px 4px',
+                    flexShrink: 0,
+                  }
+                  var gcEmptyRow = {
+                    display: 'flex',
+                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
+                    minHeight: '20px',
+                  }
+                  var gcTotalRow = {
+                    display: 'flex',
+                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
+                    minHeight: '26px',
+                    alignItems: 'center',
+                    background: '#F7F2EB',
+                  }
+                  var gcTotalLabel = {
+                    flex: 1,
+                    textAlign: 'right',
+                    paddingRight: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#1A1A1A',
+                  }
+                  var gcTotalVal = {
+                    width: '48px',
+                    borderLeft: '1px solid rgba(180, 160, 130, 0.3)',
+                    textAlign: 'center',
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: 'rgba(80, 50, 20, 0.6)',
+                    padding: '2px 4px',
+                  }
+                  var gcCta = {
                     fontSize: '12px',
                     fontWeight: 700,
                     color: 'var(--color-primary)',
-                    marginTop: '10px',
-                    display: 'inline-block',
+                    textAlign: 'center',
+                    padding: '6px 0 2px',
+                    background: '#F7F2EB',
                   }
+                  var gcFooter = {
+                    background: '#F7F2EB',
+                    textAlign: 'center',
+                    padding: '4px 8px 7px',
+                    borderTop: '1px solid rgba(180, 160, 130, 0.3)',
+                  }
+                  var gcFooterText = {
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    color: 'var(--color-primary)',
+                    margin: 0,
+                    letterSpacing: '0.03em',
+                  }
+                  var gcRowItemSub = Object.assign({}, gcRowItem, { fontSize: '12px', opacity: 0.7 })
+                  var gcRowItemBig = Object.assign({}, gcRowItem, { fontSize: '18px', fontWeight: 700 })
 
                   return (
                     <div
@@ -477,7 +591,7 @@ export function Map() {
                         scrollbarWidth: 'none',
                       }}
                     >
-                      {/* Card 1: Time of day — Green chalkboard */}
+                      {/* Guest Check 1: Time of day */}
                       <button
                         onClick={function () {
                           setExpandedCategory(timeCallout.category)
@@ -487,69 +601,90 @@ export function Map() {
                           }, 100)
                         }}
                         className="text-left active:scale-[0.97] transition-transform"
-                        style={greenBoard}
+                        style={gcOuter}
                       >
-                        <p style={chalkTagStyle}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                            <polyline points="16 7 22 7 22 13" />
-                          </svg>
-                          {timeCallout.tag}
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <span style={{ fontSize: '40px', flexShrink: 0, filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.15))' }}>
-                            {timeCallout.category === 'breakfast' ? '\uD83E\uDD5E' : timeCallout.category === 'pizza' ? '\uD83C\uDF55' : '\uD83E\uDD9E'}
-                          </span>
-                          <p style={chalkHeadlineStyle}>
-                            {timeCallout.headline}
-                          </p>
+                        <div style={gcHeader}>
+                          <p style={gcTitle}>Guest Check</p>
+                          <div style={gcFieldsRow}>
+                            <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
+                            <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>MV</p></div>
+                            <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>You</p></div>
+                            <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{timeCallout.emoji}</p></div>
+                            <div style={gcCheckNum}><span style={gcCheckNumText}>{timeCallout.checkNum}</span></div>
+                          </div>
                         </div>
-                        <span style={chalkCtaStyle}>{timeCallout.cta} &rarr;</span>
+                        <p style={gcCategories}>{timeCallout.tag}</p>
+                        <div style={gcLinedArea}>
+                          <div style={gcRow}><div style={gcRowQty}>1</div><div style={gcRowItemBig}>{timeCallout.headline}</div><div style={gcRowPrice}>{timeCallout.category === 'breakfast' ? '\uD83E\uDD5E' : timeCallout.category === 'pizza' ? '\uD83C\uDF55' : '\uD83E\uDD9E'}</div></div>
+                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>{timeCallout.sub}</div><div style={gcRowPrice}></div></div>
+                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Spots nearby</div><div style={gcRowPrice}>14</div></div>
+                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Dishes ranked</div><div style={gcRowPrice}>38</div></div>
+                          <div style={gcEmptyRow}><div style={{ width: '28px', borderRight: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div><div style={{ flex: 1 }}></div><div style={{ width: '48px', borderLeft: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div></div>
+                        </div>
+                        <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>{'Go! \u2713'}</div></div>
+                        <p style={gcCta}>{timeCallout.cta + ' \u2192'}</p>
+                        <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                       </button>
 
-                      {/* Card 2: Top Rated Restaurant — Slate board */}
+                      {/* Guest Check 2: Top Restaurant */}
                       {topRestaurant && (
                         <button
                           onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
                           className="text-left active:scale-[0.97] transition-transform"
-                          style={slateBoard}
+                          style={gcOuter}
                         >
-                          <p style={chalkTagStyle}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                            Where Everything Is Good
-                          </p>
-                          <p style={chalkHeadlineStyle}>
-                            {topRestaurant.name} has {topRestaurant.count} ranked dishes averaging {topRestaurant.avg}
-                          </p>
-                          <div style={{ height: '1px', background: 'rgba(255,255,255,0.12)', margin: '10px 0' }} />
-                          <span style={chalkCtaStyle}>See the menu &rarr;</span>
+                          <div style={gcHeader}>
+                            <p style={gcTitle}>Guest Check</p>
+                            <div style={gcFieldsRow}>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>All</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>You</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{'\u2605'}</p></div>
+                              <div style={gcCheckNum}><span style={gcCheckNumText}>{'0' + String(topRestaurant.count).padStart(2, '0') + '0'}</span></div>
+                            </div>
+                          </div>
+                          <p style={gcCategories}>Where Everything Is Good</p>
+                          <div style={gcLinedArea}>
+                            <div style={gcRow}><div style={gcRowQty}>{'\u2605'}</div><div style={gcRowItemBig}>{topRestaurant.name}</div><div style={gcRowPrice}></div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>Every dish delivers</div><div style={gcRowPrice}></div></div>
+                            <div style={gcRow}><div style={gcRowQty}>{topRestaurant.count}</div><div style={gcRowItem}>Ranked dishes</div><div style={gcRowPrice}>{topRestaurant.avg}</div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Miss rate</div><div style={gcRowPrice}>0%</div></div>
+                            <div style={gcEmptyRow}><div style={{ width: '28px', borderRight: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div><div style={{ flex: 1 }}></div><div style={{ width: '48px', borderLeft: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div></div>
+                          </div>
+                          <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>Order all</div></div>
+                          <p style={gcCta}>{'See the menu \u2192'}</p>
+                          <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                         </button>
                       )}
 
-                      {/* Card 3: Most Talked About — Walnut board */}
+                      {/* Guest Check 3: Most Talked About */}
                       {mostVotedDish && (
                         <button
                           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
                           className="text-left active:scale-[0.97] transition-transform"
-                          style={walnutBoard}
+                          style={gcOuter}
                         >
-                          <p style={chalkTagStyle}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                            </svg>
-                            Most Talked About
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <span style={{ fontSize: '40px', flexShrink: 0, filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.15))' }}>
-                              {mostVotedDish.category === 'breakfast' ? '\uD83E\uDD5E' : mostVotedDish.category === 'pizza' ? '\uD83C\uDF55' : '\uD83C\uDF7D\uFE0F'}
-                            </span>
-                            <p style={chalkHeadlineStyle}>
-                              {mostVotedDish.dish_name || mostVotedDish.name} at {mostVotedDish.restaurant_name} — {mostVotedDish.total_votes} votes and counting
-                            </p>
+                          <div style={gcHeader}>
+                            <p style={gcTitle}>Guest Check</p>
+                            <div style={gcFieldsRow}>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>{(mostVotedDish.restaurant_name || '').split(' ')[0]}</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>{mostVotedDish.total_votes || 0}</p></div>
+                              <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{'\uD83D\uDCAC'}</p></div>
+                              <div style={gcCheckNum}><span style={gcCheckNumText}>{'0' + (mostVotedDish.total_votes || 0)}</span></div>
+                            </div>
                           </div>
-                          <span style={chalkCtaStyle}>See why &rarr;</span>
+                          <p style={gcCategories}>Most Talked About on the Island</p>
+                          <div style={gcLinedArea}>
+                            <div style={gcRow}><div style={gcRowQty}>1</div><div style={gcRowItemBig}>{mostVotedDish.dish_name || mostVotedDish.name}</div><div style={gcRowPrice}></div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>{mostVotedDish.restaurant_name}</div><div style={gcRowPrice}></div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Total votes</div><div style={gcRowPrice}>{mostVotedDish.total_votes || 0}</div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Order again?</div><div style={gcRowPrice}>{mostVotedDish.avg_rating ? Math.round(mostVotedDish.avg_rating * 10) + '%' : '--'}</div></div>
+                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Island rank</div><div style={gcRowPrice}>#1</div></div>
+                          </div>
+                          <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>{'Must try \uD83D\uDD25'}</div></div>
+                          <p style={gcCta}>{'See why \u2192'}</p>
+                          <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                         </button>
                       )}
                     </div>
