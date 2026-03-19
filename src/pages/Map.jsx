@@ -406,181 +406,59 @@ export function Map() {
                 </div>
                 <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
-                {/* Editorial stories — Guest Check horizontal scroll */}
+                {/* Editorial stories — A-frame chalkboard horizontal scroll */}
                 {(function () {
                   var hour = new Date().getHours()
                   var timeCallout = hour < 11
-                    ? { category: 'breakfast', tag: 'Good Morning MV \u2014 Start Your Day Right', emoji: '\u2600\uFE0F', headline: 'Best breakfasts nearby', sub: 'The island runs on breakfast', cta: 'Best breakfasts', checkNum: '0742' }
+                    ? { category: 'breakfast', emoji: '\u2600\uFE0F', title: 'Breakfast', sub: 'on the island', stat: '14 spots \u00B7 38 dishes', cta: 'best breakfasts \u2192' }
                     : hour < 16
-                      ? { category: 'lobster roll', tag: 'Top Searched \u2014 Best Lobster Roll', emoji: '\uD83E\uDD9E', headline: 'Best lobster rolls nearby', sub: 'The #1 food search on MV', cta: 'Check them all out', checkNum: '0101' }
-                      : { category: 'pizza', tag: 'Tonight \u2014 Best Pizza on the Island', emoji: '\uD83C\uDF55', headline: 'Best pizza tonight', sub: 'Everyone\u2019s asking the same thing', cta: 'Find the best pizza', checkNum: '0630' }
+                      ? { category: 'lobster roll', emoji: '\uD83E\uDD9E', title: 'Lobster Roll', sub: 'top searched', stat: 'the #1 food search on MV', cta: 'check them all out \u2192' }
+                      : { category: 'pizza', emoji: '\uD83C\uDF55', title: 'Pizza', sub: 'tonight', stat: 'everyone\u2019s asking', cta: 'find the best pizza \u2192' }
 
-                  // Guest check shared styles
-                  var gcOuter = {
+                  // A-frame chalkboard styles
+                  var boardOuter = {
                     flexShrink: 0,
-                    width: '258px',
-                    background: '#FFFCF7',
-                    border: '3px solid var(--color-primary)',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                  }
-                  var gcHeader = {
-                    background: '#FFFCF7',
-                    padding: '8px 10px 0',
-                    textAlign: 'center',
-                  }
-                  var gcTitle = {
-                    fontFamily: "'Amatic SC', cursive",
-                    fontSize: '34px',
-                    fontWeight: 700,
-                    color: 'var(--color-primary)',
-                    margin: 0,
-                    lineHeight: 1,
-                  }
-                  var gcFieldsRow = {
-                    display: 'flex',
-                    margin: '6px 0 0',
+                    width: '175px',
                     position: 'relative',
+                    paddingBottom: '14px',
                   }
-                  var gcFieldBox = {
-                    flex: 1,
-                    border: '1px solid rgba(228, 68, 10, 0.3)',
-                    padding: '1px 4px 3px',
-                    textAlign: 'center',
-                    background: '#FFFCF7',
+                  var boardSurface = {
+                    position: 'relative',
+                    background: '#363B3F',
+                    borderRadius: '3px',
+                    overflow: 'hidden',
+                    boxShadow: '2px 3px 10px rgba(0,0,0,0.2)',
                   }
-                  var gcFieldLabel = {
-                    fontSize: '7px',
-                    fontWeight: 700,
-                    color: '#B0946E',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    margin: 0,
-                  }
-                  var gcFieldVal = {
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '13px',
-                    color: 'rgba(80, 50, 20, 0.55)',
-                    margin: 0,
-                    lineHeight: 1.1,
-                  }
-                  var gcCheckNum = {
+                  var boardFrame = {
                     position: 'absolute',
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: '54px',
-                    background: '#FFFCF7',
-                    border: '1px solid rgba(228, 68, 10, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    inset: 0,
+                    border: '3px solid #1A1D1F',
+                    borderRadius: '3px',
+                    pointerEvents: 'none',
+                    zIndex: 2,
                   }
-                  var gcCheckNumText = {
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    color: 'var(--color-accent-gold)',
-                    letterSpacing: '0.5px',
+                  var boardDust = {
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: 'radial-gradient(ellipse at 35% 45%, rgba(255,255,255,0.02) 0%, transparent 50%)',
+                    pointerEvents: 'none',
                   }
-                  var gcCategories = {
-                    fontSize: '7px',
-                    fontWeight: 700,
-                    color: '#999',
+                  var boardContent = {
+                    position: 'relative',
+                    zIndex: 1,
+                    padding: '14px 14px',
                     textAlign: 'center',
-                    padding: '5px 6px 4px',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    borderBottom: '1.5px solid rgba(228, 68, 10, 0.25)',
-                  }
-                  var gcLinedArea = {
-                    background: '#F7F2EB',
-                  }
-                  var gcRow = {
                     display: 'flex',
-                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
-                    minHeight: '24px',
+                    flexDirection: 'column',
                     alignItems: 'center',
                   }
-                  var gcRowQty = {
-                    width: '28px',
-                    borderRight: '1px solid rgba(180, 160, 130, 0.3)',
-                    textAlign: 'center',
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '14px',
-                    color: 'rgba(80, 50, 20, 0.5)',
-                    padding: '2px 0',
-                    flexShrink: 0,
-                  }
-                  var gcRowItem = {
-                    flex: 1,
-                    padding: '2px 8px',
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '15px',
-                    color: 'rgba(80, 50, 20, 0.55)',
-                  }
-                  var gcRowPrice = {
-                    width: '48px',
-                    borderLeft: '1px solid rgba(180, 160, 130, 0.3)',
-                    textAlign: 'center',
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '14px',
-                    color: 'rgba(80, 50, 20, 0.5)',
-                    padding: '2px 4px',
-                    flexShrink: 0,
-                  }
-                  var gcEmptyRow = {
-                    display: 'flex',
-                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
-                    minHeight: '20px',
-                  }
-                  var gcTotalRow = {
-                    display: 'flex',
-                    borderBottom: '1px solid rgba(180, 160, 130, 0.3)',
-                    minHeight: '26px',
-                    alignItems: 'center',
-                    background: '#F7F2EB',
-                  }
-                  var gcTotalLabel = {
-                    flex: 1,
-                    textAlign: 'right',
-                    paddingRight: '6px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: '#1A1A1A',
-                  }
-                  var gcTotalVal = {
-                    width: '48px',
-                    borderLeft: '1px solid rgba(180, 160, 130, 0.3)',
-                    textAlign: 'center',
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: 'rgba(80, 50, 20, 0.6)',
-                    padding: '2px 4px',
-                  }
-                  var gcCta = {
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: 'var(--color-primary)',
-                    textAlign: 'center',
-                    padding: '6px 0 2px',
-                    background: '#F7F2EB',
-                  }
-                  var gcFooter = {
-                    background: '#F7F2EB',
-                    textAlign: 'center',
-                    padding: '4px 8px 7px',
-                    borderTop: '1px solid rgba(180, 160, 130, 0.3)',
-                  }
-                  var gcFooterText = {
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    color: 'var(--color-primary)',
-                    margin: 0,
-                    letterSpacing: '0.03em',
-                  }
-                  var gcRowItemSub = Object.assign({}, gcRowItem, { fontSize: '12px', opacity: 0.7 })
-                  var gcRowItemBig = Object.assign({}, gcRowItem, { fontSize: '18px', fontWeight: 700 })
+                  var chalkBright = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.9)' }
+                  var chalkMed = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.55)' }
+                  var chalkFaint = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.35)' }
+                  var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
+                  var chalkCta = { fontFamily: "'Caveat', cursive", color: 'rgba(255, 220, 180, 0.85)' }
+                  var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0', width: '40px' }
+                  var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '14px', background: '#1A1D1F', borderRadius: '0 0 1px 1px' }
 
                   return (
                     <div
@@ -591,7 +469,7 @@ export function Map() {
                         scrollbarWidth: 'none',
                       }}
                     >
-                      {/* Guest Check 1: Time of day */}
+                      {/* Board 1: Time of day */}
                       <button
                         onClick={function () {
                           setExpandedCategory(timeCallout.category)
@@ -600,91 +478,79 @@ export function Map() {
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                           }, 100)
                         }}
-                        className="text-left active:scale-[0.97] transition-transform"
-                        style={gcOuter}
+                        className="active:scale-[0.97] transition-transform"
+                        style={boardOuter}
                       >
-                        <div style={gcHeader}>
-                          <p style={gcTitle}>Guest Check</p>
-                          <div style={gcFieldsRow}>
-                            <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
-                            <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>MV</p></div>
-                            <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>You</p></div>
-                            <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{timeCallout.emoji}</p></div>
-                            <div style={gcCheckNum}><span style={gcCheckNumText}>{timeCallout.checkNum}</span></div>
+                        <div style={boardSurface}>
+                          <div style={boardFrame} />
+                          <div style={boardDust} />
+                          <div style={boardContent}>
+                            <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{timeCallout.emoji + ' good morning'}</p>
+                            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
+                            <p style={Object.assign({}, chalkMed, { fontSize: '14px', margin: 0 })}>{timeCallout.sub}</p>
+                            <div style={chalkLine} />
+                            <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{timeCallout.stat}</p>
+                            <div style={chalkLine} />
+                            <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
                           </div>
                         </div>
-                        <p style={gcCategories}>{timeCallout.tag}</p>
-                        <div style={gcLinedArea}>
-                          <div style={gcRow}><div style={gcRowQty}>1</div><div style={gcRowItemBig}>{timeCallout.headline}</div><div style={gcRowPrice}>{timeCallout.category === 'breakfast' ? '\uD83E\uDD5E' : timeCallout.category === 'pizza' ? '\uD83C\uDF55' : '\uD83E\uDD9E'}</div></div>
-                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>{timeCallout.sub}</div><div style={gcRowPrice}></div></div>
-                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Spots nearby</div><div style={gcRowPrice}>14</div></div>
-                          <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Dishes ranked</div><div style={gcRowPrice}>38</div></div>
-                          <div style={gcEmptyRow}><div style={{ width: '28px', borderRight: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div><div style={{ flex: 1 }}></div><div style={{ width: '48px', borderLeft: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div></div>
+                        <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+                          <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+                          <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
                         </div>
-                        <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>{'Go! \u2713'}</div></div>
-                        <p style={gcCta}>{timeCallout.cta + ' \u2192'}</p>
-                        <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                       </button>
 
-                      {/* Guest Check 2: Top Restaurant */}
+                      {/* Board 2: Top Restaurant */}
                       {topRestaurant && (
                         <button
                           onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
-                          className="text-left active:scale-[0.97] transition-transform"
-                          style={gcOuter}
+                          className="active:scale-[0.97] transition-transform"
+                          style={boardOuter}
                         >
-                          <div style={gcHeader}>
-                            <p style={gcTitle}>Guest Check</p>
-                            <div style={gcFieldsRow}>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>All</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>You</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{'\u2605'}</p></div>
-                              <div style={gcCheckNum}><span style={gcCheckNumText}>{'0' + String(topRestaurant.count).padStart(2, '0') + '0'}</span></div>
+                          <div style={boardSurface}>
+                            <div style={boardFrame} />
+                            <div style={boardDust} />
+                            <div style={boardContent}>
+                              <p style={Object.assign({}, chalkFaint, { fontSize: '10px', letterSpacing: '0.05em', textTransform: 'uppercase', margin: 0 })}>{'\u2605 everything is good \u2605'}</p>
+                              <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
+                              <p style={Object.assign({}, chalkMed, { fontSize: '13px', margin: 0 })}>Menemsha</p>
+                              <div style={chalkLine} />
+                              <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{topRestaurant.count + ' dishes \u00B7 avg ' + topRestaurant.avg}</p>
+                              <div style={chalkLine} />
+                              <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
                             </div>
                           </div>
-                          <p style={gcCategories}>Where Everything Is Good</p>
-                          <div style={gcLinedArea}>
-                            <div style={gcRow}><div style={gcRowQty}>{'\u2605'}</div><div style={gcRowItemBig}>{topRestaurant.name}</div><div style={gcRowPrice}></div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>Every dish delivers</div><div style={gcRowPrice}></div></div>
-                            <div style={gcRow}><div style={gcRowQty}>{topRestaurant.count}</div><div style={gcRowItem}>Ranked dishes</div><div style={gcRowPrice}>{topRestaurant.avg}</div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Miss rate</div><div style={gcRowPrice}>0%</div></div>
-                            <div style={gcEmptyRow}><div style={{ width: '28px', borderRight: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div><div style={{ flex: 1 }}></div><div style={{ width: '48px', borderLeft: '1px solid rgba(180,160,130,0.3)', flexShrink: 0 }}></div></div>
+                          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+                            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+                            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
                           </div>
-                          <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>Order all</div></div>
-                          <p style={gcCta}>{'See the menu \u2192'}</p>
-                          <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                         </button>
                       )}
 
-                      {/* Guest Check 3: Most Talked About */}
+                      {/* Board 3: Most Talked About */}
                       {mostVotedDish && (
                         <button
                           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
-                          className="text-left active:scale-[0.97] transition-transform"
-                          style={gcOuter}
+                          className="active:scale-[0.97] transition-transform"
+                          style={boardOuter}
                         >
-                          <div style={gcHeader}>
-                            <p style={gcTitle}>Guest Check</p>
-                            <div style={gcFieldsRow}>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Date</p><p style={gcFieldVal}>Today</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Table</p><p style={gcFieldVal}>{(mostVotedDish.restaurant_name || '').split(' ')[0]}</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Guests</p><p style={gcFieldVal}>{mostVotedDish.total_votes || 0}</p></div>
-                              <div style={gcFieldBox}><p style={gcFieldLabel}>Server</p><p style={gcFieldVal}>{'\uD83D\uDCAC'}</p></div>
-                              <div style={gcCheckNum}><span style={gcCheckNumText}>{'0' + (mostVotedDish.total_votes || 0)}</span></div>
+                          <div style={boardSurface}>
+                            <div style={boardFrame} />
+                            <div style={boardDust} />
+                            <div style={boardContent}>
+                              <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{'\uD83D\uDCAC most talked about'}</p>
+                              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{mostVotedDish.dish_name || mostVotedDish.name}</p>
+                              <p style={Object.assign({}, chalkMed, { fontSize: '13px', margin: 0 })}>{mostVotedDish.restaurant_name}</p>
+                              <div style={chalkLine} />
+                              <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
+                              <div style={chalkLine} />
+                              <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{'\see why \u2192'}</p>
                             </div>
                           </div>
-                          <p style={gcCategories}>Most Talked About on the Island</p>
-                          <div style={gcLinedArea}>
-                            <div style={gcRow}><div style={gcRowQty}>1</div><div style={gcRowItemBig}>{mostVotedDish.dish_name || mostVotedDish.name}</div><div style={gcRowPrice}></div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItemSub}>{mostVotedDish.restaurant_name}</div><div style={gcRowPrice}></div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Total votes</div><div style={gcRowPrice}>{mostVotedDish.total_votes || 0}</div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Order again?</div><div style={gcRowPrice}>{mostVotedDish.avg_rating ? Math.round(mostVotedDish.avg_rating * 10) + '%' : '--'}</div></div>
-                            <div style={gcRow}><div style={gcRowQty}></div><div style={gcRowItem}>Island rank</div><div style={gcRowPrice}>#1</div></div>
+                          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+                            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+                            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
                           </div>
-                          <div style={gcTotalRow}><div style={gcTotalLabel}>Verdict</div><div style={gcTotalVal}>{'Must try \uD83D\uDD25'}</div></div>
-                          <p style={gcCta}>{'See why \u2192'}</p>
-                          <div style={gcFooter}><p style={gcFooterText}>{'Thank You \u2014 Please Eat Local'}</p></div>
                         </button>
                       )}
                     </div>
