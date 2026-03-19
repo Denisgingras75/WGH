@@ -418,7 +418,7 @@ export function Map() {
                   // A-frame chalkboard styles
                   var boardOuter = {
                     flexShrink: 0,
-                    width: '175px',
+                    width: '150px',
                     position: 'relative',
                     paddingBottom: '14px',
                   }
