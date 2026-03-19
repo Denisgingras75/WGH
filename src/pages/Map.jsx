@@ -410,10 +410,10 @@ export function Map() {
                 {(function () {
                   var hour = new Date().getHours()
                   var timeCallout = hour < 11
-                    ? { category: 'breakfast', emoji: '\u2600\uFE0F', title: 'Breakfast', sub: 'on the island', stat: '14 spots \u00B7 38 dishes', cta: 'best breakfasts \u2192' }
+                    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '14 spots \u00B7 38 dishes', cta: 'best breakfasts \u2192' }
                     : hour < 16
-                      ? { category: 'lobster roll', emoji: '\uD83E\uDD9E', title: 'Lobster Roll', sub: 'top searched', stat: 'the #1 food search on MV', cta: 'check them all out \u2192' }
-                      : { category: 'pizza', emoji: '\uD83C\uDF55', title: 'Pizza', sub: 'tonight', stat: 'everyone\u2019s asking', cta: 'find the best pizza \u2192' }
+                      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: '#1 food search on MV', cta: 'check them all out \u2192' }
+                      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: 'everyone\u2019s asking', cta: 'find the best pizza \u2192' }
 
                   // A-frame chalkboard styles
                   var boardOuter = {
@@ -452,11 +452,11 @@ export function Map() {
                     flexDirection: 'column',
                     alignItems: 'center',
                   }
-                  var chalkBright = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.9)' }
-                  var chalkMed = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.55)' }
-                  var chalkFaint = { fontFamily: "'Caveat', cursive", color: 'rgba(255,255,255,0.35)' }
+                  var chalkBright = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
+                  var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)' }
+                  var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.35)' }
                   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
-                  var chalkCta = { fontFamily: "'Caveat', cursive", color: 'rgba(255, 220, 180, 0.85)' }
+                  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.85)' }
                   var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0', width: '40px' }
                   var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '14px', background: '#1A1D1F', borderRadius: '0 0 1px 1px' }
 
@@ -485,7 +485,7 @@ export function Map() {
                           <div style={boardFrame} />
                           <div style={boardDust} />
                           <div style={boardContent}>
-                            <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{timeCallout.emoji + ' good morning'}</p>
+                            <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{timeCallout.tag}</p>
                             <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
                             <p style={Object.assign({}, chalkMed, { fontSize: '14px', margin: 0 })}>{timeCallout.sub}</p>
                             <div style={chalkLine} />
