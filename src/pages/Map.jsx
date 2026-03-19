@@ -452,11 +452,11 @@ export function Map() {
                     flexDirection: 'column',
                     alignItems: 'center',
                   }
-                  var chalkBright = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
-                  var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)' }
-                  var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.35)' }
+                  var chalkBright = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)', fontWeight: 700 }
+                  var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.6)', fontWeight: 700 }
+                  var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.5)', fontWeight: 700 }
                   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
-                  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.85)' }
+                  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.9)' }
                   var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0', width: '40px' }
                   var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '14px', background: '#1A1D1F', borderRadius: '0 0 1px 1px' }
 
@@ -485,13 +485,13 @@ export function Map() {
                           <div style={boardFrame} />
                           <div style={boardDust} />
                           <div style={boardContent}>
-                            <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{timeCallout.tag}</p>
+                            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{timeCallout.tag}</p>
                             <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
-                            <p style={Object.assign({}, chalkMed, { fontSize: '14px', margin: 0 })}>{timeCallout.sub}</p>
+                            <p style={Object.assign({}, chalkMed, { fontSize: '16px', margin: 0 })}>{timeCallout.sub}</p>
                             <div style={chalkLine} />
-                            <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{timeCallout.stat}</p>
+                            <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{timeCallout.stat}</p>
                             <div style={chalkLine} />
-                            <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
+                            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
                           </div>
                         </div>
                         <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
@@ -511,13 +511,13 @@ export function Map() {
                             <div style={boardFrame} />
                             <div style={boardDust} />
                             <div style={boardContent}>
-                              <p style={Object.assign({}, chalkFaint, { fontSize: '10px', letterSpacing: '0.05em', textTransform: 'uppercase', margin: 0 })}>{'\u2605 everything is good \u2605'}</p>
+                              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', letterSpacing: '0.03em', textTransform: 'uppercase', margin: 0 })}>{'\u2605 everything is good \u2605'}</p>
                               <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
-                              <p style={Object.assign({}, chalkMed, { fontSize: '13px', margin: 0 })}>Menemsha</p>
+                              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>Menemsha</p>
                               <div style={chalkLine} />
-                              <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{topRestaurant.count + ' dishes \u00B7 avg ' + topRestaurant.avg}</p>
+                              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{topRestaurant.count + ' dishes \u00B7 avg ' + topRestaurant.avg}</p>
                               <div style={chalkLine} />
-                              <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
+                              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
                             </div>
                           </div>
                           <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
@@ -538,13 +538,13 @@ export function Map() {
                             <div style={boardFrame} />
                             <div style={boardDust} />
                             <div style={boardContent}>
-                              <p style={Object.assign({}, chalkFaint, { fontSize: '11px', margin: 0 })}>{'\uD83D\uDCAC most talked about'}</p>
+                              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83D\uDCAC most talked about'}</p>
                               <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{mostVotedDish.dish_name || mostVotedDish.name}</p>
-                              <p style={Object.assign({}, chalkMed, { fontSize: '13px', margin: 0 })}>{mostVotedDish.restaurant_name}</p>
+                              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{mostVotedDish.restaurant_name}</p>
                               <div style={chalkLine} />
-                              <p style={Object.assign({}, chalkBright, { fontSize: '14px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
+                              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
                               <div style={chalkLine} />
-                              <p style={Object.assign({}, chalkCta, { fontSize: '16px', fontWeight: 700, margin: 0 })}>{'\see why \u2192'}</p>
+                              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see why \u2192'}</p>
                             </div>
                           </div>
                           <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
