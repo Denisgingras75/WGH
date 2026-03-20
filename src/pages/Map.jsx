@@ -418,7 +418,7 @@ export function Map() {
                   // A-frame chalkboard styles
                   var boardOuter = {
                     flexShrink: 0,
-                    width: '150px',
+                    width: '210px',
                     position: 'relative',
                     paddingBottom: '14px',
                   }
@@ -446,7 +446,7 @@ export function Map() {
                   var boardContent = {
                     position: 'relative',
                     zIndex: 1,
-                    padding: '14px 14px',
+                    padding: '10px 14px',
                     textAlign: 'center',
                     display: 'flex',
                     flexDirection: 'column',
@@ -457,7 +457,7 @@ export function Map() {
                   var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.5)', fontWeight: 700 }
                   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
                   var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.9)' }
-                  var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '6px 0', width: '40px' }
+                  var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '40px' }
                   var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '14px', background: '#1A1D1F', borderRadius: '0 0 1px 1px' }
 
                   return (
