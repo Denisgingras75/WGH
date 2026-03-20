@@ -388,23 +388,33 @@ export function Map() {
                 )}
               </div>
             ) : activeDishes && activeDishes.length > 0 ? (
-              /* Homepage v3 layout */
+              /* Homepage v4 layout — category chips up top, vertical list */
               <>
-                {/* Top 10 Nearby — unified horizontal scroll */}
-                <div className="flex items-baseline justify-between px-4 pt-3 pb-2">
-                  <h2 style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    fontSize: '26px',
-                    fontWeight: 700,
-                    color: 'var(--color-primary)',
-                  }}>
-                    Top Rated Nearby
-                  </h2>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-                    #1 – {Math.min(activeDishes.length, 10)}
-                  </span>
+                {/* Browse by Category — top of page */}
+                <div className="pt-2 pb-0">
+                  <div className="flex items-baseline justify-between px-4 pb-1">
+                    <h2 style={{
+                      fontFamily: "'Amatic SC', cursive",
+                      fontSize: '26px',
+                      fontWeight: 700,
+                      color: 'var(--color-primary)',
+                    }}>
+                      Browse by Category
+                    </h2>
+                  </div>
+                  <CategoryChips
+                    categories={BROWSE_CATEGORIES.filter(function (c) {
+                      var hour = new Date().getHours()
+                      var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+                      return c.id !== hideId
+                    })}
+                    selected={expandedCategory}
+                    onSelect={function (cat) {
+                      setExpandedCategory(function (prev) { return prev === cat ? null : cat })
+                    }}
+                    maxVisible={22}
+                  />
                 </div>
-                <Top10Scroll dishes={activeDishes.slice(0, 10)} />
 
                 {/* Editorial stories — A-frame chalkboard horizontal scroll */}
                 {(function () {
@@ -557,39 +567,39 @@ export function Map() {
                   )
                 })()}
 
-                {/* Category pills with expand */}
-                <div className="pt-2 pb-0">
-                  <div className="flex items-baseline justify-between px-4 pb-1">
-                    <h2 style={{
-                      fontFamily: "'Amatic SC', cursive",
-                      fontSize: '26px',
-                      fontWeight: 700,
-                      color: 'var(--color-primary)',
-                    }}>
-                      Browse by Category
-                    </h2>
-                  </div>
-                  <CategoryChips
-                    categories={BROWSE_CATEGORIES.filter(function (c) {
-                      var hour = new Date().getHours()
-                      var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
-                      return c.id !== hideId
-                    })}
-                    selected={expandedCategory}
-                    onSelect={function (cat) {
-                      setExpandedCategory(function (prev) { return prev === cat ? null : cat })
-                    }}
-                    maxVisible={22}
-                  />
-                </div>
-
-                {/* Category Expand — inline top 10 */}
-                {expandedCategory && (
+                {/* Dish list — Top Rated Nearby OR Category results */}
+                {expandedCategory ? (
                   <div id="category-expand">
-                  <CategoryExpand
-                    categoryId={expandedCategory}
-                    onClose={function () { setExpandedCategory(null) }}
-                  />
+                    <CategoryExpand
+                      categoryId={expandedCategory}
+                      onClose={function () { setExpandedCategory(null) }}
+                    />
+                  </div>
+                ) : (
+                  <div className="px-4 pt-2">
+                    <div className="flex items-baseline justify-between pb-2">
+                      <h2 style={{
+                        fontFamily: "'Amatic SC', cursive",
+                        fontSize: '26px',
+                        fontWeight: 700,
+                        color: 'var(--color-primary)',
+                      }}>
+                        Top Rated Nearby
+                      </h2>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+                        #1 – {Math.min(activeDishes.length, 10)}
+                      </span>
+                    </div>
+                    {activeDishes.slice(0, 10).map(function (dish, i) {
+                      return (
+                        <DishListItem
+                          key={dish.dish_id || dish.id}
+                          dish={dish}
+                          rank={i + 1}
+                          variant="ranked"
+                        />
+                      )
+                    })}
                   </div>
                 )}
 
