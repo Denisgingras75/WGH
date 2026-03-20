@@ -26,7 +26,7 @@ export const dishesApi = {
       const { data, error } = await supabase.rpc('get_ranked_dishes', {
         user_lat: lat,
         user_lng: lng,
-        radius_miles: radiusMiles,
+        radius_miles: radiusMiles === 0 ? 25000 : radiusMiles,
         filter_category: category,
         filter_town: town,
       })

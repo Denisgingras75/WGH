@@ -447,7 +447,7 @@ export function RestaurantDetail() {
         }}
       >
         <div className="flex gap-2 pb-2">
-          {(restaurant.toast_slug || restaurant.order_url) && (
+          {(restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) && (
             <a
               href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : restaurant.order_url}
               target="_blank"
@@ -467,11 +467,11 @@ export function RestaurantDetail() {
           <a
             href={restaurant.lat && restaurant.lng
               ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurant.lat + ',' + restaurant.lng
-              : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(restaurant.address || restaurant.name)
+              : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(restaurant.address || (restaurant.name + ', ' + (restaurant.town || "Martha's Vineyard") + ', MA'))
             }
             target="_blank"
             rel="noopener noreferrer"
-            className={(restaurant.toast_slug ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
+            className={((restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
             style={{
               background: 'var(--color-accent-gold)',
               color: 'var(--color-bg)',

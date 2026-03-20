@@ -272,7 +272,7 @@ export const restaurantsApi = {
       const { data, error } = await supabase.rpc('get_restaurants_within_radius', {
         p_lat: lat,
         p_lng: lng,
-        p_radius_miles: radiusMiles,
+        p_radius_miles: radiusMiles === 0 ? 25000 : radiusMiles,
       })
 
       if (error) throw createClassifiedError(error)

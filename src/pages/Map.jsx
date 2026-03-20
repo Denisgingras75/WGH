@@ -313,7 +313,7 @@ export function Map() {
                   rightSlot={
                     <button
                       onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
-                      aria-label={'Search radius: ' + radius + ' miles'}
+                      aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
                       className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
                       style={{
                         fontSize: '12px',
@@ -323,7 +323,7 @@ export function Map() {
                         cursor: 'pointer',
                       }}
                     >
-                      {radius} mi
+                      {radius === 0 ? 'All' : radius + ' mi'}
                       <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -667,7 +667,7 @@ export function Map() {
                   rightSlot={
                     <button
                       onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
-                      aria-label={'Search radius: ' + radius + ' miles'}
+                      aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
                       className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
                       style={{
                         fontSize: '12px',
@@ -677,7 +677,7 @@ export function Map() {
                         cursor: 'pointer',
                       }}
                     >
-                      {radius} mi
+                      {radius === 0 ? 'All' : radius + ' mi'}
                       <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>

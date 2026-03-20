@@ -1355,13 +1355,8 @@ input.outline-none:focus-visible {
 
 /* ===========================
    Map Tile Styling
-   Stamen Watercolor — treasure map aesthetic
+   CartoDB Voyager
    =========================== */
 .wgh-map-tiles {
   filter: brightness(1.0) contrast(1.02);
-}
-
-/* Street labels — softened to blend with watercolor */
-.wgh-map-labels {
-  opacity: 0.55;
 }
