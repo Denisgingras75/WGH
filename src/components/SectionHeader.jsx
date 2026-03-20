@@ -4,7 +4,7 @@
  * Props:
  *   title    - heading text (required)
  *   subtitle - optional secondary text
- *   action   - optional right-side element (link, button, TownPicker, etc.)
+ *   action   - optional right-side element (link, button, etc.)
  *   level    - 'h2' | 'h3' (default: 'h2')
  */
 export function SectionHeader({ title, subtitle, action, level = 'h2' }) {

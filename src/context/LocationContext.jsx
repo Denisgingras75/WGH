@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { capture } from '../lib/analytics'
 import { logger } from '../utils/logger'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
+import { detectRegion } from '../constants/towns'
 
 // Default location: Martha's Vineyard center (between Vineyard Haven, Oak Bluffs, Edgartown)
 const DEFAULT_LOCATION = {
@@ -17,9 +18,10 @@ export function LocationProvider({ children }) {
   const [location, setLocation] = useState(DEFAULT_LOCATION)
   const [radius, setRadiusState] = useState(() => {
     const saved = getStorageItem(STORAGE_KEYS.RADIUS)
-    if (saved) {
+    if (saved !== null && saved !== undefined) {
       const parsed = parseInt(saved, 10)
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 50) {
+      // 0 = Anywhere (no distance limit), 1-250 = miles
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 250) {
         return parsed
       }
     }
@@ -62,6 +64,16 @@ export function LocationProvider({ children }) {
       return newTown
     })
   }, [])
+
+  // Auto-detect region from coordinates
+  const [region, setRegion] = useState(() => detectRegion(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng))
+
+  useEffect(() => {
+    if (location) {
+      setRegion(detectRegion(location.lat, location.lng))
+    }
+  }, [location])
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [permissionState, setPermissionState] = useState('prompt') // 'prompt' | 'granted' | 'denied' | 'unsupported'
@@ -185,6 +197,7 @@ export function LocationProvider({ children }) {
       setRadius,
       town,
       setTown,
+      region,
       loading,
       error,
       permissionState,

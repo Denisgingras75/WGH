@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
-var RADIUS_OPTIONS = [1, 5, 10, 20, 25, 50]
+var RADIUS_OPTIONS = [1, 5, 10, 20, 25, 50, 100, 250, 0]
 
 var DISMISS_THRESHOLD = 80
 
@@ -133,7 +133,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                     }}
                   >
                     <span style={radius === r ? { color: 'var(--color-text-on-primary)' } : undefined}>
-                      {r <= 5 ? '\uD83D\uDEB6' : r <= 10 ? '\uD83D\uDE97' : r <= 20 ? '\uD83D\uDEE3\uFE0F' : '\uD83C\uDF0E'}
+                      {r === 0 ? '\uD83C\uDF0E' : r <= 5 ? '\uD83D\uDEB6' : r <= 10 ? '\uD83D\uDE97' : r <= 25 ? '\uD83D\uDEE3\uFE0F' : r <= 100 ? '\u2708\uFE0F' : '\uD83C\uDF0E'}
                     </span>
                   </div>
                   <div className="text-left">
@@ -141,13 +141,13 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                       className="font-semibold"
                       style={{ color: 'var(--color-text-primary)' }}
                     >
-                      Within {r} {r === 1 ? 'mile' : 'miles'}
+                      {r === 0 ? 'Anywhere' : 'Within ' + r + ' ' + (r === 1 ? 'mile' : 'miles')}
                     </p>
                     <p
                       className="text-sm"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
-                      {r === 1 ? 'Walking distance' : r === 5 ? 'Quick drive' : r === 10 ? 'Short trip' : r === 20 ? 'Across the area' : r === 25 ? 'Extended range' : 'Maximum range'}
+                      {r === 0 ? 'Show all dishes everywhere' : r === 1 ? 'Walking distance' : r === 5 ? 'Quick drive' : r === 10 ? 'Short trip' : r === 20 ? 'Across the area' : r === 25 ? 'Extended range' : r === 50 ? 'Island-wide' : r === 100 ? 'Regional (Boston, Cape, etc.)' : 'Cross-state'}
                     </p>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export function LocationPicker({ radius, onRadiusChange }) {
         <div className="flex items-center gap-2">
           <button
             onClick={function () { setShowRadiusSheet(true) }}
-            aria-label={'Search radius: ' + radius + ' miles. Tap to change'}
+            aria-label={radius === 0 ? 'Showing dishes everywhere. Tap to change' : 'Search radius: ' + radius + ' miles. Tap to change'}
             className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium border transition-all hover:border-neutral-300"
             style={{
               background: 'var(--color-surface)',
@@ -193,7 +193,7 @@ export function LocationPicker({ radius, onRadiusChange }) {
               color: 'var(--color-text-primary)'
             }}
           >
-            <span>Within {radius} mi</span>
+            <span>{radius === 0 ? 'Anywhere' : 'Within ' + radius + ' mi'}</span>
             <svg
               aria-hidden="true"
               className="w-4 h-4"

@@ -564,18 +564,13 @@ export function RestaurantMap({
         {/* Expose map instance to parent */}
         {mapRef && <MapRefExposer mapRef={mapRef} />}
 
-        {/* Tiles — Stamen Watercolor via Stadia Maps */}
+        {/* Tiles — CartoDB Voyager (free, no API key, includes labels) */}
         <TileLayer
-          attribution='&copy; <a href="https://stamen.com/">Stamen Design</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"
-          maxZoom={16}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          maxZoom={19}
+          subdomains="abcd"
           className="wgh-map-tiles"
-        />
-        {/* Street labels overlay on top of watercolor */}
-        <TileLayer
-          url="https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}@2x.png"
-          maxZoom={16}
-          className="wgh-map-labels"
         />
 
         {/* Fit bounds — skip on fullscreen map so it stays zoomed to user location */}
