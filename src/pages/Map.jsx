@@ -390,32 +390,6 @@ export function Map() {
             ) : activeDishes && activeDishes.length > 0 ? (
               /* Homepage v4 layout — category chips up top, vertical list */
               <>
-                {/* Browse by Category — top of page */}
-                <div className="pt-2 pb-0">
-                  <div className="flex items-baseline justify-between px-4 pb-1">
-                    <h2 style={{
-                      fontFamily: "'Amatic SC', cursive",
-                      fontSize: '26px',
-                      fontWeight: 700,
-                      color: 'var(--color-primary)',
-                    }}>
-                      Browse by Category
-                    </h2>
-                  </div>
-                  <CategoryChips
-                    categories={BROWSE_CATEGORIES.filter(function (c) {
-                      var hour = new Date().getHours()
-                      var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
-                      return c.id !== hideId
-                    })}
-                    selected={expandedCategory}
-                    onSelect={function (cat) {
-                      setExpandedCategory(function (prev) { return prev === cat ? null : cat })
-                    }}
-                    maxVisible={22}
-                  />
-                </div>
-
                 {/* Editorial stories — A-frame chalkboard horizontal scroll */}
                 {(function () {
                   var hour = new Date().getHours()
@@ -566,6 +540,32 @@ export function Map() {
                     </div>
                   )
                 })()}
+
+                {/* Browse by Category */}
+                <div className="pt-2 pb-0">
+                  <div className="flex items-baseline justify-between px-4 pb-1">
+                    <h2 style={{
+                      fontFamily: "'Amatic SC', cursive",
+                      fontSize: '26px',
+                      fontWeight: 700,
+                      color: 'var(--color-primary)',
+                    }}>
+                      Browse by Category
+                    </h2>
+                  </div>
+                  <CategoryChips
+                    categories={BROWSE_CATEGORIES.filter(function (c) {
+                      var hour = new Date().getHours()
+                      var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+                      return c.id !== hideId
+                    })}
+                    selected={expandedCategory}
+                    onSelect={function (cat) {
+                      setExpandedCategory(function (prev) { return prev === cat ? null : cat })
+                    }}
+                    maxVisible={22}
+                  />
+                </div>
 
                 {/* Dish list — Top Rated Nearby OR Category results */}
                 {expandedCategory ? (
