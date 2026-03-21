@@ -209,7 +209,7 @@ export function Login() {
                   zIndex: 1,
                 }}
               >
-                What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
+                What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
               </h1>
               <p
                 style={{

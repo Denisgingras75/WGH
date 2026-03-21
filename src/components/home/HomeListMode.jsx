@@ -280,10 +280,10 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   var hour = new Date().getHours()
   var timeCallout = hour < 11
-    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: 'ranked by locals', cta: 'best breakfasts \u2192' }
+    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
     : hour < 16
-      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: 'ranked by locals', cta: 'find the best one \u2192' }
-      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: 'ranked by locals', cta: 'find the best pizza \u2192' }
+      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: '#1 searched on MV', cta: 'find the best one \u2192' }
+      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: '#1 searched dinner', cta: 'find the best pizza \u2192' }
 
   // Chalkboard styles — fill width, 2 per row, with A-frame legs
   var boardOuter = {

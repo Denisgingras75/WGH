@@ -23,7 +23,7 @@ export function TopBar() {
             whiteSpace: 'nowrap',
           }}
         >
-          What's <span style={{ color: 'var(--color-accent-gold)' }}>Good</span> Here
+          What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
         </span>
 
         {/* Settings + Notifications grouped right */}
