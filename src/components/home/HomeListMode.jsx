@@ -316,7 +316,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var boardContent = {
     position: 'relative',
     zIndex: 1,
-    padding: '10px 12px 12px',
+    padding: '8px 10px 9px',
     textAlign: 'center',
     display: 'flex',
     flexDirection: 'column',
