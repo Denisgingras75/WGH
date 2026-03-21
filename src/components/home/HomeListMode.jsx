@@ -60,7 +60,7 @@ export function HomeListMode({
             fontFamily: "'Amatic SC', cursive",
             fontSize: '16px',
             fontWeight: 700,
-            color: 'var(--color-text-tertiary)',
+            color: 'var(--color-text-primary)',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             margin: '2px 0 0',
