@@ -50,7 +50,7 @@ export function CategoryChips({
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
-          minHeight: '56px',
+          minHeight: 'auto',
           touchAction: 'pan-x pan-y',
         }}
       >
@@ -68,7 +68,7 @@ export function CategoryChips({
               onClick={function () { onSelect(isActive ? null : cat.id) }}
               className="flex-shrink-0 flex flex-col items-center justify-center"
               style={{
-                padding: '4px 0px',
+                padding: '0',
                 minWidth: '48px',
                 fontSize: '11px',
                 background: 'transparent',
