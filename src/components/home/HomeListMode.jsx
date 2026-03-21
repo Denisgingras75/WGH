@@ -177,17 +177,17 @@ export function HomeListMode({
             />
 
             {/* Browse by Category */}
-            <div style={{ paddingTop: '6px', paddingBottom: 0 }}>
-              <div className="flex items-center gap-3 px-4" style={{ paddingBottom: '4px' }}>
+            <div style={{ paddingTop: '2px', paddingBottom: 0 }}>
+              <div className="flex items-center gap-3 px-4" style={{ paddingBottom: 0 }}>
                 <div className="flex-1" style={{ height: '1.5px', background: 'linear-gradient(to right, transparent, var(--color-text-tertiary))' }} />
                 <h2 style={{
                   fontFamily: "'Amatic SC', cursive",
-                  fontSize: '26px',
+                  fontSize: '24px',
                   fontWeight: 700,
                   color: 'var(--color-primary)',
                   margin: 0,
                   whiteSpace: 'nowrap',
-                  padding: '0 8px',
+                  padding: '0 6px',
                 }}>
                   Browse by Category
                 </h2>
@@ -214,9 +214,9 @@ export function HomeListMode({
                 />
               </div>
             ) : (
-              <div className="pt-4">
+              <div className="pt-1">
                 {/* Divider — separates editorial/browse from the rankings */}
-                <div className="mx-4 mb-3" style={{
+                <div className="mx-4 mb-2" style={{
                   height: '2px',
                   background: 'linear-gradient(90deg, var(--color-text-primary), var(--color-text-primary) 30%, transparent)',
                   opacity: 0.12,

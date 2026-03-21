@@ -50,7 +50,7 @@ export function CategoryChips({
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
-          minHeight: '68px',
+          minHeight: '56px',
           touchAction: 'pan-x pan-y',
         }}
       >
