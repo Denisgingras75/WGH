@@ -384,7 +384,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
               <p style={Object.assign({}, chalkBig, { fontSize: '24px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
               <p style={Object.assign({}, chalkMed, { fontSize: '13px', margin: 0 })}>Menemsha</p>
               <div style={chalkLine} />
-              <p style={Object.assign({}, chalkBright, { fontSize: '13px', margin: 0 })}>{topRestaurant.count + ' dishes \u00B7 avg ' + topRestaurant.avg}</p>
+              <p style={Object.assign({}, chalkBright, { fontSize: '13px', margin: 0 })}>{'avg rating ' + topRestaurant.avg}</p>
               <div style={chalkLine} />
               <p style={Object.assign({}, chalkCta, { fontSize: '15px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
             </div>
