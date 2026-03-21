@@ -1,0 +1,32 @@
+# CODEOWNERS — enforced review gates for WGH
+# Dan (PGD3311) owns design/UI, Denis (Denisgingras75) owns backend/infra
+# Both must approve changes to shared files
+
+# === DAN owns: Design, UI, Styling ===
+src/pages/                    @PGD3311
+src/components/               @PGD3311
+src/index.css                 @PGD3311
+src/constants/categories.js   @PGD3311
+src/constants/tags.js         @PGD3311
+public/                       @PGD3311
+
+# === DENIS owns: Backend, Schema, API, Infra ===
+supabase/                     @Denisgingras75
+src/api/                      @Denisgingras75
+src/hooks/                    @Denisgingras75
+src/lib/                      @Denisgingras75
+src/utils/                    @Denisgingras75
+src/context/                  @Denisgingras75
+e2e/                          @Denisgingras75
+scripts/                      @Denisgingras75
+.github/workflows/            @Denisgingras75
+
+# === SHARED: Both must approve ===
+src/pages/Map.jsx             @PGD3311 @Denisgingras75
+src/pages/Dish.jsx            @PGD3311 @Denisgingras75
+src/pages/Browse.jsx          @PGD3311 @Denisgingras75
+src/components/DishListItem.jsx @PGD3311 @Denisgingras75
+CLAUDE.md                     @PGD3311 @Denisgingras75
+SPEC.md                       @PGD3311 @Denisgingras75
+package.json                  @PGD3311 @Denisgingras75
+vercel.json                   @PGD3311 @Denisgingras75
