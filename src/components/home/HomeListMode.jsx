@@ -289,8 +289,6 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var boardOuter = {
     flexShrink: 0,
     width: '175px',
-    position: 'relative',
-    paddingBottom: '10px',
   }
   var boardSurface = {
     position: 'relative',
@@ -328,7 +326,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
   var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.85)' }
   var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
-  var legStyle = { position: 'absolute', bottom: 0, width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
+  var legStyle = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
 
   return (
     <div
@@ -385,9 +383,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
             </div>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
-            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-20px', transform: 'rotate(10deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-20px', transform: 'rotate(-10deg)', transformOrigin: 'top center' })} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
           </div>
         </button>
       )}
@@ -412,9 +410,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see why \u2192'}</p>
             </div>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
-            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-20px', transform: 'rotate(10deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-20px', transform: 'rotate(-10deg)', transformOrigin: 'top center' })} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
           </div>
         </button>
       )}
@@ -439,9 +437,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best meal under $15 \u2192'}</p>
             </div>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
-            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-20px', transform: 'rotate(10deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-20px', transform: 'rotate(-10deg)', transformOrigin: 'top center' })} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
           </div>
         </button>
       )}
@@ -466,9 +464,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best ice cream \u2192'}</p>
             </div>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
-            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-20px', transform: 'rotate(10deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-20px', transform: 'rotate(-10deg)', transformOrigin: 'top center' })} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
           </div>
         </button>
       )}
