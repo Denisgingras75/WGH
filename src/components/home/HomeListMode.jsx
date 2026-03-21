@@ -286,8 +286,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   // Chalkboard styles — fill width, 2 per row, with A-frame legs
   var boardOuter = {
-    flex: '1 1 calc(50% - 4px)',
-    maxWidth: 'calc(50% - 4px)',
+    flexShrink: 0,
+    width: '210px',
     position: 'relative',
     paddingBottom: '16px',
   }
@@ -331,10 +331,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   return (
     <div
-      className="flex flex-wrap mt-2"
+      className="flex gap-3 overflow-x-auto mt-2"
       style={{
-        padding: '0 10px',
-        gap: '8px',
+        padding: '0 16px 0',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+        touchAction: 'pan-x pan-y',
       }}
     >
       {/* Board 1: Time of day */}
