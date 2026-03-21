@@ -279,10 +279,10 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   var hour = new Date().getHours()
   var timeCallout = hour < 11
-    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '14 spots \u00B7 38 dishes', cta: 'best breakfasts \u2192' }
+    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: 'ranked by locals', cta: 'best breakfasts \u2192' }
     : hour < 16
-      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: '#1 food search on MV', cta: 'check them all out \u2192' }
-      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: 'everyone\u2019s asking', cta: 'find the best pizza \u2192' }
+      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: 'ranked by locals', cta: 'find the best one \u2192' }
+      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: 'ranked by locals', cta: 'find the best pizza \u2192' }
 
   // A-frame chalkboard styles — narrower, tapered like a real sidewalk sign
   var boardOuter = {
