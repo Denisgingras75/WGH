@@ -200,6 +200,51 @@ export function Map() {
     return top
   }, [allRanked])
 
+  // Editorial: best meal under $15 (excludes desserts, coffee, sides, apps, fries)
+  var bestValueMeal = useMemo(function () {
+    if (!allRanked || allRanked.length === 0) return null
+    var excludeCategories = new Set([
+      'dessert', 'donuts', 'ice cream', 'coffee', 'sides', 'fries',
+      'apps', 'onion rings', 'veggies', 'bakery',
+    ])
+    var candidates = allRanked.filter(function (d) {
+      return d.price && Number(d.price) > 0 && Number(d.price) <= 15
+        && (d.total_votes || 0) >= 3
+        && d.avg_rating
+        && !excludeCategories.has(d.category)
+    })
+    if (candidates.length === 0) return null
+    var best = null
+    candidates.forEach(function (d) {
+      if (!best || Number(d.avg_rating) > Number(best.avg_rating)) {
+        best = d
+      }
+    })
+    return best
+  }, [allRanked])
+
+  // Editorial: best ice cream dish
+  var bestIceCream = useMemo(function () {
+    if (!allRanked || allRanked.length === 0) return null
+    var iceCreamCategories = new Set(['ice cream', 'dessert'])
+    var candidates = allRanked.filter(function (d) {
+      var name = (d.dish_name || d.name || '').toLowerCase()
+      var cat = (d.category || '').toLowerCase()
+      return (iceCreamCategories.has(cat) || name.indexOf('ice cream') !== -1
+        || name.indexOf('gelato') !== -1 || name.indexOf('sundae') !== -1
+        || name.indexOf('soft serve') !== -1 || name.indexOf('frappe') !== -1)
+        && (d.total_votes || 0) >= 1
+    })
+    if (candidates.length === 0) return null
+    var best = null
+    candidates.forEach(function (d) {
+      if (!best || Number(d.avg_rating || 0) > Number(best.avg_rating || 0)) {
+        best = d
+      }
+    })
+    return best
+  }, [allRanked])
+
   var rankingContext = useMemo(function () {
     if (searchQuery) return 'for \u201c' + searchQuery + '\u201d'
     if (activeLocalListName) return activeLocalListName + '\u2019s picks'
@@ -261,6 +306,8 @@ export function Map() {
           expandedCategory={expandedCategory}
           topRestaurant={topRestaurant}
           mostVotedDish={mostVotedDish}
+          bestValueMeal={bestValueMeal}
+          bestIceCream={bestIceCream}
           radius={radius}
           permissionState={permissionState}
           requestLocation={requestLocation}

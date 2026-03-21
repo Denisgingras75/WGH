@@ -17,6 +17,8 @@ export function HomeListMode({
   expandedCategory,
   topRestaurant,
   mostVotedDish,
+  bestValueMeal,
+  bestIceCream,
   radius,
   permissionState,
   requestLocation,
@@ -163,6 +165,8 @@ export function HomeListMode({
             <ChalkboardSection
               topRestaurant={topRestaurant}
               mostVotedDish={mostVotedDish}
+              bestValueMeal={bestValueMeal}
+              bestIceCream={bestIceCream}
               onExpandCategory={function (cat) {
                 onExpandedCategoryChange(cat)
                 setTimeout(function () {
@@ -266,7 +270,7 @@ export function HomeListMode({
   )
 }
 
-function ChalkboardSection({ topRestaurant, mostVotedDish, onExpandCategory }) {
+function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, onExpandCategory }) {
   var navigate = useNavigate()
 
   var hour = new Date().getHours()
@@ -401,6 +405,60 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, onExpandCategory }) {
               <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
               <div style={chalkLine} />
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see why \u2192'}</p>
+            </div>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+          </div>
+        </button>
+      )}
+
+      {/* Board 4: Best Meal Under $15 */}
+      {bestValueMeal && (
+        <button
+          onClick={function () { navigate('/dish/' + bestValueMeal.dish_id) }}
+          className="active:scale-[0.97] transition-transform"
+          style={boardOuter}
+        >
+          <div style={boardSurface}>
+            <div style={boardFrame} />
+            <div style={boardDust} />
+            <div style={boardContent}>
+              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83D\uDCB0 best value'}</p>
+              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{bestValueMeal.dish_name || bestValueMeal.name}</p>
+              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{bestValueMeal.restaurant_name}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + (Number(bestValueMeal.avg_rating).toFixed(1))}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best meal under $15 \u2192'}</p>
+            </div>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+          </div>
+        </button>
+      )}
+
+      {/* Board 5: Best Ice Cream */}
+      {bestIceCream && (
+        <button
+          onClick={function () { navigate('/dish/' + bestIceCream.dish_id) }}
+          className="active:scale-[0.97] transition-transform"
+          style={boardOuter}
+        >
+          <div style={boardSurface}>
+            <div style={boardFrame} />
+            <div style={boardDust} />
+            <div style={boardContent}>
+              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83C\uDF66 island scoops'}</p>
+              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{bestIceCream.dish_name || bestIceCream.name}</p>
+              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{bestIceCream.restaurant_name}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + (Number(bestIceCream.avg_rating || 0).toFixed(1))}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best ice cream \u2192'}</p>
             </div>
           </div>
           <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
