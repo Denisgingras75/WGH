@@ -390,7 +390,30 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
         </button>
       )}
 
-      {/* Board 3: Most Talked About */}
+      {/* Board 3: Chowder */}
+      <button
+        onClick={function () { onExpandCategory('chowder') }}
+        className="active:scale-[0.97] transition-transform"
+        style={boardOuter}
+      >
+        <div style={boardSurface}>
+          <div style={boardFrame} />
+          <div style={boardDust} />
+          <div style={boardContent}>
+            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83E\uDD63 the great debate'}</p>
+            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>Chowder</p>
+            <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>ranked by the people</p>
+            <div style={chalkLine} />
+            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the rankings \u2192'}</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+          <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+          <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+        </div>
+      </button>
+
+      {/* Board 4: Most Talked About */}
       {mostVotedDish && (
         <button
           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
@@ -471,28 +494,6 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
         </button>
       )}
 
-      {/* Board 6: Best Chowder */}
-      <button
-        onClick={function () { onExpandCategory('chowder') }}
-        className="active:scale-[0.97] transition-transform"
-        style={boardOuter}
-      >
-        <div style={boardSurface}>
-          <div style={boardFrame} />
-          <div style={boardDust} />
-          <div style={boardContent}>
-            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83E\uDD63 the great debate'}</p>
-            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>Chowder</p>
-            <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>ranked by the people</p>
-            <div style={chalkLine} />
-            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the rankings \u2192'}</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-          <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-          <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-        </div>
-      </button>
     </div>
   )
 }
