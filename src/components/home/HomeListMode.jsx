@@ -58,7 +58,7 @@ export function HomeListMode({
           </h2>
           <p style={{
             fontFamily: "'Amatic SC', cursive",
-            fontSize: '16px',
+            fontSize: '20px',
             fontWeight: 700,
             color: 'var(--color-text-primary)',
             letterSpacing: '0.12em',
@@ -324,7 +324,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)', fontWeight: 700 }
   var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.45)', fontWeight: 700 }
   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
-  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.85)' }
+  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'var(--color-primary)' }
   var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
   var legStyle = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
 
