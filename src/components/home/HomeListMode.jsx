@@ -374,11 +374,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
             <div style={boardFrame} />
             <div style={boardDust} />
             <div style={boardContent}>
-              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', letterSpacing: '0.03em', textTransform: 'uppercase', margin: 0 })}>{'\u2605 everything is good \u2605'}</p>
+              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', letterSpacing: '0.03em', textTransform: 'uppercase', margin: 0 })}>{'\u2B50 highest rated restaurant'}</p>
               <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
-              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{'every dish is a hit'}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{'avg rating ' + topRestaurant.avg}</p>
+              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{'avg dish rating ' + topRestaurant.avg}</p>
               <div style={chalkLine} />
               <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
             </div>
