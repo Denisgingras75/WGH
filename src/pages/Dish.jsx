@@ -1,120 +1,40 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
-import { logger } from '../utils/logger'
-import { getCompatColor } from '../utils/formatters'
 import { shareOrCopy, buildDishShareData } from '../utils/share'
 import { toast } from 'sonner'
-import { dishesApi } from '../api/dishesApi'
-import { followsApi } from '../api/followsApi'
-import { dishPhotosApi } from '../api/dishPhotosApi'
-import { votesApi } from '../api/votesApi'
 import { useFavorites } from '../hooks/useFavorites'
+import { useDishDetail } from '../hooks/useDishDetail'
 import { ReviewFlow } from '../components/ReviewFlow'
 import { PhotoUploadConfirmation } from '../components/PhotoUploadConfirmation'
 import { LoginModal } from '../components/Auth/LoginModal'
-import { VariantSelector } from '../components/VariantPicker'
-import { CategoryIcon } from '../components/home/CategoryIcons'
-import { PhotoUploadButton } from '../components/PhotoUploadButton'
-import { TrustBadge, TrustSummary, JitterExplainer } from '../components/jitter'
-import { CATEGORY_INFO } from '../constants/categories'
-import { MIN_VOTES_FOR_RANKING } from '../constants/app'
-import { getRatingColor, getPercentColor, formatScore10 } from '../utils/ranking'
-import { formatRelativeTime } from '../utils/formatters'
-import { ThumbsUpIcon } from '../components/ThumbsUpIcon'
-import { ThumbsDownIcon } from '../components/ThumbsDownIcon'
 import { HearingIcon } from '../components/HearingIcon'
 import { EarIconTooltip } from '../components/EarIconTooltip'
+import { DishHero, DishEvidence } from '../components/dish'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
-import { useLocationContext } from '../context/LocationContext'
-
-/**
- * Transform raw dish data from API to component format
- */
-function transformDish(data) {
-  return {
-    dish_id: data.id,
-    dish_name: data.name,
-    restaurant_id: data.restaurant_id,
-    restaurant_name: data.restaurants?.name || 'Unknown',
-    restaurant_town: data.restaurants?.town,
-    restaurant_address: data.restaurants?.address,
-    restaurant_lat: data.restaurants?.lat,
-    restaurant_lng: data.restaurants?.lng,
-    category: data.category,
-    price: data.price,
-    photo_url: data.photo_url,
-    total_votes: data.total_votes || 0,
-    yes_votes: data.yes_votes || 0,
-    percent_worth_it: data.total_votes > 0
-      ? Math.round((data.yes_votes / data.total_votes) * 100)
-      : 0,
-    avg_rating: data.avg_rating,
-    parent_dish_id: data.parent_dish_id,
-    has_variants: data.has_variants,
-    value_percentile: data.value_percentile,
-    website_url: data.restaurants?.website_url,
-    order_url: data.restaurants?.order_url,
-    toast_slug: data.restaurants?.toast_slug,
-    restaurant_phone: data.restaurants?.phone,
-  }
-}
+import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 
 export function Dish() {
   const { dishId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { location } = useLocationContext()
 
-  const [dish, setDish] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const {
+    dish, loading, error,
+    variants, parentDish, isVariant,
+    photoUploaded, allPhotos, communityPhotos,
+    friendsVotes, smartSnippet,
+    reviews, reviewsLoading,
+    shouldLoadEvidence, evidenceSentinelRef,
+    handlePhotoUploaded, handleVote, clearPhotoUploaded,
+  } = useDishDetail(dishId, user)
 
-  // Variant state
-  const [variants, setVariants] = useState([])
-  const [parentDish, setParentDish] = useState(null)
-  const [isVariant, setIsVariant] = useState(false)
-
-  const [photoUploaded, setPhotoUploaded] = useState(null)
-  const [featuredPhoto, setFeaturedPhoto] = useState(null)
-  const [communityPhotos, setCommunityPhotos] = useState([])
-  const [allPhotos, setAllPhotos] = useState([])
-  const [showAllPhotos, setShowAllPhotos] = useState(false)
-  const [lightboxPhoto, setLightboxPhoto] = useState(null)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
-  const [friendsVotes, setFriendsVotes] = useState([])
-  const [friendsCompat, setFriendsCompat] = useState({}) // { userId: compatibility_pct }
-  const [reviews, setReviews] = useState([])
-  const [reviewsLoading, setReviewsLoading] = useState(false)
-  const [smartSnippet, setSmartSnippet] = useState(null)
-
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
-
-  // Lazy-load evidence section — only fetch when user scrolls near it
-  const [shouldLoadEvidence, setShouldLoadEvidence] = useState(false)
-  const evidenceSentinelRef = useRef(null)
-
-  const observerCallback = useCallback(function (entries) {
-    if (entries[0].isIntersecting) {
-      setShouldLoadEvidence(true)
-    }
-  }, [])
-
-  useEffect(function () {
-    var el = evidenceSentinelRef.current
-    if (!el || shouldLoadEvidence) return
-    var observer = new IntersectionObserver(observerCallback, {
-      rootMargin: '200px',
-    })
-    observer.observe(el)
-    return function () { observer.disconnect() }
-  }, [dish, shouldLoadEvidence, observerCallback])
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
-  const [explainerOpen, setExplainerOpen] = useState(false)
-  const [explainerData, setExplainerData] = useState(null)
   const tooltipChecked = useRef(false)
 
   useEffect(() => {
@@ -131,217 +51,7 @@ export function Dish() {
     setStorageItem(STORAGE_KEYS.HAS_SEEN_EAR_TOOLTIP, '1')
   }
 
-  // Fetch dish data
-  useEffect(() => {
-    if (!dishId) return
-
-    const fetchDish = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        setShouldLoadEvidence(false)
-
-        const data = await dishesApi.getDishById(dishId)
-        const transformedDish = transformDish(data)
-        setDish(transformedDish)
-
-        // Track dish view - valuable for restaurants!
-        capture('dish_viewed', {
-          dish_id: transformedDish.dish_id,
-          dish_name: transformedDish.dish_name,
-          restaurant_id: transformedDish.restaurant_id,
-          restaurant_name: transformedDish.restaurant_name,
-          category: transformedDish.category,
-          price: transformedDish.price,
-          avg_rating: transformedDish.avg_rating,
-          total_votes: transformedDish.total_votes,
-          percent_worth_it: transformedDish.percent_worth_it,
-        })
-      } catch (err) {
-        logger.error('Error fetching dish:', err)
-        setError('Dish not found')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDish()
-  }, [dishId])
-
-  // Fetch variant data (if parent has variants, or if this dish is a variant)
-  useEffect(() => {
-    if (!dish) {
-      setVariants([])
-      setParentDish(null)
-      setIsVariant(false)
-      return
-    }
-
-    const fetchVariantData = async () => {
-      // Check if this dish has variants (is a parent)
-      if (dish.has_variants) {
-        try {
-          const variantData = await dishesApi.getVariants(dish.dish_id || dish.id)
-          setVariants(variantData)
-          setIsVariant(false)
-          setParentDish(null)
-        } catch (err) {
-          logger.error('Failed to fetch variants:', err)
-          setVariants([])
-        }
-      }
-      // Check if this dish is a variant (has a parent)
-      else if (dish.parent_dish_id) {
-        try {
-          const [siblings, parent] = await Promise.all([
-            dishesApi.getSiblingVariants(dish.dish_id || dish.id),
-            dishesApi.getParentDish(dish.dish_id || dish.id),
-          ])
-          setVariants(siblings)
-          setParentDish(parent)
-          setIsVariant(true)
-        } catch (err) {
-          logger.error('Failed to fetch sibling variants:', err)
-          setVariants([])
-          setParentDish(null)
-        }
-      } else {
-        setVariants([])
-        setParentDish(null)
-        setIsVariant(false)
-      }
-    }
-
-    fetchVariantData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only re-run on specific dish properties
-  }, [dish?.dish_id, dish?.id, dish?.has_variants, dish?.parent_dish_id])
-
-  // Fetch photos, reviews, and friends' votes — deferred until user scrolls near evidence section
-  useEffect(() => {
-    if (!dishId || !shouldLoadEvidence) return
-
-    const fetchSecondaryData = async () => {
-      setReviewsLoading(true)
-
-      // Run all independent fetches in parallel
-      const [photosResult, reviewsResult, friendsResult, snippetResult] = await Promise.allSettled([
-        // Photos (3 calls, already parallelized internally)
-        Promise.all([
-          dishPhotosApi.getFeaturedPhoto(dishId),
-          dishPhotosApi.getCommunityPhotos(dishId),
-          dishPhotosApi.getAllVisiblePhotos(dishId),
-        ]),
-        // Reviews
-        votesApi.getReviewsForDish(dishId, { limit: 20 }),
-        // Friends' votes (only if user is logged in)
-        user ? followsApi.getFriendsVotesForDish(dishId) : Promise.resolve([]),
-        // Smart snippet (best review pull quote)
-        votesApi.getSmartSnippetForDish(dishId),
-      ])
-
-      // Handle photos result
-      if (photosResult.status === 'fulfilled') {
-        const [featured, community, all] = photosResult.value
-        setFeaturedPhoto(featured)
-        setCommunityPhotos(community)
-        setAllPhotos(all)
-      } else {
-        logger.error('Failed to fetch photos:', photosResult.reason)
-      }
-
-      // Handle reviews result
-      if (reviewsResult.status === 'fulfilled') {
-        setReviews(reviewsResult.value)
-      } else {
-        logger.error('Failed to fetch reviews:', reviewsResult.reason)
-        setReviews([])
-      }
-      setReviewsLoading(false)
-
-      // Handle friends' votes result
-      if (friendsResult.status === 'fulfilled') {
-        setFriendsVotes(friendsResult.value)
-      } else {
-        logger.error('Failed to fetch friends votes:', friendsResult.reason)
-        setFriendsVotes([])
-      }
-
-      // Handle smart snippet result
-      if (snippetResult.status === 'fulfilled') {
-        setSmartSnippet(snippetResult.value)
-      } else {
-        logger.error('Failed to fetch smart snippet:', snippetResult.reason)
-      }
-
-    }
-
-    fetchSecondaryData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dishId, user, dish?.category, shouldLoadEvidence])
-
-  // Fetch taste compatibility for each friend who voted
-  useEffect(() => {
-    if (!user || friendsVotes.length === 0) {
-      setFriendsCompat({})
-      return
-    }
-
-    async function fetchCompat() {
-      try {
-        const results = await Promise.allSettled(
-          friendsVotes.map(fv => followsApi.getTasteCompatibility(fv.user_id))
-        )
-        const compatMap = {}
-        friendsVotes.forEach((fv, i) => {
-          if (results[i].status === 'fulfilled' && results[i].value?.compatibility_pct != null) {
-            compatMap[fv.user_id] = results[i].value.compatibility_pct
-          }
-        })
-        setFriendsCompat(compatMap)
-      } catch (err) {
-        logger.error('Failed to fetch friends compatibility:', err)
-      }
-    }
-
-    fetchCompat()
-  }, [user, friendsVotes])
-
-  const handlePhotoUploaded = async (photo) => {
-    setPhotoUploaded(photo)
-    // Refresh photos
-    try {
-      const [featured, community, all] = await Promise.all([
-        dishPhotosApi.getFeaturedPhoto(dishId),
-        dishPhotosApi.getCommunityPhotos(dishId),
-        dishPhotosApi.getAllVisiblePhotos(dishId),
-      ])
-      setFeaturedPhoto(featured)
-      setCommunityPhotos(community)
-      setAllPhotos(all)
-    } catch (error) {
-      logger.error('Failed to refresh photos after upload:', error)
-    }
-  }
-
-  const handleVote = async () => {
-    // Refetch dish data and reviews after voting
-    try {
-      const [data, reviewsData] = await Promise.all([
-        dishesApi.getDishById(dishId),
-        votesApi.getReviewsForDish(dishId, { limit: 20 }),
-      ])
-      const transformedDish = transformDish(data)
-      setDish(transformedDish)
-      setReviews(reviewsData)
-    } catch (err) {
-      logger.error('Failed to refresh dish data after vote:', err)
-      // UI continues with stale data - vote was still recorded
-    }
-  }
-
-  const handleLoginRequired = () => {
-    setLoginModalOpen(true)
-  }
+  const handleLoginRequired = () => setLoginModalOpen(true)
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -379,12 +89,7 @@ export function Dish() {
     }
   }
 
-  // Photos to display
-  const displayPhotos = showAllPhotos ? allPhotos : communityPhotos.slice(0, 4)
-  const hasMorePhotos = allPhotos.length > 4 && !showAllPhotos
-
-  // Hero image — only use real photos, fall back to RestaurantAvatar placeholder
-
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--color-surface-elevated)' }}>
@@ -497,476 +202,38 @@ export function Dish() {
             dishName={dish.dish_name}
             photoUrl={photoUploaded.photo_url}
             status={photoUploaded.analysisResults?.status}
-            onRateNow={() => setPhotoUploaded(null)}
-            onLater={() => setPhotoUploaded(null)}
+            onRateNow={clearPhotoUploaded}
+            onLater={clearPhotoUploaded}
           />
         </div>
       ) : (
         <>
-          {/* ═══════════════════════════════════════════
-              LAYER 1: THE VERDICT
-              Score, consensus, distance. 2 seconds.
-              ═══════════════════════════════════════════ */}
+          {/* LAYER 1: THE VERDICT */}
+          <DishHero
+            dish={dish}
+            allPhotos={allPhotos}
+            isVariant={isVariant}
+            parentDish={parentDish}
+          />
 
-          {/* Hero: photo if available, otherwise skip straight to verdict */}
-          {(function () {
-            var heroPhoto = allPhotos.length > 0 ? allPhotos[0].photo_url : (dish.photo_url || null)
-            if (heroPhoto) {
-              return (
-                <div className="relative" style={{ height: '220px', overflow: 'hidden' }}>
-                  <img
-                    src={heroPhoto}
-                    alt={dish.dish_name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.5))' }}
-                  />
-                </div>
-              )
-            }
-            return null
-          })()}
+          {/* LAYER 2: THE EVIDENCE */}
+          <DishEvidence
+            dish={dish}
+            dishId={dishId}
+            user={user}
+            shouldLoadEvidence={shouldLoadEvidence}
+            evidenceSentinelRef={evidenceSentinelRef}
+            friendsVotes={friendsVotes}
+            smartSnippet={smartSnippet}
+            allPhotos={allPhotos}
+            communityPhotos={communityPhotos}
+            reviews={reviews}
+            reviewsLoading={reviewsLoading}
+            variants={variants}
+            isVariant={isVariant}
+          />
 
-          {/* Verdict Card — the hero when no photo */}
-          <div
-            className="mx-3 rounded-xl px-4 py-4"
-            style={{
-              background: 'var(--color-card)',
-              border: '1.5px solid var(--color-divider)',
-              marginTop: allPhotos.length > 0 || dish.photo_url ? '-24px' : '8px',
-              position: 'relative',
-              zIndex: 5,
-            }}
-          >
-            {/* Variant breadcrumb */}
-            {isVariant && parentDish && (
-              <button
-                onClick={() => navigate('/dish/' + parentDish.id)}
-                className="flex items-center gap-1 text-xs font-bold mb-3"
-                style={{ color: 'var(--color-primary)' }}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                {parentDish.name}
-              </button>
-            )}
-
-            {/* Name + Icon + Price */}
-            <div className="flex items-center gap-2">
-              {/* Category icon inline — only when no hero photo */}
-              {!allPhotos.length && !dish.photo_url && (
-                <div className="flex-shrink-0">
-                  <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={88} />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1
-                  style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    fontWeight: 700,
-                    fontSize: '28px',
-                    letterSpacing: '0.02em',
-                    color: 'var(--color-text-primary)',
-                    lineHeight: 1.1,
-                    margin: 0,
-                  }}
-                >
-                  {dish.dish_name}
-                </h1>
-                {/* Restaurant + Price */}
-                <div className="flex items-center justify-between" style={{ marginTop: '2px' }}>
-                  <button
-                    onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
-                    className="flex items-center gap-1"
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: 'var(--color-accent-gold)',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {dish.restaurant_name}
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                    {dish.restaurant_town && (
-                      <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, marginLeft: '4px' }}>
-                        {dish.restaurant_town}
-                      </span>
-                    )}
-                  </button>
-                  {dish.price ? (
-                    <span className="flex-shrink-0" style={{ color: 'var(--color-text-primary)', fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em' }}>
-                      ${Number(dish.price).toFixed(0)}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* Score Block */}
-            {isRanked && dish.avg_rating ? (
-              <div className="flex items-end justify-between mt-4 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
-                <div className="flex items-baseline gap-2">
-                  <span
-                    style={{
-                      fontWeight: 800,
-                      fontSize: '44px',
-                      lineHeight: 1,
-                      color: getRatingColor(dish.avg_rating),
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {formatScore10(dish.avg_rating)}
-                  </span>
-                </div>
-                <div className="text-right space-y-1" style={{ minWidth: '120px' }}>
-                  <p className="text-sm font-bold" style={{ color: getPercentColor(dish.percent_worth_it) }}>
-                    {dish.percent_worth_it}% would reorder
-                  </p>
-                  <div style={{
-                    height: '4px',
-                    borderRadius: '2px',
-                    background: 'var(--color-divider, #e5e7eb)',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      height: '100%',
-                      width: dish.percent_worth_it + '%',
-                      borderRadius: '2px',
-                      background: getPercentColor(dish.percent_worth_it),
-                      transition: 'width 0.4s ease',
-                    }} />
-                  </div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                    {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </div>
-            ) : dish.total_votes > 0 ? (
-              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
-                <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                  {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'} — needs {MIN_VOTES_FOR_RANKING - dish.total_votes} more to rank
-                </p>
-              </div>
-            ) : null}
-
-            {/* Jitter trust line */}
-            {dish.total_votes > 0 && (
-              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
-                <div className="flex items-center gap-2">
-                  <TrustBadge type="human_verified" size="sm" />
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                    Ratings verified by Jitter
-                  </span>
-                </div>
-                <Link
-                  to="/jitter"
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: 'var(--color-primary)',
-                  }}
-                >
-                  What's this?
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* ═══════════════════════════════════════════
-              LAYER 2: THE EVIDENCE
-              Photos, reviews, social proof. For context.
-              Lazy-loaded when user scrolls near.
-              ═══════════════════════════════════════════ */}
-          <div ref={evidenceSentinelRef} aria-hidden="true" />
-          <div className="px-3 pt-4 pb-4">
-
-            {/* Evidence skeleton while secondary data loads */}
-            {!shouldLoadEvidence && (
-              <div className="space-y-3 animate-pulse" role="status" aria-label="Loading details">
-                <div className="h-20 rounded-xl" style={{ background: 'var(--color-divider)' }} />
-                <div className="grid grid-cols-4 gap-2">
-                  {[0, 1, 2, 3].map(function (i) { return <div key={i} className="aspect-square rounded-lg" style={{ background: 'var(--color-divider)' }} /> })}
-                </div>
-                <div className="h-16 rounded-xl" style={{ background: 'var(--color-divider)' }} />
-              </div>
-            )}
-
-            {/* Friends who rated this — avatar bubble scroll, scales with count */}
-            {friendsVotes.length > 0 && (function () {
-              var count = friendsVotes.length
-              // Scale down as more friends vote: 1-3 big, 4-5 medium, 6+ compact
-              var avatarSize = count <= 3 ? 64 : count <= 5 ? 48 : 40
-              var avatarFont = count <= 3 ? 24 : count <= 5 ? 18 : 15
-              var nameSize = count <= 3 ? 13 : 11
-              var scoreSize = count <= 3 ? 20 : count <= 5 ? 16 : 14
-              var thumbSize = count <= 3 ? 14 : 12
-              var minWidth = count <= 3 ? 80 : count <= 5 ? 64 : 56
-              var gap = count <= 3 ? 20 : count <= 5 ? 16 : 12
-              return (
-              <div className="mb-4">
-                <h3 style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: '12px',
-                }}>
-                  Friends Who Rated This
-                </h3>
-                <div
-                  className={'flex overflow-x-auto pb-2' + (count <= 3 ? ' justify-center' : '')}
-                  style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
-                >
-                  {friendsVotes.map(function (vote) {
-                    var avatarColors = ['#E4440A', '#3B82F6', '#9333EA', '#16A34A', '#F59E0B', '#EC4899', '#06B6D4']
-                    var colorIndex = (vote.display_name || '').charCodeAt(0) % avatarColors.length
-                    return (
-                      <Link
-                        key={vote.user_id}
-                        to={'/user/' + vote.user_id}
-                        className="flex flex-col items-center flex-shrink-0"
-                        style={{ minWidth: minWidth + 'px' }}
-                      >
-                        <div
-                          className="rounded-full flex items-center justify-center font-bold"
-                          style={{
-                            width: avatarSize + 'px',
-                            height: avatarSize + 'px',
-                            background: avatarColors[colorIndex],
-                            color: 'white',
-                            fontSize: avatarFont + 'px',
-                          }}
-                        >
-                          {vote.display_name?.charAt(0).toUpperCase() || '?'}
-                        </div>
-                        <span style={{
-                          fontSize: nameSize + 'px',
-                          fontWeight: 600,
-                          color: 'var(--color-text-secondary)',
-                          marginTop: '4px',
-                          maxWidth: minWidth + 'px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          textAlign: 'center',
-                        }}>
-                          {vote.display_name || 'Anon'}
-                        </span>
-                        <span style={{
-                          fontSize: scoreSize + 'px',
-                          fontWeight: 800,
-                          letterSpacing: '-0.02em',
-                          color: getRatingColor(vote.rating_10),
-                          marginTop: '2px',
-                        }}>
-                          {formatScore10(vote.rating_10)}
-                        </span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-              )
-            })()}
-
-            {/* Smart Snippet — the one-liner social proof */}
-            {smartSnippet && smartSnippet.review_text && (
-              <div
-                className="mb-4 p-4 rounded-xl"
-                style={{
-                  background: 'var(--color-surface)',
-                  borderLeft: '3px solid var(--color-accent-gold)',
-                }}
-              >
-                <p className="text-sm italic" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
-                  &ldquo;{smartSnippet.review_text}&rdquo;
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                    — @{smartSnippet.profiles?.display_name || 'Anonymous'}
-                  </span>
-                  {smartSnippet.rating_10 && (
-                    <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
-                      {formatScore10(smartSnippet.rating_10)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Photos grid */}
-            {displayPhotos.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Photos ({displayPhotos.length})
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {displayPhotos.map((photo) => (
-                    <button
-                      key={photo.id}
-                      onClick={() => setLightboxPhoto(photo.photo_url)}
-                      aria-label={'View photo of ' + dish.dish_name}
-                      className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
-                      style={{ border: '1.5px solid var(--color-divider)' }}
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt={dish.dish_name}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                        onError={function (e) { e.target.parentElement.style.display = 'none' }}
-                      />
-                    </button>
-                  ))}
-                </div>
-                {hasMorePhotos && (
-                  <button
-                    onClick={function () { setShowAllPhotos(true) }}
-                    className="mt-3 text-sm font-bold"
-                    style={{ color: 'var(--color-primary)' }}
-                  >
-                    See all {allPhotos.length} photos
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Reviews feed — exclude friends (shown in bubbles) and own review */}
-            {(function () {
-              var friendIds = new Set(friendsVotes.map(function (v) { return v.user_id }))
-              var snippetId = smartSnippet && smartSnippet.id ? smartSnippet.id : null
-              var filteredReviews = reviews.filter(function (r) {
-                if (user && r.user_id === user.id) return false
-                if (friendIds.has(r.user_id)) return false
-                if (snippetId && r.id === snippetId) return false
-                return true
-              })
-              return filteredReviews.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-bold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    Reviews ({filteredReviews.length})
-                  </h3>
-                  <TrustSummary
-                    verifiedCount={reviews.filter(function (r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }).length}
-                    aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
-                  />
-                </div>
-                <div className="space-y-4">
-                  {filteredReviews.map(function (review) {
-                    var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
-                    return (
-                      <div
-                        key={review.id}
-                        className="p-4 rounded-xl"
-                        style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
-                      >
-                        {/* Row 1: Avatar + Name + Timestamp */}
-                        <Link to={'/user/' + review.user_id} className="flex items-center gap-3 mb-2.5 min-w-0">
-                          <div
-                            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-                          >
-                            {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="flex items-center gap-1.5">
-                              <span className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
-                                @{review.profiles?.display_name || 'Anonymous'}
-                              </span>
-                              <TrustBadge type={review.trust_badge} profileData={review.jitter_profile} />
-                              {review.trust_badge && review.trust_badge !== 'building' && (
-                                <button
-                                  onClick={function (e) {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setExplainerData({ warScore: review.war_score, stats: review.jitter_profile })
-                                    setExplainerOpen(true)
-                                  }}
-                                  className="flex-shrink-0"
-                                  style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', lineHeight: 1 }}
-                                  aria-label="What is this badge?"
-                                >
-                                  ?
-                                </button>
-                              )}
-                            </span>
-                            <span className="text-[11px] block" style={{ color: 'var(--color-text-secondary)' }}>
-                              {formatRelativeTime(review.review_created_at)}{dish.restaurant_town ? ' · ' + dish.restaurant_town : ''}
-                            </span>
-                          </div>
-                        </Link>
-
-                        {/* Row 2: Rating pill + sentiment */}
-                        <div className="flex items-center gap-2 mb-2.5">
-                          {review.rating_10 ? (
-                            <span
-                              className="rounded-full px-2.5 py-0.5 font-bold text-sm"
-                              style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
-                            >
-                              {formatScore10(review.rating_10)}
-                            </span>
-                          ) : null}
-                          <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                            {review.would_order_again ? <><ThumbsUpIcon size={18} /> Would order again</> : <><ThumbsDownIcon size={18} /> Would skip</>}
-                          </span>
-                        </div>
-
-                        {/* Row 3: Review text */}
-                        {review.review_text && (
-                          <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>
-                            {review.review_text}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              )
-            })()}
-
-            {/* No reviews message */}
-            {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
-              <div
-                className="mb-4 p-4 rounded-xl text-center"
-                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-              >
-                <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                  No written reviews yet — be the first to share your thoughts!
-                </p>
-              </div>
-            )}
-
-            {/* Variant Selector */}
-            {variants.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  {isVariant ? 'Other flavors' : 'Available flavors'}
-                </p>
-                <VariantSelector
-                  variants={variants}
-                  currentDishId={dish.dish_id}
-                  onSelect={function (variant) { navigate('/dish/' + variant.dish_id) }}
-                />
-              </div>
-            )}
-
-          </div>
-
-          {/* ═══════════════════════════════════════════
-              LAYER 3: THE ACTION
-              Order, directions, and vote — after evidence.
-              ═══════════════════════════════════════════ */}
+          {/* LAYER 3: THE ACTION */}
           <div className="px-3 pt-3">
             <div className="flex gap-2">
               {dish.website_url && (
@@ -995,7 +262,7 @@ export function Dish() {
             </div>
           </div>
 
-          {/* Vote Flow — at the bottom, for people who've tried it */}
+          {/* Vote Flow */}
           <div className="p-4">
             <div
               className="p-4 rounded-xl"
@@ -1027,35 +294,6 @@ export function Dish() {
         </>
       )}
 
-      {/* Photo Lightbox */}
-      {lightboxPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0, 0, 0, 0.9)' }}
-          onClick={() => setLightboxPhoto(null)}
-          role="dialog"
-          aria-label="Photo lightbox"
-        >
-          <button
-            className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-2xl"
-            style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
-            onClick={() => setLightboxPhoto(null)}
-            aria-label="Close lightbox"
-          >
-            &times;
-          </button>
-          <img
-            src={lightboxPhoto}
-            alt={dish.dish_name}
-            className="max-w-full max-h-full object-contain"
-            onError={() => {
-              // Close lightbox if image fails to load
-              setLightboxPhoto(null)
-            }}
-          />
-        </div>
-      )}
-
       {/* Floating action bar */}
       <div
         className="fixed left-0 right-0 px-3"
@@ -1072,7 +310,6 @@ export function Dish() {
             backdropFilter: 'blur(16px)',
           }}
         >
-          {/* Order Now (Toast or order_url) or See Menu (website) */}
           {(dish.toast_slug || dish.order_url) ? (
             <a
               href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : dish.order_url}
@@ -1114,7 +351,6 @@ export function Dish() {
             </a>
           ) : null}
 
-          {/* Directions */}
           <a
             href={dish.restaurant_lat && dish.restaurant_lng
               ? 'https://www.google.com/maps/dir/?api=1&destination=' + dish.restaurant_lat + ',' + dish.restaurant_lng
@@ -1134,7 +370,6 @@ export function Dish() {
             </svg>
             Directions
           </a>
-
         </div>
       </div>
 
@@ -1142,14 +377,6 @@ export function Dish() {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-      />
-
-      {/* Jitter Explainer */}
-      <JitterExplainer
-        open={explainerOpen}
-        onClose={function () { setExplainerOpen(false) }}
-        warScore={explainerData && explainerData.warScore}
-        stats={explainerData && explainerData.stats}
       />
     </div>
   )

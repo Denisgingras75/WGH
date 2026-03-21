@@ -174,7 +174,24 @@ export function RestaurantDetail() {
     )
   }
 
-  if (!restaurant) return null
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
+        <div className="text-center px-4">
+          <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+            Restaurant not found
+          </p>
+          <button
+            onClick={() => navigate('/restaurants')}
+            className="px-4 py-2 text-sm font-medium rounded-lg"
+            style={{ background: 'var(--color-primary)', color: 'white' }}
+          >
+            Back to Restaurants
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>

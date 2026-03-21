@@ -1,0 +1,412 @@
+import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { BROWSE_CATEGORIES } from '../../constants/categories'
+import { DishSearch } from '../DishSearch'
+import { DishListItem } from '../DishListItem'
+import { CategoryChips } from '../CategoryChips'
+import { EmptyState } from '../EmptyState'
+import { LocationBanner } from '../LocationBanner'
+import { LocalListsSection, CategoryExpand } from './'
+
+export function HomeListMode({
+  listScrollRef,
+  searchQuery,
+  searchLoading,
+  rankedLoading,
+  activeDishes,
+  expandedCategory,
+  topRestaurant,
+  mostVotedDish,
+  radius,
+  permissionState,
+  requestLocation,
+  onSearchChange,
+  onRadiusSheetOpen,
+  onExpandedCategoryChange,
+  onLocalListExpanded,
+}) {
+  var navigate = useNavigate()
+
+  var handleCategorySelect = useCallback(function (cat) {
+    onExpandedCategoryChange(function (prev) { return prev === cat ? null : cat })
+  }, [onExpandedCategoryChange])
+
+  return (
+    <div
+      className="fixed inset-0 flex flex-col"
+      style={{
+        background: 'var(--color-bg)',
+        zIndex: 1,
+      }}
+    >
+      {/* Fixed header: brand + search + chips */}
+      <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
+        {/* Brand header */}
+        <div className="text-center pt-4 pb-1">
+          <h2 style={{
+            fontFamily: "'Amatic SC', cursive",
+            fontSize: '42px',
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            letterSpacing: '0.04em',
+            lineHeight: 1,
+            margin: 0,
+          }}>
+            What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
+          </h2>
+          <p style={{
+            fontFamily: "'Amatic SC', cursive",
+            fontSize: '16px',
+            fontWeight: 700,
+            color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            margin: '2px 0 0',
+          }}>
+            Martha's Vineyard
+          </p>
+        </div>
+        {/* Search bar */}
+        <div className="px-4 pt-2 pb-2" style={{
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}>
+          <div style={{
+            borderRadius: '14px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+          }}>
+            <DishSearch
+              loading={false}
+              placeholder="What are you craving?"
+              onSearchChange={onSearchChange}
+              initialQuery={searchQuery}
+              rightSlot={
+                <button
+                  onClick={function (e) { e.stopPropagation(); onRadiusSheetOpen() }}
+                  aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                  style={{
+                    fontSize: '12px',
+                    background: 'var(--color-bg)',
+                    color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-divider)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {radius === 0 ? 'All' : radius + ' mi'}
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              }
+            />
+          </div>
+        </div>
+
+        {/* Location banner */}
+        <div className="px-4">
+          <LocationBanner
+            permissionState={permissionState}
+            requestLocation={requestLocation}
+            message="Enable location to find the best food near you"
+          />
+        </div>
+
+      </div>
+
+      {/* Scrollable content */}
+      <div
+        ref={listScrollRef}
+        className="flex-1 overflow-y-auto"
+        style={{
+          paddingBottom: '80px',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+        }}
+      >
+        {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
+          <div className="px-4 pt-4"><ListSkeleton /></div>
+        ) : searchQuery ? (
+          /* Search results — flat list */
+          <div className="px-4 pt-2 pb-4">
+            <h2 style={{
+              fontFamily: "'Amatic SC', cursive",
+              fontSize: '28px',
+              fontWeight: 700,
+              color: 'var(--color-text-primary)',
+              letterSpacing: '0.02em',
+              marginBottom: '8px',
+            }}>
+              Results
+            </h2>
+            {activeDishes && activeDishes.length > 0 ? (
+              <div className="flex flex-col" style={{ gap: '2px' }}>
+                {activeDishes.map(function (dish, i) {
+                  return (
+                    <DishListItem
+                      key={dish.dish_id}
+                      dish={dish}
+                      rank={i + 1}
+                      showDistance
+                      onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
+              <EmptyState emoji="🔍" title={'No dishes found for \u201c' + searchQuery + '\u201d'} />
+            )}
+          </div>
+        ) : activeDishes && activeDishes.length > 0 ? (
+          /* Homepage v4 layout — category chips up top, vertical list */
+          <>
+            {/* Editorial stories — A-frame chalkboard horizontal scroll */}
+            <ChalkboardSection
+              topRestaurant={topRestaurant}
+              mostVotedDish={mostVotedDish}
+              onExpandCategory={function (cat) {
+                onExpandedCategoryChange(cat)
+                setTimeout(function () {
+                  var el = document.getElementById('category-expand')
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 100)
+              }}
+            />
+
+            {/* Browse by Category */}
+            <div className="pt-2 pb-0">
+              <div className="flex items-baseline justify-between px-4 pb-1">
+                <h2 style={{
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: '26px',
+                  fontWeight: 700,
+                  color: 'var(--color-primary)',
+                }}>
+                  Browse by Category
+                </h2>
+              </div>
+              <CategoryChips
+                categories={BROWSE_CATEGORIES.filter(function (c) {
+                  var hour = new Date().getHours()
+                  var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+                  return c.id !== hideId
+                })}
+                selected={expandedCategory}
+                onSelect={handleCategorySelect}
+                maxVisible={22}
+              />
+            </div>
+
+            {/* Dish list — Top Rated Nearby OR Category results */}
+            {expandedCategory ? (
+              <div id="category-expand">
+                <CategoryExpand
+                  categoryId={expandedCategory}
+                  onClose={function () { onExpandedCategoryChange(null) }}
+                />
+              </div>
+            ) : (
+              <div className="px-4 pt-2">
+                <div className="flex items-baseline justify-between pb-2">
+                  <h2 style={{
+                    fontFamily: "'Amatic SC', cursive",
+                    fontSize: '26px',
+                    fontWeight: 700,
+                    color: 'var(--color-primary)',
+                  }}>
+                    Top Rated Nearby
+                  </h2>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+                    #1 – {Math.min(activeDishes.length, 10)}
+                  </span>
+                </div>
+                {activeDishes.slice(0, 10).map(function (dish, i) {
+                  return (
+                    <DishListItem
+                      key={dish.dish_id || dish.id}
+                      dish={dish}
+                      rank={i + 1}
+                      variant="ranked"
+                    />
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Local Lists */}
+            <LocalListsSection onListExpanded={onLocalListExpanded} />
+          </>
+        ) : (
+          <div className="px-4 pt-4">
+            <EmptyState emoji="🍽️" title="No dishes found nearby" />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ChalkboardSection({ topRestaurant, mostVotedDish, onExpandCategory }) {
+  var navigate = useNavigate()
+
+  var hour = new Date().getHours()
+  var timeCallout = hour < 11
+    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '14 spots \u00B7 38 dishes', cta: 'best breakfasts \u2192' }
+    : hour < 16
+      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: '#1 food search on MV', cta: 'check them all out \u2192' }
+      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: 'everyone\u2019s asking', cta: 'find the best pizza \u2192' }
+
+  // A-frame chalkboard styles
+  var boardOuter = {
+    flexShrink: 0,
+    width: '210px',
+    position: 'relative',
+    paddingBottom: '14px',
+  }
+  var boardSurface = {
+    position: 'relative',
+    background: '#363B3F',
+    borderRadius: '3px',
+    overflow: 'hidden',
+    boxShadow: '2px 3px 10px rgba(0,0,0,0.2)',
+  }
+  var boardFrame = {
+    position: 'absolute',
+    inset: 0,
+    border: '3px solid #1A1D1F',
+    borderRadius: '3px',
+    pointerEvents: 'none',
+    zIndex: 2,
+  }
+  var boardDust = {
+    position: 'absolute',
+    inset: 0,
+    backgroundImage: 'radial-gradient(ellipse at 35% 45%, rgba(255,255,255,0.02) 0%, transparent 50%)',
+    pointerEvents: 'none',
+  }
+  var boardContent = {
+    position: 'relative',
+    zIndex: 1,
+    padding: '10px 14px',
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  }
+  var chalkBright = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)', fontWeight: 700 }
+  var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.6)', fontWeight: 700 }
+  var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.5)', fontWeight: 700 }
+  var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.9)' }
+  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.9)' }
+  var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '40px' }
+  var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '14px', background: '#1A1D1F', borderRadius: '0 0 1px 1px' }
+
+  return (
+    <div
+      className="flex gap-3 overflow-x-auto mt-4"
+      style={{
+        padding: '0 16px 4px',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+      }}
+    >
+      {/* Board 1: Time of day */}
+      <button
+        onClick={function () { onExpandCategory(timeCallout.category) }}
+        className="active:scale-[0.97] transition-transform"
+        style={boardOuter}
+      >
+        <div style={boardSurface}>
+          <div style={boardFrame} />
+          <div style={boardDust} />
+          <div style={boardContent}>
+            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{timeCallout.tag}</p>
+            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
+            <p style={Object.assign({}, chalkMed, { fontSize: '16px', margin: 0 })}>{timeCallout.sub}</p>
+            <div style={chalkLine} />
+            <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{timeCallout.stat}</p>
+            <div style={chalkLine} />
+            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
+          </div>
+        </div>
+        <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+          <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+          <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+        </div>
+      </button>
+
+      {/* Board 2: Top Restaurant */}
+      {topRestaurant && (
+        <button
+          onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
+          className="active:scale-[0.97] transition-transform"
+          style={boardOuter}
+        >
+          <div style={boardSurface}>
+            <div style={boardFrame} />
+            <div style={boardDust} />
+            <div style={boardContent}>
+              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', letterSpacing: '0.03em', textTransform: 'uppercase', margin: 0 })}>{'\u2605 everything is good \u2605'}</p>
+              <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
+              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>Menemsha</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{topRestaurant.count + ' dishes \u00B7 avg ' + topRestaurant.avg}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
+            </div>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+          </div>
+        </button>
+      )}
+
+      {/* Board 3: Most Talked About */}
+      {mostVotedDish && (
+        <button
+          onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
+          className="active:scale-[0.97] transition-transform"
+          style={boardOuter}
+        >
+          <div style={boardSurface}>
+            <div style={boardFrame} />
+            <div style={boardDust} />
+            <div style={boardContent}>
+              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83D\uDCAC most talked about'}</p>
+              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{mostVotedDish.dish_name || mostVotedDish.name}</p>
+              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{mostVotedDish.restaurant_name}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
+              <div style={chalkLine} />
+              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see why \u2192'}</p>
+            </div>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
+            <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-16px', transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-16px', transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+          </div>
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ListSkeleton() {
+  return (
+    <div className="animate-pulse">
+      {[0, 1, 2, 3].map(function (i) {
+        return (
+          <div key={i} className="flex items-center gap-3 py-3 px-3">
+            <div className="w-7 h-5 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="w-6 h-6 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="flex-1">
+              <div className="h-4 w-28 rounded mb-1" style={{ background: 'var(--color-divider)' }} />
+              <div className="h-3 w-20 rounded" style={{ background: 'var(--color-divider)' }} />
+            </div>
+            <div className="h-5 w-8 rounded" style={{ background: 'var(--color-divider)' }} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
