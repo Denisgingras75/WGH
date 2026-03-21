@@ -177,13 +177,14 @@ export function HomeListMode({
             />
 
             {/* Browse by Category */}
-            <div className="pt-2 pb-0">
-              <div className="px-4 pb-1">
+            <div style={{ paddingTop: '2px', paddingBottom: 0 }}>
+              <div className="px-4" style={{ paddingBottom: '2px' }}>
                 <h2 style={{
                   fontFamily: "'Amatic SC', cursive",
                   fontSize: '26px',
                   fontWeight: 700,
                   color: 'var(--color-primary)',
+                  margin: 0,
                 }}>
                   Browse by Category
                 </h2>
@@ -285,7 +286,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
     flexShrink: 0,
     width: '155px',
     position: 'relative',
-    paddingBottom: '18px',
+    paddingBottom: '14px',
   }
   var boardSurface = {
     position: 'relative',
@@ -316,7 +317,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var boardContent = {
     position: 'relative',
     zIndex: 1,
-    padding: '10px 12px 12px',
+    padding: '8px 10px 10px',
     textAlign: 'center',
     display: 'flex',
     flexDirection: 'column',
@@ -332,9 +333,9 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   return (
     <div
-      className="flex gap-3 overflow-x-auto mt-4"
+      className="flex gap-3 overflow-x-auto mt-3"
       style={{
-        padding: '0 16px 4px',
+        padding: '0 16px 0',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'none',
         touchAction: 'pan-x pan-y',
