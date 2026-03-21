@@ -282,7 +282,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var timeCallout = hour < 11
     ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
     : hour < 16
-      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: 'the hunt is on', stat: '#1 searched on MV', cta: 'find the best one \u2192' }
+      ? { category: 'lobster roll', tag: '\uD83E\uDD9E top searched', title: 'Lobster Roll', sub: '#1 searched on MV', stat: '', cta: 'find the best one \u2192' }
       : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: 'on the island', stat: '#1 searched dinner', cta: 'find the best pizza \u2192' }
 
   // Chalkboard styles — fill width, 2 per row, with A-frame legs
@@ -352,8 +352,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
             <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
             <p style={Object.assign({}, chalkMed, { fontSize: '16px', margin: 0 })}>{timeCallout.sub}</p>
             <div style={chalkLine} />
-            <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{timeCallout.stat}</p>
-            <div style={chalkLine} />
+            {timeCallout.stat && <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{timeCallout.stat}</p>}
+            {timeCallout.stat && <div style={chalkLine} />}
             <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
           </div>
         </div>
@@ -481,11 +481,11 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
           <div style={boardFrame} />
           <div style={boardDust} />
           <div style={boardContent}>
-            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83E\uDD63 best chowder on island'}</p>
+            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83E\uDD63 the great debate'}</p>
             <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>Chowder</p>
-            <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>who has the best bowl</p>
+            <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>ranked by the people</p>
             <div style={chalkLine} />
-            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'find out \u2192'}</p>
+            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the rankings \u2192'}</p>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
