@@ -120,7 +120,7 @@ export function HomeListMode({
         style={{
           paddingBottom: '80px',
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
+          overscrollBehaviorY: 'contain',
         }}
       >
         {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
@@ -307,6 +307,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, onExpandCategory }) {
         padding: '0 16px 4px',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'none',
+        touchAction: 'pan-x pan-y',
       }}
     >
       {/* Board 1: Time of day */}
