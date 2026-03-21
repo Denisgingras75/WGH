@@ -65,7 +65,7 @@ export function HomeListMode({
             textTransform: 'uppercase',
             margin: '2px 0 0',
           }}>
-            Martha's Vineyard
+            Dishes worth ordering again
           </p>
         </div>
         {/* Search bar */}
