@@ -281,7 +281,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var hour = new Date().getHours()
   var timeCallout = hour < 11
     ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
-    : hour < 16
+    : hour < 18
       ? { category: 'lobster roll', tag: '\uD83E\uDD9E #1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
       : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
 
