@@ -58,7 +58,7 @@ export function HomeListMode({
           </h2>
           <p style={{
             fontFamily: "'Amatic SC', cursive",
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: 700,
             color: 'var(--color-text-primary)',
             letterSpacing: '0.12em',
