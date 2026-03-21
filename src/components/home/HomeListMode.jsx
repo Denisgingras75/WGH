@@ -290,7 +290,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
     flexShrink: 0,
     width: '175px',
     position: 'relative',
-    paddingBottom: '16px',
+    paddingBottom: '10px',
   }
   var boardSurface = {
     position: 'relative',
@@ -328,7 +328,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
   var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255, 220, 180, 0.85)' }
   var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
-  var legStyle = { position: 'absolute', bottom: 0, width: '3px', height: '18px', background: '#1A1D1F', borderRadius: '0 0 2px 2px' }
+  var legStyle = { position: 'absolute', bottom: 0, width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
 
   return (
     <div

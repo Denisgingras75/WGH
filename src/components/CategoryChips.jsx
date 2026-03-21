@@ -38,7 +38,10 @@ export function CategoryChips({
   return (
     <div
       className={sticky ? 'sticky top-0 z-10' : ''}
-      style={sticky ? { background: 'var(--color-bg)' } : undefined}
+      style={Object.assign(
+        { position: 'relative' },
+        sticky ? { background: 'var(--color-bg)' } : {}
+      )}
     >
       <div
         ref={scrollRef}
@@ -51,6 +54,7 @@ export function CategoryChips({
           touchAction: 'pan-x pan-y',
         }}
       >
+
         {townPicker && (
           <div className="flex-shrink-0 self-center">
             {townPicker}
@@ -78,6 +82,19 @@ export function CategoryChips({
           )
         })}
       </div>
+      {/* Right fade mask — signals carousel continues */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '32px',
+          background: 'linear-gradient(to right, transparent, var(--color-bg))',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
     </div>
   )
 }
