@@ -177,17 +177,20 @@ export function HomeListMode({
             />
 
             {/* Browse by Category */}
-            <div style={{ paddingTop: '2px', paddingBottom: 0 }}>
-              <div className="px-4" style={{ paddingBottom: '2px' }}>
+            <div style={{ paddingTop: '6px', paddingBottom: 0 }}>
+              <div className="flex items-center gap-3 px-4" style={{ paddingBottom: '4px' }}>
+                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to right, transparent, var(--color-divider))' }} />
                 <h2 style={{
                   fontFamily: "'Amatic SC', cursive",
                   fontSize: '26px',
                   fontWeight: 700,
                   color: 'var(--color-primary)',
                   margin: 0,
+                  whiteSpace: 'nowrap',
                 }}>
                   Browse by Category
                 </h2>
+                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to left, transparent, var(--color-divider))' }} />
               </div>
               <CategoryChips
                 categories={BROWSE_CATEGORIES.filter(function (c) {
