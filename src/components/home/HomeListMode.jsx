@@ -357,10 +357,10 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
             <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}>
-          <div style={Object.assign({}, legStyle, { position: 'absolute', left: '-20px', transform: 'rotate(10deg)', transformOrigin: 'top center' })} />
-          <div style={Object.assign({}, legStyle, { position: 'absolute', right: '-20px', transform: 'rotate(-10deg)', transformOrigin: 'top center' })} />
-        </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
+            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
+          </div>
       </button>
 
       {/* Board 2: Top Restaurant */}
