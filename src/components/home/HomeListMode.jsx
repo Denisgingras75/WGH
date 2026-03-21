@@ -288,7 +288,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
   // Chalkboard styles — fill width, 2 per row, with A-frame legs
   var boardOuter = {
     flexShrink: 0,
-    width: '210px',
+    width: '175px',
     position: 'relative',
     paddingBottom: '16px',
   }
