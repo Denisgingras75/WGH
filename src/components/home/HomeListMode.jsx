@@ -205,30 +205,51 @@ export function HomeListMode({
                 />
               </div>
             ) : (
-              <div className="px-4 pt-2">
-                <div className="flex items-baseline justify-between pb-2">
+              <div className="pt-4">
+                {/* Divider — separates editorial/browse from the rankings */}
+                <div className="mx-4 mb-3" style={{
+                  height: '2px',
+                  background: 'linear-gradient(90deg, var(--color-text-primary), var(--color-text-primary) 30%, transparent)',
+                  opacity: 0.12,
+                }} />
+
+                {/* Scoreboard header */}
+                <div className="px-4 flex items-baseline justify-between mb-1">
                   <h2 style={{
                     fontFamily: "'Amatic SC', cursive",
-                    fontSize: '26px',
+                    fontSize: '30px',
                     fontWeight: 700,
-                    color: 'var(--color-primary)',
+                    color: 'var(--color-text-primary)',
+                    letterSpacing: '0.02em',
+                    lineHeight: 1,
                   }}>
                     Top Rated Nearby
                   </h2>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-                    #1 – {Math.min(activeDishes.length, 10)}
+                  <span style={{
+                    fontSize: '11px',
+                    color: 'var(--color-text-tertiary)',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {Math.min(activeDishes.length, 10)} dishes
                   </span>
                 </div>
-                {activeDishes.slice(0, 10).map(function (dish, i) {
-                  return (
-                    <DishListItem
-                      key={dish.dish_id || dish.id}
-                      dish={dish}
-                      rank={i + 1}
-                      variant="ranked"
-                    />
-                  )
-                })}
+
+                {/* Rankings */}
+                <div className="px-3">
+                  {activeDishes.slice(0, 10).map(function (dish, i) {
+                    return (
+                      <DishListItem
+                        key={dish.dish_id || dish.id}
+                        dish={dish}
+                        rank={i + 1}
+                        variant="ranked"
+                        isLast={i === Math.min(activeDishes.length, 10) - 1}
+                      />
+                    )
+                  })}
+                </div>
               </div>
             )}
 
@@ -265,15 +286,15 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, onExpandCategory }) {
   var boardSurface = {
     position: 'relative',
     background: '#363B3F',
-    borderRadius: '3px',
+    borderRadius: '2px',
     overflow: 'hidden',
-    boxShadow: '2px 3px 10px rgba(0,0,0,0.2)',
+    boxShadow: '1px 2px 6px rgba(0,0,0,0.15)',
   }
   var boardFrame = {
     position: 'absolute',
     inset: 0,
-    border: '3px solid #1A1D1F',
-    borderRadius: '3px',
+    border: '3.5px solid #1A1D1F',
+    borderRadius: '2px',
     pointerEvents: 'none',
     zIndex: 2,
   }
