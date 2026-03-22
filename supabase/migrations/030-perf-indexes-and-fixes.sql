@@ -79,7 +79,9 @@ $$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 -- =============================================
 -- 5. HIGH: Missing foreign key indexes
 -- =============================================
-CREATE INDEX IF NOT EXISTS idx_dishes_created_by ON dishes(created_by);
+-- dishes.created_by index — only if the column exists in your live DB
+-- ALTER TABLE dishes ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+-- CREATE INDEX IF NOT EXISTS idx_dishes_created_by ON dishes(created_by);
 CREATE INDEX IF NOT EXISTS idx_favorites_dish_id ON favorites(dish_id);
 CREATE INDEX IF NOT EXISTS idx_bias_events_dish_id ON bias_events(dish_id);
 CREATE INDEX IF NOT EXISTS idx_local_list_items_dish_id ON local_list_items(dish_id);
