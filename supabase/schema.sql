@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
   is_local_curator BOOLEAN DEFAULT false,
+  avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -342,6 +343,7 @@ CREATE INDEX IF NOT EXISTS idx_restaurants_open_lat_lng ON restaurants(is_open, 
 CREATE INDEX IF NOT EXISTS idx_restaurants_cuisine ON restaurants(cuisine);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_restaurants_google_place_id ON restaurants(google_place_id) WHERE google_place_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_restaurants_created_by ON restaurants(created_by);
+CREATE INDEX IF NOT EXISTS idx_restaurants_town ON restaurants(town);
 
 -- dishes
 CREATE INDEX IF NOT EXISTS idx_dishes_restaurant ON dishes(restaurant_id);
@@ -350,6 +352,9 @@ CREATE INDEX IF NOT EXISTS idx_dishes_parent ON dishes(parent_dish_id);
 CREATE INDEX IF NOT EXISTS idx_dishes_tags ON dishes USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_dishes_consensus ON dishes(consensus_ready) WHERE consensus_ready = TRUE;
 CREATE INDEX IF NOT EXISTS idx_dishes_restaurant_category ON dishes(restaurant_id, category);
+CREATE INDEX IF NOT EXISTS idx_dishes_created_by ON dishes(created_by);
+CREATE INDEX IF NOT EXISTS idx_dishes_restaurant_toplevel ON dishes(restaurant_id) WHERE parent_dish_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_dishes_consensus_eligible ON dishes(id) WHERE total_votes >= 5 AND avg_rating IS NOT NULL;
 
 -- votes
 CREATE INDEX IF NOT EXISTS idx_votes_dish ON votes(dish_id);
@@ -357,6 +362,8 @@ CREATE INDEX IF NOT EXISTS idx_votes_user ON votes(user_id);
 CREATE INDEX IF NOT EXISTS idx_votes_created ON votes(created_at);
 CREATE INDEX IF NOT EXISTS idx_votes_review_text ON votes(dish_id) WHERE review_text IS NOT NULL AND review_text != '';
 CREATE INDEX IF NOT EXISTS idx_votes_unscored ON votes(dish_id) WHERE scored_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_votes_user_dish ON votes(user_id, dish_id);
+CREATE INDEX IF NOT EXISTS idx_votes_user_position ON votes(user_id, vote_position);
 
 -- profiles
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_display_name_unique ON profiles(LOWER(display_name)) WHERE display_name IS NOT NULL;
@@ -380,6 +387,7 @@ CREATE INDEX IF NOT EXISTS idx_user_rating_stats_bias ON user_rating_stats(ratin
 
 -- bias_events
 CREATE INDEX IF NOT EXISTS idx_bias_events_user ON bias_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_bias_events_dish ON bias_events(dish_id);
 CREATE INDEX IF NOT EXISTS idx_bias_events_unseen ON bias_events(user_id, seen) WHERE seen = FALSE;
 
 -- user_badges
@@ -411,6 +419,7 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup ON rate_limits(created_at);
 
 -- events
 CREATE INDEX IF NOT EXISTS idx_events_restaurant ON events(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 CREATE INDEX IF NOT EXISTS idx_events_active_upcoming ON events(event_date, is_promoted DESC) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type) WHERE is_active = true;
 
@@ -650,29 +659,24 @@ CREATE OR REPLACE FUNCTION dish_search_score(
   p_avg_rating DECIMAL,
   p_total_votes BIGINT,
   p_distance_miles DECIMAL DEFAULT NULL,
-  p_recent_votes_14d INT DEFAULT 0
+  p_recent_votes_14d INT DEFAULT 0,
+  p_global_mean DECIMAL DEFAULT 7.0
 )
 RETURNS DECIMAL AS $$
 DECLARE
-  v_global_mean DECIMAL;
   v_prior_strength DECIMAL := 3;
   v_base_score DECIMAL;
   v_distance_bonus DECIMAL := 0;
   v_trend_bonus DECIMAL := 0;
   v_votes DECIMAL;
 BEGIN
-  SELECT COALESCE(AVG(avg_rating), 7.0)
-  INTO v_global_mean
-  FROM dishes
-  WHERE total_votes > 0 AND avg_rating IS NOT NULL;
-
   v_votes := COALESCE(p_total_votes, 0);
 
   IF v_votes = 0 OR p_avg_rating IS NULL THEN
-    v_base_score := v_global_mean;
+    v_base_score := p_global_mean;
   ELSE
     v_base_score := (v_votes / (v_votes + v_prior_strength)) * p_avg_rating
-                  + (v_prior_strength / (v_votes + v_prior_strength)) * v_global_mean;
+                  + (v_prior_strength / (v_votes + v_prior_strength)) * p_global_mean;
   END IF;
 
   IF p_distance_miles IS NOT NULL THEN
@@ -689,7 +693,7 @@ BEGIN
 
   RETURN ROUND((v_base_score + v_distance_bonus + v_trend_bonus)::NUMERIC, 3);
 END;
-$$ LANGUAGE plpgsql STABLE SET search_path = public;
+$$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 
 -- Get ranked dishes with bounding box optimization, town filter, variant aggregation
 -- Intentionally NOT SECURITY DEFINER: all referenced tables (restaurants, dishes, votes) have public SELECT
@@ -737,7 +741,12 @@ DECLARE
   lng_delta DECIMAL := radius_miles / (69.0 * COS(RADIANS(user_lat)));
 BEGIN
   RETURN QUERY
-  WITH nearby_restaurants AS (
+  WITH global_stats AS (
+    SELECT COALESCE(AVG(dishes.avg_rating), 7.0) AS global_mean
+    FROM dishes
+    WHERE dishes.total_votes > 0 AND dishes.avg_rating IS NOT NULL
+  ),
+  nearby_restaurants AS (
     SELECT r.id, r.name, r.town, r.lat, r.lng, r.cuisine,
            r.address, r.phone, r.website_url, r.toast_slug, r.order_url
     FROM restaurants r
@@ -872,7 +881,8 @@ BEGIN
       COALESCE(vs.total_child_votes,
         SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::BIGINT,
       fr.distance,
-      COALESCE(rvc.recent_votes, 0)
+      COALESCE(rvc.recent_votes, 0),
+      (SELECT global_mean FROM global_stats)
     ) AS search_score,
     bp.photo_url AS featured_photo_url,
     fr.lat AS restaurant_lat,
@@ -2305,6 +2315,8 @@ CREATE TABLE IF NOT EXISTS local_list_items (
 CREATE INDEX IF NOT EXISTS idx_local_lists_user_id ON local_lists(user_id);
 CREATE INDEX IF NOT EXISTS idx_local_lists_is_active ON local_lists(is_active);
 CREATE INDEX IF NOT EXISTS idx_local_list_items_list_position ON local_list_items(list_id, position);
+CREATE INDEX IF NOT EXISTS idx_local_list_items_dish_id ON local_list_items(dish_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_dish_id ON favorites(dish_id);
 
 -- RLS for local_lists
 ALTER TABLE local_lists ENABLE ROW LEVEL SECURITY;
