@@ -125,10 +125,10 @@ export function Map() {
   var listDishes = selectedCategory ? allRanked.slice(0, listLimit) : allRanked.slice(0, 10)
   var mapDishes = allRanked.slice(0, 10)
 
-  // Expanded category dishes for map — uses same data source as CategoryExpand
+  // Expanded category dishes for map — only fetch when a category is actually expanded
   var expandedCategoryData = useDishes(
-    location, radius,
-    expandedCategory || '__none__',
+    expandedCategory ? location : null, radius,
+    expandedCategory,
     null, null
   )
   var expandedDishes = expandedCategory ? (expandedCategoryData.dishes || []) : []
@@ -216,7 +216,7 @@ export function Map() {
     if (candidates.length === 0) return null
     var best = null
     candidates.forEach(function (d) {
-      if (!best || Number(d.avg_rating) > Number(best.avg_rating)) {
+      if (!best || Number(d.avg_rating || 0) > Number(best.avg_rating || 0)) {
         best = d
       }
     })

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
@@ -28,6 +28,13 @@ export function HomeListMode({
   onLocalListExpanded,
 }) {
   var navigate = useNavigate()
+
+  // Memoize filtered categories — hour changes at most once per hour
+  var filteredCategories = useMemo(function () {
+    var hour = new Date().getHours()
+    var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+    return BROWSE_CATEGORIES.filter(function (c) { return c.id !== hideId })
+  }, [])
 
   var handleCategorySelect = useCallback(function (cat) {
     onExpandedCategoryChange(function (prev) { return prev === cat ? null : cat })
@@ -194,11 +201,7 @@ export function HomeListMode({
                 <div className="flex-1" style={{ height: '1.5px', background: 'linear-gradient(to left, transparent, var(--color-text-tertiary))' }} />
               </div>
               <CategoryChips
-                categories={BROWSE_CATEGORIES.filter(function (c) {
-                  var hour = new Date().getHours()
-                  var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
-                  return c.id !== hideId
-                })}
+                categories={filteredCategories}
                 selected={expandedCategory}
                 onSelect={handleCategorySelect}
                 maxVisible={22}
@@ -275,6 +278,50 @@ export function HomeListMode({
   )
 }
 
+// Chalkboard styles — module-level constants (no re-creation per render)
+var BOARD_OUTER = { flexShrink: 0, width: '175px' }
+var BOARD_SURFACE = { position: 'relative', background: '#363B3F', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
+var BOARD_FRAME = { position: 'absolute', inset: '3px', border: '2.5px solid #1A1D1F', borderRadius: '2px', pointerEvents: 'none', zIndex: 2 }
+var BOARD_DUST = { position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.03) 0%, transparent 60%)', pointerEvents: 'none' }
+var BOARD_CONTENT = { position: 'relative', zIndex: 1, padding: '8px 10px 9px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }
+var CHALK_BRIGHT = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)', fontWeight: 700 }
+var CHALK_MED = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)', fontWeight: 700 }
+var CHALK_FAINT = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.45)', fontWeight: 700 }
+var CHALK_BIG = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
+var CHALK_CTA = { fontFamily: "'Amatic SC', cursive", color: 'var(--color-primary)' }
+var CHALK_LINE = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
+var LEG_STYLE = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
+var LEG_LEFT = Object.assign({}, LEG_STYLE, { transform: 'rotate(6deg)', transformOrigin: 'top center' })
+var LEG_RIGHT = Object.assign({}, LEG_STYLE, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })
+
+function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="active:scale-[0.97] transition-transform"
+      style={BOARD_OUTER}
+    >
+      <div style={BOARD_SURFACE}>
+        <div style={BOARD_FRAME} />
+        <div style={BOARD_DUST} />
+        <div style={BOARD_CONTENT}>
+          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>{tag}</p>
+          <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
+          {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
+          <div style={CHALK_LINE} />
+          {stat && <p style={Object.assign({}, CHALK_BRIGHT, { fontSize: '16px', margin: 0 })}>{stat}</p>}
+          {stat && <div style={CHALK_LINE} />}
+          <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+        <div style={LEG_LEFT} />
+        <div style={LEG_RIGHT} />
+      </div>
+    </button>
+  )
+}
+
 function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, onExpandCategory }) {
   var navigate = useNavigate()
 
@@ -284,49 +331,6 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
     : hour < 18
       ? { category: 'lobster roll', tag: '\uD83E\uDD9E #1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
       : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
-
-  // Chalkboard styles — fill width, 2 per row, with A-frame legs
-  var boardOuter = {
-    flexShrink: 0,
-    width: '175px',
-  }
-  var boardSurface = {
-    position: 'relative',
-    background: '#363B3F',
-    borderRadius: '4px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-  }
-  var boardFrame = {
-    position: 'absolute',
-    inset: '3px',
-    border: '2.5px solid #1A1D1F',
-    borderRadius: '2px',
-    pointerEvents: 'none',
-    zIndex: 2,
-  }
-  var boardDust = {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage: 'radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.03) 0%, transparent 60%)',
-    pointerEvents: 'none',
-  }
-  var boardContent = {
-    position: 'relative',
-    zIndex: 1,
-    padding: '8px 10px 9px',
-    textAlign: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  }
-  var chalkBright = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)', fontWeight: 700 }
-  var chalkMed = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)', fontWeight: 700 }
-  var chalkFaint = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.45)', fontWeight: 700 }
-  var chalkBig = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
-  var chalkCta = { fontFamily: "'Amatic SC', cursive", color: 'var(--color-primary)' }
-  var chalkLine = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
-  var legStyle = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
 
   return (
     <div
@@ -339,159 +343,73 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       }}
     >
       {/* Board 1: Time of day */}
-      <button
+      <ChalkboardCard
+        tag={timeCallout.tag}
+        title={timeCallout.title}
+        sub={timeCallout.sub}
+        stat={timeCallout.stat}
+        cta={timeCallout.cta}
         onClick={function () { onExpandCategory(timeCallout.category) }}
-        className="active:scale-[0.97] transition-transform"
-        style={boardOuter}
-      >
-        <div style={boardSurface}>
-          <div style={boardFrame} />
-          <div style={boardDust} />
-          <div style={boardContent}>
-            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{timeCallout.tag}</p>
-            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{timeCallout.title}</p>
-            {timeCallout.sub && <p style={Object.assign({}, chalkMed, { fontSize: '16px', margin: 0 })}>{timeCallout.sub}</p>}
-            <div style={chalkLine} />
-            {timeCallout.stat && <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{timeCallout.stat}</p>}
-            {timeCallout.stat && <div style={chalkLine} />}
-            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{timeCallout.cta}</p>
-          </div>
-        </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-          </div>
-      </button>
+      />
 
       {/* Board 2: Top Restaurant */}
       {topRestaurant && (
-        <button
+        <ChalkboardCard
+          tag={'\u2B50 highest rated restaurant'}
+          title={topRestaurant.name}
+          sub={'avg dish rating ' + topRestaurant.avg}
+          cta={'see the menu \u2192'}
           onClick={function () { navigate('/restaurants/' + topRestaurant.id) }}
-          className="active:scale-[0.97] transition-transform"
-          style={boardOuter}
-        >
-          <div style={boardSurface}>
-            <div style={boardFrame} />
-            <div style={boardDust} />
-            <div style={boardContent}>
-              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', letterSpacing: '0.03em', textTransform: 'uppercase', margin: 0 })}>{'\u2B50 highest rated restaurant'}</p>
-              <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '3px 0 0' })}>{topRestaurant.name}</p>
-              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{'avg dish rating ' + topRestaurant.avg}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the menu \u2192'}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-          </div>
-        </button>
+        />
       )}
 
       {/* Board 3: Chowder */}
-      <button
+      <ChalkboardCard
+        tag={'\uD83E\uDD63 the great debate'}
+        title="Chowder"
+        sub="ranked by the people"
+        cta={'see the rankings \u2192'}
         onClick={function () { onExpandCategory('chowder') }}
-        className="active:scale-[0.97] transition-transform"
-        style={boardOuter}
-      >
-        <div style={boardSurface}>
-          <div style={boardFrame} />
-          <div style={boardDust} />
-          <div style={boardContent}>
-            <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83E\uDD63 the great debate'}</p>
-            <p style={Object.assign({}, chalkBig, { fontSize: '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>Chowder</p>
-            <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>ranked by the people</p>
-            <div style={chalkLine} />
-            <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see the rankings \u2192'}</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-          <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-          <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-        </div>
-      </button>
+      />
 
       {/* Board 4: Most Talked About */}
       {mostVotedDish && (
-        <button
+        <ChalkboardCard
+          tag={'\uD83D\uDCAC most talked about'}
+          title={mostVotedDish.dish_name || mostVotedDish.name}
+          titleSize="28px"
+          sub={mostVotedDish.restaurant_name}
+          stat={(mostVotedDish.total_votes || 0) + ' votes'}
+          cta={'see why \u2192'}
           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
-          className="active:scale-[0.97] transition-transform"
-          style={boardOuter}
-        >
-          <div style={boardSurface}>
-            <div style={boardFrame} />
-            <div style={boardDust} />
-            <div style={boardContent}>
-              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83D\uDCAC most talked about'}</p>
-              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{mostVotedDish.dish_name || mostVotedDish.name}</p>
-              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{mostVotedDish.restaurant_name}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(mostVotedDish.total_votes || 0) + ' votes \u00B7 94%'}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'see why \u2192'}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-          </div>
-        </button>
+        />
       )}
 
-      {/* Board 4: Best Meal Under $15 */}
+      {/* Board 5: Best Meal Under $15 */}
       {bestValueMeal && (
-        <button
+        <ChalkboardCard
+          tag={'\uD83D\uDCB0 best value'}
+          title={bestValueMeal.dish_name || bestValueMeal.name}
+          titleSize="28px"
+          sub={bestValueMeal.restaurant_name}
+          stat={'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + Number(bestValueMeal.avg_rating || 0).toFixed(1)}
+          cta={'best meal under $15 \u2192'}
           onClick={function () { navigate('/dish/' + bestValueMeal.dish_id) }}
-          className="active:scale-[0.97] transition-transform"
-          style={boardOuter}
-        >
-          <div style={boardSurface}>
-            <div style={boardFrame} />
-            <div style={boardDust} />
-            <div style={boardContent}>
-              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83D\uDCB0 best value'}</p>
-              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{bestValueMeal.dish_name || bestValueMeal.name}</p>
-              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{bestValueMeal.restaurant_name}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + (Number(bestValueMeal.avg_rating).toFixed(1))}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best meal under $15 \u2192'}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-          </div>
-        </button>
+        />
       )}
 
-      {/* Board 5: Best Ice Cream */}
+      {/* Board 6: Best Ice Cream */}
       {bestIceCream && (
-        <button
+        <ChalkboardCard
+          tag={'\uD83C\uDF66 island scoops'}
+          title={bestIceCream.dish_name || bestIceCream.name}
+          titleSize="28px"
+          sub={bestIceCream.restaurant_name}
+          stat={(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + Number(bestIceCream.avg_rating || 0).toFixed(1)}
+          cta={'best ice cream \u2192'}
           onClick={function () { navigate('/dish/' + bestIceCream.dish_id) }}
-          className="active:scale-[0.97] transition-transform"
-          style={boardOuter}
-        >
-          <div style={boardSurface}>
-            <div style={boardFrame} />
-            <div style={boardDust} />
-            <div style={boardContent}>
-              <p style={Object.assign({}, chalkFaint, { fontSize: '14px', margin: 0 })}>{'\uD83C\uDF66 island scoops'}</p>
-              <p style={Object.assign({}, chalkBig, { fontSize: '28px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{bestIceCream.dish_name || bestIceCream.name}</p>
-              <p style={Object.assign({}, chalkMed, { fontSize: '15px', margin: 0 })}>{bestIceCream.restaurant_name}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkBright, { fontSize: '16px', margin: 0 })}>{(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + (Number(bestIceCream.avg_rating || 0).toFixed(1))}</p>
-              <div style={chalkLine} />
-              <p style={Object.assign({}, chalkCta, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{'best ice cream \u2192'}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(6deg)', transformOrigin: 'top center' })} />
-            <div style={Object.assign({}, legStyle, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })} />
-          </div>
-        </button>
+        />
       )}
-
     </div>
   )
 }
