@@ -157,28 +157,38 @@ export const dishPhotosApi = {
         return []
       }
 
-      // Get recent photos by user (limit 100 for performance)
-      const { data: photos, error: photosError } = await supabase
-        .from('dish_photos')
-        .select(`
-          id,
-          photo_url,
-          created_at,
-          dishes (
+      // Fetch photos and votes in parallel (independent queries)
+      const [
+        { data: photos, error: photosError },
+        { data: votes, error: votesError },
+      ] = await Promise.all([
+        supabase
+          .from('dish_photos')
+          .select(`
             id,
-            name,
-            category,
-            price,
             photo_url,
-            restaurants (
+            created_at,
+            dishes (
               id,
-              name
+              name,
+              category,
+              price,
+              photo_url,
+              restaurants (
+                id,
+                name
+              )
             )
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('votes')
+          .select('dish_id')
+          .eq('user_id', userId)
+          .limit(500),
+      ])
 
       if (photosError) {
         throw createClassifiedError(photosError)
@@ -187,13 +197,6 @@ export const dishPhotosApi = {
       if (!photos?.length) {
         return []
       }
-
-      // Get user's votes to filter out rated dishes (limit 500)
-      const { data: votes, error: votesError } = await supabase
-        .from('votes')
-        .select('dish_id')
-        .eq('user_id', userId)
-        .limit(500)
 
       if (votesError) {
         throw createClassifiedError(votesError)

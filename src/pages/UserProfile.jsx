@@ -99,166 +99,175 @@ export function UserProfile() {
     }
   }, [isOwnProfile, navigate])
 
-  // Fetch profile data
+  // Fetch all independent data in parallel
   useEffect(() => {
-    async function fetchProfile() {
+    if (!userId) return
+    let cancelled = false
+
+    async function fetchAll() {
       setLoading(true)
+      setReviewsLoading(true)
       setError(null)
 
-      try {
-        const data = await followsApi.getUserProfile(userId)
+      // Build the list of parallel fetches
+      const fetches = [
+        // 0: profile (always)
+        followsApi.getUserProfile(userId),
+        // 1: follow status (only if logged in and not own profile)
+        currentUser && !isOwnProfile
+          ? followsApi.isFollowing(userId)
+          : Promise.resolve(null),
+        // 2: taste compatibility (only if logged in and not own profile)
+        currentUser && !isOwnProfile
+          ? followsApi.getTasteCompatibility(userId)
+          : Promise.resolve(null),
+        // 3: rating bias
+        profileApi.getRatingBias(userId),
+        // 4: jitter badge
+        import('../lib/supabase').then(({ supabase }) =>
+          supabase.rpc('get_jitter_badges', { p_user_ids: [userId] })
+        ),
+        // 5: reviews
+        votesApi.getReviewsForUser(userId),
+      ]
+
+      const results = await Promise.allSettled(fetches)
+      if (cancelled) return
+
+      // 0: Profile
+      if (results[0].status === 'fulfilled') {
+        const data = results[0].value
         if (!data) {
           setError('User not found')
         } else {
           setProfile(data)
         }
-      } catch (err) {
-        logger.error('Failed to fetch profile:', err)
+      } else {
+        logger.error('Failed to fetch profile:', results[0].reason)
         setError('Failed to load profile')
-      } finally {
-        setLoading(false)
       }
-    }
 
-    if (userId) {
-      fetchProfile()
-    }
-  }, [userId])
+      // 1: Follow status
+      if (results[1].status === 'fulfilled' && results[1].value !== null) {
+        setIsFollowing(results[1].value)
+      } else if (results[1].status === 'rejected') {
+        logger.error('Failed to check follow status:', results[1].reason)
+      }
 
-  // Check follow status
-  useEffect(() => {
-    async function checkFollowStatus() {
-      if (currentUser && userId && !isOwnProfile) {
-        try {
-          const following = await followsApi.isFollowing(userId)
-          setIsFollowing(following)
-        } catch (err) {
-          logger.error('Failed to check follow status:', err)
+      // 2: Taste compatibility
+      if (results[2].status === 'fulfilled' && results[2].value !== null) {
+        setTasteCompat(results[2].value)
+      } else if (results[2].status === 'rejected') {
+        logger.error('Failed to fetch taste compatibility:', results[2].reason)
+      }
+
+      // 3: Rating bias
+      if (results[3].status === 'fulfilled') {
+        setRatingBias(results[3].value)
+      } else {
+        logger.error('Failed to fetch rating bias:', results[3].reason)
+      }
+
+      // 4: Jitter badge
+      if (results[4].status === 'fulfilled') {
+        const { data } = results[4].value
+        if (data && data.length > 0) {
+          setJitterBadgeType(jitterApi.getTrustBadgeType(data[0]))
+          setJitterBadgeData(data[0])
         }
+      } else {
+        logger.error('Failed to fetch jitter badge:', results[4].reason)
       }
-    }
-    checkFollowStatus()
-  }, [currentUser, userId, isOwnProfile])
 
-  // Fetch taste compatibility
-  useEffect(() => {
-    async function fetchCompatibility() {
-      if (!currentUser || !userId || isOwnProfile) return
-      try {
-        const compat = await followsApi.getTasteCompatibility(userId)
-        setTasteCompat(compat)
-      } catch (err) {
-        logger.error('Failed to fetch taste compatibility:', err)
+      // 5: Reviews
+      if (results[5].status === 'fulfilled') {
+        setUserReviews(results[5].value || [])
+      } else {
+        logger.error('Failed to fetch reviews:', results[5].reason)
       }
+
+      setLoading(false)
+      setReviewsLoading(false)
     }
-    fetchCompatibility()
-  }, [currentUser, userId, isOwnProfile])
 
-  // Fetch rating bias
+    fetchAll()
+    return () => { cancelled = true }
+  }, [userId, currentUser, isOwnProfile])
+
+  // Dependent fetches: compute standout picks + fetch my ratings (need profile.recent_votes)
   useEffect(() => {
-    if (!userId) return
-    profileApi.getRatingBias(userId).then(setRatingBias)
-  }, [userId])
+    if (!profile?.recent_votes?.length) return
+    let cancelled = false
 
-  // Fetch jitter trust badge for this user
-  useEffect(() => {
-    if (!userId) return
-    import('../lib/supabase').then(({ supabase }) => {
-      supabase.rpc('get_jitter_badges', { p_user_ids: [userId] })
-        .then(({ data }) => {
-          if (data && data.length > 0) {
-            setJitterBadgeType(jitterApi.getTrustBadgeType(data[0]))
-            setJitterBadgeData(data[0])
-          }
-        })
-        .catch((err) => logger.error('Failed to fetch jitter badge:', err))
-    })
-  }, [userId])
-
-  // Compute standout picks from recent votes + community averages
-  useEffect(() => {
-    async function computePicks() {
-      if (!profile?.recent_votes?.length) return
-
+    async function fetchDependentData() {
       const ratedVotes = profile.recent_votes.filter(v => v.rating != null)
       const dishIds = ratedVotes.map(v => v.dish?.id).filter(Boolean)
       if (dishIds.length === 0) return
 
-      try {
-        const communityAvgs = await votesApi.getCommunityAvgsForDishes(dishIds)
-        const MIN_COMMUNITY = 3
-        const picks = {}
+      // Build dependent fetches in parallel
+      const fetches = [
+        // 0: community averages for standout picks
+        votesApi.getCommunityAvgsForDishes(dishIds),
+        // 1: my ratings for comparison (only if logged in and not own profile)
+        currentUser && !isOwnProfile
+          ? votesApi.getMyRatingsForDishes(dishIds)
+          : Promise.resolve(null),
+      ]
 
-        const comparisons = ratedVotes
-          .filter(v => v.dish?.id && communityAvgs[v.dish.id]?.count >= MIN_COMMUNITY)
-          .map(v => ({
-            dish_name: v.dish.name,
-            restaurant_name: v.dish.restaurant_name,
-            userRating: v.rating,
-            communityAvg: communityAvgs[v.dish.id].avg,
-            diff: v.rating - communityAvgs[v.dish.id].avg,
-          }))
+      const results = await Promise.allSettled(fetches)
+      if (cancelled) return
 
-        if (comparisons.length === 0) return
+      // 0: Compute standout picks
+      if (results[0].status === 'fulfilled') {
+        try {
+          const communityAvgs = results[0].value
+          const MIN_COMMUNITY = 3
+          const picks = {}
 
-        // Best find: highest user rating, tie-break by positive diff
-        const best = comparisons.slice().sort((a, b) => {
-          if (b.userRating !== a.userRating) return b.userRating - a.userRating
-          return b.diff - a.diff
-        })
-        picks.bestFind = best[0]
+          const comparisons = ratedVotes
+            .filter(v => v.dish?.id && communityAvgs[v.dish.id]?.count >= MIN_COMMUNITY)
+            .map(v => ({
+              dish_name: v.dish.name,
+              restaurant_name: v.dish.restaurant_name,
+              userRating: v.rating,
+              communityAvg: communityAvgs[v.dish.id].avg,
+              diff: v.rating - communityAvgs[v.dish.id].avg,
+            }))
 
-        // Hottest take: biggest negative diff (user rates much lower than community), min -1.0
-        const harsh = comparisons.slice().sort((a, b) => a.diff - b.diff)
-        if (harsh[0] && harsh[0].diff <= -1.0) {
-          picks.harshestTake = harsh[0]
+          if (comparisons.length > 0) {
+            // Best find: highest user rating, tie-break by positive diff
+            const best = comparisons.slice().sort((a, b) => {
+              if (b.userRating !== a.userRating) return b.userRating - a.userRating
+              return b.diff - a.diff
+            })
+            picks.bestFind = best[0]
+
+            // Hottest take: biggest negative diff (user rates much lower than community), min -1.0
+            const harsh = comparisons.slice().sort((a, b) => a.diff - b.diff)
+            if (harsh[0] && harsh[0].diff <= -1.0) {
+              picks.harshestTake = harsh[0]
+            }
+
+            setStandoutPicks(picks)
+          }
+        } catch (err) {
+          logger.error('Failed to compute standout picks:', err)
         }
+      } else {
+        logger.error('Failed to fetch community averages:', results[0].reason)
+      }
 
-        setStandoutPicks(picks)
-      } catch (err) {
-        logger.error('Failed to compute standout picks:', err)
+      // 1: My ratings
+      if (results[1].status === 'fulfilled' && results[1].value !== null) {
+        setMyRatings(results[1].value)
+      } else if (results[1].status === 'rejected') {
+        logger.error('Failed to fetch my ratings:', results[1].reason)
       }
     }
-    computePicks()
-  }, [profile?.recent_votes])
 
-  // Fetch current user's ratings for the same dishes (for comparison)
-  useEffect(() => {
-    async function fetchMyRatings() {
-      if (!currentUser || !profile?.recent_votes?.length || isOwnProfile) return
-
-      const dishIds = profile.recent_votes
-        .map(v => v.dish?.id)
-        .filter(Boolean)
-
-      if (dishIds.length === 0) return
-
-      try {
-        const ratingsMap = await votesApi.getMyRatingsForDishes(dishIds)
-        setMyRatings(ratingsMap)
-      } catch (err) {
-        logger.error('Failed to fetch my ratings:', err)
-      }
-    }
-    fetchMyRatings()
-  }, [currentUser, profile?.recent_votes, isOwnProfile])
-
-  // Fetch user's written reviews
-  useEffect(() => {
-    async function fetchReviews() {
-      if (!userId) return
-      setReviewsLoading(true)
-      try {
-        const reviews = await votesApi.getReviewsForUser(userId)
-        setUserReviews(reviews)
-      } catch (error) {
-        logger.error('Failed to fetch reviews:', error)
-      } finally {
-        setReviewsLoading(false)
-      }
-    }
-    fetchReviews()
-  }, [userId])
+    fetchDependentData()
+    return () => { cancelled = true }
+  }, [profile?.recent_votes, currentUser, isOwnProfile])
 
   // Handle follow/unfollow
   const handleFollowToggle = async () => {

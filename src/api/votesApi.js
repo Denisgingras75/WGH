@@ -303,23 +303,20 @@ export const votesApi = {
 
       if (!data?.length) return []
 
-      // Enrich with profile display names
+      // Enrich with profile display names and jitter badges in parallel (independent queries)
       const userIds = [...new Set(data.map(v => v.user_id).filter(Boolean))]
-      const { data: profiles } = userIds.length
-        ? await supabase.from('profiles').select('id, display_name').in('id', userIds)
-        : { data: [] }
+      const [{ data: profiles }, { data: jitterData }] = userIds.length
+        ? await Promise.all([
+            supabase.from('profiles').select('id, display_name').in('id', userIds),
+            supabase.rpc('get_jitter_badges', { p_user_ids: userIds }),
+          ])
+        : [{ data: [] }, { data: [] }]
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
 
-      // Fetch jitter badge data via RPC (restricts exposed columns — no biometric data)
-      let jitterMap = {}
-      if (userIds.length > 0) {
-        const { data: jitterData } = await supabase
-          .rpc('get_jitter_badges', { p_user_ids: userIds })
-
-        if (jitterData) {
-          for (const j of jitterData) {
-            jitterMap[j.user_id] = j
-          }
+      const jitterMap = {}
+      if (jitterData) {
+        for (const j of jitterData) {
+          jitterMap[j.user_id] = j
         }
       }
 

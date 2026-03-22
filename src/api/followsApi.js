@@ -178,17 +178,20 @@ export const followsApi = {
    * @returns {Promise<{followers: number, following: number}>}
    */
   async getFollowCounts(userId) {
-    // Count followers (people who follow this user)
-    const { count: followerCount, error: followerError } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('followed_id', userId)
-
-    // Count following (people this user follows)
-    const { count: followingCount, error: followingError } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('follower_id', userId)
+    // Count followers and following in parallel (independent queries)
+    const [
+      { count: followerCount, error: followerError },
+      { count: followingCount, error: followingError },
+    ] = await Promise.all([
+      supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('followed_id', userId),
+      supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', userId),
+    ])
 
     if (followerError || followingError) {
       logger.error('Error fetching follow counts:', followerError || followingError)

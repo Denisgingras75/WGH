@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
@@ -155,14 +155,18 @@ export function Profile() {
   }
 
   // Enrich worthIt/avoid dishes with review text for journal cards
-  var enrichedWorthIt = worthItDishes.map(function (dish) {
-    var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
-    return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
-  })
-  var enrichedAvoid = avoidDishes.map(function (dish) {
-    var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
-    return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
-  })
+  const enrichedWorthIt = useMemo(function () {
+    return worthItDishes.map(function (dish) {
+      var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
+      return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
+    })
+  }, [worthItDishes, userReviews])
+  const enrichedAvoid = useMemo(function () {
+    return avoidDishes.map(function (dish) {
+      var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
+      return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
+    })
+  }, [avoidDishes, userReviews])
 
   var feedLoading = votesLoading || favoritesLoading
 
