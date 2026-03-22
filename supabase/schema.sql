@@ -419,7 +419,6 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup ON rate_limits(created_at);
 
 -- events
 CREATE INDEX IF NOT EXISTS idx_events_restaurant ON events(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 CREATE INDEX IF NOT EXISTS idx_events_active_upcoming ON events(event_date, is_promoted DESC) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type) WHERE is_active = true;
 

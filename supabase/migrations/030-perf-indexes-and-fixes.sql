@@ -83,7 +83,9 @@ CREATE INDEX IF NOT EXISTS idx_dishes_created_by ON dishes(created_by);
 CREATE INDEX IF NOT EXISTS idx_favorites_dish_id ON favorites(dish_id);
 CREATE INDEX IF NOT EXISTS idx_bias_events_dish_id ON bias_events(dish_id);
 CREATE INDEX IF NOT EXISTS idx_local_list_items_dish_id ON local_list_items(dish_id);
-CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
+-- events.created_by index — only if the column exists in your live DB
+-- ALTER TABLE events ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+-- CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 
 -- =============================================
 -- 6. HIGH: Composite index for taste compatibility self-joins
