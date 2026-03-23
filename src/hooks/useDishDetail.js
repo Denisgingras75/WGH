@@ -96,6 +96,7 @@ export function useDishDetail(dishId, user) {
     setFriendsVotes([])
     setFriendsCompat({})
     setReviews([])
+    setReviewsLoading(false)
     setSmartSnippet(null)
     setFeaturedPhoto(null)
     setCommunityPhotos([])
@@ -209,7 +210,10 @@ export function useDishDetail(dishId, user) {
         votesApi.getSmartSnippetForDish(dishId),
       ])
 
-      if (cancelled) return
+      if (cancelled) {
+        setReviewsLoading(false)
+        return
+      }
 
       if (photosResult.status === 'fulfilled') {
         const [featured, community, all] = photosResult.value
@@ -245,7 +249,7 @@ export function useDishDetail(dishId, user) {
     fetchSecondaryData()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dishId, user, dish?.category, shouldLoadEvidence])
+  }, [dishId, user, shouldLoadEvidence])
 
   // Fetch taste compatibility for each friend who voted
   useEffect(() => {
