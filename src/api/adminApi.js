@@ -89,7 +89,7 @@ export const adminApi = {
           restaurant_id: restaurantId,
           name: name.trim(),
           category: category.toLowerCase(),
-          price: price ? parseFloat(price) : null,
+          price: price != null && price !== '' ? parseFloat(price) : null,
           photo_url: photoUrl?.trim() || null,
         })
         .select()
@@ -147,7 +147,7 @@ export const adminApi = {
           restaurant_id: restaurantId,
           name: name.trim(),
           category: category.toLowerCase(),
-          price: price ? parseFloat(price) : null,
+          price: price != null && price !== '' ? parseFloat(price) : null,
           photo_url: photoUrl?.trim() || null,
         })
         .eq('id', dishId)

@@ -204,9 +204,9 @@ export const dishPhotosApi = {
 
       const votedDishIds = new Set((votes || []).map(v => v.dish_id))
 
-      // Filter to only unrated dishes and transform
+      // Filter to only unrated dishes with valid data, then transform
       return photos
-        .filter(photo => !votedDishIds.has(photo.dishes.id))
+        .filter(photo => photo.dishes && photo.dishes.restaurants && !votedDishIds.has(photo.dishes.id))
         .map(photo => ({
           photo_id: photo.id,
           user_photo_url: photo.photo_url,

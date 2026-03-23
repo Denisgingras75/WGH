@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dishesApi } from '../api/dishesApi'
 import { getUserMessage } from '../utils/errorHandler'
@@ -25,9 +26,9 @@ export function useDish(dishId) {
       }
     : null
 
-  if (error) {
-    logger.error('Error fetching dish:', error)
-  }
+  useEffect(() => {
+    if (error) logger.error('Error fetching dish:', error)
+  }, [error])
 
   return {
     dish: data,

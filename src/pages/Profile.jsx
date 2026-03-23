@@ -359,7 +359,7 @@ export function Profile() {
                         {stats.standoutPicks.harshestTake.dish_name}
                       </p>
                       <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {stats.standoutPicks.harshestTake.communityAvg.toFixed(1)}
+                        You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
                       </p>
                     </div>
                   )}
@@ -439,9 +439,7 @@ export function Profile() {
           )}
 
           {/* Login Modal */}
-          {showLoginModal && (
-            <LoginModal onClose={() => setShowLoginModal(false)} />
-          )}
+          <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
           {/* Follow List Modal */}
           {followListModal && (

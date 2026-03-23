@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { placesApi } from '../api/placesApi'
 import { logger } from '../utils/logger'
@@ -37,13 +38,13 @@ export function useNearbyPlaces({ lat, lng, radius, isAuthenticated, existingPla
   const existingSet = new Set(existingPlaceIds)
   const places = (data || []).filter(p => !existingSet.has(p.placeId))
 
-  if (error) {
-    logger.error('Error discovering nearby places:', error?.message || error)
-  }
+  useEffect(() => {
+    if (error) logger.error('Error discovering nearby places:', error?.message || error)
+  }, [error])
 
   // Surface the error with more detail for diagnostics
   const errorInfo = error
-    ? { message: placesApi._lastError?.message || 'Could not load nearby restaurant suggestions' }
+    ? { message: error?.message || 'Could not load nearby restaurant suggestions' }
     : !isAuthenticated && lat && lng
       ? { message: 'Sign in to discover nearby restaurants from Google' }
       : null

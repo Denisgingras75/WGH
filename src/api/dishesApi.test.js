@@ -337,7 +337,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { ...mockDish, avg_rating: 8, total_votes: 3 }, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { ...mockDish, avg_rating: 8, total_votes: 3 }, error: null }),
         }),
       })
       // Second call: count yes_votes (head: true count query)
@@ -369,7 +369,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: mockDish, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: mockDish, error: null }),
         }),
       })
       supabase.from.mockReturnValueOnce({
@@ -396,7 +396,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found', code: 'PGRST116' } }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       })
 
@@ -409,7 +409,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: mockDish, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: mockDish, error: null }),
         }),
       })
       // yes_votes count query fails

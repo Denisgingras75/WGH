@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
@@ -29,12 +29,10 @@ export function HomeListMode({
 }) {
   var navigate = useNavigate()
 
-  // Memoize filtered categories — hour changes at most once per hour
-  var filteredCategories = useMemo(function () {
-    var hour = new Date().getHours()
-    var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
-    return BROWSE_CATEGORIES.filter(function (c) { return c.id !== hideId })
-  }, [])
+  // Compute filtered categories — recalculates on each render so time-of-day is fresh
+  var hour = new Date().getHours()
+  var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
+  var filteredCategories = BROWSE_CATEGORIES.filter(function (c) { return c.id !== hideId })
 
   var handleCategorySelect = useCallback(function (cat) {
     onExpandedCategoryChange(function (prev) { return prev === cat ? null : cat })

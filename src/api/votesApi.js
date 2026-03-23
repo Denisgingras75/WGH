@@ -22,6 +22,7 @@ export const votesApi = {
    * @returns {Promise<Object>} Success status
    */
   async submitVote({ dishId, wouldOrderAgain, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+    try {
     // Quick client-side check first (better UX)
       const clientRateLimit = checkVoteRateLimit()
       if (!clientRateLimit.allowed) {
@@ -125,6 +126,10 @@ export const votesApi = {
       })
 
       return { success: true }
+    } catch (error) {
+      logger.error('Error submitting vote:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   /**
@@ -305,13 +310,17 @@ export const votesApi = {
 
       // Enrich with profile display names and jitter badges in parallel (independent queries)
       const userIds = [...new Set(data.map(v => v.user_id).filter(Boolean))]
-      const [{ data: profiles }, { data: jitterData }] = userIds.length
+      const [profileResult, jitterResult] = userIds.length
         ? await Promise.all([
             supabase.from('profiles').select('id, display_name').in('id', userIds),
             supabase.rpc('get_jitter_badges', { p_user_ids: userIds }),
           ])
         : [{ data: [] }, { data: [] }]
-      const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
+      if (profileResult.error) logger.warn('Error fetching reviewer profiles:', profileResult.error)
+      if (jitterResult.error) logger.warn('Error fetching jitter badges:', jitterResult.error)
+      const profiles = profileResult.data || []
+      const jitterData = jitterResult.data || []
+      const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
 
       const jitterMap = {}
       if (jitterData) {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { votesApi } from '../api/votesApi'
 import { logger } from '../utils/logger'
@@ -7,6 +7,7 @@ import { logger } from '../utils/logger'
  * Transform raw vote data to dish format
  */
 function transformVote(vote) {
+  if (!vote.dishes) return null
   return {
     dish_id: vote.dishes.id,
     dish_name: vote.dishes.name,
@@ -160,7 +161,7 @@ function calculateStats(data) {
   // Category counts
   const categoryCounts = {}
   data.forEach(v => {
-    const cat = v.dishes.category
+    const cat = v.dishes?.category
     if (cat) {
       categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
     }
@@ -286,21 +287,21 @@ export function useUserVotes(userId) {
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 
-  if (primaryError) {
-    logger.error('Error fetching user votes:', primaryError)
-  }
+  useEffect(() => {
+    if (primaryError) logger.error('Error fetching user votes:', primaryError)
+  }, [primaryError])
 
   const votes = primaryData?.votes || []
   const helpedCount = primaryData?.helpedCount || 0
 
   // Derive sorted dish lists from raw votes
   const worthItDishes = useMemo(
-    () => votes.filter(v => v.would_order_again).map(transformVote).sort(sortByRating),
+    () => votes.filter(v => v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
     [votes]
   )
 
   const avoidDishes = useMemo(
-    () => votes.filter(v => !v.would_order_again).map(transformVote).sort(sortByRating),
+    () => votes.filter(v => !v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
     [votes]
   )
 
@@ -324,9 +325,9 @@ export function useUserVotes(userId) {
     staleTime: 1000 * 60 * 30, // 30 minutes (matches old COMMUNITY_CACHE_TTL)
   })
 
-  if (communityError) {
-    logger.error('Error fetching community averages:', communityError)
-  }
+  useEffect(() => {
+    if (communityError) logger.error('Error fetching community averages:', communityError)
+  }, [communityError])
 
   // Final stats: merge base stats + community-dependent comparisons
   const stats = useMemo(() => {

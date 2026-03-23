@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { toast } from 'sonner'
 import { logger } from '../utils/logger'
 import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
@@ -333,6 +334,9 @@ export function Browse() {
       setSearchQuery('')
     } else if (suggestion.type === 'restaurant') {
       navigate(`/restaurants/${suggestion.id}`)
+    } else if (suggestion.type === 'place') {
+      // Google Places result — not in our DB yet
+      toast('This restaurant hasn\'t been added yet', { duration: 2000 })
     }
   }, [navigate, openDishPage])
 

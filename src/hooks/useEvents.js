@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { eventsApi } from '../api/eventsApi'
+import { getUserMessage } from '../utils/errorHandler'
 
 /**
  * Hook to fetch active events with optional filters
@@ -19,7 +20,7 @@ export function useEvents(filters = {}) {
   return {
     events: events || [],
     loading,
-    error,
+    error: error ? { message: getUserMessage(error, 'loading events') } : null,
     refetch
   }
 }
@@ -43,7 +44,7 @@ export function useRestaurantEvents(restaurantId) {
   return {
     events: events || [],
     loading,
-    error,
+    error: error ? { message: getUserMessage(error, 'loading events') } : null,
     refetch
   }
 }

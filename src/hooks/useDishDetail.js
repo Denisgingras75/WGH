@@ -90,6 +90,19 @@ export function useDishDetail(dishId, user) {
   // Fetch dish data
   useEffect(() => {
     if (!dishId) return
+    let cancelled = false
+
+    // Reset state between dish navigations
+    setFriendsVotes([])
+    setFriendsCompat({})
+    setReviews([])
+    setSmartSnippet(null)
+    setFeaturedPhoto(null)
+    setCommunityPhotos([])
+    setAllPhotos([])
+    setVariants([])
+    setParentDish(null)
+    setIsVariant(false)
 
     const fetchDish = async () => {
       try {
@@ -98,6 +111,7 @@ export function useDishDetail(dishId, user) {
         setShouldLoadEvidence(false)
 
         const data = await dishesApi.getDishById(dishId)
+        if (cancelled) return
         const transformedDish = transformDish(data)
         setDish(transformedDish)
 
@@ -113,14 +127,16 @@ export function useDishDetail(dishId, user) {
           percent_worth_it: transformedDish.percent_worth_it,
         })
       } catch (err) {
+        if (cancelled) return
         logger.error('Error fetching dish:', err)
         setError('Dish not found')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchDish()
+    return () => { cancelled = true }
   }, [dishId])
 
   // Fetch variant data
@@ -131,15 +147,18 @@ export function useDishDetail(dishId, user) {
       setIsVariant(false)
       return
     }
+    let cancelled = false
 
     const fetchVariantData = async () => {
       if (dish.has_variants) {
         try {
           const variantData = await dishesApi.getVariants(dish.dish_id || dish.id)
+          if (cancelled) return
           setVariants(variantData)
           setIsVariant(false)
           setParentDish(null)
         } catch (err) {
+          if (cancelled) return
           logger.error('Failed to fetch variants:', err)
           setVariants([])
         }
@@ -149,10 +168,12 @@ export function useDishDetail(dishId, user) {
             dishesApi.getSiblingVariants(dish.dish_id || dish.id),
             dishesApi.getParentDish(dish.dish_id || dish.id),
           ])
+          if (cancelled) return
           setVariants(siblings)
           setParentDish(parent)
           setIsVariant(true)
         } catch (err) {
+          if (cancelled) return
           logger.error('Failed to fetch sibling variants:', err)
           setVariants([])
           setParentDish(null)
@@ -165,12 +186,14 @@ export function useDishDetail(dishId, user) {
     }
 
     fetchVariantData()
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dish?.dish_id, dish?.id, dish?.has_variants, dish?.parent_dish_id])
 
   // Fetch photos, reviews, friends votes — deferred until user scrolls near evidence
   useEffect(() => {
     if (!dishId || !shouldLoadEvidence) return
+    let cancelled = false
 
     const fetchSecondaryData = async () => {
       setReviewsLoading(true)
@@ -185,6 +208,8 @@ export function useDishDetail(dishId, user) {
         user ? followsApi.getFriendsVotesForDish(dishId) : Promise.resolve([]),
         votesApi.getSmartSnippetForDish(dishId),
       ])
+
+      if (cancelled) return
 
       if (photosResult.status === 'fulfilled') {
         const [featured, community, all] = photosResult.value
@@ -218,6 +243,7 @@ export function useDishDetail(dishId, user) {
     }
 
     fetchSecondaryData()
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dishId, user, dish?.category, shouldLoadEvidence])
 
@@ -227,12 +253,14 @@ export function useDishDetail(dishId, user) {
       setFriendsCompat({})
       return
     }
+    let cancelled = false
 
     async function fetchCompat() {
       try {
         const results = await Promise.allSettled(
           friendsVotes.map(fv => followsApi.getTasteCompatibility(fv.user_id))
         )
+        if (cancelled) return
         const compatMap = {}
         friendsVotes.forEach((fv, i) => {
           if (results[i].status === 'fulfilled' && results[i].value?.compatibility_pct != null) {
@@ -241,11 +269,13 @@ export function useDishDetail(dishId, user) {
         })
         setFriendsCompat(compatMap)
       } catch (err) {
+        if (cancelled) return
         logger.error('Failed to fetch friends compatibility:', err)
       }
     }
 
     fetchCompat()
+    return () => { cancelled = true }
   }, [user, friendsVotes])
 
   // Handlers

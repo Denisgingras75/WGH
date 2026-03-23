@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { createClassifiedError } from '../utils/errorHandler'
+import { logger } from '../utils/logger'
 
 /**
  * Notifications API
@@ -13,23 +14,28 @@ export const notificationsApi = {
    * @throws {Error} Not authenticated or API error
    */
   async getNotifications(limit = 20) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Not authenticated')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
+
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) {
+        throw createClassifiedError(error)
+      }
+
+      return data || []
+    } catch (error) {
+      logger.error('Error fetching notifications:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
-
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (error) {
-      throw createClassifiedError(error)
-    }
-
-    return data || []
   },
 
   /**
@@ -38,22 +44,27 @@ export const notificationsApi = {
    * @throws {Error} Not authenticated or API error
    */
   async getUnreadCount() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Not authenticated')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
+
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+
+      if (error) {
+        throw createClassifiedError(error)
+      }
+
+      return count || 0
+    } catch (error) {
+      logger.error('Error fetching unread count:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
-
-    const { count, error } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('read', false)
-
-    if (error) {
-      throw createClassifiedError(error)
-    }
-
-    return count || 0
   },
 
   /**
@@ -62,19 +73,24 @@ export const notificationsApi = {
    * @throws {Error} Not authenticated or API error
    */
   async markAllAsRead() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Not authenticated')
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
 
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('user_id', user.id)
-      .eq('read', false)
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
 
-    if (error) {
-      throw createClassifiedError(error)
+      if (error) {
+        throw createClassifiedError(error)
+      }
+    } catch (error) {
+      logger.error('Error marking notifications as read:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 
@@ -84,18 +100,23 @@ export const notificationsApi = {
    * @throws {Error} Not authenticated or API error
    */
   async deleteAll() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Not authenticated')
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
 
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('user_id', user.id)
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id)
 
-    if (error) {
-      throw createClassifiedError(error)
+      if (error) {
+        throw createClassifiedError(error)
+      }
+    } catch (error) {
+      logger.error('Error deleting notifications:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 
@@ -106,19 +127,24 @@ export const notificationsApi = {
    * @throws {Error} Not authenticated or API error
    */
   async markAsRead(notificationId) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Not authenticated')
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
 
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notificationId)
-      .eq('user_id', user.id)
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user.id)
 
-    if (error) {
-      throw createClassifiedError(error)
+      if (error) {
+        throw createClassifiedError(error)
+      }
+    } catch (error) {
+      logger.error('Error marking notification as read:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
+import { logger } from '../utils/logger'
 import { useAuth } from '../context/AuthContext'
 import { shareOrCopy, buildDishShareData } from '../utils/share'
 import { toast } from 'sonner'
@@ -58,7 +59,11 @@ export function Dish() {
       setLoginModalOpen(true)
       return
     }
-    await toggleFavorite(dishId)
+    try {
+      await toggleFavorite(dishId)
+    } catch (error) {
+      logger.error('Failed to toggle favorite:', error)
+    }
   }
 
   const handleBack = () => {

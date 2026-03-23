@@ -131,8 +131,9 @@ export const favoritesApi = {
         throw createClassifiedError(error)
       }
 
-      const favoriteIds = (data || []).map(f => f.dish_id)
-      const favorites = (data || []).map(f => ({
+      const validData = (data || []).filter(f => f.dishes)
+      const favoriteIds = validData.map(f => f.dish_id)
+      const favorites = validData.map(f => ({
         dish_id: f.dishes.id,
         dish_name: f.dishes.name,
         category: f.dishes.category,

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dishesApi } from '../api/dishesApi'
 import { logger } from '../utils/logger'
@@ -15,9 +16,9 @@ export function useAllDishes() {
     gcTime: 1000 * 60 * 30,
   })
 
-  if (error) {
-    logger.error('Error loading dish cache:', error)
-  }
+  useEffect(() => {
+    if (error) logger.error('Error loading dish cache:', error)
+  }, [error])
 
   return {
     dishes: data || [],

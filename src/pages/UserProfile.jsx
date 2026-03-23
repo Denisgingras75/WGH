@@ -79,7 +79,7 @@ export function UserProfile() {
   const [myRatings, setMyRatings] = useState({}) // { dishId: rating }
   const [userReviews, setUserReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
-  const [selectedReview, setSelectedReview] = useState(null)
+  // selectedReview state removed — ReviewDetailModal doesn't exist yet
   const [activeShelf, setActiveShelf] = useState('all')
   const [tasteCompat, setTasteCompat] = useState(null)
   const [ratingBias, setRatingBias] = useState(null)
@@ -124,9 +124,7 @@ export function UserProfile() {
         // 3: rating bias
         profileApi.getRatingBias(userId),
         // 4: jitter badge
-        import('../lib/supabase').then(({ supabase }) =>
-          supabase.rpc('get_jitter_badges', { p_user_ids: [userId] })
-        ),
+        jitterApi.getJitterBadges([userId]),
         // 5: reviews
         votesApi.getReviewsForUser(userId),
       ]
@@ -170,10 +168,10 @@ export function UserProfile() {
 
       // 4: Jitter badge
       if (results[4].status === 'fulfilled') {
-        const { data } = results[4].value
-        if (data && data.length > 0) {
-          setJitterBadgeType(jitterApi.getTrustBadgeType(data[0]))
-          setJitterBadgeData(data[0])
+        const badges = results[4].value
+        if (badges && badges.length > 0) {
+          setJitterBadgeType(jitterApi.getTrustBadgeType(badges[0]))
+          setJitterBadgeData(badges[0])
         }
       } else {
         logger.error('Failed to fetch jitter badge:', results[4].reason)
@@ -293,8 +291,13 @@ export function UserProfile() {
           follower_count: (prev.follower_count || 0) + 1
         }))
       }
-    } catch {
-      // Error is already logged by Sentry, just fail silently for UX
+    } catch (error) {
+      logger.error('Failed to toggle follow:', error)
+      setIsFollowing(prev => !prev)
+      setProfile(prev => prev ? {
+        ...prev,
+        follower_count: (prev.follower_count || 0) + (isFollowing ? 1 : -1)
+      } : prev)
     } finally {
       setFollowLoading(false)
     }
@@ -442,7 +445,7 @@ export function UserProfile() {
     )
   }
 
-  const totalVotes = profile.stats?.total_votes || 0
+  const totalVotes = foodMapStats.totalVotes
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
@@ -824,14 +827,7 @@ export function UserProfile() {
         />
       )}
 
-      {/* Review Detail Modal */}
-      {selectedReview && (
-        <ReviewDetailModal
-          review={selectedReview}
-          reviewerName={profile.display_name}
-          onClose={() => setSelectedReview(null)}
-        />
-      )}
+      {/* Review Detail Modal — removed, component doesn't exist yet */}
     </div>
   )
 }

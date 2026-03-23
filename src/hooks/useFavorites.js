@@ -79,7 +79,6 @@ export function useFavorites(userId) {
   const addFavorite = async (dishId, dishData = null) => {
     if (!userId) return { error: 'Not logged in' }
 
-    toast.success('Moved to Heard it was Good Here', { duration: 2000 })
     capture('dish_saved', {
       dish_id: dishId,
       dish_name: dishData?.dish_name,
@@ -89,8 +88,10 @@ export function useFavorites(userId) {
 
     try {
       await addMutation.mutateAsync(dishId)
+      toast.success('Moved to Heard it was Good Here', { duration: 2000 })
       return { error: null }
     } catch (err) {
+      toast.error('Could not save dish')
       return { error: err.message }
     }
   }
@@ -99,7 +100,6 @@ export function useFavorites(userId) {
     if (!userId) return { error: 'Not logged in' }
 
     const dishToRemove = favorites.find((d) => d.dish_id === dishId)
-    toast('Removed from Heard it was Good Here', { duration: 2000 })
     capture('dish_unsaved', {
       dish_id: dishId,
       dish_name: dishToRemove?.dish_name,
@@ -109,8 +109,10 @@ export function useFavorites(userId) {
 
     try {
       await removeMutation.mutateAsync(dishId)
+      toast('Removed from Heard it was Good Here', { duration: 2000 })
       return { error: null }
     } catch (err) {
+      toast.error('Could not remove dish')
       return { error: err.message }
     }
   }

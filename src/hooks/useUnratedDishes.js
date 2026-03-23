@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dishPhotosApi } from '../api/dishPhotosApi'
 import { logger } from '../utils/logger'
@@ -13,9 +14,9 @@ export function useUnratedDishes(userId) {
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 
-  if (error) {
-    logger.error('Error fetching unrated dishes:', error)
-  }
+  useEffect(() => {
+    if (error) logger.error('Error fetching unrated dishes:', error)
+  }, [error])
 
   const dishes = data || []
 

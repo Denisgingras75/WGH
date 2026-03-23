@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { specialsApi } from '../api/specialsApi'
+import { getUserMessage } from '../utils/errorHandler'
 
 /**
  * Hook to fetch active specials
@@ -19,7 +20,7 @@ export function useSpecials() {
   return {
     specials: specials || [],
     loading,
-    error,
+    error: error ? { message: getUserMessage(error, 'loading specials') } : null,
     refetch
   }
 }
@@ -43,7 +44,7 @@ export function useRestaurantSpecials(restaurantId) {
   return {
     specials: specials || [],
     loading,
-    error,
+    error: error ? { message: getUserMessage(error, 'loading specials') } : null,
     refetch
   }
 }

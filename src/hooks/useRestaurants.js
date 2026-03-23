@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { getUserMessage } from '../utils/errorHandler'
@@ -33,9 +34,9 @@ export function useRestaurants(location, radius, permissionState) {
       }
     : null
 
-  if (error) {
-    logger.error('Error fetching restaurants:', error)
-  }
+  useEffect(() => {
+    if (error) logger.error('Error fetching restaurants:', error)
+  }, [error])
 
   return {
     restaurants: data || [],

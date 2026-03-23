@@ -61,6 +61,7 @@ export const specialsApi = {
     if (descError) throw new Error(descError)
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('You must be logged in to create a special')
 
     const { data, error } = await supabase
       .from('specials')
@@ -70,7 +71,7 @@ export const specialsApi = {
         description,
         price,
         expires_at: expiresAt,
-        created_by: user?.id
+        created_by: user.id
       })
       .select()
       .single()

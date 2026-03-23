@@ -84,6 +84,7 @@ export const dishesApi = {
         .from('votes')
         .select('dish_id')
         .gte('created_at', since)
+        .limit(5000)
 
       if (votesError) {
         throw createClassifiedError(votesError)
@@ -464,10 +465,14 @@ export const dishesApi = {
           )
         `)
         .eq('id', dishId)
-        .single()
+        .maybeSingle()
 
       if (dishError) {
         throw createClassifiedError(dishError)
+      }
+
+      if (!dish) {
+        throw new Error('Dish not found')
       }
 
       // Count yes_votes and check variants in parallel

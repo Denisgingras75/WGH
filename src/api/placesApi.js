@@ -5,15 +5,12 @@ import { logger } from '../utils/logger'
 /**
  * Places API - Google Places proxy via Supabase Edge Functions
  *
- * Error strategy: methods track the last error for diagnostics.
+ * Error strategy: methods log errors for diagnostics.
  * Autocomplete gracefully degrades (returns []) so local search still works.
  * discoverNearby propagates errors so callers can show error states.
  */
 
 export const placesApi = {
-  /** Last error from any Places API call — for diagnostics */
-  _lastError: null,
-
   /**
    * Autocomplete restaurant search via Google Places
    * @param {string} input - Search text (min 2 chars)
@@ -33,7 +30,7 @@ export const placesApi = {
       if (response.error) {
         const errMsg = response.error?.message || response.error?.context?.message || String(response.error)
         logger.error('Places autocomplete edge function error:', errMsg, response.error)
-        this._lastError = { reason: 'edge_function_error', message: errMsg, raw: response.error }
+        logger.warn('Places autocomplete failed:', errMsg)
         // Graceful degradation for search — don't break local results
         return []
       }
@@ -41,16 +38,14 @@ export const placesApi = {
       // Check if the response itself contains an error (edge function returned 200 with error body)
       if (response.data?.error) {
         logger.error('Places autocomplete API error:', response.data.error)
-        this._lastError = { reason: 'api_error', message: response.data.error }
+        logger.warn('Places autocomplete API error:', response.data.error)
         return []
       }
 
-      this._lastError = null
       return response.data?.predictions || []
     } catch (error) {
       const errMsg = error?.message || String(error)
       logger.error('Places autocomplete exception:', errMsg)
-      this._lastError = { reason: 'exception', message: errMsg }
       // Don't throw — graceful degradation, just show local results
       return []
     }
@@ -73,20 +68,19 @@ export const placesApi = {
       if (response.error) {
         const errMsg = response.error?.message || response.error?.context?.message || String(response.error)
         logger.error('places-nearby-search edge function error:', errMsg, response.error)
-        this._lastError = { reason: 'edge_function_error', message: errMsg, raw: response.error }
+        logger.warn('places-nearby-search failed:', errMsg)
         throw createClassifiedError(response.error)
       }
 
       // Check for API-level errors in the response body
       if (response.data?.error) {
         logger.error('places-nearby-search API error:', response.data.error)
-        this._lastError = { reason: 'api_error', message: response.data.error }
+        logger.warn('places-nearby-search API error:', response.data.error)
         // Still try to use places if they exist alongside the error
       }
 
       const places = response.data?.places || []
       if (places.length > 0) {
-        this._lastError = null
         return places
       }
 
@@ -99,7 +93,7 @@ export const placesApi = {
         return await this._discoverViaAutocomplete(lat, lng, radiusMeters)
       } catch (fallbackError) {
         logger.error('Places discover fallback also failed:', fallbackError?.message || fallbackError)
-        this._lastError = { reason: 'all_failed', message: 'Both nearby search and autocomplete failed' }
+        logger.warn('Both nearby search and autocomplete failed')
         return []
       }
     }

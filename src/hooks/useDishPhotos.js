@@ -103,7 +103,8 @@ export function useDishPhotos() {
       throw err
     } finally {
       setAnalyzing(false)
-      // Reset progress after a short delay
+      // Reset progress after a short delay — clear previous timer to avoid leak
+      if (progressResetTimerRef.current) clearTimeout(progressResetTimerRef.current)
       progressResetTimerRef.current = setTimeout(() => setUploadProgress(0), 500)
     }
   }, [uploadMutation])

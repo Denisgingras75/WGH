@@ -1,12 +1,13 @@
 import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { profileApi } from '../api/profileApi'
+import { getUserMessage } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 export function useProfile(userId) {
   const queryClient = useQueryClient()
 
-  const { data: profile, isLoading: loading } = useQuery({
+  const { data: profile, isLoading: loading, error } = useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {
       // API uses auth.getUser() internally for security
@@ -38,6 +39,7 @@ export function useProfile(userId) {
   return {
     profile: profile ?? null,
     loading: userId ? loading : false,
+    error: error ? { message: getUserMessage(error, 'loading profile') } : null,
     updateProfile,
   }
 }

@@ -23,6 +23,21 @@ export const jitterApi = {
   },
 
   /**
+   * Get jitter badges for a list of user IDs.
+   * Returns array of badge objects from the RPC.
+   */
+  async getJitterBadges(userIds) {
+    try {
+      const { data, error } = await supabase.rpc('get_jitter_badges', { p_user_ids: userIds })
+      if (error) throw createClassifiedError(error)
+      return data || []
+    } catch (error) {
+      logger.error('Failed to get jitter badges:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
    * Get trust badge type for a given user based on their jitter profile.
    * Returns: 'trusted_reviewer' | 'human_verified' | 'building' | null
    */

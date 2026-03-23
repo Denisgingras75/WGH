@@ -74,6 +74,7 @@ export const eventsApi = {
     if (descError) throw new Error(descError)
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('You must be logged in to create an event')
 
     const { data, error } = await supabase
       .from('events')
@@ -87,7 +88,7 @@ export const eventsApi = {
         event_type: eventType,
         recurring_pattern: recurringPattern || null,
         recurring_day_of_week: recurringDayOfWeek != null ? recurringDayOfWeek : null,
-        created_by: user?.id,
+        created_by: user.id,
       })
       .select()
       .single()

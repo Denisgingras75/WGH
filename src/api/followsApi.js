@@ -48,6 +48,7 @@ async function _paginateFollows(userId, direction, { limit = 20, cursor = null }
     .in('id', userIds)
 
   if (profileError) {
+    logger.warn('Error fetching follower profiles:', profileError)
     // Continue without profile data
   }
 
@@ -418,8 +419,9 @@ export const followsApi = {
     const totalVotes = voteList.length
     const worthItCount = voteList.filter(v => v.would_order_again).length
     const avoidCount = voteList.filter(v => !v.would_order_again).length
-    const avgRating = totalVotes > 0
-      ? Math.round((voteList.reduce((sum, v) => sum + (v.rating_10 || 0), 0) / totalVotes) * 10) / 10
+    const ratedVotes = voteList.filter(v => v.rating_10 != null)
+    const avgRating = ratedVotes.length > 0
+      ? Math.round((ratedVotes.reduce((sum, v) => sum + v.rating_10, 0) / ratedVotes.length) * 10) / 10
       : null
 
     const badges = badgesResult.data || []
