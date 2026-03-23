@@ -79,6 +79,10 @@ export function Map() {
     }
   }, [mode])
 
+  var handleRadiusSheetOpen = useCallback(function () {
+    setRadiusSheetOpen(true)
+  }, [])
+
   var handleSearchChange = useCallback(function (q) {
     setSearchQuery(q)
     setSearchLimit(10)
@@ -312,7 +316,7 @@ export function Map() {
           permissionState={permissionState}
           requestLocation={requestLocation}
           onSearchChange={handleSearchChange}
-          onRadiusSheetOpen={function () { setRadiusSheetOpen(true) }}
+          onRadiusSheetOpen={handleRadiusSheetOpen}
           onExpandedCategoryChange={setExpandedCategory}
           onLocalListExpanded={handleLocalListExpanded}
         />

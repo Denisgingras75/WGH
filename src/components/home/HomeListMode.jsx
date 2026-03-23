@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
@@ -8,7 +8,7 @@ import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
 import { LocalListsSection, CategoryExpand } from './'
 
-export function HomeListMode({
+export const HomeListMode = memo(function HomeListMode({
   listScrollRef,
   searchQuery,
   searchLoading,
@@ -274,7 +274,7 @@ export function HomeListMode({
       </div>
     </div>
   )
-}
+})
 
 // Chalkboard styles — module-level constants (no re-creation per render)
 var BOARD_OUTER = { flexShrink: 0, width: '175px' }

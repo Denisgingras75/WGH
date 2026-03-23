@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { getRelatedSuggestions } from '../../constants/searchSuggestions'
 import { DishListItem } from '../DishListItem'
@@ -25,7 +26,7 @@ function formatSearchQuery(query) {
   return query
 }
 
-export function BrowseResults({
+export const BrowseResults = memo(function BrowseResults({
   filteredDishes,
   loading,
   searchLoading,
@@ -258,4 +259,4 @@ export function BrowseResults({
       </div>
     </>
   )
-}
+})

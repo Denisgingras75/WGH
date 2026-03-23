@@ -8,7 +8,7 @@ import { useDishes } from '../hooks/useDishes'
 import { useUserVotes } from '../hooks/useUserVotes'
 import { useDishSearch } from '../hooks/useDishSearch'
 import { useFavorites } from '../hooks/useFavorites'
-import { restaurantsApi } from '../api/restaurantsApi'
+
 import { getStorageItem, setStorageItem } from '../lib/storage'
 import { BROWSE_CATEGORIES } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
@@ -39,7 +39,7 @@ export function Browse() {
   const [autocompleteOpen, setAutocompleteOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1)
-  const [restaurantSuggestions, setRestaurantSuggestions] = useState([])
+  // restaurantSuggestions derived from useRestaurantSearch below
 
   const { location, radius, setRadius, town, permissionState, requestLocation, isUsingDefault } = useLocationContext()
   const [showRadiusSheet, setShowRadiusSheet] = useState(false)
@@ -51,7 +51,7 @@ export function Browse() {
   // Google Places restaurant search — don't bias by default MV location or Browse radius
   const placesLat = isUsingDefault ? null : location?.lat
   const placesLng = isUsingDefault ? null : location?.lng
-  const { externalResults: placesResults } = useRestaurantSearch(
+  const { localResults: hookRestaurantResults, externalResults: placesResults } = useRestaurantSearch(
     searchQuery, placesLat, placesLng, searchQuery.trim().length >= 2, null
   )
 
@@ -102,28 +102,13 @@ export function Browse() {
   const dishSuggestions = useMemo(() => {
     if (!searchQuery?.trim() || searchQuery.trim().length < 2) return []
     return searchResults.slice(0, 5)
-  }, [searchResults, searchQuery])
+  }, [searchResults]) // searchQuery guard is inline, not a dep
 
-  // Fetch restaurant autocomplete suggestions
-  useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length < 2) {
-      setRestaurantSuggestions([])
-      return
-    }
-
-    const fetchSuggestions = async () => {
-      try {
-        const restaurantResults = await restaurantsApi.search(searchQuery, 3)
-        setRestaurantSuggestions(restaurantResults)
-      } catch (error) {
-        logger.error('Restaurant suggestions failed:', error)
-        setRestaurantSuggestions([])
-      }
-    }
-
-    const timer = setTimeout(fetchSuggestions, 150)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  // Restaurant suggestions derived from useRestaurantSearch (no duplicate fetch)
+  const restaurantSuggestions = useMemo(
+    () => (hookRestaurantResults || []).slice(0, 3),
+    [hookRestaurantResults]
+  )
 
   // Close autocomplete when clicking outside
   useEffect(() => {
