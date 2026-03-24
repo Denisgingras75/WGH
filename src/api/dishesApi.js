@@ -17,18 +17,17 @@ export const dishesApi = {
    * @param {number} params.lng - User longitude
    * @param {number} params.radiusMiles - Search radius in miles
    * @param {string|null} params.category - Optional category filter
-   * @param {string|null} params.town - Optional town filter (e.g., 'Oak Bluffs')
    * @returns {Promise<Array>} Array of ranked dishes
    * @throws {Error} With classified error type
    */
-  async getRankedDishes({ lat, lng, radiusMiles, category = null, town = null }) {
+  async getRankedDishes({ lat, lng, radiusMiles, category = null }) {
     try {
       const { data, error } = await supabase.rpc('get_ranked_dishes', {
         user_lat: lat,
         user_lng: lng,
         radius_miles: radiusMiles === 0 ? 25000 : radiusMiles,
         filter_category: category,
-        filter_town: town,
+        filter_town: null,
       })
 
       if (error) {
@@ -70,10 +69,9 @@ export const dishesApi = {
   /**
    * Get trending dishes (most votes in last 7 days)
    * @param {number} limit - Max results (default 10)
-   * @param {string|null} town - Optional town filter
    * @returns {Promise<Array>} Trending dishes with vote counts
    */
-  async getTrending(limit = 10, town = null) {
+  async getTrending(limit = 10) {
     try {
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -102,7 +100,7 @@ export const dishesApi = {
       const trendingIds = Object.entries(voteCounts)
         .filter(([, count]) => count >= 2)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, limit * 2) // fetch extra for town filtering
+        .slice(0, limit)
         .map(([id]) => id)
 
       if (!trendingIds.length) return []
@@ -135,11 +133,6 @@ export const dishesApi = {
           restaurant_name: d.restaurants.name,
           restaurant_town: d.restaurants.town,
         }))
-
-      // Town filter
-      if (town) {
-        results = results.filter(d => d.restaurant_town === town)
-      }
 
       // Sort by recent votes descending
       results.sort((a, b) => b.recent_votes - a.recent_votes)

@@ -261,25 +261,6 @@ describe('searchDishes', () => {
     })
   })
 
-  describe('town filter', () => {
-    it('filters results to the specified town', () => {
-      const results = searchDishes(DISHES, 'pizza', { town: 'Oak Bluffs' })
-      results.forEach(r => {
-        expect(r.restaurant_town).toBe('Oak Bluffs')
-      })
-    })
-
-    it('returns empty when no dishes match the town', () => {
-      const results = searchDishes(DISHES, 'lobster', { town: 'Edgartown' })
-      expect(results).toEqual([])
-    })
-
-    it('town filter is case-insensitive', () => {
-      const results = searchDishes(DISHES, 'pizza', { town: 'oak bluffs' })
-      expect(results.length).toBeGreaterThanOrEqual(1)
-    })
-  })
-
   describe('limit parameter', () => {
     it('defaults to 10 results max', () => {
       const results = searchDishes(DISHES, 'a')

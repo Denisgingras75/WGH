@@ -41,12 +41,12 @@ export function Browse() {
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1)
   // restaurantSuggestions derived from useRestaurantSearch below
 
-  const { location, radius, setRadius, town, permissionState, requestLocation, isUsingDefault } = useLocationContext()
+  const { location, radius, setRadius, permissionState, requestLocation, isUsingDefault } = useLocationContext()
   const [showRadiusSheet, setShowRadiusSheet] = useState(false)
   const { stats: userStats } = useUserVotes(user?.id)
 
   // Search results from API using React Query hook
-  const { results: searchResults, loading: searchLoading } = useDishSearch(debouncedSearchQuery, 50, town)
+  const { results: searchResults, loading: searchLoading } = useDishSearch(debouncedSearchQuery, 50)
 
   // Google Places restaurant search — don't bias by default MV location or Browse radius
   const placesLat = isUsingDefault ? null : location?.lat
@@ -132,8 +132,7 @@ export function Browse() {
     shouldFetchFromUseDishes ? location : null,
     radius,
     selectedCategory,
-    null,
-    town
+    null
   )
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 

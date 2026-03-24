@@ -7,7 +7,6 @@ import { TAG_SYNONYMS } from '../constants/tags'
  * @param {Array} dishes - Cached array of dish objects
  * @param {string} query - User search query
  * @param {Object} [options] - Optional filters
- * @param {string} [options.town] - Filter by restaurant town
  * @param {number} [options.limit=10] - Max results to return
  * @returns {Array} Matching dishes in output shape, sorted by relevance then rating
  */
@@ -156,7 +155,6 @@ export function searchDishes(dishes, query, options = {}) {
   if (tokens.length === 0) return []
 
   const limit = options.limit ?? 10
-  const town = options.town ? options.town.toLowerCase() : null
   const normalizedPhrase = tokens.join(' ')
   const expandedTags = expandTokenTags(tokens)
 
@@ -167,9 +165,6 @@ export function searchDishes(dishes, query, options = {}) {
 
     // Skip closed restaurants
     if (dish.restaurant_is_open === false) continue
-
-    // Town filter
-    if (town && (dish.restaurant_town || '').toLowerCase() !== town) continue
 
     const score = scoreDish(dish, tokens, normalizedPhrase, expandedTags)
     if (score > 0) {

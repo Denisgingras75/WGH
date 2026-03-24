@@ -84,7 +84,6 @@ export const STORAGE_KEYS = {
   HAS_SEEN_EAR_TOOLTIP: 'wgh_has_seen_ear_tooltip',
   SOUND_MUTED: 'soundMuted',
   RADIUS: 'wgh_radius',
-  TOWN: 'wgh_town',
   LOCATION_PERMISSION: 'whats-good-here-location-permission',
   EMAIL_CACHE: 'whats-good-here-email',
 }

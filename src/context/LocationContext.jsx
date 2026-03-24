@@ -43,28 +43,6 @@ export function LocationProvider({ children }) {
     })
   }, [])
 
-  // Town filter state (null = All Island)
-  const [town, setTownState] = useState(() => {
-    const saved = getStorageItem(STORAGE_KEYS.TOWN)
-    // Return null if empty string or not set (All Island)
-    return saved || null
-  })
-
-  // Wrap setTown to track filter changes and persist to localStorage
-  const setTown = useCallback((newTown) => {
-    setTownState(prevTown => {
-      if (newTown !== prevTown) {
-        capture('filter_applied', {
-          filter_type: 'town',
-          town: newTown || 'all',
-          previous_town: prevTown || 'all',
-        })
-        setStorageItem(STORAGE_KEYS.TOWN, newTown || '')
-      }
-      return newTown
-    })
-  }, [])
-
   // Auto-detect region from coordinates
   const [region, setRegion] = useState(() => detectRegion(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng))
 
@@ -195,8 +173,6 @@ export function LocationProvider({ children }) {
       location,
       radius,
       setRadius,
-      town,
-      setTown,
       region,
       loading,
       error,
