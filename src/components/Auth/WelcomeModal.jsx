@@ -182,6 +182,9 @@ export function WelcomeModal() {
 
       {/* Modal */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Welcome"
         className="relative z-10 rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
         style={{ animationDelay: '0.1s', background: 'var(--color-text-on-primary)' }}
       >
@@ -289,6 +292,8 @@ export function WelcomeModal() {
           {isNameStep ? (
             <form onSubmit={handleNameSubmit} className="space-y-4">
               <input
+                id="welcome-name"
+                aria-label="Your name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}

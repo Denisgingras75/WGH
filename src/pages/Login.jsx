@@ -397,10 +397,11 @@ export function Login() {
             {mode === 'signin' && (
               <form onSubmit={handleSignIn} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="login-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Email
                   </label>
                   <input
+                    id="login-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -413,10 +414,11 @@ export function Login() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="login-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Password
                   </label>
                   <input
+                    id="login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -472,10 +474,11 @@ export function Login() {
             {mode === 'forgot' && (
               <form onSubmit={handleForgotPassword} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="forgot-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Email
                   </label>
                   <input
+                    id="forgot-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -511,11 +514,12 @@ export function Login() {
             {mode === 'signup' && (
               <form onSubmit={handleSignUp} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-username" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Username
                   </label>
                   <div className="relative">
                     <input
+                      id="signup-username"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
@@ -548,10 +552,11 @@ export function Login() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Email
                   </label>
                   <input
+                    id="signup-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -563,10 +568,11 @@ export function Login() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
                     Password
                   </label>
                   <input
+                    id="signup-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

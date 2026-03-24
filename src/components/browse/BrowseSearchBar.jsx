@@ -91,11 +91,13 @@ export function BrowseSearchBar({
               onFocus={onSearchFocus}
               onBlur={onSearchBlur}
               onKeyDown={onSearchKeyDown}
+              aria-label="Search dishes"
               className="flex-1 bg-transparent outline-none border-none text-sm"
               style={{ color: 'var(--color-text-primary)', outline: 'none', border: 'none', boxShadow: 'none' }}
             />
             {searchQuery && (
               <button
+                aria-label="Clear search"
                 onClick={onClearSearch}
                 className="p-1 rounded-full transition-colors"
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}

@@ -180,13 +180,13 @@ export const DishListItem = memo(function DishListItem({
             }}
           >
             {restaurantId ? (
-              <span
-                role="link"
+              <button
+                type="button"
                 onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
-                style={{ color: 'var(--color-accent-gold)', fontWeight: 600 }}
+                style={{ color: 'var(--color-accent-gold)', fontWeight: 600, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', fontSize: 'inherit' }}
               >
                 {restaurantName}
-              </span>
+              </button>
             ) : restaurantName}
             {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}

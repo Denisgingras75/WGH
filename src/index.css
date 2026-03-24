@@ -37,7 +37,7 @@
   --color-primary: #E4440A;
   --color-primary-muted: rgba(228, 68, 10, 0.10);
   --color-primary-glow: rgba(228, 68, 10, 0.20);
-  --color-rating: #16A34A;
+  --color-rating: #15803D;
   /* Secondary: Gold — medals, accents, secondary links */
   --color-accent-gold: #C48A12;
   --color-accent-gold-muted: rgba(196, 138, 18, 0.12);
@@ -47,7 +47,7 @@
   /* Text — near-black on warm white */
   --color-text-primary: #1A1A1A;
   --color-text-secondary: #555555;
-  --color-text-tertiary: #999999;
+  --color-text-tertiary: #767676;
   /* Surfaces — warm white */
   --color-bg: #F0ECE8;
   --color-surface: #F7F4F1;
@@ -67,9 +67,9 @@
   --color-success-light: #F0FFF4;
   --color-success-muted: rgba(22, 163, 74, 0.10);
   --color-success-border: rgba(22, 163, 74, 0.30);
-  --color-muted: #999999;
+  --color-muted: #767676;
   /* Tagline — muted under headings */
-  --color-text-tagline: #999999;
+  --color-text-tagline: #767676;
   --color-text-on-primary: #FFFFFF;
 
   /* Semantic status colors */

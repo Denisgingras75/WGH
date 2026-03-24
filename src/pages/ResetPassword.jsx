@@ -111,10 +111,11 @@ export function ResetPassword() {
       ) : isValidSession ? (
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+            <label htmlFor="reset-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
               New Password
             </label>
             <input
+              id="reset-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
