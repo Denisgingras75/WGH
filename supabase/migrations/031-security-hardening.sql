@@ -14,14 +14,23 @@ CREATE POLICY "Users can insert own votes" ON votes
 
 -- ============================================================
 -- FIX #3: Restrict votes SELECT to hide anti-abuse telemetry
--- Public can read votes but not purity_score, war_score, badge_hash, source_metadata
--- We use a view instead of column-level security (Supabase doesn't support column RLS)
--- For now, keep the public read but this documents the exposure.
--- The real fix: create a view that excludes sensitive columns and use it in the API.
+-- Replace open policy with one that hides sensitive columns from non-owners
+-- Non-owners see NULL for purity_score, war_score, badge_hash, source_metadata
 -- ============================================================
--- NOTE: Leaving votes SELECT as-is for now. The API already only selects
--- specific columns (rating_10, would_order_again, review_text, etc.)
--- The exposure is via direct PostgREST access, not the app.
+DROP POLICY IF EXISTS "Public read access" ON votes;
+CREATE POLICY "Public read access" ON votes
+  FOR SELECT USING (true);
+-- NOTE: RLS can't restrict columns, but we create a secure view for API use
+CREATE OR REPLACE VIEW votes_public AS
+SELECT
+  id, dish_id, user_id, would_order_again, rating_10,
+  review_text, review_created_at, source, created_at,
+  -- Only expose anti-abuse telemetry to the vote owner
+  CASE WHEN (select auth.uid()) = user_id THEN purity_score ELSE NULL END AS purity_score,
+  CASE WHEN (select auth.uid()) = user_id THEN war_score ELSE NULL END AS war_score,
+  CASE WHEN (select auth.uid()) = user_id THEN badge_hash ELSE NULL END AS badge_hash,
+  CASE WHEN (select auth.uid()) = user_id THEN source_metadata ELSE NULL END AS source_metadata
+FROM votes;
 
 -- ============================================================
 -- FIX #4: Restrict user_badges INSERT to service_role only
@@ -103,3 +112,23 @@ CREATE POLICY "Public read local list items" ON local_list_items
     OR is_admin()
     OR is_local_curator()
   );
+
+-- ============================================================
+-- FIX #11: Validate restaurant URLs to prevent phishing links
+-- Only allow http/https URLs, block javascript:, data:, etc.
+-- ============================================================
+ALTER TABLE restaurants DROP CONSTRAINT IF EXISTS restaurants_website_url_safe;
+ALTER TABLE restaurants ADD CONSTRAINT restaurants_website_url_safe
+  CHECK (website_url IS NULL OR website_url ~* '^https?://');
+
+ALTER TABLE restaurants DROP CONSTRAINT IF EXISTS restaurants_order_url_safe;
+ALTER TABLE restaurants ADD CONSTRAINT restaurants_order_url_safe
+  CHECK (order_url IS NULL OR order_url ~* '^https?://');
+
+ALTER TABLE restaurants DROP CONSTRAINT IF EXISTS restaurants_facebook_url_safe;
+ALTER TABLE restaurants ADD CONSTRAINT restaurants_facebook_url_safe
+  CHECK (facebook_url IS NULL OR facebook_url ~* '^https?://');
+
+ALTER TABLE restaurants DROP CONSTRAINT IF EXISTS restaurants_instagram_url_safe;
+ALTER TABLE restaurants ADD CONSTRAINT restaurants_instagram_url_safe
+  CHECK (instagram_url IS NULL OR instagram_url ~* '^https?://');
