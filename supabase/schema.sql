@@ -452,26 +452,39 @@ ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
 -- restaurants: public read, admin write (+ manager policies below)
 CREATE POLICY "Public read access" ON restaurants FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR INSERT WITH CHECK (
+  auth.uid() IS NOT NULL
+  AND (is_admin()
+    OR (SELECT count(*) FROM restaurants WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 5)
+);
 CREATE POLICY "Admins can update restaurants" ON restaurants FOR UPDATE USING (is_admin());
 CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (is_admin());
 
 -- dishes: public read, admin + manager write
 CREATE POLICY "Public read access" ON dishes FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH CHECK (
+  auth.uid() IS NOT NULL
+  AND (is_admin() OR auth.role() = 'service_role'
+    OR (SELECT count(*) FROM dishes WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 20)
+);
 CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admins can delete dishes" ON dishes FOR DELETE USING (is_admin());
 
 -- votes: public read, users manage own (optimized auth.uid())
 CREATE POLICY "Public read access" ON votes FOR SELECT USING (true);
-CREATE POLICY "Users can insert own votes" ON votes FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
+CREATE POLICY "Users can insert own votes" ON votes FOR INSERT WITH CHECK ((select auth.uid()) = user_id AND source = 'user');
 CREATE POLICY "Users can update own votes" ON votes FOR UPDATE USING ((select auth.uid()) = user_id);
 CREATE POLICY "Users can delete own votes" ON votes FOR DELETE USING ((select auth.uid()) = user_id);
 
 -- profiles: public read (if display_name set), users manage own
 CREATE POLICY "profiles_select_public_or_own" ON profiles FOR SELECT USING ((select auth.uid()) = id OR display_name IS NOT NULL);
 CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT WITH CHECK ((select auth.uid()) = id);
-CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE USING ((select auth.uid()) = id) WITH CHECK ((select auth.uid()) = id);
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE USING ((select auth.uid()) = id) WITH CHECK (
+  (select auth.uid()) = id
+  AND is_local_curator = (SELECT is_local_curator FROM profiles WHERE id = (select auth.uid()))
+  AND follower_count = (SELECT follower_count FROM profiles WHERE id = (select auth.uid()))
+  AND following_count = (SELECT following_count FROM profiles WHERE id = (select auth.uid()))
+);
 -- No DELETE policy on profiles — users must not delete their own profile row (orphans FKs)
 
 -- favorites: users manage own only
@@ -514,7 +527,7 @@ CREATE POLICY "Users can read own badges" ON user_badges FOR SELECT USING (
   (select auth.uid()) = user_id
   OR EXISTS (SELECT 1 FROM badges b WHERE b.key = badge_key AND b.is_public_eligible = true)
 );
-CREATE POLICY "System can insert badges" ON user_badges FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
+CREATE POLICY "System can insert badges" ON user_badges FOR INSERT WITH CHECK (auth.role() = 'service_role');
 
 -- specials: conditional read, admin + manager write
 CREATE POLICY "Read specials" ON specials FOR SELECT USING (is_active = true OR is_admin() OR is_restaurant_manager(restaurant_id));
@@ -2694,7 +2707,11 @@ CREATE POLICY "dish_photos_public_read" ON storage.objects
 
 DROP POLICY IF EXISTS "dish_photos_insert_own" ON storage.objects;
 CREATE POLICY "dish_photos_insert_own" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'dish-photos' AND (select auth.uid()) = owner);
+  FOR INSERT WITH CHECK (
+    bucket_id = 'dish-photos'
+    AND (select auth.uid()) = owner
+    AND (storage.extension(name) IN ('jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'))
+  );
 
 DROP POLICY IF EXISTS "dish_photos_update_own" ON storage.objects;
 CREATE POLICY "dish_photos_update_own" ON storage.objects

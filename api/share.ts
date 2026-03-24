@@ -40,12 +40,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.redirect(302, '/')
   }
 
-  // Map type to SPA route path (API uses 'restaurant', SPA uses 'restaurants')
-  const routePath = type === 'restaurant' ? 'restaurants' : type
+  // Validate type against allowlist to prevent open redirect
+  const ALLOWED_TYPES: Record<string, string> = { dish: 'dish', restaurant: 'restaurants' }
+  const routePath = ALLOWED_TYPES[type]
+  if (!routePath) {
+    return res.redirect(302, '/')
+  }
 
   // Validate UUID
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-    return res.redirect(302, `/${routePath}/${id}`)
+    return res.redirect(302, '/')
   }
 
   // Check if this is a social crawler

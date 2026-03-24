@@ -218,6 +218,34 @@ serve(async (req) => {
   }
 
   try {
+    // Auth gate: require admin user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const supabaseUrl_ = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey_ = Deno.env.get('SUPABASE_ANON_KEY')!
+    const authClient = createClient(supabaseUrl_, supabaseAnonKey_, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user: authUser } } = await authClient.auth.getUser()
+    if (!authUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const { data: adminRow } = await authClient.from('admins').select('user_id').eq('user_id', authUser.id).maybeSingle()
+    if (!adminRow) {
+      return new Response(JSON.stringify({ error: 'Admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (!GOOGLE_API_KEY || !ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'Missing API keys' }), {
         status: 500,
