@@ -411,6 +411,7 @@ export function Browse() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+      <h1 className="sr-only">Browse Dishes</h1>
       {/* Header - only shows when viewing dishes */}
       {showingDishes && (
         <header style={{ background: 'var(--color-bg)' }}>

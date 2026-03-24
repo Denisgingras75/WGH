@@ -126,7 +126,8 @@ export function Admin() {
     setPrice(dish.price ? String(dish.price) : '')
     setPhotoUrl(dish.photo_url || '')
     // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
   }
 
   function handleCancelEdit() {

@@ -47,7 +47,7 @@ export function ForRestaurants() {
         >
           How It Works
         </h2>
-        <div className="space-y-3">
+        <ol className="space-y-3 list-none p-0 m-0">
           {[
             {
               num: '1',
@@ -66,7 +66,7 @@ export function ForRestaurants() {
             },
           ].map(function (step) {
             return (
-              <div
+              <li
                 key={step.num}
                 className="flex items-start gap-4 p-4 rounded-xl"
                 style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
@@ -74,6 +74,7 @@ export function ForRestaurants() {
                 <span
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '14px' }}
+                  aria-hidden="true"
                 >
                   {step.num}
                 </span>
@@ -85,10 +86,10 @@ export function ForRestaurants() {
                     {step.desc}
                   </p>
                 </div>
-              </div>
+              </li>
             )
           })}
-        </div>
+        </ol>
       </div>
 
       {/* Value props */}

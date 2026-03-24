@@ -360,12 +360,12 @@ export function RestaurantDetail() {
             background: 'var(--color-surface-elevated)',
             border: '1px solid var(--color-divider)',
           }}
-          role="tablist"
+          role="group"
           aria-label="Restaurant view"
         >
           <button
-            role="tab"
-            aria-selected={activeTab === 'top'}
+            role="button"
+            aria-pressed={activeTab === 'top'}
             onClick={() => setActiveTab('top')}
             className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
             style={{
@@ -377,8 +377,8 @@ export function RestaurantDetail() {
             Top Rated
           </button>
           <button
-            role="tab"
-            aria-selected={activeTab === 'menu'}
+            role="button"
+            aria-pressed={activeTab === 'menu'}
             onClick={() => setActiveTab('menu')}
             className="flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all"
             style={{

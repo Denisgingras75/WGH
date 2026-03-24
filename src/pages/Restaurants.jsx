@@ -172,12 +172,12 @@ export function Restaurants() {
             background: 'var(--color-surface)',
             border: '1.5px solid var(--color-divider)',
           }}
-          role="tablist"
-          aria-label="Restaurant status filter"
+          role="group"
+          aria-label="Filter by status"
         >
           <button
-            role="tab"
-            aria-selected={restaurantTab === 'open'}
+            role="button"
+            aria-pressed={restaurantTab === 'open'}
             onClick={function () { setRestaurantTab('open') }}
             className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
             style={{
@@ -188,8 +188,8 @@ export function Restaurants() {
             Open
           </button>
           <button
-            role="tab"
-            aria-selected={restaurantTab === 'closed'}
+            role="button"
+            aria-pressed={restaurantTab === 'closed'}
             onClick={function () { setRestaurantTab('closed') }}
             className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
             style={{

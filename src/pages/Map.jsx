@@ -296,7 +296,7 @@ export function Map() {
   }, [])
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+    <main id="main-content" className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">What's Good Here</h1>
 
       {/* LIST MODE */}
@@ -414,8 +414,8 @@ export function Map() {
             style={{
               bottom: '148px',
               right: '20px',
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
               background: 'var(--color-card)',
               border: '1.5px solid var(--color-divider)',
@@ -445,7 +445,7 @@ export function Map() {
         onRadiusChange={setRadius}
       />
 
-    </div>
+    </main>
   )
 }
 

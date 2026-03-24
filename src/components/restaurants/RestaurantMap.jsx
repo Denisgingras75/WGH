@@ -318,7 +318,7 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
     : bestRank === 2 ? 'var(--color-medal-silver)'
     : bestRank === 3 ? 'var(--color-medal-bronze)'
     : null
-  var size = isSelected ? 56 : (medalBg ? 46 : 40)
+  var size = isSelected ? 56 : (medalBg ? 46 : 44)
   var imgSize = isSelected ? 52 : (medalBg ? 46 : 42)
 
   var glow = isSelected
@@ -545,6 +545,8 @@ export function RestaurantMap({
 
   return (
     <div
+      role="application"
+      aria-label="Dish map"
       style={{
         height: mapHeight,
         width: '100%',
@@ -849,7 +851,7 @@ export function RestaurantMap({
             }}
           >
             {/* Restaurant name — clickable */}
-            <div
+            <button
               onClick={function () { nav('/restaurants/' + selectedGroup.restaurant_id) }}
               style={{
                 fontSize: '14px',
@@ -857,10 +859,15 @@ export function RestaurantMap({
                 color: 'var(--color-accent-gold)',
                 cursor: 'pointer',
                 marginBottom: '2px',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                font: 'inherit',
+                textAlign: 'left',
               }}
             >
               {selectedGroup.restaurant_name} →
-            </div>
+            </button>
 
             {/* Meta line */}
             <div style={{

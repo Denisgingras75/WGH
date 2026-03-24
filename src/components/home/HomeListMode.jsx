@@ -176,7 +176,10 @@ export const HomeListMode = memo(function HomeListMode({
                 onExpandedCategoryChange(cat)
                 setTimeout(function () {
                   var el = document.getElementById('category-expand')
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  if (el) {
+                    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+                  }
                 }, 100)
               }}
             />
