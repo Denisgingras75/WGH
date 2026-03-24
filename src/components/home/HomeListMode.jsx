@@ -62,24 +62,21 @@ export const HomeListMode = memo(function HomeListMode({
             What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
           </h2>
           <p style={{
-            fontFamily: "'Amatic SC', cursive",
-            fontSize: '18px',
-            fontWeight: 700,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '0.12em',
+            fontSize: '10px',
+            fontWeight: 600,
+            color: '#999',
+            letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            margin: '2px 0 0',
+            margin: '5px 0 0',
           }}>
             Dishes worth ordering again
           </p>
         </div>
         {/* Search bar */}
-        <div className="px-4 pt-2 pb-2" style={{
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        }}>
+        <div className="px-5 pt-2 pb-2">
           <div style={{
             borderRadius: '14px',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
           }}>
             <DishSearch
               loading={false}
@@ -186,20 +183,20 @@ export const HomeListMode = memo(function HomeListMode({
 
             {/* Browse by Category */}
             <div style={{ paddingTop: '2px', paddingBottom: 0 }}>
-              <div className="flex items-center gap-3 px-4" style={{ paddingBottom: 0 }}>
-                <div className="flex-1" style={{ height: '1.5px', background: 'linear-gradient(to right, transparent, var(--color-text-tertiary))' }} />
+              <div className="flex items-center gap-3 px-5" style={{ paddingBottom: 0 }}>
+                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to right, transparent, #C4BDB5)' }} />
                 <h2 style={{
                   fontFamily: "'Amatic SC', cursive",
-                  fontSize: '24px',
+                  fontSize: '22px',
                   fontWeight: 700,
-                  color: 'var(--color-primary)',
+                  color: 'var(--color-text-primary)',
                   margin: 0,
                   whiteSpace: 'nowrap',
-                  padding: '0 6px',
+                  padding: '0 4px',
                 }}>
                   Browse by Category
                 </h2>
-                <div className="flex-1" style={{ height: '1.5px', background: 'linear-gradient(to left, transparent, var(--color-text-tertiary))' }} />
+                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to left, transparent, #C4BDB5)' }} />
               </div>
               <CategoryChips
                 categories={filteredCategories}
@@ -227,7 +224,7 @@ export const HomeListMode = memo(function HomeListMode({
                 }} />
 
                 {/* Scoreboard header */}
-                <div className="px-4 flex items-baseline justify-between mb-1">
+                <div className="px-5 flex items-baseline justify-between mb-1">
                   <h2 style={{
                     fontFamily: "'Amatic SC', cursive",
                     fontSize: '30px',
@@ -250,7 +247,7 @@ export const HomeListMode = memo(function HomeListMode({
                 </div>
 
                 {/* Rankings */}
-                <div className="px-3">
+                <div className="px-4">
                   {activeDishes.slice(0, 10).map(function (dish, i) {
                     return (
                       <DishListItem
@@ -314,10 +311,6 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
           {stat && <div style={CHALK_LINE} />}
           <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
         </div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
-        <div style={LEG_LEFT} />
-        <div style={LEG_RIGHT} />
       </div>
     </button>
   )

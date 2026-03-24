@@ -51,8 +51,8 @@ export function CategoryChips({
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           minHeight: 'auto',
-          marginTop: '-4px',
-          marginBottom: '-6px',
+          marginTop: '4px',
+          marginBottom: '8px',
           touchAction: 'pan-x pan-y',
         }}
       >
@@ -78,7 +78,7 @@ export function CategoryChips({
                 fontWeight: isActive ? 700 : 500,
               }}
             >
-              <CategoryIcon categoryId={cat.id} size={88} />
+              <CategoryIcon categoryId={cat.id} size={56} />
               <span style={{ marginTop: '2px', lineHeight: 1.2 }}>{cat.label}</span>
             </button>
           )
