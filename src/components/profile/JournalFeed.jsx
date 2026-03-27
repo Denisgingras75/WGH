@@ -3,21 +3,33 @@ import { JournalCard } from './JournalCard'
 
 var PAGE_SIZE = 5
 
+function getDateLabel(timestamp) {
+  if (!timestamp) return ''
+  var date = new Date(timestamp)
+  var now = new Date()
+  var diffMs = now - date
+  var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return diffDays + ' days ago'
+  if (diffDays < 14) return 'Last week'
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 /**
  * JournalFeed — reverse-chronological feed of food journal entries.
  *
- * Merges worthIt, avoid, and heard data sources into a single feed.
- * Shelf filtering narrows to a specific category.
+ * Merges worthIt and avoid data sources into a single chronological feed.
+ * Shelf filtering narrows to a specific category (for UserProfile compatibility).
+ * Date group headers separate entries by recency.
  *
  * Props:
  *   worthIt     - array of "Good Here" dishes (from useUserVotes)
  *   avoid       - array of "Wasn't Good Here" dishes (from useUserVotes)
- *   heard       - array of "Heard That's Good There" dishes (from useFavorites)
- *   activeShelf - 'all' | 'good-here' | 'not-good-here' | 'heard'
- *   onTriedIt   - callback when "Tried it?" is tapped on a heard card
+ *   activeShelf - 'all' | 'good-here' | 'not-good-here'
  *   loading     - show loading skeletons
  */
-export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loading }) {
+export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
   var [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Reset to first page when shelf changes
@@ -46,24 +58,17 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
   var entries = []
 
   if (activeShelf === 'all' || activeShelf === 'good-here') {
-    var tagged = worthIt.map(function (d) {
+    var tagged = (worthIt || []).map(function (d) {
       return { dish: d, variant: 'good-here', time: d.voted_at }
     })
     entries = entries.concat(tagged)
   }
 
   if (activeShelf === 'all' || activeShelf === 'not-good-here') {
-    var taggedAvoid = avoid.map(function (d) {
+    var taggedAvoid = (avoid || []).map(function (d) {
       return { dish: d, variant: 'not-good-here', time: d.voted_at }
     })
     entries = entries.concat(taggedAvoid)
-  }
-
-  if (activeShelf === 'all' || activeShelf === 'heard') {
-    var taggedHeard = heard.map(function (d) {
-      return { dish: d, variant: 'heard', time: d.saved_at || d.created_at }
-    })
-    entries = entries.concat(taggedHeard)
   }
 
   // Sort reverse chronological
@@ -93,8 +98,7 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
           >
             {activeShelf === 'good-here' && "Dishes you'd order again will show up here"}
             {activeShelf === 'not-good-here' && "Dishes that weren't good will show up here"}
-            {activeShelf === 'heard' && "Save dishes you want to try later"}
-            {activeShelf === 'all' && "Start rating dishes to build your food journal"}
+            {(activeShelf === 'all' || !activeShelf) && "Start rating dishes to build your food journal"}
           </p>
         </div>
       </div>
@@ -105,23 +109,54 @@ export function JournalFeed({ worthIt, avoid, heard, activeShelf, onTriedIt, loa
   var hasMore = entries.length > visibleCount
   var remaining = entries.length - visibleCount
 
+  // Build render list with date group headers inserted between label changes
+  var renderItems = []
+  var lastLabel = null
+  for (var i = 0; i < visibleEntries.length; i++) {
+    var entry = visibleEntries[i]
+    var label = getDateLabel(entry.time)
+    if (label && label !== lastLabel) {
+      renderItems.push({ type: 'header', label: label, key: 'header-' + label + '-' + i })
+      lastLabel = label
+    }
+    renderItems.push({ type: 'entry', entry: entry, key: entry.variant + '-' + (entry.dish.dish_id || entry.dish.id) })
+  }
+
   return (
-    <div className="space-y-3 p-4">
-      {visibleEntries.map(function (entry) {
-        var key = entry.variant + '-' + (entry.dish.dish_id || entry.dish.id)
-        return (
-          <JournalCard
-            key={key}
-            dish={entry.dish}
-            variant={entry.variant}
-            onTriedIt={onTriedIt}
-          />
-        )
-      })}
+    <div className="p-4">
+      <div className="space-y-3">
+        {renderItems.map(function (item) {
+          if (item.type === 'header') {
+            return (
+              <div
+                key={item.key}
+                style={{
+                  color: 'var(--color-accent-gold)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  paddingTop: '4px',
+                  paddingBottom: '2px',
+                }}
+              >
+                {item.label}
+              </div>
+            )
+          }
+          return (
+            <JournalCard
+              key={item.key}
+              dish={item.entry.dish}
+              variant={item.entry.variant}
+            />
+          )
+        })}
+      </div>
       {hasMore && (
         <button
           onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
-          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98] mt-3"
           style={{
             fontSize: '14px',
             color: 'var(--color-accent-gold)',
