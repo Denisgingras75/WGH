@@ -5,10 +5,8 @@ import { logger } from '../utils/logger'
 import { authApi } from '../api/authApi'
 import { followsApi } from '../api/followsApi'
 import { votesApi } from '../api/votesApi'
-import { dishPhotosApi } from '../api/dishPhotosApi'
 import { useProfile } from '../hooks/useProfile'
 import { useUserVotes } from '../hooks/useUserVotes'
-import { useFavorites } from '../hooks/useFavorites'
 import { useUnratedDishes } from '../hooks/useUnratedDishes'
 import { DishModal } from '../components/DishModal'
 import { LoginModal } from '../components/Auth/LoginModal'
@@ -17,24 +15,14 @@ import { ProfileSkeleton } from '../components/Skeleton'
 import { CameraIcon } from '../components/CameraIcon'
 import {
   HeroIdentityCard,
-  ShelfFilter,
   JournalFeed,
-  SharePicksButton,
 } from '../components/profile'
 import { jitterApi } from '../api/jitterApi'
-
-const SHELVES = [
-  { id: 'all', label: 'All' },
-  { id: 'good-here', label: 'Good Here' },
-  { id: 'heard', label: "Heard That's Good There" },
-  { id: 'not-good-here', label: "Wasn't Good Here" },
-]
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
 
 export function Profile() {
   const { user, loading } = useAuth()
-  const [activeShelf, setActiveShelf] = useState('all')
   const [authLoading, setAuthLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState(null)
@@ -44,8 +32,7 @@ export function Profile() {
 
   const { profile, updateProfile } = useProfile(user?.id)
   const { worthItDishes, avoidDishes, stats, loading: votesLoading, refetch: refetchVotes } = useUserVotes(user?.id)
-  const { favorites, loading: favoritesLoading, removeFavorite } = useFavorites(user?.id)
-  const { dishes: unratedDishes, count: unratedCount, loading: unratedLoading, refetch: refetchUnrated } = useUnratedDishes(user?.id)
+  const { dishes: unratedDishes, count: unratedCount, refetch: refetchUnrated } = useUnratedDishes(user?.id)
 
   const [jitterProfile, setJitterProfile] = useState(null)
 
@@ -168,24 +155,7 @@ export function Profile() {
     })
   }, [avoidDishes, userReviews])
 
-  var feedLoading = votesLoading || favoritesLoading
-
-  // Handle "Tried it?" from heard card — open DishModal
-  const handleTriedIt = (dish) => {
-    setSelectedDish({
-      dish_id: dish.dish_id,
-      dish_name: dish.dish_name,
-      restaurant_name: dish.restaurant_name,
-      restaurant_id: dish.restaurant_id,
-      category: dish.category,
-      price: dish.price,
-      photo_url: dish.photo_url,
-      total_votes: 0,
-      yes_votes: 0,
-    })
-  }
-
-  // Handle vote from unrated dish or heard card
+  // Handle vote from unrated dish
   const handleVote = async () => {
     setSelectedDish(null)
     try {
@@ -209,19 +179,6 @@ export function Profile() {
       total_votes: 0,
       yes_votes: 0,
     })
-  }
-
-  // Handle deleting an unrated photo
-  const handleDeletePhoto = async (photoId) => {
-    // TODO: Replace browser confirm() with custom confirmation modal
-    if (!confirm('Delete this photo? This cannot be undone.')) return
-    try {
-      await dishPhotosApi.deletePhoto(photoId)
-      await refetchUnrated()
-    } catch (error) {
-      logger.error('Failed to delete photo:', error)
-      alert('Failed to delete photo. Please try again.')
-    }
   }
 
   if (loading) {
@@ -250,132 +207,6 @@ export function Profile() {
             setFollowListModal={setFollowListModal}
             jitterProfile={jitterProfile}
           />
-
-          {/* Dashboard cards — side by side */}
-          {stats.totalVotes > 0 && (
-            <div className="px-4 pt-4 flex gap-3">
-              {/* Left card — Recent Meals */}
-              <div
-                className="flex-1 min-w-0 rounded-2xl px-3.5 py-3.5"
-                style={{
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-divider)',
-                }}
-              >
-                <h2
-                  className="font-bold mb-2.5"
-                  style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    color: 'var(--color-text-primary)',
-                    fontSize: '24px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  Recent
-                </h2>
-                <div className="space-y-2.5">
-                  {stats.recentMeals.map(function (meal, i) {
-                    return (
-                      <div key={i}>
-                        <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                          {meal.dish_name}
-                        </p>
-                        <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                          {meal.restaurant_name} &middot; <span className="font-semibold" style={{ color: 'var(--color-rating)' }}>{meal.rating}/10</span>
-                        </p>
-                      </div>
-                    )
-                  })}
-                  {stats.recentMeals.length === 0 && (
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
-                      Rate some dishes to see them here
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right card — Loyal Spot + Best Find */}
-              <div
-                className="flex-1 min-w-0 rounded-2xl px-3.5 py-3.5"
-                style={{
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-divider)',
-                }}
-              >
-                <h2
-                  className="font-bold mb-2.5"
-                  style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    color: 'var(--color-text-primary)',
-                    fontSize: '24px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  Highlights
-                </h2>
-                <div className="space-y-2.5">
-                  {/* Most loyal spot */}
-                  {stats.favoriteRestaurant && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\uD83C\uDFE0'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Most loyal</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.favoriteRestaurant}
-                      </p>
-                      <p style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'} rated
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Best find */}
-                  {stats.standoutPicks.bestFind && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\u2B50'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Best find</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.standoutPicks.bestFind.dish_name}
-                      </p>
-                      <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        {stats.standoutPicks.bestFind.restaurant_name} &middot; <span className="font-semibold" style={{ color: 'var(--color-accent-gold)' }}>{stats.standoutPicks.bestFind.userRating}/10</span>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Controversial pick */}
-                  {stats.standoutPicks.harshestTake && (
-                    <div>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span style={{ fontSize: '12px' }}>{'\uD83C\uDF36\uFE0F'}</span>
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: '600' }}>Hot take</span>
-                      </div>
-                      <p className="font-bold truncate" style={{ color: 'var(--color-text-primary)', fontSize: '13px' }}>
-                        {stats.standoutPicks.harshestTake.dish_name}
-                      </p>
-                      <p className="truncate" style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                        You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Share My Picks */}
-          <div className="px-4 pt-3">
-            <SharePicksButton
-              userId={user.id}
-              userName={profile?.display_name}
-            />
-          </div>
-
 
           {/* Unrated Photos Banner - shown when user has photos to rate */}
           {unratedCount > 0 && (
@@ -411,21 +242,29 @@ export function Profile() {
             </div>
           )}
 
-          {/* Shelf Filters */}
-          <ShelfFilter
-            shelves={SHELVES}
-            active={activeShelf}
-            onSelect={setActiveShelf}
-          />
+          {/* Your Journal title */}
+          <div className="px-4 pt-5 pb-1">
+            <h2
+              style={{
+                fontFamily: "'Amatic SC', cursive",
+                color: 'var(--color-text-primary)',
+                fontSize: '32px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Your Journal
+            </h2>
+          </div>
 
           {/* Journal Feed */}
           <JournalFeed
             worthIt={enrichedWorthIt}
             avoid={enrichedAvoid}
-            heard={favorites}
-            activeShelf={activeShelf}
-            onTriedIt={handleTriedIt}
-            loading={feedLoading}
+            heard={[]}
+            activeShelf="all"
+            onTriedIt={null}
+            loading={votesLoading}
           />
 
           {/* Dish Modal for rating unrated dishes */}
