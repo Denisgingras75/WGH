@@ -148,7 +148,6 @@ export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
             <JournalCard
               key={item.key}
               dish={item.entry.dish}
-              variant={item.entry.variant}
             />
           )
         })}

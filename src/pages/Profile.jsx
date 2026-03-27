@@ -261,9 +261,7 @@ export function Profile() {
           <JournalFeed
             worthIt={enrichedWorthIt}
             avoid={enrichedAvoid}
-            heard={[]}
             activeShelf="all"
-            onTriedIt={null}
             loading={votesLoading}
           />
 
