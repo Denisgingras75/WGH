@@ -11,6 +11,7 @@
       "destination": "/api/share?type=restaurant&id=:id"
     },
     { "source": "/logo-concepts.html", "destination": "/logo-concepts.html" },
+    { "source": "/profile-redesign.html", "destination": "/profile-redesign.html" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
