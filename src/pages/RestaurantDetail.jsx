@@ -374,7 +374,7 @@ export function RestaurantDetail() {
                   }}>
                     on <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{review.dish_name}</span>
                     {review.rating != null && (
-                      <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}/10</span></span>
+                      <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}</span></span>
                     )}
                   </p>
                 </div>
