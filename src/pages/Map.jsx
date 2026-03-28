@@ -307,7 +307,7 @@ export function Map() {
           searchLoading={searchLoading}
           rankedLoading={rankedLoading}
           activeDishes={activeDishes}
-          expandedCategory={expandedCategory}
+          allRankedDishes={allRanked}
           topRestaurant={topRestaurant}
           mostVotedDish={mostVotedDish}
           bestValueMeal={bestValueMeal}

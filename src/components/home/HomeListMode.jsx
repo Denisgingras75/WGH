@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
@@ -6,7 +6,7 @@ import { DishListItem } from '../DishListItem'
 import { CategoryChips } from '../CategoryChips'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
-import { LocalListsSection, CategoryExpand } from './'
+import { LocalListsSection, Top10Carousel } from './'
 
 export const HomeListMode = memo(function HomeListMode({
   listScrollRef,
@@ -14,7 +14,7 @@ export const HomeListMode = memo(function HomeListMode({
   searchLoading,
   rankedLoading,
   activeDishes,
-  expandedCategory,
+  allRankedDishes,
   topRestaurant,
   mostVotedDish,
   bestValueMeal,
@@ -28,6 +28,7 @@ export const HomeListMode = memo(function HomeListMode({
   onLocalListExpanded,
 }) {
   var navigate = useNavigate()
+  var carouselRef = useRef(null)
 
   // Compute filtered categories — recalculates on each render so time-of-day is fresh
   var hour = new Date().getHours()
@@ -35,7 +36,17 @@ export const HomeListMode = memo(function HomeListMode({
   var filteredCategories = BROWSE_CATEGORIES.filter(function (c) { return c.id !== hideId })
 
   var handleCategorySelect = useCallback(function (cat) {
-    onExpandedCategoryChange(function (prev) { return prev === cat ? null : cat })
+    onExpandedCategoryChange(cat)
+    if (carouselRef.current) {
+      carouselRef.current.scrollToCategory(cat)
+    }
+    setTimeout(function () {
+      var el = document.getElementById('top10-carousel')
+      if (el) {
+        var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+      }
+    }, 100)
   }, [onExpandedCategoryChange])
 
   return (
@@ -171,8 +182,11 @@ export const HomeListMode = memo(function HomeListMode({
               bestIceCream={bestIceCream}
               onExpandCategory={function (cat) {
                 onExpandedCategoryChange(cat)
+                if (carouselRef.current) {
+                  carouselRef.current.scrollToCategory(cat)
+                }
                 setTimeout(function () {
-                  var el = document.getElementById('category-expand')
+                  var el = document.getElementById('top10-carousel')
                   if (el) {
                     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
                     el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
@@ -200,68 +214,16 @@ export const HomeListMode = memo(function HomeListMode({
               </div>
               <CategoryChips
                 categories={filteredCategories}
-                selected={expandedCategory}
+                selected={null}
                 onSelect={handleCategorySelect}
                 maxVisible={22}
               />
             </div>
 
-            {/* Dish list — Top Rated Nearby OR Category results */}
-            {expandedCategory ? (
-              <div id="category-expand">
-                <CategoryExpand
-                  categoryId={expandedCategory}
-                  onClose={function () { onExpandedCategoryChange(null) }}
-                />
-              </div>
-            ) : (
-              <div className="pt-1">
-                {/* Divider — separates editorial/browse from the rankings */}
-                <div className="mx-4 mb-2" style={{
-                  height: '2px',
-                  background: 'linear-gradient(90deg, var(--color-text-primary), var(--color-text-primary) 30%, transparent)',
-                  opacity: 0.12,
-                }} />
-
-                {/* Scoreboard header */}
-                <div className="px-5 flex items-baseline justify-between mb-1">
-                  <h2 style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    fontSize: '30px',
-                    fontWeight: 700,
-                    color: 'var(--color-text-primary)',
-                    letterSpacing: '0.02em',
-                    lineHeight: 1,
-                  }}>
-                    Top Rated Nearby
-                  </h2>
-                  <span style={{
-                    fontSize: '11px',
-                    color: 'var(--color-text-tertiary)',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}>
-                    {Math.min(activeDishes.length, 10)} dishes
-                  </span>
-                </div>
-
-                {/* Rankings */}
-                <div className="px-4">
-                  {activeDishes.slice(0, 10).map(function (dish, i) {
-                    return (
-                      <DishListItem
-                        key={dish.dish_id || dish.id}
-                        dish={dish}
-                        rank={i + 1}
-                        variant="ranked"
-                        isLast={i === Math.min(activeDishes.length, 10) - 1}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
+            <div id="top10-carousel">
+              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} />
+            </div>
 
             {/* Local Lists */}
             <LocalListsSection onListExpanded={onLocalListExpanded} />
