@@ -101,7 +101,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
               className="flex-shrink-0 flex flex-col items-center justify-center active:scale-[0.94] transition-transform"
               style={{
                 padding: '0',
-                minWidth: '56px',
+                minWidth: '64px',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -111,8 +111,8 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
             >
               {tab.id === 'nearby' ? (
                 <div style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '56px',
+                  height: '56px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -121,7 +121,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
                   📍
                 </div>
               ) : (
-                <CategoryIcon categoryId={tab.id} size={42} />
+                <CategoryIcon categoryId={tab.id} size={56} />
               )}
               <span style={{
                 marginTop: '1px',
