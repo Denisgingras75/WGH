@@ -319,6 +319,7 @@ export function Map() {
           onSearchChange={handleSearchChange}
           onRadiusSheetOpen={handleRadiusSheetOpen}
           onExpandedCategoryChange={setExpandedCategory}
+          onCategoryChange={setSelectedCategory}
           onLocalListExpanded={handleLocalListExpanded}
         />
       )}

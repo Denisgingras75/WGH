@@ -25,6 +25,7 @@ export const HomeListMode = memo(function HomeListMode({
   onSearchChange,
   onRadiusSheetOpen,
   onExpandedCategoryChange,
+  onCategoryChange,
   onLocalListExpanded,
 }) {
   var navigate = useNavigate()
@@ -192,7 +193,7 @@ export const HomeListMode = memo(function HomeListMode({
 
             {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
             <div id="top10-carousel">
-              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} />
+              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} onCategoryChange={onCategoryChange} />
             </div>
 
             {/* Local Lists */}
@@ -224,7 +225,9 @@ var LEG_STYLE = { width: '2.5px', height: '10px', background: '#6B7280', borderR
 var LEG_LEFT = Object.assign({}, LEG_STYLE, { transform: 'rotate(6deg)', transformOrigin: 'top center' })
 var LEG_RIGHT = Object.assign({}, LEG_STYLE, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })
 
-function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
+var BOARD_ICON_STYLE = { display: 'inline-block', verticalAlign: 'middle', width: '20px', height: '20px', objectFit: 'contain', marginRight: '3px' }
+
+function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick, icon, bottomIcon }) {
   return (
     <button
       onClick={onClick}
@@ -235,28 +238,34 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
         <div style={BOARD_FRAME} />
         <div style={BOARD_DUST} />
         <div style={BOARD_CONTENT}>
-          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>{tag}</p>
+          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>
+            {icon && <img src={icon} alt="" style={BOARD_ICON_STYLE} />}
+            <span>{tag}</span>
+          </p>
           <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
           {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
           <div style={CHALK_LINE} />
           {stat && <p style={Object.assign({}, CHALK_BRIGHT, { fontSize: '16px', margin: 0 })}>{stat}</p>}
           {stat && <div style={CHALK_LINE} />}
           <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
+          {bottomIcon && <img src={bottomIcon} alt="" style={ICE_CREAM_MELTING_STYLE} />}
         </div>
       </div>
     </button>
   )
 }
 
+var ICE_CREAM_MELTING_STYLE = { display: 'block', margin: '4px auto -2px', width: '40px', height: '40px', objectFit: 'contain' }
+
 function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, onExpandCategory }) {
   var navigate = useNavigate()
 
   var hour = new Date().getHours()
   var timeCallout = hour < 11
-    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
+    ? { category: 'breakfast', icon: '/categories/icons/breakfast.webp', tag: 'good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
     : hour < 18
-      ? { category: 'lobster roll', tag: '\uD83E\uDD9E #1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
-      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
+      ? { category: 'lobster roll', icon: '/categories/icons/lobster-roll.webp', tag: '#1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
+      : { category: 'pizza', icon: '/categories/icons/pizza.webp', tag: 'tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
 
   return (
     <div
@@ -270,6 +279,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
     >
       {/* Board 1: Time of day */}
       <ChalkboardCard
+        icon={timeCallout.icon}
         tag={timeCallout.tag}
         title={timeCallout.title}
         sub={timeCallout.sub}
@@ -281,7 +291,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 2: Top Restaurant */}
       {topRestaurant && (
         <ChalkboardCard
-          tag={'\u2B50 highest rated restaurant'}
+          icon="/categories/icons/star.png"
+          tag={'highest rated restaurant'}
           title={topRestaurant.name}
           sub={'avg dish rating ' + topRestaurant.avg}
           cta={'see the menu \u2192'}
@@ -291,7 +302,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 3: Chowder */}
       <ChalkboardCard
-        tag={'\uD83E\uDD63 the great debate'}
+        icon="/categories/icons/chowder.webp"
+        tag={'the great debate'}
         title="Chowder"
         sub="ranked by the people"
         cta={'see the rankings \u2192'}
@@ -301,7 +313,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 4: Most Talked About */}
       {mostVotedDish && (
         <ChalkboardCard
-          tag={'\uD83D\uDCAC most talked about'}
+          icon="/categories/icons/speech-bubble.png"
+          tag={'most talked about'}
           title={mostVotedDish.dish_name || mostVotedDish.name}
           titleSize="28px"
           sub={mostVotedDish.restaurant_name}
@@ -314,7 +327,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 5: Best Meal Under $15 */}
       {bestValueMeal && (
         <ChalkboardCard
-          tag={'\uD83D\uDCB0 best value'}
+          icon="/categories/icons/money-bag.png"
+          tag={'best value'}
           title={bestValueMeal.dish_name || bestValueMeal.name}
           titleSize="28px"
           sub={bestValueMeal.restaurant_name}
@@ -324,16 +338,18 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
         />
       )}
 
-      {/* Board 6: Best Ice Cream */}
+      {/* Board 6: Best Ice Cream — clean cone top, melting cone bottom */}
       {bestIceCream && (
         <ChalkboardCard
-          tag={'\uD83C\uDF66 island scoops'}
+          icon="/categories/icons/ice-cream-clean.png"
+          tag={'island scoops'}
           title={bestIceCream.dish_name || bestIceCream.name}
           titleSize="28px"
           sub={bestIceCream.restaurant_name}
           stat={(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + Number(bestIceCream.avg_rating || 0).toFixed(1)}
           cta={'best ice cream \u2192'}
           onClick={function () { navigate('/dish/' + bestIceCream.dish_id) }}
+          bottomIcon="/categories/icons/ice-cream-melting.png"
         />
       )}
     </div>
