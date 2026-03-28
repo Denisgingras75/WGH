@@ -77,8 +77,7 @@ export function RestaurantDetail() {
   var wghFoodScore = null
   if (ratedDishes.length > 0) {
     var avgRating = ratedDishes.reduce(function (sum, d) { return sum + Number(d.avg_rating) }, 0) / ratedDishes.length
-    var confidence = Math.min(1.0, totalVotes / 50)
-    wghFoodScore = (avgRating * confidence).toFixed(1)
+    wghFoodScore = avgRating.toFixed(1)
   }
 
   // Fetch review snippets for "What People Are Saying"
