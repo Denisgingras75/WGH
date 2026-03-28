@@ -331,6 +331,59 @@ export function RestaurantDetail() {
         </div>
       </div>
 
+      {/* What People Are Saying — top of page, first thing you see */}
+      {reviewSnippets.length > 0 && (
+        <div className="px-4 pt-2 pb-3">
+          <h3
+            className="font-semibold mb-2"
+            style={{
+              fontFamily: "'Amatic SC', cursive",
+              fontSize: '22px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            What People Are Saying
+          </h3>
+          <div className="space-y-2">
+            {reviewSnippets.map(function (review, i) {
+              return (
+                <div
+                  key={i}
+                  style={{
+                    padding: '10px 14px',
+                    background: 'var(--color-card)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--color-divider)',
+                  }}
+                >
+                  <p style={{
+                    fontSize: '13px',
+                    color: 'var(--color-text-secondary)',
+                    fontStyle: 'italic',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}>
+                    &ldquo;{review.review_text}&rdquo;
+                  </p>
+                  <p style={{
+                    fontSize: '11px',
+                    color: 'var(--color-text-tertiary)',
+                    marginTop: '4px',
+                  }}>
+                    on <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{review.dish_name}</span>
+                    {review.rating != null && (
+                      <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}/10</span></span>
+                    )}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Restaurant Details Card */}
       <div className="px-4 py-4 relative" style={{ background: 'var(--color-bg)' }}>
         <div
@@ -489,63 +542,6 @@ export function RestaurantDetail() {
           searchQuery={dishSearchQuery}
           menuSectionOrder={restaurant?.menu_section_order || []}
         />
-      )}
-
-      {/* What People Are Saying */}
-      {reviewSnippets.length > 0 && (
-        <div className="px-4 py-4">
-          <div
-            className="mb-3 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)' }}
-          />
-          <h3
-            className="font-semibold mb-3"
-            style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '24px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            What People Are Saying
-          </h3>
-          <div className="space-y-3">
-            {reviewSnippets.map(function (review, i) {
-              return (
-                <div
-                  key={i}
-                  style={{
-                    padding: '12px 14px',
-                    background: 'var(--color-card)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--color-divider)',
-                  }}
-                >
-                  <p style={{
-                    fontSize: '13px',
-                    color: 'var(--color-text-secondary)',
-                    fontStyle: 'italic',
-                    lineHeight: 1.5,
-                    margin: 0,
-                  }}>
-                    &ldquo;{review.review_text}&rdquo;
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'var(--color-text-tertiary)',
-                    marginTop: '6px',
-                  }}>
-                    on <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{review.dish_name}</span>
-                    {review.rating != null && (
-                      <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}/10</span></span>
-                    )}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       )}
 
       {/* Happening Here - Specials & Events */}
