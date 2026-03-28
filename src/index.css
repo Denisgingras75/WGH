@@ -880,6 +880,27 @@
   to { transform: rotate(360deg); }
 }
 
+/* Ice cream drip animation — melting from chalkboard */
+@keyframes iceDrip {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.25); }
+}
+
+@keyframes iceDripSlow {
+  0%, 100% { transform: scaleY(1); }
+  60% { transform: scaleY(1.15); }
+}
+
+@keyframes iceDroplet {
+  0%, 85% { opacity: 0; transform: translateY(0) scale(0.5); }
+  90% { opacity: 0.7; transform: translateY(2px) scale(1); }
+  100% { opacity: 0; transform: translateY(8px) scale(0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ice-drip, .ice-droplet { animation: none !important; }
+}
+
 .photo-upload-error-container {
   margin-top: 12px;
   text-align: center;
