@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     // Call Google Places Details (New) API
-    const fields = 'displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,googleMapsUri,menuUri'
+    const fields = 'displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,googleMapsUri,menuUri,rating,userRatingCount'
     const url = `https://places.googleapis.com/v1/places/${placeId}?languageCode=en`
 
     const response = await fetch(url, {
@@ -72,6 +72,8 @@ serve(async (req) => {
       websiteUrl: data.websiteUri || null,
       menuUrl: data.menuUri || null,
       googleMapsUrl: data.googleMapsUri || null,
+      googleRating: data.rating || null,
+      googleReviewCount: data.userRatingCount || null,
     }
 
     return new Response(JSON.stringify(details), {

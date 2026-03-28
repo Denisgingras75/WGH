@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { shareOrCopy } from '../utils/share'
 import { restaurantsApi } from '../api/restaurantsApi'
+import { placesApi } from '../api/placesApi'
 import { followsApi } from '../api/followsApi'
 import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
@@ -68,6 +69,31 @@ export function RestaurantDetail() {
   const { dishes, loading: dishesLoading, error: dishesError, refetch } = useDishes(
     location, radius, null, restaurantId
   )
+
+  // Compute WGH Food Score — aggregated from dish ratings
+  var ratedDishes = (dishes || []).filter(function (d) { return d.avg_rating != null && (d.total_votes || 0) > 0 })
+  var totalVotes = ratedDishes.reduce(function (sum, d) { return sum + (d.total_votes || 0) }, 0)
+  var wghFoodScore = null
+  if (ratedDishes.length > 0) {
+    var avgRating = ratedDishes.reduce(function (sum, d) { return sum + Number(d.avg_rating) }, 0) / ratedDishes.length
+    var confidence = Math.min(1.0, totalVotes / 50)
+    wghFoodScore = (avgRating * confidence).toFixed(1)
+  }
+
+  // Fetch Google rating if restaurant has a google_place_id
+  var [googleRating, setGoogleRating] = useState(null)
+  useEffect(function () {
+    if (!restaurant || !restaurant.google_place_id) return
+    placesApi.getDetails(restaurant.google_place_id)
+      .then(function (details) {
+        if (details && details.googleRating) {
+          setGoogleRating({ rating: details.googleRating, count: details.googleReviewCount })
+        }
+      })
+      .catch(function (err) {
+        logger.error('Failed to fetch Google rating:', err)
+      })
+  }, [restaurant])
 
   // Auto-detect best default tab: Menu if no votes yet, Top Rated if votes exist
   useEffect(() => {
@@ -239,6 +265,40 @@ export function RestaurantDetail() {
                 <span> · {restaurant.distance_miles} mi away</span>
               )}
             </p>
+            {/* Scores row */}
+            {(wghFoodScore || googleRating) && (
+              <div className="flex items-center gap-4" style={{ marginTop: '6px' }}>
+                {wghFoodScore && (
+                  <div className="flex items-center gap-1.5">
+                    <span style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: 'var(--color-rating)',
+                    }}>
+                      {wghFoodScore}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+                      WGH · {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+                    </span>
+                  </div>
+                )}
+                {googleRating && (
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: '14px' }}>⭐</span>
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: 'var(--color-text-primary)',
+                    }}>
+                      {googleRating.rating}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+                      Google{googleRating.count ? ' · ' + googleRating.count : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={async () => {
