@@ -12,6 +12,7 @@
     },
     { "source": "/logo-concepts.html", "destination": "/logo-concepts.html" },
     { "source": "/profile-redesign.html", "destination": "/profile-redesign.html" },
+    { "source": "/profile-soul.html", "destination": "/profile-soul.html" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
