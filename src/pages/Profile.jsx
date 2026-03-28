@@ -208,6 +208,66 @@ export function Profile() {
             jitterProfile={jitterProfile}
           />
 
+          {/* Food Story chalkboard — your food identity at a glance */}
+          {stats.totalVotes > 0 && (
+            <div style={{ padding: '12px 16px 0' }}>
+              <div
+                style={{
+                  background: '#2C3033',
+                  borderRadius: '12px',
+                  padding: '18px',
+                  backgroundImage: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 60%)',
+                }}
+              >
+                <h3 style={{
+                  fontFamily: "'Amatic SC', cursive",
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '10px',
+                }}>
+                  Your Food Story
+                </h3>
+                {/* Rating style */}
+                {stats.ratingStyle && (
+                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Rating style</span>
+                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                      {stats.ratingStyle.label}
+                    </span>
+                  </div>
+                )}
+                {/* Most loyal */}
+                {stats.favoriteRestaurant && (
+                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Most loyal</span>
+                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                      {stats.favoriteRestaurant} &middot; {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'}
+                    </span>
+                  </div>
+                )}
+                {/* Best find */}
+                {stats.standoutPicks && stats.standoutPicks.bestFind && (
+                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Best find</span>
+                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-accent-gold)' }}>
+                      {stats.standoutPicks.bestFind.dish_name} &middot; {stats.standoutPicks.bestFind.userRating}
+                    </span>
+                  </div>
+                )}
+                {/* Hot take */}
+                {stats.standoutPicks && stats.standoutPicks.harshestTake && (
+                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Hot take</span>
+                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                      {stats.standoutPicks.harshestTake.dish_name} &middot; You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Unrated Photos Banner - shown when user has photos to rate */}
           {unratedCount > 0 && (
             <div className="px-4 py-4" style={{ background: 'var(--color-surface)' }}>
