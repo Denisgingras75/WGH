@@ -117,7 +117,8 @@ export function Map() {
   var searchLoading = searchData.loading
 
   // Ranked dishes — single source of truth for both modes
-  var rankedData = useDishes(location, radius, selectedCategory, null, null)
+  // Always fetch ALL dishes — carousel does client-side category filtering
+  var rankedData = useDishes(location, radius, null, null, null)
   var rankedDishes = rankedData.dishes
   var rankedLoading = rankedData.loading || rankedData.isFetching
 
