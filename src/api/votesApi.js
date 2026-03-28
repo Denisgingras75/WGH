@@ -474,6 +474,53 @@ export const votesApi = {
     }
   },
 
+  /**
+   * Get the best review snippets across all dishes at a restaurant.
+   * Returns reviews with dish name, sorted by rating (highest first).
+   */
+  async getReviewsForRestaurant(restaurantId, { limit = 5 } = {}) {
+    try {
+      if (!restaurantId) return []
+
+      const { data, error } = await supabase
+        .from('votes')
+        .select(`
+          id,
+          review_text,
+          rating_10,
+          would_order_again,
+          dish_id,
+          dishes!inner (
+            id,
+            name,
+            restaurant_id
+          )
+        `)
+        .eq('dishes.restaurant_id', restaurantId)
+        .not('review_text', 'is', null)
+        .neq('review_text', '')
+        .order('rating_10', { ascending: false })
+        .range(0, limit - 1)
+
+      if (error) {
+        logger.error('Error fetching reviews for restaurant:', error)
+        return []
+      }
+
+      return (data || []).map(function (v) {
+        return {
+          review_text: v.review_text,
+          rating: v.rating_10,
+          would_order_again: v.would_order_again,
+          dish_name: v.dishes ? v.dishes.name : '',
+        }
+      })
+    } catch (error) {
+      logger.error('Error fetching reviews for restaurant:', error)
+      return []
+    }
+  },
+
   async getReviewsForUser(userId, { limit = 20, offset = 0 } = {}) {
     try {
       if (!userId) {
