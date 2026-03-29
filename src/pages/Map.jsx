@@ -128,7 +128,10 @@ export function Map() {
 
   var allRanked = rankedDishes || []
   var listDishes = selectedCategory ? allRanked.slice(0, listLimit) : allRanked.slice(0, 10)
-  var mapDishes = allRanked.slice(0, 10)
+  // Map pins: filter by selected category (from carousel) or show top 10
+  var mapDishes = selectedCategory
+    ? allRanked.filter(function (d) { return d.category && d.category.toLowerCase() === selectedCategory.toLowerCase() }).slice(0, 20)
+    : allRanked.slice(0, 10)
 
   // Expanded category dishes for map — only fetch when a category is actually expanded
   var expandedCategoryData = useDishes(

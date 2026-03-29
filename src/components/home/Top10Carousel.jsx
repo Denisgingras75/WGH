@@ -205,8 +205,10 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
           width: '100%',
         }}
       >
-        {CAROUSEL_TABS.map(function (tab) {
-          var allTabDishes = getAllDishesForTab(tab)
+        {CAROUSEL_TABS.map(function (tab, tabIndex) {
+          // Only render content for active page ± 1 neighbor (lazy rendering)
+          var isNearActive = Math.abs(tabIndex - activeIndex) <= 1
+          var allTabDishes = isNearActive ? getAllDishesForTab(tab) : []
           var tabLimit = getLimit(tab.id)
           var visibleDishes = allTabDishes.slice(0, tabLimit)
           var hasMore = allTabDishes.length > tabLimit
@@ -224,7 +226,9 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                 boxSizing: 'border-box',
               }}
             >
-              {visibleDishes.length > 0 ? (
+              {!isNearActive ? (
+                <div style={{ minHeight: '200px' }} />
+              ) : visibleDishes.length > 0 ? (
                 <>
                   {visibleDishes.map(function (dish, i) {
                     return (
