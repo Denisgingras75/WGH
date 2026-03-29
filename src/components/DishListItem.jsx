@@ -7,6 +7,7 @@ import { RestaurantAvatar } from './RestaurantAvatar'
 import { ThumbsUpIcon } from './ThumbsUpIcon'
 import { ThumbsDownIcon } from './ThumbsDownIcon'
 import { HearingIcon } from './HearingIcon'
+import { sanitizeUrl } from '../utils/sanitize'
 /**
  * DishListItem — the ONE component for showing a dish in any list.
  *
@@ -196,11 +197,11 @@ export const DishListItem = memo(function DishListItem({
           </p>
         </div>
         {/* Action buttons — Order / Directions */}
-        {(toastSlug || orderUrl || restaurantLat) && (
+        {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
           <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
-            {(toastSlug || orderUrl) && (
+            {(toastSlug || sanitizeUrl(orderUrl)) && (
               <a
-                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : orderUrl}
+                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : sanitizeUrl(orderUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}

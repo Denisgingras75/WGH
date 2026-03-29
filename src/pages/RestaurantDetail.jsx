@@ -431,9 +431,9 @@ export function RestaurantDetail() {
                   {restaurant.phone}
                 </a>
               )}
-              {restaurant.website_url && (
+              {sanitizeUrl(restaurant.website_url) && (
                 <a
-                  href={restaurant.website_url}
+                  href={sanitizeUrl(restaurant.website_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -445,9 +445,9 @@ export function RestaurantDetail() {
                   Website
                 </a>
               )}
-              {restaurant.facebook_url && (
+              {sanitizeUrl(restaurant.facebook_url) && (
                 <a
-                  href={restaurant.facebook_url}
+                  href={sanitizeUrl(restaurant.facebook_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -459,9 +459,9 @@ export function RestaurantDetail() {
                   Facebook
                 </a>
               )}
-              {restaurant.instagram_url && (
+              {sanitizeUrl(restaurant.instagram_url) && (
                 <a
-                  href={restaurant.instagram_url}
+                  href={sanitizeUrl(restaurant.instagram_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -595,9 +595,9 @@ export function RestaurantDetail() {
         }}
       >
         <div className="flex gap-2 pb-2">
-          {(restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) && (
+          {(restaurant.toast_slug || sanitizeUrl(restaurant.order_url)) && (
             <a
-              href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : restaurant.order_url}
+              href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : sanitizeUrl(restaurant.order_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
@@ -619,7 +619,7 @@ export function RestaurantDetail() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className={((restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
+            className={((restaurant.toast_slug || sanitizeUrl(restaurant.order_url)) ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
             style={{
               background: 'var(--color-accent-gold)',
               color: 'var(--color-bg)',
