@@ -5,19 +5,15 @@ import { useLocalLists } from '../../hooks/useLocalLists'
 import { useLocalListDetail } from '../../hooks/useLocalListDetail'
 import { DishListItem } from '../DishListItem'
 
-function ExpandableListCard({ list, onListExpanded }) {
-  var [expanded, setExpanded] = useState(false)
+function ExpandableListCard({ list, expanded, onToggle, onListExpanded }) {
   var navigate = useNavigate()
   var { items, loading } = useLocalListDetail(expanded ? list.user_id : null)
 
-  // Notify parent when list expands/collapses so map can show these dishes
+  // Notify parent when items load for the expanded list
   useEffect(function () {
-    if (onListExpanded) {
-      if (expanded && items.length > 0) {
-        onListExpanded(items, list.display_name)
-      } else if (!expanded) {
-        onListExpanded(null, null)
-      }
+    if (!onListExpanded) return
+    if (expanded && items.length > 0) {
+      onListExpanded(items, list.display_name)
     }
   }, [expanded, items])
 
@@ -36,7 +32,7 @@ function ExpandableListCard({ list, onListExpanded }) {
     >
       {/* Header — tap to expand/collapse */}
       <button
-        onClick={function () { setExpanded(!expanded) }}
+        onClick={function () { onToggle(list.list_id) }}
         className="w-full text-left active:scale-[0.98]"
         style={{
           padding: '14px 16px',
@@ -194,6 +190,15 @@ function ExpandableListCard({ list, onListExpanded }) {
 export function LocalListsSection({ onListExpanded }) {
   var { user } = useAuth()
   var { lists, loading } = useLocalLists(user ? user.id : null)
+  var [expandedListId, setExpandedListId] = useState(null)
+
+  function handleToggle(listId) {
+    var nextId = expandedListId === listId ? null : listId
+    setExpandedListId(nextId)
+    if (nextId === null && onListExpanded) {
+      onListExpanded(null, null)
+    }
+  }
 
   if (loading || lists.length === 0) return null
 
@@ -221,7 +226,15 @@ export function LocalListsSection({ onListExpanded }) {
       {/* Expandable cards */}
       <div className="px-4 flex flex-col" style={{ gap: '10px' }}>
         {lists.map(function (list) {
-          return <ExpandableListCard key={list.list_id} list={list} onListExpanded={onListExpanded} />
+          return (
+            <ExpandableListCard
+              key={list.list_id}
+              list={list}
+              expanded={expandedListId === list.list_id}
+              onToggle={handleToggle}
+              onListExpanded={onListExpanded}
+            />
+          )
         })}
       </div>
     </div>
