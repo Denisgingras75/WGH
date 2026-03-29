@@ -4,6 +4,7 @@ import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { shareOrCopy } from '../utils/share'
+import { sanitizeUrl } from '../utils/sanitize'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { placesApi } from '../api/placesApi'
 import { votesApi } from '../api/votesApi'
@@ -84,6 +85,7 @@ export function RestaurantDetail() {
   var [reviewSnippets, setReviewSnippets] = useState([])
   useEffect(function () {
     if (!restaurantId) return
+    setReviewSnippets([])
     votesApi.getReviewsForRestaurant(restaurantId, { limit: 5 })
       .then(setReviewSnippets)
       .catch(function (err) {
@@ -94,6 +96,7 @@ export function RestaurantDetail() {
   // Fetch Google rating if restaurant has a google_place_id
   var [googleRating, setGoogleRating] = useState(null)
   useEffect(function () {
+    setGoogleRating(null)
     if (!restaurant || !restaurant.google_place_id) return
     placesApi.getDetails(restaurant.google_place_id)
       .then(function (details) {
