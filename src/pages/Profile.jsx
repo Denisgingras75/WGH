@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { authApi } from '../api/authApi'
 import { followsApi } from '../api/followsApi'
-import { votesApi } from '../api/votesApi'
 import { useProfile } from '../hooks/useProfile'
 import { useUserVotes } from '../hooks/useUserVotes'
 import { useUnratedDishes } from '../hooks/useUnratedDishes'
@@ -93,12 +92,6 @@ export function Profile() {
     return () => { clearTimeout(timer); cancelled = true }
   }, [newName, editingName, profile?.display_name])
 
-  const { data: userReviews = [] } = useQuery({
-    queryKey: ['userReviews', user?.id],
-    queryFn: () => votesApi.getReviewsForUser(user.id),
-    enabled: !!user,
-  })
-
   const handleSaveName = async () => {
     // Don't save if name is taken
     if (nameStatus === 'taken') {
@@ -115,20 +108,6 @@ export function Profile() {
       logger.error('Profile: failed to save display name', error)
     }
   }
-
-  // Enrich worthIt/avoid dishes with review text for journal cards
-  const enrichedWorthIt = useMemo(function () {
-    return worthItDishes.map(function (dish) {
-      var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
-      return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
-    })
-  }, [worthItDishes, userReviews])
-  const enrichedAvoid = useMemo(function () {
-    return avoidDishes.map(function (dish) {
-      var review = userReviews.find(function (r) { return r.dish_id === dish.dish_id })
-      return review ? Object.assign({}, dish, { review_text: review.review_text }) : dish
-    })
-  }, [avoidDishes, userReviews])
 
   // Handle vote from unrated dish
   const handleVote = async () => {
@@ -294,8 +273,8 @@ export function Profile() {
 
           {/* Journal Feed */}
           <JournalFeed
-            worthIt={enrichedWorthIt}
-            avoid={enrichedAvoid}
+            worthIt={worthItDishes}
+            avoid={avoidDishes}
             activeShelf="all"
             loading={votesLoading}
           />

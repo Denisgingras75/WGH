@@ -185,6 +185,7 @@ export const votesApi = {
           id,
           would_order_again,
           rating_10,
+          review_text,
           created_at,
           dishes (
             id,
