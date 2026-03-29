@@ -80,9 +80,12 @@ export const DishListItem = memo(function DishListItem({
   var isPodium = rank != null && rank <= 3
 
   return (
-    <button
+    <div
       data-dish-id={dishId}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
       className={'w-full text-left active:scale-[0.98]' + (isPodium ? ' rounded-xl' : '')}
       style={{
         background: highlighted
@@ -271,7 +274,7 @@ export const DishListItem = memo(function DishListItem({
       </div>
       </div>
 
-    </button>
+    </div>
   )
 
   // --- VOTED CARD RENDERER ---
