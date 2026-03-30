@@ -333,6 +333,33 @@ WHERE price IS NOT NULL AND price > 0 AND total_votes >= 8
 GROUP BY category;
 
 
+-- 1v-b. public_votes (view)
+-- Exposes only the fields the app needs for display. Excludes anti-abuse internals:
+-- purity_score, war_score, badge_hash, source_metadata.
+--
+-- MIGRATION NOTE: Components and hooks that query the votes table directly should
+-- migrate to use this view instead. The underlying "Public read access" RLS policy
+-- on votes still allows full table access — tighten that policy once all callers
+-- have migrated to public_votes.
+--
+-- To migrate a caller:
+--   1. Change the table reference from `votes` to `public_votes`
+--   2. Remove any references to excluded columns
+--   3. Once all callers are migrated, drop or restrict the RLS policy on votes
+CREATE OR REPLACE VIEW public_votes
+WITH (security_invoker = true) AS
+SELECT
+  id,
+  dish_id,
+  would_order_again,
+  rating_10,
+  review_text,
+  review_created_at,
+  user_id,
+  source
+FROM votes;
+
+
 -- =============================================
 -- 2. INDEXES
 -- =============================================
@@ -2352,9 +2379,10 @@ CREATE POLICY "local_lists_admin_delete"
 -- RLS for local_list_items
 ALTER TABLE local_list_items ENABLE ROW LEVEL SECURITY;
 
+-- Only expose items whose parent list is active. Prevents leaking unpublished curator drafts.
 CREATE POLICY "local_list_items_public_read"
   ON local_list_items FOR SELECT
-  USING (true);
+  USING (EXISTS (SELECT 1 FROM local_lists ll WHERE ll.id = list_id AND ll.is_active = true));
 
 CREATE POLICY "local_list_items_admin_insert"
   ON local_list_items FOR INSERT
