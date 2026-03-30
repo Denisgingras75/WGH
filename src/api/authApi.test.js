@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { clearRateLimit } from '../lib/rateLimiter'
 import { authApi } from '../api'
 
 // Mock supabase
@@ -22,6 +23,7 @@ import { supabase } from '../lib/supabase'
 describe('Auth API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clearRateLimit('auth')
   })
 
   afterEach(() => {
