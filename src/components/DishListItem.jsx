@@ -157,7 +157,7 @@ export const DishListItem = memo(function DishListItem({
           className="flex-shrink-0 rounded-lg overflow-hidden relative"
           style={{ width: '48px', height: '48px', marginLeft: '6px' }}
         >
-          <RestaurantAvatar name={restaurantName} town={restaurantTown} fill />
+          <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill />
         </div>
       )}
 
@@ -317,7 +317,7 @@ export const DishListItem = memo(function DishListItem({
                 loading="lazy"
               />
             ) : (
-              <RestaurantAvatar name={restaurantName} town={restaurantTown} fill className="absolute inset-0" />
+              <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill className="absolute inset-0" />
             )}
           </div>
 
