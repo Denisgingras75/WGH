@@ -19,6 +19,7 @@ import { logger } from '../utils/logger'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
 import { PhotoUploadButton } from './PhotoUploadButton'
 import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
+import { validateUserContent } from '../lib/reviewBlocklist'
 
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
   const { user } = useAuth()
@@ -157,6 +158,14 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     if (reviewText.length > MAX_REVIEW_LENGTH) {
       setReviewError(`${reviewText.length - MAX_REVIEW_LENGTH} characters over limit`)
       return
+    }
+    // Validate review content against blocklist
+    if (reviewText.trim()) {
+      const contentError = validateUserContent(reviewText, 'Review')
+      if (contentError) {
+        setReviewError(contentError)
+        return
+      }
     }
     setReviewError(null)
     await doSubmit(reviewText.trim() || null)

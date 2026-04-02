@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { createClassifiedError } from '../utils/errorHandler'
+import { validateUserContent } from '../lib/reviewBlocklist'
 import { logger } from '../utils/logger'
 
 /**
@@ -80,6 +81,12 @@ export const profileApi = {
 
       if (!user) {
         throw new Error('You must be logged in to update your profile')
+      }
+
+      // Validate display name against content blocklist
+      if (updates.display_name) {
+        const contentError = validateUserContent(updates.display_name, 'Display name')
+        if (contentError) throw new Error(contentError)
       }
 
       const { data, error } = await supabase
