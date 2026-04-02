@@ -219,7 +219,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
                     <span
                       className="text-xs font-medium px-1.5 py-0.5 rounded"
                       style={{
-                        background: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-bg))',
+                        background: 'rgba(var(--color-primary-rgb), 0.15)',
                         color: 'var(--color-primary)',
                       }}
                     >

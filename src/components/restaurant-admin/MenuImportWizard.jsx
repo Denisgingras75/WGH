@@ -140,7 +140,7 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
             className="flex items-center gap-2 p-2 rounded-lg border"
             style={{
               borderColor: selected[i] ? 'var(--color-primary)' : 'var(--color-divider)',
-              background: selected[i] ? 'color-mix(in srgb, var(--color-primary) 5%, var(--color-surface))' : 'var(--color-surface)',
+              background: selected[i] ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
             }}
           >
             <input type="checkbox" checked={!!selected[i]} onChange={() => toggleDish(i)} className="shrink-0" />

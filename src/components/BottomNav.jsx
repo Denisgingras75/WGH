@@ -40,7 +40,7 @@ export function BottomNav() {
       aria-label="Main navigation"
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
-        background: 'color-mix(in srgb, var(--color-bg) 85%, transparent)',
+        background: 'rgba(var(--color-bg-rgb), 0.85)',
         backdropFilter: 'blur(16px) saturate(180%)',
         WebkitBackdropFilter: 'blur(16px) saturate(180%)',
         borderTop: '2px solid var(--color-divider)',

@@ -94,6 +94,14 @@
   --color-tier-community: #3B82F6;
   --color-tier-hidden: #6B7280;
 
+  /* RGB components for rgba() usage (Safari <16.2 compat — replaces color-mix) */
+  --color-danger-rgb: 220, 38, 38;
+  --color-success-rgb: 22, 163, 74;
+  --color-primary-rgb: 228, 68, 10;
+  --color-accent-gold-rgb: 196, 138, 18;
+  --color-rating-rgb: 22, 163, 74;
+  --color-bg-rgb: 240, 236, 232;
+
   /* Glow effects */
   --glow-primary: 0 0 10px rgba(228, 68, 10, 0.15);
   --glow-gold: 0 0 8px rgba(196, 138, 18, 0.20);

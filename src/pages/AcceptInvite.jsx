@@ -79,7 +79,7 @@ export function AcceptInvite() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
             <span className="text-2xl">!</span>
           </div>
           <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -103,7 +103,7 @@ export function AcceptInvite() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
       <div className="text-center max-w-md px-6">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-primary) 20%, var(--color-bg))' }}>
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-primary-rgb), 0.2)' }}>
           <span className="text-2xl">🏪</span>
         </div>
         <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
