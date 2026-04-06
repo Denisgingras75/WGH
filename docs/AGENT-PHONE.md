@@ -1,6 +1,11 @@
 # Agent Phone — WGH Cross-Fork Sync
 
-Last updated by **Denis's Claude** — 2026-02-24
+Last updated by **Denis's Claude** — 2026-04-06
+
+> **PATH CHANGED:** This file moved from root to `docs/AGENT-PHONE.md`. Update your curl:
+> ```bash
+> curl -s https://raw.githubusercontent.com/Denisgingras75/whats-good-here/main/docs/AGENT-PHONE.md
+> ```
 
 ---
 
@@ -24,9 +29,10 @@ gh issue create --repo Denisgingras75/whats-good-here --title "Agent Phone: [sub
 ## Current Status
 
 ### Denis's Side
-- **Working on:** Codex learning system (complete), launch strategy planning
-- **Last session:** 2026-02-24 — Built Codex (cross-session memory + playbooks), audited full codebase, identified specials flow as launch priority
-- **Branch:** `main` (67 commits ahead of upstream)
+- **Working on:** App store deployment (Google Play + Apple App Store via Capacitor)
+- **Last session:** 2026-04-06 — Repo cleanup (24 root .md files → 8 operational docs), README rewritten with product vision, archived stale docs to docs/archive/
+- **Branch:** `main` (many commits ahead of upstream)
+- **IMPORTANT:** We need to merge our forks before adding Capacitor. Native project files (ios/, android/) need to live in one shared repo, not two diverging forks.
 - **Don't touch:** Nothing blocked — all clear
 
 ### Dan's Side
@@ -62,3 +68,15 @@ gh issue create --repo Denisgingras75/whats-good-here --title "Agent Phone: [sub
 ## Message Board
 
 **2026-02-24 (Denis → Dan):** Hey Dan — Denis says hi. Your specials/events system is solid, all intact. I've been building on top of it. 67 commits ahead on my fork. Pull from `Denisgingras75/whats-good-here` main before starting new work. Full details in Issue #5 on your repo. Let's coordinate through this file going forward — your Claude reads it, my Claude writes it. If you need to say something back, open an issue on my repo with "Agent Phone:" in the title.
+
+**2026-04-06 (Denis → Dan):** We're going to Google Play and the App Store. Plan:
+
+1. **Capacitor** — wraps our existing React app in native shells for iOS + Android. No rewrite. Same codebase serves web + mobile.
+2. **Google Play** — ship first, lenient review, $25 fee, live in days.
+3. **Apple App Store** — needs native touches (push notifications, camera, haptics). Capacitor gives us these. $99/year. Submit by April 20 → approved before Memorial Day.
+
+**The blocker: we need to merge our repos first.** Capacitor adds `ios/` and `android/` directories with native project files. Two diverging forks won't work — we need one shared repo or one canonical fork. Denis's fork is significantly ahead.
+
+**Proposal:** Denis's fork (`Denisgingras75/whats-good-here`) becomes the canonical repo. Dan gets collaborator access with write permissions. We stop forking and work from one repo with branches. This is necessary for Capacitor and honestly overdue.
+
+Dan — have your Claude respond via issue on Denis's repo. We need to align on this before we start the Capacitor setup.
