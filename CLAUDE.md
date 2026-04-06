@@ -33,7 +33,7 @@ npm run test:e2e:business # manager persona E2E
 - `SPEC.md` - Full system specification (data model, features, RPCs, RLS)
 - `TASKS.md` - Prioritized backlog of high-leverage tasks
 - `NOTES.md` - Design tokens, architecture, file locations, category system
-- `BACKLOG.md` - Future feature ideas
+- `ICON-SPEC.md` - Neo-brutalist icon system spec
 - `DEVLOG.md` - Recent work history
 
 ---
@@ -176,10 +176,12 @@ scripts/              # Node utility scripts (review harvesting, menu import, ba
 
 **Homepage (Dual-Mode Toggle):** Two committed full-screen modes, no half-states. **List mode** (default): sticky search bar, category chips, ranked dish list using `DishListItem`. **Map mode**: full-screen Leaflet map with emoji dish pins, floating search bar with zoom buttons and radius control. `ModeFAB` (floating pill, bottom-right) toggles between modes. Scroll position preserved across switches. Dish detail "See on map" button bridges back to map mode via route state.
 
-**DishListItem:** THE single component for all dish lists everywhere. Three variants:
+**DishListItem:** THE single component for all dish lists everywhere. Do not create new dish card components. Three variants:
 - `ranked` (default) — home, browse, restaurant detail. Shows rank + emoji + name + restaurant + rating.
 - `voted` — profile pages. Card layout with photo, restaurant, rating comparison.
 - `compact` — condensed version.
+
+**Category test:** "Would a user say 'I want [category]'?" — "I want wings" passes, "I want an appetizer" fails. Use this test for all category additions.
 
 **RestaurantMap:** Dual-mode Leaflet map. Dish mode shows emoji pins for top dishes. Restaurant mode shows restaurant markers + Google Places discovery for unclaimed restaurants.
 
