@@ -252,10 +252,9 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         has_order_url: !!orderUrl,
       })
 
-      // Fire-and-forget: auto-import menu if restaurant has a menu URL
-      if (menuUrl) {
-        restaurantsApi.refreshMenu(restaurant.id)
-      }
+      // Fire-and-forget: auto-discover website + import menu
+      // Edge Function handles everything: Google Places lookup → website probe → menu extraction
+      restaurantsApi.refreshMenu(restaurant.id)
 
       // Optionally create first dish
       if (dishName.trim() && dishCategory) {

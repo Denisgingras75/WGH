@@ -170,6 +170,76 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+const GOOGLE_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')
+
+const MENU_PATHS = [
+  '/menu', '/menus', '/food-menu', '/dinner-menu', '/food',
+  '/food-drink', '/food--drinks', '/eat', '/dining', '/our-menu',
+]
+
+/**
+ * Probe a website for common menu URL paths (HEAD requests)
+ */
+async function findMenuUrl(websiteUrl: string): Promise<string | null> {
+  if (!websiteUrl) return null
+  let base = websiteUrl.replace(/\/+$/, '')
+  if (!base.startsWith('http')) base = 'https://' + base
+
+  for (const path of MENU_PATHS) {
+    const candidate = base + path
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(candidate, {
+        method: 'HEAD',
+        signal: controller.signal,
+        redirect: 'follow',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-Bot/1.0)' },
+      })
+      clearTimeout(timeout)
+      if (res.ok) return candidate
+    } catch {
+      // skip
+    }
+  }
+  return null
+}
+
+/**
+ * Search Google Places for a restaurant by name + address to find its website
+ */
+async function findWebsiteViaGoogle(name: string, address: string): Promise<{ websiteUrl: string | null; googlePlaceId: string | null }> {
+  if (!GOOGLE_API_KEY) return { websiteUrl: null, googlePlaceId: null }
+
+  try {
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.websiteUri',
+      },
+      body: JSON.stringify({
+        textQuery: `${name} ${address}`,
+        maxResultCount: 1,
+      }),
+    })
+
+    if (!response.ok) return { websiteUrl: null, googlePlaceId: null }
+
+    const data = await response.json()
+    const place = data.places?.[0]
+    if (!place) return { websiteUrl: null, googlePlaceId: null }
+
+    return {
+      websiteUrl: place.websiteUri || null,
+      googlePlaceId: place.id || null,
+    }
+  } catch {
+    return { websiteUrl: null, googlePlaceId: null }
+  }
+}
+
 /**
  * Simple content hash — if the page hasn't changed, skip the Claude call
  */
@@ -411,21 +481,68 @@ serve(async (req) => {
     let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
 
     if (body.restaurant_id) {
-      // Single restaurant mode
+      // Single restaurant mode — auto-discover menu URL if missing
       const { data, error } = await supabase
         .from('restaurants')
-        .select('id, name, menu_url, menu_content_hash')
-        .eq('id', body.restaurant_id)
-        .not('menu_url', 'is', null)
+        .select('id, name, address, menu_url, website_url, google_place_id, menu_content_hash')
+        .eq('id', body.restaurant_id as string)
         .single()
 
       if (error || !data) {
-        return new Response(JSON.stringify({ error: 'Restaurant not found or no menu_url' }), {
+        return new Response(JSON.stringify({ error: 'Restaurant not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      restaurants = [data]
+
+      let menuUrl = data.menu_url
+      let websiteUrl = data.website_url
+      let googlePlaceId = data.google_place_id
+      const dbUpdates: Record<string, unknown> = {}
+
+      // Step 1: If no website, try Google Places text search
+      if (!websiteUrl && !menuUrl) {
+        console.log(`${data.name}: no website or menu URL — searching Google Places`)
+        const googleResult = await findWebsiteViaGoogle(data.name, data.address || '')
+        if (googleResult.websiteUrl) {
+          websiteUrl = googleResult.websiteUrl
+          dbUpdates.website_url = websiteUrl
+          console.log(`${data.name}: found website via Google: ${websiteUrl}`)
+        }
+        if (googleResult.googlePlaceId && !googlePlaceId) {
+          googlePlaceId = googleResult.googlePlaceId
+          dbUpdates.google_place_id = googlePlaceId
+        }
+      }
+
+      // Step 2: If no menu URL but have website, probe for menu paths
+      if (!menuUrl && websiteUrl) {
+        console.log(`${data.name}: probing website for menu URL...`)
+        const found = await findMenuUrl(websiteUrl)
+        if (found) {
+          menuUrl = found
+          dbUpdates.menu_url = menuUrl
+          console.log(`${data.name}: found menu at ${menuUrl}`)
+        }
+      }
+
+      // Save any discovered URLs back to the restaurant
+      if (Object.keys(dbUpdates).length > 0) {
+        await supabase.from('restaurants').update(dbUpdates).eq('id', data.id)
+      }
+
+      if (!menuUrl) {
+        return new Response(JSON.stringify({
+          message: 'No menu URL found',
+          restaurant: data.name,
+          website_discovered: websiteUrl || null,
+          google_place_id_discovered: googlePlaceId || null,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      restaurants = [{ id: data.id, name: data.name, menu_url: menuUrl, menu_content_hash: data.menu_content_hash }]
     } else {
       // Batch mode: find stale menus
       const staleDate = new Date()
