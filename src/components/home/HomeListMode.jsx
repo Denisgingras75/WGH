@@ -43,7 +43,8 @@ export const HomeListMode = memo(function HomeListMode({
       var el = document.getElementById('top10-carousel')
       if (el) {
         var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+        var offset = el.getBoundingClientRect().top + window.scrollY - 8
+        window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
       }
     }, 100)
   }, [onExpandedCategoryChange])
@@ -189,7 +190,8 @@ export const HomeListMode = memo(function HomeListMode({
                   var el = document.getElementById('top10-carousel')
                   if (el) {
                     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+                    var offset = el.getBoundingClientRect().top + window.scrollY - 8
+                    window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
                   }
                 }, 100)
               }}
