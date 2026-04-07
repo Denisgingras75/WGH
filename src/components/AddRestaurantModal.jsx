@@ -145,42 +145,71 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       return
     }
 
-    // Fetch details from Google Places
+    // Fetch details from Google Places and create directly
     try {
+      setSubmitting(true)
       setSelectedPlace(prediction)
       const details = await placesApi.getDetails(prediction.placeId)
-      if (details) {
-        setName(details.name || prediction.name)
-        setAddress(details.address || prediction.address || '')
-        setLat(details.lat)
-        setLng(details.lng)
-        setPhone(details.phone || '')
-        setWebsiteUrl(details.websiteUrl || '')
-        setMenuUrl(details.menuUrl || '')
-        setGooglePlaceId(prediction.placeId)
-        // Auto-detect Toast slug or ordering URL from website
+      if (details && details.lat && details.lng) {
+        // Extract town from address
+        var extractedTown = ''
+        const parts = (details.address || '').split(',')
+        if (parts.length >= 2) {
+          extractedTown = parts[parts.length - 2].trim().replace(/\s+\d{5}(-\d{4})?$/, '')
+        }
+        // Auto-detect Toast slug or ordering URL
         var ordering = detectOrderingInfo(details.websiteUrl)
         if (!ordering.toastSlug && !ordering.orderUrl) {
           ordering = detectOrderingInfo(details.menuUrl)
         }
-        setToastSlug(ordering.toastSlug)
-        setOrderUrl(ordering.orderUrl)
-        // Try to extract town from address
-        const parts = (details.address || '').split(',')
-        if (parts.length >= 2) {
-          setTown(parts[parts.length - 2].trim().replace(/\s+\d{5}(-\d{4})?$/, ''))
+        // Content validation
+        const contentErr = validateUserContent(details.name || prediction.name, 'Restaurant name')
+        if (contentErr) {
+          setError(contentErr)
+          setSubmitting(false)
+          return
         }
-      } else {
-        setName(prediction.name)
-        setAddress(prediction.address || '')
-        setGooglePlaceId(prediction.placeId)
+        // Create restaurant directly — skip confirm details
+        const restaurant = await restaurantsApi.create({
+          name: (details.name || prediction.name).trim(),
+          address: (details.address || prediction.address || '').trim(),
+          lat: details.lat,
+          lng: details.lng,
+          town: extractedTown || null,
+          googlePlaceId: prediction.placeId,
+          websiteUrl: details.websiteUrl || null,
+          menuUrl: details.menuUrl || null,
+          phone: details.phone || null,
+          toastSlug: ordering.toastSlug || null,
+          orderUrl: ordering.orderUrl || null,
+        })
+        capture('restaurant_created', {
+          restaurant_id: restaurant.id,
+          source: 'google_places',
+          has_first_dish: false,
+          has_toast: !!ordering.toastSlug,
+          has_order_url: !!ordering.orderUrl,
+        })
+        // Fire-and-forget: auto-import menu
+        restaurantsApi.refreshMenu(restaurant.id)
+        setSubmitting(false)
+        onClose()
+        navigate('/restaurants/' + restaurant.id)
+        return
       }
-      setStep(STEPS.DETAILS)
-    } catch (err) {
-      logger.error('Error fetching place details:', err)
+      // Fallback: no lat/lng from Google — show manual form
       setName(prediction.name)
       setAddress(prediction.address || '')
       setGooglePlaceId(prediction.placeId)
+      setSubmitting(false)
+      setStep(STEPS.DETAILS)
+    } catch (err) {
+      logger.error('Error creating restaurant from Google Places:', err)
+      // Fallback: show manual form
+      setName(prediction.name)
+      setAddress(prediction.address || '')
+      setGooglePlaceId(prediction.placeId)
+      setSubmitting(false)
       setStep(STEPS.DETAILS)
     }
   }
