@@ -547,8 +547,8 @@ export function RestaurantDetail() {
         />
       )}
 
-      {/* Happening Here - Specials & Events */}
-      {(specials.length > 0 || events.length > 0) && (
+      {/* Happening Here - Specials & Events (hidden until Launch 2.0 — stale scraped data) */}
+      {false && (specials.length > 0 || events.length > 0) && (
         <div className="px-4 py-4">
           <div
             className="mb-3 h-px"

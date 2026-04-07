@@ -479,8 +479,10 @@ serve(async (req) => {
     }
 
     let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
+    let isSingleMode = false
 
     if (body.restaurant_id) {
+      isSingleMode = true
       // Single restaurant mode — auto-discover menu URL if missing
       const { data, error } = await supabase
         .from('restaurants')
@@ -605,6 +607,7 @@ serve(async (req) => {
         }
 
         // Check for closure signals BEFORE calling Claude (saves API cost)
+        // In single-restaurant mode, still extract menu even if closed (seasonal restaurants)
         const closedSignal = detectClosed(content)
         if (closedSignal) {
           console.log(`${restaurant.name}: detected closed signal "${closedSignal}"`)
@@ -612,12 +615,16 @@ serve(async (req) => {
             .from('restaurants')
             .update({ is_open: false, menu_last_checked: new Date().toISOString() })
             .eq('id', restaurant.id)
-          results.push({
-            restaurant_id: restaurant.id,
-            name: restaurant.name,
-            status: `closed: ${closedSignal}`,
-          })
-          continue
+          if (!isSingleMode) {
+            results.push({
+              restaurant_id: restaurant.id,
+              name: restaurant.name,
+              status: `closed: ${closedSignal}`,
+            })
+            continue
+          }
+          // Single mode: mark closed but still extract the menu
+          console.log(`${restaurant.name}: closed but extracting menu anyway (single-restaurant mode)`)
         }
 
         // Extract dishes with Claude
