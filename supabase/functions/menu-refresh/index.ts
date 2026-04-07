@@ -22,75 +22,106 @@ const corsHeaders = {
 }
 
 const VALID_CATEGORIES = [
-  'pizza', 'burger', 'taco', 'wings', 'sushi', 'breakfast',
-  'breakfast sandwich', 'lobster roll', 'chowder', 'pasta', 'steak',
-  'sandwich', 'salad', 'seafood', 'fish', 'tendys', 'fried chicken',
-  'apps', 'fries', 'entree', 'dessert', 'donuts', 'pokebowl',
-  'asian', 'chicken', 'quesadilla', 'soup',
-  'ribs', 'sides', 'duck', 'lamb', 'pork', 'clams',
-  'oysters', 'coffee', 'cocktails', 'ice cream',
+  'pizza', 'burger', 'lobster roll', 'wings', 'sushi', 'breakfast',
+  'seafood', 'chowder', 'pasta', 'steak', 'sandwich', 'salad',
+  'taco', 'tendys', 'dessert', 'ice cream', 'fish', 'clams',
+  'chicken', 'pork', 'breakfast sandwich', 'fried chicken', 'apps',
+  'fries', 'entree', 'donuts', 'pokebowl', 'asian', 'quesadilla',
+  'soup', 'ribs', 'duck', 'lamb', 'bruschetta', 'burrito',
+  'calamari', 'crab', 'curry', 'lobster', 'mussels', 'onion rings',
+  'pancakes', 'scallops', 'shrimp', 'waffles', 'wrap',
+  'fish-and-chips', 'fish-sandwich', 'eggs-benedict',
+  'oysters', 'pastry',
 ]
 
-const MENU_EXTRACTION_PROMPT = `You are a menu data extraction assistant for a food discovery app.
+const MENU_EXTRACTION_PROMPT = `You are extracting a restaurant menu for a food discovery app. Your job is to produce output that mirrors the restaurant's actual menu — a user reading it should feel like they're looking at the real thing.
 
-Given raw menu text from a restaurant webpage, extract every food AND drink item and return structured JSON.
+## Your #1 Priority: Faithfulness to the Source
 
-## Category Vocabulary (use ONLY these exact IDs)
+The menu_section field and menu_section_order array must use the restaurant's EXACT section headings. If the menu says "From The Sea", you write "From The Sea" — not "Seafood", not "Fish Entrees". Copy the headings verbatim, preserving capitalization and punctuation.
 
-| Category ID | Use For |
+Keep sections in the same order they appear on the menu. If "Raw Bar" comes before "Entrees" on the restaurant's menu, it comes first in your output.
+
+Use the restaurant's exact dish names. If they call it "The Big Kahuna Burger", write that — don't shorten to "Kahuna Burger".
+
+## WGH Category (Internal — Separate from Menu Section)
+
+Each dish also gets a "category" field. This is OUR internal classification, NOT the restaurant's. A dish in the restaurant's "From The Sea" section might get category "lobster roll" or "scallops" or "fish-and-chips" depending on what it actually is.
+
+Pick the MOST SPECIFIC category that fits. Prefer "lobster roll" over "seafood", "fish-and-chips" over "fish", "eggs-benedict" over "breakfast", "scallops" over "seafood", "calamari" over "apps".
+
+### Valid Category IDs (use ONLY these)
+
+| ID | Use For |
 |---|---|
-| pizza | Pizza |
+| pizza | Pizza, flatbreads |
 | burger | Burgers |
-| taco | Tacos, burritos, quesadillas |
+| lobster roll | Lobster rolls specifically |
+| lobster | Lobster entrees (not rolls) |
 | wings | Wings |
 | sushi | Sushi, sashimi, rolls |
-| breakfast | Breakfast plates, waffles, pancakes, eggs |
-| breakfast sandwich | Breakfast sandwiches, breakfast burritos |
-| lobster roll | Lobster rolls specifically |
-| chowder | Clam chowder, any chowder |
-| pasta | Pasta, risotto |
-| steak | Steak entrees |
-| sandwich | Sandwiches, wraps, BLTs, clubs, grilled cheese, hot dogs |
-| salad | Salads |
-| seafood | Seafood entrees (salmon, cod, swordfish, shellfish, crab cakes). NOT lobster roll, NOT chowder |
-| fish | Fish & chips, fish sandwiches, fish tacos — casual/fried fish items |
-| oysters | Oysters (raw bar, oyster plates) |
+| breakfast | Breakfast plates, eggs, omelets (not benedict, not pancakes/waffles) |
+| eggs-benedict | Eggs benedict, lobster benedict |
+| pancakes | Pancakes, french toast |
+| waffles | Waffles |
+| breakfast sandwich | Breakfast sandwiches, breakfast burritos, breakfast wraps |
+| seafood | Seafood entrees that don't fit a more specific category |
+| fish | Fish entrees (salmon, cod, swordfish, halibut, mahi) |
+| fish-and-chips | Fish & chips, cod & chips |
+| fish-sandwich | Fish sandwiches |
+| scallops | Scallop dishes |
+| shrimp | Shrimp dishes |
+| crab | Crab cakes, crab entrees |
+| calamari | Calamari, fried calamari |
+| mussels | Mussel dishes |
 | clams | Clam dishes (steamers, stuffed clams, clam strips) |
+| oysters | Oysters (raw bar, oyster plates) |
+| chowder | Clam chowder, any chowder |
+| pasta | Pasta, risotto, linguine, ravioli |
+| steak | Steak entrees, filet, ribeye, sirloin |
+| sandwich | Sandwiches, BLTs, clubs, grilled cheese, hot dogs |
+| wrap | Wraps |
+| salad | Salads |
+| taco | Tacos |
+| burrito | Burritos |
+| quesadilla | Quesadillas |
 | tendys | Chicken tenders |
 | fried chicken | Fried chicken sandwiches, fried chicken plates |
-| apps | Appetizers, starters, shareable plates |
-| fries | Fries, onion rings, tater tots |
-| sides | Non-fries side dishes: vegetables, rice, beans, coleslaw |
-| entree | Other entrees that don't fit a specific category |
-| ribs | Ribs |
-| pork | Pork entrees |
-| lamb | Lamb entrees |
-| duck | Duck entrees |
 | chicken | Chicken entrees (not fried chicken, not tenders) |
-| dessert | Cakes, pies, ice cream, brownies, sundaes |
-| donuts | Donuts, fritters |
-| pokebowl | Poke bowls |
-| asian | Asian entrees (pad thai, curry, stir-fry) |
+| pork | Pork entrees, pork chops |
+| ribs | Ribs |
+| duck | Duck entrees |
+| lamb | Lamb entrees |
+| bruschetta | Bruschetta |
+| apps | Appetizers, starters, shareable plates (only if no specific category fits) |
+| fries | Fries, tater tots |
+| onion rings | Onion rings |
+| veggies | Vegetable-focused ENTREES only (veggie burger, veggie stir-fry) — not side dishes |
 | soup | Soups (non-chowder) |
-| cocktails | Cocktails, mixed drinks, signature drinks |
-| coffee | Coffee drinks, espresso, lattes |
+| dessert | Cakes, pies, brownies, sundaes |
 | ice cream | Ice cream, gelato, frozen treats, milkshakes |
-| quesadilla | Quesadillas |
+| donuts | Donuts, fritters |
+| pastry | Pastries, croissants, scones, muffins |
+| pokebowl | Poke bowls |
+| asian | Asian entrees (pad thai, stir-fry) |
+| curry | Curry dishes |
+| entree | Catch-all for entrees that don't fit any specific category |
 
 ## Rules
 
-1. **Include cocktails, coffee, and specialty drinks** — these are important categories
-2. **Skip generic beverages** — no beer/wine lists, no soda, no plain water/juice
-3. **Skip condiment-level items under ~$4** — extra sauce, bread roll, etc.
-4. **Include substantive sides $4+**
-5. **Deduplicate sizes** — keep only the larger/dinner version
-6. **Use exact dish names from the menu**
-7. **Prices must be numbers** (no $ sign). If range, use lower price. If no price, use null.
-8. **One category per dish** — pick the most specific match
+1. **Extract EVERY food dish on the menu** — be thorough, don't skip items
+2. **Skip ALL drinks** — no cocktails, beer, wine, coffee, soda, juice, or any beverages
+3. **Skip kids meals**
+4. **Skip condiments** — extra sauce, side of dressing, bread roll
+5. **Skip side dishes** — mashed potatoes, green beans, rice, coleslaw, steamed veggies, etc. NOT rateable.
+6. **EXCEPTION: Fries and onion rings ARE included** — people rate these. Keep them.
+7. **Deduplicate sizes** — keep only the larger/dinner version
+8. **Prices must be numbers** (no $ sign). If range, use lower price. If no price, use null.
+9. **One category per dish** — pick the most specific match
 
 ## Output Format
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON (no markdown, no code fences):
 {
   "dishes": [
     { "name": "Dish Name", "category": "category_id", "menu_section": "Section Name", "price": 18.00 }
@@ -233,7 +264,7 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6-20250514',
       max_tokens: 4096,
       messages: [
         {

@@ -252,6 +252,11 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         has_order_url: !!orderUrl,
       })
 
+      // Fire-and-forget: auto-import menu if restaurant has a menu URL
+      if (menuUrl) {
+        restaurantsApi.refreshMenu(restaurant.id)
+      }
+
       // Optionally create first dish
       if (dishName.trim() && dishCategory) {
         try {
@@ -293,7 +298,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center"
         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
       >
