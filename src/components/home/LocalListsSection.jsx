@@ -111,7 +111,7 @@ function MenuCard({ list, index }) {
           onClick={function () { navigate('/user/' + list.user_id) }}
           style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary)' }}
         >
-          See full list \u2192
+          {'See full list \u2192'}
         </button>
       </div>
     </div>
