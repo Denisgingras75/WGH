@@ -1,0 +1,92 @@
+-- =============================================
+-- 2. ADD MISSING COLUMNS (idempotent)
+-- =============================================
+-- Uses ADD COLUMN IF NOT EXISTS for columns that may have been added later.
+
+-- restaurants
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT 'mv';
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS cuisine TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS town TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS google_place_id TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS website_url TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS facebook_url TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS instagram_url TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS menu_url TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS menu_last_checked TIMESTAMPTZ;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS menu_content_hash TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS menu_section_order TEXT[] DEFAULT '{}';
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS toast_slug TEXT;
+ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS order_url TEXT;
+
+-- dishes
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS menu_section TEXT;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS parent_dish_id UUID REFERENCES dishes(id) ON DELETE SET NULL;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS cuisine TEXT;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS avg_rating DECIMAL(3, 1);
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS total_votes INT DEFAULT 0;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS consensus_rating NUMERIC(3, 1);
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS consensus_ready BOOLEAN DEFAULT FALSE;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS consensus_votes INT DEFAULT 0;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS consensus_calculated_at TIMESTAMPTZ;
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS value_score DECIMAL(6, 2);
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS value_percentile DECIMAL(5, 2);
+ALTER TABLE dishes ADD COLUMN IF NOT EXISTS category_median_price DECIMAL(6, 2);
+
+-- votes
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS rating_10 DECIMAL(3, 1);
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS review_text TEXT;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS review_created_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS vote_position INT;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS scored_at TIMESTAMPTZ;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS category_snapshot TEXT;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS purity_score DECIMAL(5, 2);
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS war_score DECIMAL(4, 3);
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS badge_hash TEXT;
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'user';
+ALTER TABLE votes ADD COLUMN IF NOT EXISTS source_metadata JSONB;
+
+-- profiles
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS has_onboarded BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS preferred_categories TEXT[] DEFAULT '{}';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS follower_count INTEGER DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS following_count INTEGER DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_local_curator BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+-- dish_photos
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS width INT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS height INT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS mime_type TEXT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS avg_brightness REAL;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS bright_pixel_pct REAL;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS dark_pixel_pct REAL;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS quality_score INT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'community';
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS reject_reason TEXT;
+ALTER TABLE dish_photos ADD COLUMN IF NOT EXISTS source_type TEXT DEFAULT 'user';
+
+-- specials
+ALTER TABLE specials ADD COLUMN IF NOT EXISTS is_promoted BOOLEAN DEFAULT false;
+ALTER TABLE specials ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual';
+ALTER TABLE specials ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+ALTER TABLE specials ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+
+-- jitter_profiles
+ALTER TABLE jitter_profiles ADD COLUMN IF NOT EXISTS consistency_score DECIMAL(4, 3) DEFAULT 0;
+ALTER TABLE jitter_profiles ADD COLUMN IF NOT EXISTS flagged BOOLEAN DEFAULT false;
+ALTER TABLE jitter_profiles ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+-- events
+ALTER TABLE events ADD COLUMN IF NOT EXISTS recurring_pattern TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS recurring_day_of_week INT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS is_promoted BOOLEAN DEFAULT false;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual';
+ALTER TABLE events ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+
+

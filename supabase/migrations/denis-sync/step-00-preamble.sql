@@ -1,0 +1,28 @@
+-- =============================================
+-- FULL SCHEMA SYNC: Dan's schema → Denis's Supabase
+-- =============================================
+-- Generated: 2026-04-02
+-- Purpose: Single-run migration to bring Denis's DB up to parity with Dan's schema.sql
+-- Safe to run multiple times (idempotent).
+--
+-- Dependency order:
+--   0. Extensions
+--   1. Tables (CREATE TABLE IF NOT EXISTS)
+--   2. Columns (ALTER TABLE ADD COLUMN IF NOT EXISTS)
+--   3. Constraints (idempotent DO blocks)
+--   4. Indexes
+--   5. Enable RLS on all tables
+--   6. Helper functions (needed by RLS policies and RPCs)
+--   7. Views
+--   8. RLS policies (DROP IF EXISTS + CREATE)
+--   9. Core RPCs (CREATE OR REPLACE)
+--  10. Triggers (DROP IF EXISTS + CREATE)
+--  11. Rate-limit convenience functions
+--  12. Badge seed data (UPSERT)
+--  13. Auth trigger
+--  14. Grants
+--  15. Storage policies
+--  16. pg_cron jobs (wrapped in DO blocks for safety)
+-- =============================================
+
+

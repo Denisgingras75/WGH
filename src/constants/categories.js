@@ -85,6 +85,7 @@ export const ALL_CATEGORIES = [
   { id: 'fish-sandwich', label: 'Fish Sandwich', emoji: '🐟' },
   { id: 'eggs-benedict', label: 'Eggs Benedict', emoji: '🍳' },
   { id: 'veggies', label: 'Veggies', emoji: '🥦' },
+  { id: 'pastry', label: 'Pastry', emoji: '🥐' },
 ]
 
 // Fuzzy match a search term to existing categories
@@ -271,6 +272,9 @@ const DISH_NAME_ICON_RULES = [
   { keyword: 'curry', icon: '/categories/icons/curry.webp' },
   { keyword: 'soup', icon: '/categories/icons/soup.webp' },
   { keyword: 'bruschetta', icon: '/categories/icons/bruschetta.webp' },
+  { keyword: 'muffin', icon: '/categories/icons/dessert.webp' },
+  { keyword: 'scone', icon: '/categories/icons/dessert.webp' },
+  { keyword: 'croissant', icon: '/categories/icons/dessert.webp' },
   { keyword: 'cake', icon: '/categories/icons/dessert.webp' },
   { keyword: 'pie', icon: '/categories/icons/dessert.webp' },
   { keyword: 'brownie', icon: '/categories/icons/dessert.webp' },
@@ -358,6 +362,7 @@ export const CATEGORY_INFO = {
   'fish-sandwich': { emoji: '🐟', label: 'Fish Sandwich' },
   'eggs-benedict': { emoji: '🍳', label: 'Eggs Benedict' },
   'veggies': { emoji: '🥦', label: 'Veggies' },
+  'pastry': { emoji: '🥐', label: 'Pastries' },
 }
 
 // Get category info with fuzzy matching
