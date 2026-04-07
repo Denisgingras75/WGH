@@ -23,7 +23,8 @@ const categoryIcons = {
   clams: '/categories/icons/clams.webp',             // basket has yellow-orange hatching
   chicken: '/categories/icons/chicken.webp',
   pork: '/categories/icons/pork.webp',
-  // Missing poster icons: oysters, coffee, cocktails, ice cream (use SVG fallback)
+  'ice cream': '/categories/icons/ice-cream.webp',
+  // Missing poster icons: oysters, coffee, cocktails (use SVG fallback)
 
   // === SUB-CATEGORIES ===
   'fried chicken': '/categories/icons/fried-chicken.webp', // grittier texture, slightly off-coral

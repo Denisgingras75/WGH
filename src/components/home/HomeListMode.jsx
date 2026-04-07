@@ -195,13 +195,13 @@ export const HomeListMode = memo(function HomeListMode({
               }}
             />
 
+            {/* Local Lists — horizontal scroll above the food icon tabs */}
+            <LocalListsSection onListExpanded={onLocalListExpanded} />
+
             {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
             <div id="top10-carousel">
               <Top10Carousel ref={carouselRef} dishes={allRankedDishes} onCategoryChange={onCategoryChange} />
             </div>
-
-            {/* Local Lists */}
-            <LocalListsSection onListExpanded={onLocalListExpanded} />
           </>
         ) : (
           <div className="px-4 pt-4">
