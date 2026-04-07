@@ -506,12 +506,11 @@ CREATE POLICY "Users can delete own votes" ON votes FOR DELETE USING ((select au
 -- profiles: public read (if display_name set), users manage own
 CREATE POLICY "profiles_select_public_or_own" ON profiles FOR SELECT USING ((select auth.uid()) = id OR display_name IS NOT NULL);
 CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT WITH CHECK ((select auth.uid()) = id);
-CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE USING ((select auth.uid()) = id) WITH CHECK (
-  (select auth.uid()) = id
-  AND is_local_curator = (SELECT is_local_curator FROM profiles WHERE id = (select auth.uid()))
-  AND follower_count = (SELECT follower_count FROM profiles WHERE id = (select auth.uid()))
-  AND following_count = (SELECT following_count FROM profiles WHERE id = (select auth.uid()))
-);
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
+  USING ((select auth.uid()) = id)
+  WITH CHECK ((select auth.uid()) = id);
+-- Protected fields (is_local_curator, follower_count, following_count) are guarded by
+-- protect_profile_fields_trigger (BEFORE UPDATE) — not RLS — to avoid infinite recursion.
 -- No DELETE policy on profiles — users must not delete their own profile row (orphans FKs)
 
 -- favorites: users manage own only
