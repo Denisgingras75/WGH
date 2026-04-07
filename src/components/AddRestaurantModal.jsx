@@ -5,15 +5,13 @@ import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
 import { useLocationContext } from '../context/LocationContext'
 import { useAuth } from '../context/AuthContext'
 import { restaurantsApi } from '../api/restaurantsApi'
-import { dishesApi } from '../api/dishesApi'
 import { placesApi } from '../api/placesApi'
-import { ALL_CATEGORIES } from '../constants/categories'
 import { validateUserContent } from '../lib/reviewBlocklist'
 import { capture } from '../lib/analytics'
 import { logger } from '../utils/logger'
 import { LoginModal } from './Auth/LoginModal'
 
-const STEPS = { SEARCH: 'search', DETAILS: 'details', DISH: 'dish' }
+const STEPS = { SEARCH: 'search', DETAILS: 'details' }
 
 /**
  * Auto-detect Toast slug or ordering URL from a website URL.
@@ -79,9 +77,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
   const [orderUrl, setOrderUrl] = useState(null)
 
   // Optional first dish
-  const [dishName, setDishName] = useState('')
-  const [dishCategory, setDishCategory] = useState('')
-  const [dishPrice, setDishPrice] = useState('')
 
   const hasLocation = permissionState === 'granted'
   // Don't pass location when on MV default — let Google search globally, not biased to MV
@@ -109,9 +104,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       setGooglePlaceId(null)
       setToastSlug(null)
       setOrderUrl(null)
-      setDishName('')
-      setDishCategory('')
-      setDishPrice('')
     }
   }, [isOpen, initialQuery])
 
@@ -250,7 +242,8 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       }
     }
     setError(null)
-    setStep(STEPS.DISH)
+    // Skip "Add First Dish" step — menu-refresh Edge Function handles dish import automatically
+    handleSubmit()
   }
 
   const handleSubmit = async () => {
@@ -276,7 +269,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       capture('restaurant_created', {
         restaurant_id: restaurant.id,
         source: googlePlaceId ? 'google_places' : 'manual',
-        has_first_dish: !!dishName.trim(),
         has_toast: !!toastSlug,
         has_order_url: !!orderUrl,
       })
@@ -284,26 +276,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       // Fire-and-forget: auto-discover website + import menu
       // Edge Function handles everything: Google Places lookup → website probe → menu extraction
       restaurantsApi.refreshMenu(restaurant.id)
-
-      // Optionally create first dish
-      if (dishName.trim() && dishCategory) {
-        try {
-          await dishesApi.create({
-            restaurantId: restaurant.id,
-            name: dishName.trim(),
-            category: dishCategory,
-            price: dishPrice ? parseFloat(dishPrice) : null,
-          })
-
-          capture('dish_created_by_user', {
-            restaurant_id: restaurant.id,
-            category: dishCategory,
-          })
-        } catch (dishErr) {
-          logger.error('Error creating first dish (restaurant was created):', dishErr)
-          // Don't block — restaurant was created successfully
-        }
-      }
 
       onClose()
       navigate(`/restaurants/${restaurant.id}`)
@@ -315,12 +287,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     }
   }
 
-  const handleSkipDish = async () => {
-    setDishName('')
-    setDishCategory('')
-    setDishPrice('')
-    await handleSubmit()
-  }
 
   return (
     <>
@@ -350,7 +316,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
               className="font-bold text-lg"
               style={{ color: 'var(--color-text-primary)' }}
             >
-              {step === STEPS.SEARCH ? 'Add a Restaurant' : step === STEPS.DETAILS ? 'Confirm Details' : 'Add First Dish'}
+              {step === STEPS.SEARCH ? 'Add a Restaurant' : 'Confirm Details'}
             </h2>
             <button
               onClick={onClose}
@@ -554,81 +520,6 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
             </div>
           )}
 
-          {/* Step 3: Add First Dish (optional) */}
-          {step === STEPS.DISH && (
-            <div className="p-5 space-y-4">
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                Add the first dish to <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{name}</span> — be the first to review!
-              </p>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Dish Name</label>
-                <input
-                  type="text"
-                  value={dishName}
-                  onChange={(e) => setDishName(e.target.value)}
-                  placeholder="e.g. Margherita Pizza"
-                  autoFocus
-                  className="w-full px-4 py-2.5 rounded-lg text-sm"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Category</label>
-                <select
-                  value={dishCategory}
-                  onChange={(e) => setDishCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm appearance-none"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: dishCategory ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}
-                >
-                  <option value="">Select a category...</option>
-                  {ALL_CATEGORIES.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.emoji} {cat.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Price (optional)</label>
-                <input
-                  type="number"
-                  value={dishPrice}
-                  onChange={(e) => setDishPrice(e.target.value)}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-2.5 rounded-lg text-sm"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
-                />
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || !dishName.trim() || !dishCategory}
-                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'white' }}
-              >
-                {submitting ? 'Creating...' : 'Create Restaurant + Dish'}
-              </button>
-              <button
-                onClick={handleSkipDish}
-                disabled={submitting}
-                className="w-full py-2 text-sm font-medium disabled:opacity-50"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                {submitting ? 'Creating...' : 'Skip — just create the restaurant'}
-              </button>
-              <button
-                onClick={() => setStep(STEPS.DETAILS)}
-                disabled={submitting}
-                className="w-full py-2 text-sm font-medium disabled:opacity-50"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                Back
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
