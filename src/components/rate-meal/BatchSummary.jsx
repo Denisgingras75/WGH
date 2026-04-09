@@ -157,11 +157,11 @@ export function BatchSummary({
       </div>
 
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"
+        className="fixed left-0 right-0 z-30 px-4 pt-3 pb-3"
         style={{
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
           boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
         }}
       >
         <button

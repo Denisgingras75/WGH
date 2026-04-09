@@ -413,13 +413,22 @@ export function DishSelector({
       </div>
 
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"
+        className="fixed left-0 right-0 z-30 px-4 pt-3 pb-3"
         style={{
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          boxShadow: selectedCount > 0 ? '0 -4px 20px rgba(0,0,0,0.12)' : '0 -2px 12px rgba(0,0,0,0.08)',
+          transition: 'box-shadow 0.2s ease',
         }}
       >
+        {selectedCount > 0 && (
+          <p
+            className="text-center font-semibold mb-2"
+            style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}
+          >
+            {selectedCount} dish{selectedCount === 1 ? '' : 'es'} selected — ready to rate!
+          </p>
+        )}
         <button
           onClick={onContinue}
           disabled={selectedCount === 0}
@@ -431,8 +440,8 @@ export function DishSelector({
           }}
         >
           {selectedCount === 0
-            ? 'Select dishes to continue'
-            : 'Rate ' + selectedCount + ' Dish' + (selectedCount === 1 ? '' : 'es')}
+            ? 'Tap dishes you ate'
+            : 'Rate ' + selectedCount + ' Dish' + (selectedCount === 1 ? '' : 'es') + ' →'}
         </button>
       </div>
     </div>
