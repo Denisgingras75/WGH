@@ -469,40 +469,9 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                   style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>City/Town</label>
-                <input
-                  type="text"
-                  value={town}
-                  onChange={(e) => setTown(e.target.value)}
-                  placeholder="e.g. Oak Bluffs, Boston"
-                  className="w-full px-4 py-2.5 rounded-lg text-sm"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Phone</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg text-sm"
-                    style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Website</label>
-                  <input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-lg text-sm"
-                    style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
-                  />
-                </div>
-              </div>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                We'll find the website, menu, and phone number automatically.
+              </p>
 
               <button
                 onClick={handleDetailsNext}
