@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     // Call Google Places Details (New) API
-    const fields = 'displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,googleMapsUri,menuUri,rating,userRatingCount'
+    const fields = 'displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,googleMapsUri,rating,userRatingCount'
     const url = `https://places.googleapis.com/v1/places/${placeId}?languageCode=en`
 
     const response = await fetch(url, {
@@ -54,7 +54,8 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Google Places Details API error:', errorText)
-      return new Response(JSON.stringify({ error: 'Places API error' }), {
+      console.error('API key present:', !!GOOGLE_API_KEY, 'Key prefix:', GOOGLE_API_KEY?.slice(0, 10))
+      return new Response(JSON.stringify({ error: 'Places API error', details: errorText, keyPresent: !!GOOGLE_API_KEY }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
