@@ -1,5 +1,8 @@
 -- Add avg_rating and total_votes to get_restaurants_within_radius RPC
 -- Run this in Supabase SQL Editor
+-- Must DROP first because return type changed (Postgres requirement)
+
+DROP FUNCTION IF EXISTS get_restaurants_within_radius(DECIMAL, DECIMAL, INT);
 
 CREATE OR REPLACE FUNCTION get_restaurants_within_radius(
   p_lat DECIMAL,
