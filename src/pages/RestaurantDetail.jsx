@@ -334,11 +334,11 @@ export function RestaurantDetail() {
         </div>
       </div>
 
-      {/* What People Are Saying — top of page, first thing you see */}
+      {/* What People Are Saying — horizontal swipeable row */}
       {reviewSnippets.length > 0 && (
-        <div className="px-4 pt-2 pb-3">
+        <div className="pt-2 pb-3">
           <h3
-            className="font-semibold mb-2"
+            className="font-semibold mb-2 px-4"
             style={{
               fontFamily: "'Amatic SC', cursive",
               fontSize: '22px',
@@ -349,12 +349,23 @@ export function RestaurantDetail() {
           >
             What People Are Saying
           </h3>
-          <div className="space-y-2">
+          <div
+            className="flex gap-2 overflow-x-auto px-4"
+            style={{
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
             {reviewSnippets.map(function (review, i) {
               return (
                 <div
                   key={i}
+                  className="flex-shrink-0"
                   style={{
+                    scrollSnapAlign: 'start',
+                    width: '280px',
                     padding: '10px 14px',
                     background: 'var(--color-card)',
                     borderRadius: '12px',
@@ -365,8 +376,12 @@ export function RestaurantDetail() {
                     fontSize: '13px',
                     color: 'var(--color-text-secondary)',
                     fontStyle: 'italic',
-                    lineHeight: 1.5,
+                    lineHeight: 1.4,
                     margin: 0,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
                   }}>
                     &ldquo;{review.review_text}&rdquo;
                   </p>
