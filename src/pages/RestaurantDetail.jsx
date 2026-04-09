@@ -251,7 +251,7 @@ export function RestaurantDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-40" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">{restaurant.name}</h1>
 
       {/* Sticky header with back button */}
@@ -621,16 +621,14 @@ export function RestaurantDetail() {
 
       {/* Sticky bottom action bar */}
       <div
-        className="fixed left-0 right-0 z-30 px-4 pt-3"
+        className="fixed left-0 right-0 z-30 px-4 pt-3 pb-3"
         style={{
-          bottom: '60px',
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          backdropFilter: 'blur(12px)',
           boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-          paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
         }}
       >
-        <div className="flex gap-2 pb-1">
+        <div className="flex gap-2">
           {(restaurant.toast_slug || sanitizeUrl(restaurant.order_url)) && (
             <a
               href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : sanitizeUrl(restaurant.order_url)}
