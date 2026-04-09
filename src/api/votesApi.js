@@ -80,6 +80,7 @@ async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, rev
     user_id: userId,
     would_order_again: wouldOrderAgain,
     rating_10: rating10,
+    source: 'user',
   }
 
   if (reviewText) {
@@ -99,11 +100,29 @@ async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, rev
     voteData.badge_hash = badgeHash
   }
 
-  var { error } = await supabase
+  // Partial unique index (WHERE source='user') can't be targeted by PostgREST upsert.
+  // Check for existing vote first, then update or insert.
+  var { data: existing } = await supabase
     .from('votes')
-    .upsert(voteData, {
-      onConflict: 'dish_id,user_id',
-    })
+    .select('id')
+    .eq('dish_id', dishId)
+    .eq('user_id', userId)
+    .eq('source', 'user')
+    .maybeSingle()
+
+  var error
+  if (existing) {
+    var result = await supabase
+      .from('votes')
+      .update(voteData)
+      .eq('id', existing.id)
+    error = result.error
+  } else {
+    var result = await supabase
+      .from('votes')
+      .insert(voteData)
+    error = result.error
+  }
 
   if (error) {
     throw createClassifiedError(error)
