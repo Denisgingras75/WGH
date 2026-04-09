@@ -34,7 +34,7 @@ export const restaurantsApi = {
         throw createClassifiedError(error)
       }
 
-      // Transform to include dish count and "known for" dish
+      // Transform to include dish count, "known for" dish, and aggregate score
       return (data || []).map(r => {
         const dishList = r.dishes || []
 
@@ -48,10 +48,19 @@ export const restaurantsApi = {
           }
         })
 
+        // Compute aggregate restaurant score from dish ratings
+        const ratedDishes = dishList.filter(d => d.avg_rating != null && (d.total_votes || 0) > 0)
+        const totalVotes = ratedDishes.reduce((sum, d) => sum + (d.total_votes || 0), 0)
+        const avgRating = ratedDishes.length > 0
+          ? Number((ratedDishes.reduce((sum, d) => sum + Number(d.avg_rating), 0) / ratedDishes.length).toFixed(1))
+          : null
+
         return {
           ...r,
           dishCount: dishList.length,
           knownFor,
+          avg_rating: avgRating,
+          total_votes: totalVotes,
           dishes: undefined,
         }
       })

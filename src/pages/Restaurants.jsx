@@ -231,10 +231,9 @@ export function Restaurants() {
           <div className="space-y-3">
             {filteredRestaurants.map(function (restaurant) {
               return (
-                <button
+                <div
                   key={restaurant.id}
-                  onClick={function () { handleRestaurantSelect(restaurant) }}
-                  className="w-full rounded-xl p-4 text-left transition-all active:scale-[0.98]"
+                  className="w-full rounded-xl p-4 transition-all"
                   style={{
                     background: restaurant.is_open
                       ? 'var(--color-surface-elevated)'
@@ -243,73 +242,109 @@ export function Restaurants() {
                     boxShadow: restaurant.is_open ? '0 2px 12px rgba(0, 0, 0, 0.06)' : 'none',
                   }}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3
+                  <button
+                    onClick={function () { handleRestaurantSelect(restaurant) }}
+                    className="w-full text-left active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="font-bold"
+                          style={{
+                            color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                            fontSize: restaurant.is_open ? '18px' : '14px',
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {restaurant.name}
+                        </h3>
+                        {restaurant.is_open && restaurant.town && (
+                          <p
+                            className="mt-0.5 font-medium"
+                            style={{
+                              fontSize: '12px',
+                              color: 'var(--color-text-tertiary)',
+                              letterSpacing: '0.02em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {restaurant.town}
+                            {restaurant.distance_miles != null && (
+                              ' · ' + restaurant.distance_miles + ' mi'
+                            )}
+                          </p>
+                        )}
+                        {!restaurant.is_open && (
+                          <span
+                            className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
+                            style={{
+                              fontSize: '10px',
+                              background: 'rgba(228, 68, 10, 0.08)',
+                              color: 'var(--color-primary)',
+                              border: '1px solid var(--color-primary)',
+                            }}
+                          >
+                            Closed for Season
+                          </span>
+                        )}
+                        {restaurant.knownFor && (
+                          <p
+                            className="mt-1.5 font-medium"
+                            style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
+                          >
+                            Known for{' '}
+                            <span style={{ color: 'var(--color-text-secondary)' }}>
+                              {restaurant.knownFor.name}
+                            </span>
+                            {' · '}
+                            <span
+                              className="font-bold"
+                              style={{ color: getRatingColor(restaurant.knownFor.rating) }}
+                            >
+                              {restaurant.knownFor.rating}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Chevron */}
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Rating row — tappable, navigates to reviews */}
+                  {restaurant.is_open && restaurant.avg_rating != null && (
+                    <button
+                      onClick={function (e) {
+                        e.stopPropagation()
+                        navigate('/restaurants/' + restaurant.id + '/reviews')
+                      }}
+                      className="flex items-center gap-2 mt-2.5 pt-2.5 w-full text-left active:opacity-70 transition-opacity"
+                      style={{ borderTop: '1px solid var(--color-divider)' }}
+                    >
+                      <span
                         className="font-bold"
                         style={{
-                          color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                          fontSize: restaurant.is_open ? '18px' : '14px',
-                          letterSpacing: '-0.01em',
+                          fontSize: '18px',
+                          color: getRatingColor(restaurant.avg_rating),
                         }}
                       >
-                        {restaurant.name}
-                      </h3>
-                      {restaurant.is_open && restaurant.town && (
-                        <p
-                          className="mt-0.5 font-medium"
-                          style={{
-                            fontSize: '12px',
-                            color: 'var(--color-text-tertiary)',
-                            letterSpacing: '0.02em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {restaurant.town}
-                          {restaurant.distance_miles != null && (
-                            ' · ' + restaurant.distance_miles + ' mi'
-                          )}
-                        </p>
-                      )}
-                      {!restaurant.is_open && (
-                        <span
-                          className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
-                          style={{
-                            fontSize: '10px',
-                            background: 'rgba(228, 68, 10, 0.08)',
-                            color: 'var(--color-primary)',
-                            border: '1px solid var(--color-primary)',
-                          }}
-                        >
-                          Closed for Season
-                        </span>
-                      )}
-                      {restaurant.knownFor && (
-                        <p
-                          className="mt-1.5 font-medium"
-                          style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
-                        >
-                          Known for{' '}
-                          <span style={{ color: 'var(--color-text-secondary)' }}>
-                            {restaurant.knownFor.name}
-                          </span>
-                          {' · '}
-                          <span
-                            className="font-bold"
-                            style={{ color: getRatingColor(restaurant.knownFor.rating) }}
-                          >
-                            {restaurant.knownFor.rating}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Chevron */}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </div>
-                </button>
+                        {restaurant.avg_rating}
+                      </span>
+                      <span
+                        className="font-medium"
+                        style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
+                      >
+                        WGH Score · {restaurant.total_votes || 0} vote{(restaurant.total_votes || 0) === 1 ? '' : 's'}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               )
             })}
 

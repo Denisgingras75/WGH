@@ -476,20 +476,24 @@ export const votesApi = {
   },
 
   /**
-   * Get the best review snippets across all dishes at a restaurant.
-   * Returns reviews with dish name, sorted by rating (highest first).
+   * Get review snippets across all dishes at a restaurant.
+   * @param {string} restaurantId
+   * @param {Object} options
+   * @param {number} options.limit - Max results (default 5)
+   * @param {string} options.sort - 'rating' (default) or 'newest'
    */
-  async getReviewsForRestaurant(restaurantId, { limit = 5 } = {}) {
+  async getReviewsForRestaurant(restaurantId, { limit = 5, sort = 'rating' } = {}) {
     try {
       if (!restaurantId) return []
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('votes')
         .select(`
           id,
           review_text,
           rating_10,
           would_order_again,
+          created_at,
           dish_id,
           dishes!inner (
             id,
@@ -500,8 +504,16 @@ export const votesApi = {
         .eq('dishes.restaurant_id', restaurantId)
         .not('review_text', 'is', null)
         .neq('review_text', '')
-        .order('rating_10', { ascending: false })
-        .range(0, limit - 1)
+
+      if (sort === 'newest') {
+        query = query.order('created_at', { ascending: false })
+      } else {
+        query = query.order('rating_10', { ascending: false })
+      }
+
+      query = query.range(0, limit - 1)
+
+      const { data, error } = await query
 
       if (error) {
         logger.error('Error fetching reviews for restaurant:', error)
@@ -514,6 +526,8 @@ export const votesApi = {
           rating: v.rating_10,
           would_order_again: v.would_order_again,
           dish_name: v.dishes ? v.dishes.name : '',
+          dish_id: v.dish_id,
+          created_at: v.created_at,
         }
       })
     } catch (error) {

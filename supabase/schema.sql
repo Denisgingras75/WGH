@@ -2283,7 +2283,9 @@ RETURNS TABLE (
   website_url TEXT,
   phone TEXT,
   distance_miles DECIMAL,
-  dish_count BIGINT
+  dish_count BIGINT,
+  avg_rating DECIMAL,
+  total_votes BIGINT
 ) AS $$
 DECLARE
   lat_delta DECIMAL := p_radius_miles / 69.0;
@@ -2310,7 +2312,9 @@ BEGIN
     n.id, n.name, n.address, n.lat, n.lng, n.is_open, n.cuisine, n.town,
     n.google_place_id, n.website_url, n.phone,
     n.distance_miles,
-    COUNT(d.id)::BIGINT AS dish_count
+    COUNT(d.id)::BIGINT AS dish_count,
+    ROUND(AVG(d.avg_rating) FILTER (WHERE d.avg_rating IS NOT NULL AND d.total_votes > 0)::NUMERIC, 1) AS avg_rating,
+    COALESCE(SUM(d.total_votes), 0)::BIGINT AS total_votes
   FROM nearby n
   LEFT JOIN dishes d ON d.restaurant_id = n.id AND d.parent_dish_id IS NULL
   WHERE n.distance_miles <= p_radius_miles
