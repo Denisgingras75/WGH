@@ -175,6 +175,8 @@ const GOOGLE_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')
 const MENU_PATHS = [
   '/menu', '/menus', '/food-menu', '/dinner-menu', '/food',
   '/food-drink', '/food--drinks', '/eat', '/dining', '/our-menu',
+  '/breakfast-menu', '/lunch-menu', '/brunch-menu', '/dinner',
+  '/breakfast', '/lunch', '/order', '/order-online',
 ]
 
 /**
