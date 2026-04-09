@@ -5,11 +5,137 @@ import { containsBlockedContent } from '../lib/reviewBlocklist'
 import { MAX_REVIEW_LENGTH } from '../constants/app'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
-import { jitterApi } from './jitterApi'
 
 /**
  * Votes API - Centralized data fetching and mutation for votes
  */
+
+async function getAuthenticatedUser() {
+  var { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('You must be logged in to vote')
+  }
+
+  return user
+}
+
+async function checkVoteRateLimitOnce() {
+  var clientRateLimit = checkVoteRateLimit()
+  if (!clientRateLimit.allowed) {
+    throw new Error(clientRateLimit.message)
+  }
+
+  var { data: serverRateLimit, error: rateLimitError } = await supabase
+    .rpc('check_vote_rate_limit')
+
+  if (rateLimitError) {
+    logger.error('Vote rate limit check failed:', rateLimitError)
+    throw new Error('Unable to verify vote limit. Please try again.')
+  }
+
+  if (serverRateLimit && !serverRateLimit.allowed) {
+    throw new Error(serverRateLimit.message || 'Too many votes. Please wait.')
+  }
+}
+
+function normalizeVotePayload({ dishId, wouldOrderAgain, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+  if (!dishId) {
+    throw new Error('Dish is required')
+  }
+
+  if (typeof wouldOrderAgain !== 'boolean') {
+    throw new Error('Vote selection is required')
+  }
+
+  if (rating10 != null && (rating10 < 0 || rating10 > 10)) {
+    throw new Error('Rating must be between 0 and 10')
+  }
+
+  if (reviewText) {
+    if (reviewText.length > MAX_REVIEW_LENGTH) {
+      throw new Error(`Review is ${reviewText.length - MAX_REVIEW_LENGTH} characters over limit`)
+    }
+
+    if (containsBlockedContent(reviewText)) {
+      throw new Error('Review contains inappropriate content. Please revise.')
+    }
+  }
+
+  return {
+    dishId,
+    wouldOrderAgain,
+    rating10,
+    reviewText: reviewText?.trim() || null,
+    purityData,
+    jitterData,
+    jitterScore,
+    badgeHash,
+  }
+}
+
+async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, reviewText, purityData, jitterData, jitterScore, badgeHash }) {
+  var voteData = {
+    dish_id: dishId,
+    user_id: userId,
+    would_order_again: wouldOrderAgain,
+    rating_10: rating10,
+  }
+
+  if (reviewText) {
+    voteData.review_text = reviewText
+    voteData.review_created_at = new Date().toISOString()
+  }
+
+  if (purityData && purityData.purity != null) {
+    voteData.purity_score = purityData.purity
+  }
+
+  if (jitterScore && jitterScore.score != null) {
+    voteData.war_score = jitterScore.score
+  }
+
+  if (badgeHash) {
+    voteData.badge_hash = badgeHash
+  }
+
+  var { error } = await supabase
+    .from('votes')
+    .upsert(voteData, {
+      onConflict: 'dish_id,user_id',
+    })
+
+  if (error) {
+    throw createClassifiedError(error)
+  }
+
+  if (jitterData) {
+    try {
+      var sampleRow = {
+        user_id: userId,
+        sample_data: jitterData,
+      }
+
+      if (jitterScore) {
+        sampleRow.liveness_score = jitterScore.score
+        sampleRow.flags = jitterScore.flags
+      }
+
+      await supabase.from('jitter_samples').insert(sampleRow)
+    } catch (jitterErr) {
+      logger.warn('Jitter sample submission failed:', jitterErr)
+    }
+  }
+
+  capture('vote_submitted', {
+    dish_id: dishId,
+    would_order_again: wouldOrderAgain,
+    rating: rating10,
+    has_review: !!reviewText,
+  })
+
+  return { success: true }
+}
 
 export const votesApi = {
   /**
@@ -23,112 +149,82 @@ export const votesApi = {
    */
   async submitVote({ dishId, wouldOrderAgain, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
     try {
-    // Quick client-side check first (better UX)
-      const clientRateLimit = checkVoteRateLimit()
-      if (!clientRateLimit.allowed) {
-        throw new Error(clientRateLimit.message)
-      }
+      var user = await getAuthenticatedUser()
+      await checkVoteRateLimitOnce()
 
-      // Validate review text if provided
-      if (reviewText) {
-        // Check length
-        if (reviewText.length > MAX_REVIEW_LENGTH) {
-          throw new Error(`Review is ${reviewText.length - MAX_REVIEW_LENGTH} characters over limit`)
-        }
-        // Check for blocked content
-        if (containsBlockedContent(reviewText)) {
-          throw new Error('Review contains inappropriate content. Please revise.')
-        }
-      }
-
-      // Treat empty string as no review
-      const cleanReviewText = reviewText?.trim() || null
-
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error('You must be logged in to vote')
-      }
-
-      // Server-side rate limit check (authoritative)
-      const { data: serverRateLimit, error: rateLimitError } = await supabase
-        .rpc('check_vote_rate_limit')
-
-      if (rateLimitError) {
-        // SECURITY: Fail closed - if rate limit check fails, block the vote
-        logger.error('Vote rate limit check failed:', rateLimitError)
-        throw new Error('Unable to verify vote limit. Please try again.')
-      } else if (serverRateLimit && !serverRateLimit.allowed) {
-        throw new Error(serverRateLimit.message || 'Too many votes. Please wait.')
-      }
-
-      // Upsert vote with all fields
-      const voteData = {
-        dish_id: dishId,
-        user_id: user.id,
-        would_order_again: wouldOrderAgain,
-        rating_10: rating10,
-      }
-
-      // Only include review fields if there's a review
-      if (cleanReviewText) {
-        voteData.review_text = cleanReviewText
-        voteData.review_created_at = new Date().toISOString()
-      }
-
-      // Attach purity score if available (silent anti-spam metric)
-      if (purityData && purityData.purity != null) {
-        voteData.purity_score = purityData.purity
-      }
-
-      // Attach WAR score and badge hash from attestation
-      if (jitterScore && jitterScore.score != null) {
-        voteData.war_score = jitterScore.score
-      }
-      if (badgeHash) {
-        voteData.badge_hash = badgeHash
-      }
-
-      const { error } = await supabase
-        .from('votes')
-        .upsert(voteData, {
-          onConflict: 'dish_id,user_id',
-        })
-
-      if (error) {
-        throw createClassifiedError(error)
-      }
-
-      // Submit jitter profile data if available
-      if (jitterData) {
-        try {
-          const sampleRow = {
-            user_id: user.id,
-            sample_data: jitterData,
-          }
-          if (jitterScore) {
-            sampleRow.liveness_score = jitterScore.score
-            sampleRow.flags = jitterScore.flags
-          }
-          await supabase.from('jitter_samples').insert(sampleRow)
-        } catch (jitterErr) {
-          // Jitter submission is non-critical -- log but don't fail the vote
-          logger.warn('Jitter sample submission failed:', jitterErr)
-        }
-      }
-
-      capture('vote_submitted', {
-        dish_id: dishId,
-        would_order_again: wouldOrderAgain,
-        rating: rating10,
-        has_review: !!cleanReviewText,
+      return await upsertVoteRecord({
+        userId: user.id,
+        ...normalizeVotePayload({
+          dishId,
+          wouldOrderAgain,
+          rating10,
+          reviewText,
+          purityData,
+          jitterData,
+          jitterScore,
+          badgeHash,
+        }),
       })
-
-      return { success: true }
     } catch (error) {
       logger.error('Error submitting vote:', error)
       throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
+   * Submit multiple votes sequentially with a single upfront rate-limit check
+   * @param {Object} params
+   * @param {Array<Object>} params.votes - Vote payloads matching submitVote shape
+   * @returns {Promise<Object>} Submission result with count metadata
+   */
+  async submitBatchVotes({ votes }) {
+    try {
+      if (!Array.isArray(votes) || votes.length === 0) {
+        throw new Error('Select at least one dish to rate')
+      }
+
+      var normalizedVotes = votes.map(function (vote) {
+        return normalizeVotePayload(vote)
+      })
+
+      var user = await getAuthenticatedUser()
+      await checkVoteRateLimitOnce()
+
+      var submittedDishIds = []
+
+      for (var i = 0; i < normalizedVotes.length; i += 1) {
+        try {
+          await upsertVoteRecord({
+            userId: user.id,
+            ...normalizedVotes[i],
+          })
+          submittedDishIds.push(normalizedVotes[i].dishId)
+        } catch (error) {
+          var classifiedError = error.type ? error : createClassifiedError(error)
+          classifiedError.submittedCount = submittedDishIds.length
+          classifiedError.submittedDishIds = submittedDishIds.slice()
+          throw classifiedError
+        }
+      }
+
+      return {
+        success: true,
+        submittedCount: submittedDishIds.length,
+        submittedDishIds,
+      }
+    } catch (error) {
+      logger.error('Error submitting batch votes:', error)
+
+      if (error.type) {
+        throw error
+      }
+
+      var classifiedError = createClassifiedError(error)
+      if (error.submittedCount != null) {
+        classifiedError.submittedCount = error.submittedCount
+        classifiedError.submittedDishIds = error.submittedDishIds
+      }
+      throw classifiedError
     }
   },
 
@@ -138,12 +234,12 @@ export const votesApi = {
    */
   async getUserVotes() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      var { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         return {}
       }
 
-      const { data, error } = await supabase
+      var { data, error } = await supabase
         .from('votes')
         .select('dish_id, would_order_again, rating_10')
         .eq('user_id', user.id)
@@ -179,7 +275,7 @@ export const votesApi = {
         return []
       }
 
-      const { data, error } = await supabase
+      var { data, error } = await supabase
         .from('votes')
         .select(`
           id,
@@ -220,7 +316,7 @@ export const votesApi = {
    */
   async deleteVote(dishId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      var { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
         throw new Error('Not authenticated')

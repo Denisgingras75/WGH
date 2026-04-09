@@ -138,6 +138,7 @@ export function RestaurantDetail() {
   // Fetch specials and events for this restaurant
   const { specials } = useRestaurantSpecials(restaurantId)
   const { events } = useRestaurantEvents(restaurantId)
+  var showRateYourMeal = !dishesLoading && (dishes?.length || 0) > 0
 
   // Fetch friend votes
   useEffect(() => {
@@ -645,6 +646,28 @@ export function RestaurantDetail() {
               </svg>
               Order Now
             </a>
+          )}
+          {showRateYourMeal && (
+            <button
+              onClick={function () {
+                if (!user) {
+                  setLoginModalOpen(true)
+                  return
+                }
+
+                navigate('/restaurants/' + restaurantId + '/rate')
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m6.75 2.25A8.25 8.25 0 1 1 5.25 12a8.25 8.25 0 0 1 16.5 0Z" />
+              </svg>
+              Rate Your Meal
+            </button>
           )}
           <a
             href={restaurant.lat && restaurant.lng

@@ -52,6 +52,7 @@ const Browse = lazyWithRetry(() => import('./pages/Browse'), 'Browse')
 const Dish = lazyWithRetry(() => import('./pages/Dish'), 'Dish')
 const Restaurants = lazyWithRetry(() => import('./pages/Restaurants'), 'Restaurants')
 const RestaurantDetail = lazyWithRetry(() => import('./pages/RestaurantDetail'), 'RestaurantDetail')
+const RateYourMeal = lazyWithRetry(() => import('./pages/RateYourMeal'), 'RateYourMeal')
 const Profile = lazyWithRetry(() => import('./pages/Profile'), 'Profile')
 const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin')
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login')
@@ -131,6 +132,7 @@ function App() {
               <Route path="/dish/:dishId" element={<Layout><Dish /></Layout>} />
               <Route path="/restaurants" element={<Layout><Restaurants /></Layout>} />
               <Route path="/restaurants/:restaurantId" element={<Layout><RestaurantDetail /></Layout>} />
+              <Route path="/restaurants/:restaurantId/rate" element={<Layout><RateYourMeal /></Layout>} />
               <Route path="/restaurants/:restaurantId/reviews" element={<Layout><RestaurantReviews /></Layout>} />
               <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
               <Route path="/user/:userId" element={<Layout><UserProfile /></Layout>} />
