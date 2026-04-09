@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
@@ -13,7 +13,8 @@ import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
 import { useFavorites } from '../hooks/useFavorites'
 import { LoginModal } from '../components/Auth/LoginModal'
-import { RestaurantDishes, RestaurantMenu } from '../components/restaurants'
+import { RestaurantDishes, RestaurantMenu, MenuImportStatus } from '../components/restaurants'
+import { useMenuImportStatus } from '../hooks/useMenuImportStatus'
 import { useNearbyRestaurant } from '../hooks/useNearbyRestaurant'
 import { useRestaurantSpecials } from '../hooks/useSpecials'
 import { useRestaurantEvents } from '../hooks/useEvents'
@@ -34,6 +35,7 @@ export function RestaurantDetail() {
   const [dishSearchQuery, setDishSearchQuery] = useState('')
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [friendsVotesByDish, setFriendsVotesByDish] = useState({})
+  const [expandedReview, setExpandedReview] = useState(null)
 
   // Fetch restaurant by ID
   useEffect(() => {
@@ -71,6 +73,16 @@ export function RestaurantDetail() {
   const { dishes, loading: dishesLoading, error: dishesError, refetch } = useDishes(
     location, radius, null, restaurantId
   )
+
+  // Poll menu import status and auto-refetch dishes when a job completes
+  const { status: importStatus } = useMenuImportStatus(restaurantId)
+  const prevImportStatus = useRef(importStatus)
+  useEffect(() => {
+    if (prevImportStatus.current === 'processing' && importStatus === 'completed') {
+      refetch()
+    }
+    prevImportStatus.current = importStatus
+  }, [importStatus, refetch])
 
   // Compute WGH Food Score — aggregated from dish ratings
   var ratedDishes = (dishes || []).filter(function (d) { return d.avg_rating != null && (d.total_votes || 0) > 0 })
@@ -359,17 +371,19 @@ export function RestaurantDetail() {
             }}
           >
             {reviewSnippets.map(function (review, i) {
+              var isExpanded = expandedReview === i
               return (
-                <div
+                <button
                   key={i}
-                  className="flex-shrink-0"
+                  onClick={function () { setExpandedReview(isExpanded ? null : i) }}
+                  className="flex-shrink-0 text-left transition-all"
                   style={{
                     scrollSnapAlign: 'start',
-                    width: '280px',
+                    width: isExpanded ? '320px' : '280px',
                     padding: '10px 14px',
                     background: 'var(--color-card)',
                     borderRadius: '12px',
-                    border: '1px solid var(--color-divider)',
+                    border: isExpanded ? '1.5px solid var(--color-accent-gold)' : '1px solid var(--color-divider)',
                   }}
                 >
                   <p style={{
@@ -378,10 +392,10 @@ export function RestaurantDetail() {
                     fontStyle: 'italic',
                     lineHeight: 1.4,
                     margin: 0,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
+                    display: isExpanded ? 'block' : '-webkit-box',
+                    WebkitLineClamp: isExpanded ? undefined : 2,
+                    WebkitBoxOrient: isExpanded ? undefined : 'vertical',
+                    overflow: isExpanded ? 'visible' : 'hidden',
                   }}>
                     &ldquo;{review.review_text}&rdquo;
                   </p>
@@ -395,7 +409,7 @@ export function RestaurantDetail() {
                       <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}</span></span>
                     )}
                   </p>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -537,6 +551,11 @@ export function RestaurantDetail() {
           style={{ background: 'linear-gradient(90deg, transparent, var(--color-accent-gold), transparent)' }}
         />
       </div>
+
+      {/* Menu import status — shown only when no dishes yet */}
+      {!dishesLoading && (
+        <MenuImportStatus restaurantId={restaurantId} dishCount={dishes?.length ?? 0} />
+      )}
 
       {/* Dish Content */}
       {(activeTab || 'top') === 'top' ? (

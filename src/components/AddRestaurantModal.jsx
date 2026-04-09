@@ -6,6 +6,7 @@ import { useLocationContext } from '../context/LocationContext'
 import { useAuth } from '../context/AuthContext'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { placesApi } from '../api/placesApi'
+import { menuImportApi } from '../api'
 import { validateUserContent } from '../lib/reviewBlocklist'
 import { capture } from '../lib/analytics'
 import { logger } from '../utils/logger'
@@ -183,7 +184,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
           has_order_url: !!ordering.orderUrl,
         })
         // Fire-and-forget: auto-import menu
-        restaurantsApi.refreshMenu(restaurant.id)
+        menuImportApi.createJob(restaurant.id, 'initial').catch(() => {})
         setSubmitting(false)
         onClose()
         navigate('/restaurants/' + restaurant.id)
@@ -275,7 +276,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
 
       // Fire-and-forget: auto-discover website + import menu
       // Edge Function handles everything: Google Places lookup → website probe → menu extraction
-      restaurantsApi.refreshMenu(restaurant.id)
+      menuImportApi.createJob(restaurant.id, 'initial').catch(() => {})
 
       onClose()
       navigate(`/restaurants/${restaurant.id}`)
