@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
@@ -22,6 +23,7 @@ import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/b
 import { validateUserContent } from '../lib/reviewBlocklist'
 
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
   const { getPurity, getJitterProfile, attachToTextarea, reset: resetPurity } = usePurityTracker()
@@ -334,6 +336,30 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             </div>
           </div>
         )}
+        {/* Rate Your Meal nudge — sit-down restaurants often mean multiple dishes */}
+        {restaurantId && (
+          <button
+            onClick={() => navigate('/restaurants/' + restaurantId + '/rate')}
+            className="w-full py-3 px-4 rounded-xl flex items-center justify-between transition-all active:scale-[0.98]"
+            style={{
+              background: 'var(--color-primary-muted)',
+              border: '1px solid var(--color-primary)',
+            }}
+          >
+            <div className="text-left">
+              <p className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>
+                Had more at {restaurantName || 'this restaurant'}?
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                Rate your whole meal in one go
+              </p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        )}
+
         <button
           onClick={() => {
             setPendingVote(userVote)
