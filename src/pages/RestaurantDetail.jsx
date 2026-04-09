@@ -138,7 +138,7 @@ export function RestaurantDetail() {
   // Fetch specials and events for this restaurant
   const { specials } = useRestaurantSpecials(restaurantId)
   const { events } = useRestaurantEvents(restaurantId)
-  var showRateYourMeal = !dishesLoading && (dishes?.length || 0) > 0
+  var showRateYourMeal = !dishesLoading && (dishes?.length || 0) > 0 && (activeTab || 'top') === 'top'
 
   // Fetch friend votes
   useEffect(() => {
@@ -621,15 +621,16 @@ export function RestaurantDetail() {
 
       {/* Sticky bottom action bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"
+        className="fixed left-0 right-0 z-30 px-4 pt-3"
         style={{
+          bottom: '60px',
           background: 'var(--color-bg)',
           backdropFilter: 'blur(12px)',
           boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
         }}
       >
-        <div className="flex gap-2 pb-2">
+        <div className="flex gap-2 pb-1">
           {(restaurant.toast_slug || sanitizeUrl(restaurant.order_url)) && (
             <a
               href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : sanitizeUrl(restaurant.order_url)}
