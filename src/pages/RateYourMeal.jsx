@@ -26,7 +26,7 @@ function getSpecialClientId(specialDishName) {
 function createInitialRatingState(previousValue) {
   return previousValue || {
     wouldOrderAgain: null,
-    rating10: 7,
+    rating10: 0,
     reviewText: '',
     photoFile: null,
   }

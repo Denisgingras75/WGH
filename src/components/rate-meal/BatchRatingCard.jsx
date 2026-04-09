@@ -132,7 +132,7 @@ export function BatchRatingCard({
             <FoodRatingSlider
               value={value.rating10}
               onChange={function (nextRating) { updateValue({ rating10: nextRating }) }}
-              min={1}
+              min={0}
               max={10}
               step={0.1}
               category={dish.category}
