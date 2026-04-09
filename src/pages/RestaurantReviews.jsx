@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { votesApi } from '../api/votesApi'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { logger } from '../utils/logger'
 import { getRatingColor } from '../utils/ranking'
+
+var SORT_OPTIONS = [
+  { key: 'newest', label: 'Newest' },
+  { key: 'highest', label: 'Highest' },
+  { key: 'lowest', label: 'Lowest' },
+]
 
 export function RestaurantReviews() {
   var { restaurantId } = useParams()
@@ -13,6 +19,18 @@ export function RestaurantReviews() {
   var [reviews, setReviews] = useState([])
   var [loading, setLoading] = useState(true)
   var [fetchError, setFetchError] = useState(null)
+  var [sortBy, setSortBy] = useState('newest')
+
+  var sortedReviews = useMemo(function () {
+    var sorted = reviews.slice()
+    if (sortBy === 'highest') {
+      sorted.sort(function (a, b) { return (b.rating || 0) - (a.rating || 0) })
+    } else if (sortBy === 'lowest') {
+      sorted.sort(function (a, b) { return (a.rating || 0) - (b.rating || 0) })
+    }
+    // 'newest' is the default fetch order, no re-sort needed
+    return sorted
+  }, [reviews, sortBy])
 
   useEffect(function () {
     if (!restaurantId) return
@@ -115,6 +133,29 @@ export function RestaurantReviews() {
         </div>
       </div>
 
+      {/* Sort pills */}
+      {!fetchError && reviews.length > 0 && (
+        <div className="flex gap-2 px-4 pt-3">
+          {SORT_OPTIONS.map(function (opt) {
+            var isActive = sortBy === opt.key
+            return (
+              <button
+                key={opt.key}
+                onClick={function () { setSortBy(opt.key) }}
+                className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+                style={{
+                  background: isActive ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: isActive ? 'white' : 'var(--color-text-secondary)',
+                  border: isActive ? 'none' : '1.5px solid var(--color-divider)',
+                }}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Error state */}
       {fetchError && (
         <div className="px-4 pt-8 text-center">
@@ -133,7 +174,7 @@ export function RestaurantReviews() {
 
       {/* Reviews list */}
       {!fetchError && <div className="px-4 pt-4 space-y-3">
-        {reviews.length === 0 ? (
+        {sortedReviews.length === 0 ? (
           <div
             className="text-center py-16 rounded-xl"
             style={{
@@ -146,7 +187,7 @@ export function RestaurantReviews() {
             <p className="text-sm mt-2">Be the first to leave a review!</p>
           </div>
         ) : (
-          reviews.map(function (review, i) {
+          sortedReviews.map(function (review, i) {
             return (
               <button
                 key={i}
