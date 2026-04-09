@@ -253,6 +253,43 @@ async function hashContent(text: string): Promise<string> {
     .slice(0, 16) // 16 hex chars = 64 bits, plenty for change detection
 }
 
+type ErrorCode = 'no_menu_url' | 'fetch_timeout' | 'fetch_error' | 'claude_error' | 'parse_error' | 'no_dishes' | 'page_too_short'
+
+function classifyError(error: unknown, context?: string): { code: ErrorCode; message: string; context: Record<string, unknown> } {
+  const message = error instanceof Error ? error.message : String(error)
+
+  if (context === 'no_menu_url') {
+    return { code: 'no_menu_url', message: 'No menu URL found', context: {} }
+  }
+  if (context === 'no_dishes') {
+    return { code: 'no_dishes', message: 'No dishes extracted from content', context: {} }
+  }
+  if (context === 'page_too_short') {
+    return { code: 'page_too_short', message: 'Page content too short (<50 chars)', context: {} }
+  }
+  if (message.includes('abort') || message.includes('timeout')) {
+    return { code: 'fetch_timeout', message, context: {} }
+  }
+  if (message.includes('HTTP ')) {
+    const statusMatch = message.match(/HTTP (\d+)/)
+    return { code: 'fetch_error', message, context: { http_status: statusMatch?.[1] } }
+  }
+  if (message.includes('Claude API error')) {
+    return { code: 'claude_error', message, context: {} }
+  }
+  if (message.includes('JSON') || message.includes('parse')) {
+    return { code: 'parse_error', message, context: {} }
+  }
+  return { code: 'claude_error', message, context: {} }
+}
+
+function calculateBackoff(attemptCount: number): Date {
+  const minutes = 5 * Math.pow(6, attemptCount - 1)
+  const backoff = new Date()
+  backoff.setMinutes(backoff.getMinutes() + minutes)
+  return backoff
+}
+
 /**
  * Fetch and strip HTML from a menu URL
  */
@@ -334,7 +371,7 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6-20260409',
       max_tokens: 4096,
       messages: [
         {
@@ -478,74 +515,267 @@ serve(async (req) => {
       // Empty body = batch mode
     }
 
-    let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
-    let isSingleMode = false
+    // === Queue processing mode ===
+    if (body.mode === 'queue') {
+      // --- Recovery pass: reset stalled jobs ---
+      const { data: stalledJobs } = await supabase
+        .from('menu_import_jobs')
+        .select('id, attempt_count, max_attempts')
+        .eq('status', 'processing')
+        .lt('lock_expires_at', new Date().toISOString())
 
-    if (body.restaurant_id) {
-      isSingleMode = true
-      // Single restaurant mode — auto-discover menu URL if missing
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('id, name, address, menu_url, website_url, google_place_id, menu_content_hash')
-        .eq('id', body.restaurant_id as string)
-        .single()
-
-      if (error || !data) {
-        return new Response(JSON.stringify({ error: 'Restaurant not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-
-      let menuUrl = data.menu_url
-      let websiteUrl = data.website_url
-      let googlePlaceId = data.google_place_id
-      const dbUpdates: Record<string, unknown> = {}
-
-      // Step 1: If no website, try Google Places text search
-      if (!websiteUrl && !menuUrl) {
-        console.log(`${data.name}: no website or menu URL — searching Google Places`)
-        const googleResult = await findWebsiteViaGoogle(data.name, data.address || '')
-        if (googleResult.websiteUrl) {
-          websiteUrl = googleResult.websiteUrl
-          dbUpdates.website_url = websiteUrl
-          console.log(`${data.name}: found website via Google: ${websiteUrl}`)
-        }
-        if (googleResult.googlePlaceId && !googlePlaceId) {
-          googlePlaceId = googleResult.googlePlaceId
-          dbUpdates.google_place_id = googlePlaceId
+      for (const stalled of (stalledJobs || [])) {
+        const newAttemptCount = stalled.attempt_count + 1
+        if (newAttemptCount >= stalled.max_attempts) {
+          await supabase
+            .from('menu_import_jobs')
+            .update({
+              status: 'dead',
+              attempt_count: newAttemptCount,
+              error_message: 'Worker crashed or timed out',
+              error_code: 'fetch_timeout',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', stalled.id)
+        } else {
+          await supabase
+            .from('menu_import_jobs')
+            .update({
+              status: 'pending',
+              attempt_count: newAttemptCount,
+              run_after: new Date().toISOString(),
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', stalled.id)
         }
       }
 
-      // Step 2: If no menu URL but have website, probe for menu paths
-      if (!menuUrl && websiteUrl) {
-        console.log(`${data.name}: probing website for menu URL...`)
-        const found = await findMenuUrl(websiteUrl)
-        if (found) {
-          menuUrl = found
-          dbUpdates.menu_url = menuUrl
-          console.log(`${data.name}: found menu at ${menuUrl}`)
-        }
-      }
+      // --- Atomic dequeue ---
+      const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 5 })
 
-      // Save any discovered URLs back to the restaurant
-      if (Object.keys(dbUpdates).length > 0) {
-        await supabase.from('restaurants').update(dbUpdates).eq('id', data.id)
-      }
-
-      if (!menuUrl) {
+      if (dequeueErr || !jobs || jobs.length === 0) {
         return new Response(JSON.stringify({
-          message: 'No menu URL found',
-          restaurant: data.name,
-          website_discovered: websiteUrl || null,
-          google_place_id_discovered: googlePlaceId || null,
+          message: jobs?.length === 0 ? 'No jobs to process' : 'Dequeue error',
+          recovered: stalledJobs?.length || 0,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
-      restaurants = [{ id: data.id, name: data.name, menu_url: menuUrl, menu_content_hash: data.menu_content_hash }]
-    } else {
+      const results: Array<Record<string, unknown>> = []
+
+      for (const job of jobs) {
+        try {
+          const { data: restaurant, error: restErr } = await supabase
+            .from('restaurants')
+            .select('id, name, address, menu_url, website_url, google_place_id, menu_content_hash')
+            .eq('id', job.restaurant_id)
+            .single()
+
+          if (restErr || !restaurant) {
+            await supabase.from('menu_import_jobs').update({
+              status: 'dead',
+              error_code: 'fetch_error',
+              error_message: 'Restaurant not found',
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'error', reason: 'restaurant not found' })
+            continue
+          }
+
+          let menuUrl = restaurant.menu_url
+          let websiteUrl = restaurant.website_url
+          const dbUpdates: Record<string, unknown> = {}
+
+          if (!websiteUrl && !menuUrl) {
+            const googleResult = await findWebsiteViaGoogle(restaurant.name, restaurant.address || '')
+            if (googleResult.websiteUrl) {
+              websiteUrl = googleResult.websiteUrl
+              dbUpdates.website_url = websiteUrl
+            }
+            if (googleResult.googlePlaceId && !restaurant.google_place_id) {
+              dbUpdates.google_place_id = googleResult.googlePlaceId
+            }
+          }
+
+          if (!menuUrl && websiteUrl) {
+            const found = await findMenuUrl(websiteUrl)
+            if (found) {
+              menuUrl = found
+              dbUpdates.menu_url = menuUrl
+            }
+          }
+
+          if (Object.keys(dbUpdates).length > 0) {
+            await supabase.from('restaurants').update(dbUpdates).eq('id', restaurant.id)
+          }
+
+          if (!menuUrl) {
+            const classified = classifyError(null, 'no_menu_url')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: { website_discovered: websiteUrl },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'no_menu_url', restaurant: restaurant.name })
+            continue
+          }
+
+          const content = await fetchMenuContent(menuUrl)
+
+          if (content.length < 50) {
+            const classified = classifyError(null, 'page_too_short')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'page_too_short', restaurant: restaurant.name })
+            continue
+          }
+
+          const contentHash = await hashContent(content)
+          if (restaurant.menu_content_hash && restaurant.menu_content_hash === contentHash) {
+            await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
+            await supabase.from('menu_import_jobs').update({
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
+            continue
+          }
+
+          const closedSignal = detectClosed(content)
+          if (closedSignal) {
+            await supabase.from('restaurants').update({
+              is_open: false, menu_last_checked: new Date().toISOString(),
+            }).eq('id', restaurant.id)
+
+            if (job.job_type === 'refresh') {
+              await supabase.from('menu_import_jobs').update({
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                error_message: `Closed: ${closedSignal}`,
+                lock_expires_at: null,
+                updated_at: new Date().toISOString(),
+              }).eq('id', job.id)
+              results.push({ job_id: job.id, status: 'closed', restaurant: restaurant.name })
+              continue
+            }
+          }
+
+          const extracted = await extractMenuWithClaude(content, restaurant.name)
+
+          if (extracted.dishes.length === 0) {
+            const classified = classifyError(null, 'no_dishes')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'no_dishes', restaurant: restaurant.name })
+            continue
+          }
+
+          const stats = await upsertDishes(supabase, restaurant.id, extracted)
+
+          await supabase.from('restaurants').update({
+            menu_last_checked: new Date().toISOString(),
+            menu_content_hash: contentHash,
+          }).eq('id', restaurant.id)
+
+          await supabase.from('menu_import_jobs').update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            dishes_found: extracted.dishes.length,
+            dishes_inserted: stats.inserted,
+            dishes_updated: stats.updated,
+            dishes_unchanged: stats.unchanged,
+            lock_expires_at: null,
+            updated_at: new Date().toISOString(),
+          }).eq('id', job.id)
+
+          results.push({
+            job_id: job.id, status: 'success', restaurant: restaurant.name,
+            dishes: extracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
+          })
+
+        } catch (err) {
+          console.error(`Job ${job.id} failed:`, err)
+          const classified = classifyError(err)
+          const newAttemptCount = job.attempt_count + 1
+
+          await supabase.from('menu_import_jobs').update({
+            status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+            attempt_count: newAttemptCount,
+            run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+            error_code: classified.code,
+            error_message: classified.message,
+            error_context: classified.context,
+            lock_expires_at: null,
+            updated_at: new Date().toISOString(),
+          }).eq('id', job.id)
+
+          results.push({ job_id: job.id, status: 'error', error: classified.code })
+        }
+
+        if (jobs.length > 1) await sleep(2000)
+      }
+
+      return new Response(JSON.stringify({
+        processed: jobs.length,
+        recovered: stalledJobs?.length || 0,
+        results,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // === Backward compatibility: single restaurant_id enqueues a job ===
+    if (body.restaurant_id) {
+      const { data, error } = await supabase.rpc('enqueue_menu_import', {
+        p_restaurant_id: body.restaurant_id as string,
+        p_job_type: 'initial',
+        p_priority: 10,
+      })
+      if (error) {
+        return new Response(JSON.stringify({ error: 'Failed to enqueue job', details: error.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({
+        message: 'Job enqueued',
+        job: data?.[0],
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // === Batch fallback mode: find stale menus ===
+    let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
+
+    {
       // Batch mode: find stale menus
       const staleDate = new Date()
       staleDate.setDate(staleDate.getDate() - STALE_DAYS)
@@ -607,7 +837,6 @@ serve(async (req) => {
         }
 
         // Check for closure signals BEFORE calling Claude (saves API cost)
-        // In single-restaurant mode, still extract menu even if closed (seasonal restaurants)
         const closedSignal = detectClosed(content)
         if (closedSignal) {
           console.log(`${restaurant.name}: detected closed signal "${closedSignal}"`)
@@ -615,16 +844,12 @@ serve(async (req) => {
             .from('restaurants')
             .update({ is_open: false, menu_last_checked: new Date().toISOString() })
             .eq('id', restaurant.id)
-          if (!isSingleMode) {
-            results.push({
-              restaurant_id: restaurant.id,
-              name: restaurant.name,
-              status: `closed: ${closedSignal}`,
-            })
-            continue
-          }
-          // Single mode: mark closed but still extract the menu
-          console.log(`${restaurant.name}: closed but extracting menu anyway (single-restaurant mode)`)
+          results.push({
+            restaurant_id: restaurant.id,
+            name: restaurant.name,
+            status: `closed: ${closedSignal}`,
+          })
+          continue
         }
 
         // Extract dishes with Claude
