@@ -217,7 +217,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     setStep(STEPS.DETAILS)
   }
 
-  const handleDetailsNext = () => {
+  const handleDetailsNext = async () => {
     if (!name.trim()) {
       setError('Restaurant name is required')
       return
@@ -233,17 +233,34 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       return
     }
     if (lat == null || lng == null) {
+      // Try fetching coordinates from Google Place ID first
+      if (googlePlaceId) {
+        try {
+          setSubmitting(true)
+          const details = await placesApi.getDetails(googlePlaceId)
+          if (details && details.lat && details.lng) {
+            setLat(details.lat)
+            setLng(details.lng)
+            setSubmitting(false)
+            setError(null)
+            handleSubmit()
+            return
+          }
+        } catch {
+          // Fall through to GPS
+        }
+        setSubmitting(false)
+      }
       // Fall back to device GPS
       if (hasLocation && location) {
         setLat(location.lat)
         setLng(location.lng)
       } else {
-        setError('Location coordinates are required. Please enable location access.')
+        setError('Could not determine location. Please enable location access and try again.')
         return
       }
     }
     setError(null)
-    // Skip "Add First Dish" step — menu-refresh Edge Function handles dish import automatically
     handleSubmit()
   }
 
