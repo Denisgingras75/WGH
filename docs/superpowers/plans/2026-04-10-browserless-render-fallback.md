@@ -24,7 +24,7 @@
 | `supabase/functions/menu-refresh/cms-detect.ts` | Create | Pure function: detect CMS from HTML/URL signatures |
 | `supabase/functions/menu-refresh/browserless.ts` | Create | Browserless API client (fetchRenderedHtml) |
 | `supabase/functions/menu-refresh/cms-detect.test.ts` | Create | Unit tests for CMS detection |
-| `supabase/migrations/add-browserless-columns.sql` | Create | No schema changes — error_context already JSONB |
+| `supabase/migrations/extend-job-lock.sql` | Create | Extend `claim_menu_import_jobs` lock from 5 → 10 minutes for render workload |
 
 **Key design decisions:**
 - Keep `menu-refresh/index.ts` as the entrypoint — Supabase Edge Functions bundle into one file, so we import from sibling files
@@ -113,6 +113,15 @@ Deno.test('returns null for WordPress (not a JS-rendered CMS)', () => {
 Deno.test('case-insensitive URL matching', () => {
   const html = '<html></html>'
   assertEquals(detectCms(html, 'https://EXAMPLE.WIXSITE.COM/'), 'wix')
+})
+
+Deno.test('cmsRequiresRender: wix/square/weebly need render, squarespace does not', async () => {
+  const { cmsRequiresRender } = await import('./cms-detect.ts')
+  assertEquals(cmsRequiresRender('wix'), true)
+  assertEquals(cmsRequiresRender('square'), true)
+  assertEquals(cmsRequiresRender('weebly'), true)
+  assertEquals(cmsRequiresRender('squarespace'), false)
+  assertEquals(cmsRequiresRender(null), false)
 })
 ```
 
@@ -215,7 +224,7 @@ export function cmsRequiresRender(cms: CmsId | null): boolean {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `cd supabase/functions/menu-refresh && deno test cms-detect.test.ts`
-Expected: All 11 tests PASS.
+Expected: All 12 tests PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -239,33 +248,50 @@ Create `supabase/functions/menu-refresh/browserless.ts`:
 /**
  * Browserless API client — fetches fully-rendered HTML for JavaScript-heavy sites.
  *
- * Docs: https://docs.browserless.io/rest-apis/content
+ * Docs:
+ *   https://docs.browserless.io/rest-apis/content
+ *   https://docs.browserless.io/rest-apis/unblock
+ *   https://docs.browserless.io/rest-apis/request-configuration
  *
  * Pricing (2026 prototyping plan):
  *   - $25/year for 20,000 units
  *   - 1 unit = up to 30s of browser time
  *   - Overages: $0.002/unit
  *
- * We use the /content endpoint which returns fully rendered HTML as text/html.
- * Set BROWSERLESS_API_KEY env var.
+ * Important gotchas:
+ *   - /content returns HTTP 200 even when the TARGET site returned 403/404.
+ *     The real target status is in the `X-Response-Code` response header.
+ *     We check this header and throw on 4xx/5xx target responses.
+ *   - `waitForTimeout` is a TOP-LEVEL body field for "sleep after load",
+ *     NOT `gotoOptions.timeout` which is the navigation timeout.
+ *   - /unblock requires `?proxy=residential` in the query string per the docs.
  */
 
 const BROWSERLESS_BASE = 'https://production-sfo.browserless.io'
 
 export interface RenderOptions {
-  // Max wait in ms before returning even if page isn't fully loaded
-  waitForTimeout?: number
+  // Navigation timeout in ms (default 30000)
+  gotoTimeout?: number
+  // Extra sleep after load in ms — gives JS frameworks time to hydrate
+  waitForTimeoutMs?: number
   // CSS selector to wait for before considering the page loaded
   waitForSelector?: string
-  // Use residential proxy (costs more, required for 403-blocked sites)
+  // Use residential proxy + unblock pipeline (costs more, for 403-blocked sites)
   useUnblock?: boolean
 }
+
+export type BrowserlessErrorCode =
+  | 'NO_API_KEY'
+  | 'RENDER_TIMEOUT'
+  | 'RENDER_FAILED'
+  | 'QUOTA_EXCEEDED'
+  | 'TARGET_ERROR'
 
 export class BrowserlessError extends Error {
   constructor(
     message: string,
     public status: number,
-    public code: 'NO_API_KEY' | 'RENDER_TIMEOUT' | 'RENDER_FAILED' | 'QUOTA_EXCEEDED'
+    public code: BrowserlessErrorCode
   ) {
     super(message)
     this.name = 'BrowserlessError'
@@ -283,21 +309,29 @@ export async function fetchRenderedHtml(url: string, options: RenderOptions = {}
   }
 
   const endpoint = options.useUnblock ? '/unblock' : '/content'
-  const fullUrl = `${BROWSERLESS_BASE}${endpoint}?token=${encodeURIComponent(apiKey)}`
+  const query = options.useUnblock
+    ? `?token=${encodeURIComponent(apiKey)}&proxy=residential`
+    : `?token=${encodeURIComponent(apiKey)}`
+  const fullUrl = `${BROWSERLESS_BASE}${endpoint}${query}`
 
   const body: Record<string, unknown> = {
     url,
     gotoOptions: {
       waitUntil: 'networkidle2',
-      timeout: options.waitForTimeout ?? 30000,
+      timeout: options.gotoTimeout ?? 30000,
     },
+  }
+
+  // Top-level waitForTimeout — sleep after page load (NOT navigation timeout)
+  if (options.waitForTimeoutMs != null) {
+    body.waitForTimeout = options.waitForTimeoutMs
   }
 
   if (options.waitForSelector) {
     body.waitForSelector = { selector: options.waitForSelector, timeout: 10000 }
   }
 
-  // /unblock requires slightly different body shape
+  // /unblock requires content: true to return the HTML in the JSON response
   if (options.useUnblock) {
     body.browserWSEndpoint = false
     body.cookies = false
@@ -307,7 +341,7 @@ export async function fetchRenderedHtml(url: string, options: RenderOptions = {}
   }
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 45000)
+  const timeoutId = setTimeout(() => controller.abort(), 60000) // overall wall clock
 
   try {
     const response = await fetch(fullUrl, {
@@ -325,6 +359,19 @@ export async function fetchRenderedHtml(url: string, options: RenderOptions = {}
       throw new BrowserlessError(`Browserless render failed: ${response.status} ${errorText}`, response.status, 'RENDER_FAILED')
     }
 
+    // Check if the TARGET site returned an error even though Browserless returned 200
+    const targetStatusHeader = response.headers.get('x-response-code')
+    if (targetStatusHeader) {
+      const targetStatus = parseInt(targetStatusHeader, 10)
+      if (!isNaN(targetStatus) && targetStatus >= 400) {
+        throw new BrowserlessError(
+          `Target site returned ${targetStatus}`,
+          targetStatus,
+          'TARGET_ERROR'
+        )
+      }
+    }
+
     if (options.useUnblock) {
       const json = await response.json()
       return json.content || ''
@@ -336,7 +383,11 @@ export async function fetchRenderedHtml(url: string, options: RenderOptions = {}
     if (err instanceof DOMException && err.name === 'AbortError') {
       throw new BrowserlessError('Browserless render timeout', 408, 'RENDER_TIMEOUT')
     }
-    throw new BrowserlessError(`Browserless request failed: ${err instanceof Error ? err.message : String(err)}`, 500, 'RENDER_FAILED')
+    throw new BrowserlessError(
+      `Browserless request failed: ${err instanceof Error ? err.message : String(err)}`,
+      500,
+      'RENDER_FAILED'
+    )
   } finally {
     clearTimeout(timeoutId)
   }
@@ -527,20 +578,29 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
       }
 
       const cms = detectCms(rawHtml, menuUrl)
-      let content = extractMenuTextFromHtml(rawHtml)
+      const rawText = extractMenuTextFromHtml(rawHtml)
+      const rawTextLen = rawText.length
+      let content = rawText
       let rendererAttempted = false
+      let renderSucceeded = false
+      let renderError: string | null = null
       let renderedTextLen: number | null = null
 
       // Render fallback #1: content too short AND CMS requires rendering
       if (content.length < 50 && cmsRequiresRender(cms)) {
         console.log(`${restaurant.name}: content too short + ${cms} CMS, attempting render fallback`)
+        rendererAttempted = true  // mark ATTEMPTED regardless of outcome
         try {
           const renderedHtml = await fetchRenderedHtml(menuUrl)
-          rendererAttempted = true
-          content = extractMenuTextFromHtml(renderedHtml)
-          renderedTextLen = content.length
+          const renderedText = extractMenuTextFromHtml(renderedHtml)
+          renderedTextLen = renderedText.length
+          if (renderedText.length >= 50) {
+            content = renderedText
+            renderSucceeded = true
+          }
         } catch (renderErr) {
-          console.error(`${restaurant.name}: render failed:`, renderErr)
+          renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+          console.error(`${restaurant.name}: render failed:`, renderError)
         }
       }
 
@@ -558,8 +618,10 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
             website_url: websiteUrl,
             cms_detected: cms,
             raw_html_len: rawHtml.length,
-            raw_text_len: content.length,
+            raw_text_len: rawTextLen,
             renderer_attempted: rendererAttempted,
+            render_succeeded: renderSucceeded,
+            render_error: renderError,
             rendered_text_len: renderedTextLen,
           },
           lock_expires_at: null,
@@ -569,22 +631,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
         continue
       }
 
-      // Content hash — skip if unchanged
-      const contentHash = await hashContent(content)
-      if (restaurant.menu_content_hash && restaurant.menu_content_hash === contentHash) {
-        await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
-        await supabase.from('menu_import_jobs').update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
-          lock_expires_at: null,
-          updated_at: new Date().toISOString(),
-        }).eq('id', job.id)
-        results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
-        continue
-      }
-
-      // Closed detection
+      // Closed detection — run on whatever content we ended up with (raw or rendered)
       const closedSignal = detectClosed(content)
       if (closedSignal) {
         await supabase.from('restaurants').update({
@@ -610,16 +657,37 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
       // Render fallback #2: zero dishes AND CMS requires rendering AND we haven't rendered yet
       if (extracted.dishes.length === 0 && cmsRequiresRender(cms) && !rendererAttempted) {
         console.log(`${restaurant.name}: Sonnet found 0 dishes in ${cms} site, attempting render fallback`)
+        rendererAttempted = true  // mark ATTEMPTED regardless of outcome
         try {
           const renderedHtml = await fetchRenderedHtml(menuUrl)
-          rendererAttempted = true
-          content = extractMenuTextFromHtml(renderedHtml)
-          renderedTextLen = content.length
-          if (content.length >= 50) {
+          const renderedText = extractMenuTextFromHtml(renderedHtml)
+          renderedTextLen = renderedText.length
+          if (renderedText.length >= 50) {
+            content = renderedText
+            renderSucceeded = true
+            // Re-run closed detection on rendered content (could reveal "closed for season" text)
+            const renderedClosedSignal = detectClosed(content)
+            if (renderedClosedSignal) {
+              await supabase.from('restaurants').update({
+                is_open: false, menu_last_checked: new Date().toISOString(),
+              }).eq('id', restaurant.id)
+              if (job.job_type === 'refresh') {
+                await supabase.from('menu_import_jobs').update({
+                  status: 'completed',
+                  completed_at: new Date().toISOString(),
+                  error_message: `Closed: ${renderedClosedSignal}`,
+                  lock_expires_at: null,
+                  updated_at: new Date().toISOString(),
+                }).eq('id', job.id)
+                results.push({ job_id: job.id, status: 'closed', restaurant: restaurant.name })
+                continue
+              }
+            }
             extracted = await extractMenuWithClaude(content, restaurant.name)
           }
         } catch (renderErr) {
-          console.error(`${restaurant.name}: render retry failed:`, renderErr)
+          renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+          console.error(`${restaurant.name}: render retry failed:`, renderError)
         }
       }
 
@@ -637,14 +705,33 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
             website_url: websiteUrl,
             cms_detected: cms,
             raw_html_len: rawHtml.length,
-            raw_text_len: content.length,
+            raw_text_len: rawTextLen,
             renderer_attempted: rendererAttempted,
+            render_succeeded: renderSucceeded,
+            render_error: renderError,
             rendered_text_len: renderedTextLen,
           },
           lock_expires_at: null,
           updated_at: new Date().toISOString(),
         }).eq('id', job.id)
         results.push({ job_id: job.id, status: 'no_dishes', restaurant: restaurant.name })
+        continue
+      }
+
+      // FINAL content hash — compute AFTER all fallbacks so we hash what we actually used.
+      // This prevents the next run from short-circuiting on a raw hash when we actually
+      // extracted from rendered HTML.
+      const contentHash = await hashContent(content)
+      if (restaurant.menu_content_hash && restaurant.menu_content_hash === contentHash) {
+        await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
+        await supabase.from('menu_import_jobs').update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
+          lock_expires_at: null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', job.id)
+        results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
         continue
       }
 ```
@@ -672,13 +759,64 @@ error_context (cms, text lengths, renderer_attempted) for debugging."
 ### Task 5: Extend Job Lock for Render Workload
 
 **Files:**
+- Create: `supabase/migrations/extend-job-lock.sql`
+- Modify: `supabase/schema.sql` (claim_menu_import_jobs function)
 - Modify: `supabase/functions/menu-refresh/index.ts` (queue mode, the dequeue call)
 
-Rendering adds 10-30 seconds per job. If we claim 5 jobs and each needs rendering, we might exceed the 5-minute lock. Two options: extend the lock, or process fewer jobs per run. We'll process fewer to keep the lock length conservative.
+Rendering adds 10-30 seconds per job. Worst case with 3 jobs needing render + `/unblock` fallback + network sleeps, we could easily exceed 5 minutes. Two changes: extend the lock to 10 minutes, AND reduce the per-run limit to 3.
 
-- [ ] **Step 1: Lower the per-run job limit**
+- [ ] **Step 1: Write the migration**
 
-In the queue mode block, find:
+Create `supabase/migrations/extend-job-lock.sql`:
+
+```sql
+-- Extend menu_import_jobs lock from 5 to 10 minutes
+-- Rendering with Browserless adds 10-30s per job; safer to overshoot the lock
+-- than have a worker crash mid-render and stall jobs.
+
+CREATE OR REPLACE FUNCTION claim_menu_import_jobs(p_limit INT DEFAULT 3)
+RETURNS SETOF menu_import_jobs
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE menu_import_jobs
+  SET
+    status = 'processing',
+    started_at = now(),
+    lock_expires_at = now() + interval '10 minutes',
+    updated_at = now()
+  WHERE id IN (
+    SELECT mij.id FROM menu_import_jobs mij
+    WHERE mij.status = 'pending' AND mij.run_after <= now()
+    ORDER BY mij.priority DESC, mij.run_after, mij.created_at
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  )
+  RETURNING *;
+END;
+$$;
+```
+
+- [ ] **Step 2: Run the migration in Supabase SQL Editor**
+
+Manual: paste the SQL above into the Supabase SQL Editor and run it. Verify success:
+
+```sql
+SELECT pg_get_functiondef('claim_menu_import_jobs'::regproc);
+```
+
+Should show `interval '10 minutes'` and `p_limit INT DEFAULT 3`.
+
+- [ ] **Step 3: Update schema.sql to match**
+
+Find the existing `claim_menu_import_jobs` function in `supabase/schema.sql` and update both the interval (`5 minutes` → `10 minutes`) and the default (`p_limit INT DEFAULT 5` → `p_limit INT DEFAULT 3`).
+
+- [ ] **Step 4: Update the Edge Function caller**
+
+In `supabase/functions/menu-refresh/index.ts`, find:
 
 ```ts
       const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 5 })
@@ -690,13 +828,15 @@ Replace with:
       const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 3 })
 ```
 
-3 jobs × (20s fetch + 30s render + 10s Sonnet + 5s upsert) = ~3 minutes worst case, well under the 5-minute lock.
-
-- [ ] **Step 2: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/functions/menu-refresh/index.ts
-git commit -m "chore: reduce jobs per cron run to 3 — safer with render fallback"
+git add supabase/migrations/extend-job-lock.sql supabase/schema.sql supabase/functions/menu-refresh/index.ts
+git commit -m "fix: extend menu_import_jobs lock to 10min, reduce batch to 3
+
+Rendering with Browserless adds 10-30s per job. Extending the lock from
+5 to 10 minutes prevents crashes mid-render from stalling retries. Batch
+size reduced from 5 to 3 to stay safely within the new budget."
 ```
 
 ---
