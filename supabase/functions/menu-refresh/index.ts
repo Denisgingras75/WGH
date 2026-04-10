@@ -579,7 +579,7 @@ serve(async (req) => {
       }
 
       // --- Atomic dequeue ---
-      const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 5 })
+      const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 3 })
 
       if (dequeueErr || !jobs || jobs.length === 0) {
         return new Response(JSON.stringify({
