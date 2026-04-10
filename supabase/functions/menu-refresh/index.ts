@@ -304,9 +304,10 @@ function calculateBackoff(attemptCount: number): Date {
 }
 
 /**
- * Fetch and strip HTML from a menu URL
+ * Fetch raw HTML from a URL with a browser-ish User-Agent and 20s timeout.
+ * Returns the full HTML text. Caller is responsible for extracting content.
  */
-async function fetchMenuContent(url: string): Promise<string> {
+async function fetchRawHtml(url: string): Promise<string> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 20000)
 
@@ -323,53 +324,64 @@ async function fetchMenuContent(url: string): Promise<string> {
       throw new Error(`HTTP ${response.status}`)
     }
 
-    const html = await response.text()
-
-    // Strategy 1: Extract JSON-LD structured data (common on Squarespace/Wix)
-    const jsonLdMatches = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
-    const jsonLdText = jsonLdMatches
-      .map(m => m.replace(/<\/?script[^>]*>/gi, ''))
-      .join(' ')
-
-    // Strategy 2: Extract text from data attributes and visible content
-    // Keep script tags that contain menu-related data (prices, items)
-    const menuScripts: string[] = []
-    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi
-    let match
-    while ((match = scriptRegex.exec(html)) !== null) {
-      const content = match[1]
-      // Keep scripts that look like they contain menu/price data
-      if (content.match(/\$\d+|\bprice\b|\bmenu\b.*\d{1,3}\.\d{2}/i) && content.length < 5000) {
-        menuScripts.push(content)
-      }
-    }
-
-    // Strategy 3: Standard HTML text extraction
-    const plainText = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;|&apos;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    // Combine all sources, prioritizing structured data
-    const parts: string[] = []
-    if (jsonLdText.length > 20) parts.push('=== STRUCTURED DATA ===\n' + jsonLdText)
-    if (menuScripts.length > 0) parts.push('=== EMBEDDED DATA ===\n' + menuScripts.join('\n'))
-    parts.push('=== PAGE TEXT ===\n' + plainText)
-
-    return parts.join('\n\n').slice(0, 60000)
+    return await response.text()
   } finally {
     clearTimeout(timeout)
   }
+}
+
+/**
+ * Extract menu-relevant text from HTML using 3 strategies, combined.
+ * Returns up to 60k chars of text suitable for Sonnet extraction.
+ */
+function extractMenuTextFromHtml(html: string): string {
+  // Strategy 1: Extract JSON-LD structured data (common on Squarespace/Wix)
+  const jsonLdMatches = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
+  const jsonLdText = jsonLdMatches
+    .map(m => m.replace(/<\/?script[^>]*>/gi, ''))
+    .join(' ')
+
+  // Strategy 2: Extract script tags that look like menu data (prices, items)
+  const menuScripts: string[] = []
+  const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi
+  let match
+  while ((match = scriptRegex.exec(html)) !== null) {
+    const content = match[1]
+    if (content.match(/\$\d+|\bprice\b|\bmenu\b.*\d{1,3}\.\d{2}/i) && content.length < 5000) {
+      menuScripts.push(content)
+    }
+  }
+
+  // Strategy 3: Standard HTML text extraction
+  const plainText = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&apos;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const parts: string[] = []
+  if (jsonLdText.length > 20) parts.push('=== STRUCTURED DATA ===\n' + jsonLdText)
+  if (menuScripts.length > 0) parts.push('=== EMBEDDED DATA ===\n' + menuScripts.join('\n'))
+  parts.push('=== PAGE TEXT ===\n' + plainText)
+
+  return parts.join('\n\n').slice(0, 60000)
+}
+
+/**
+ * Legacy wrapper — same signature as before so existing callers still work.
+ */
+async function fetchMenuContent(url: string): Promise<string> {
+  const html = await fetchRawHtml(url)
+  return extractMenuTextFromHtml(html)
 }
 
 /**
