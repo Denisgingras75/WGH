@@ -387,6 +387,65 @@ async function fetchMenuContent(url: string): Promise<string> {
 }
 
 /**
+ * Extract PDF URLs from HTML that look like menu documents.
+ * Returns absolute URLs. Skips PDFs that clearly aren't menus (gift cards, terms, etc).
+ */
+function extractPdfMenuUrls(html: string, baseUrl: string): string[] {
+  const base = new URL(baseUrl)
+  // Match href="..."pdf and src="..."pdf
+  const pdfRegex = /(?:href|src)=["']([^"']*\.pdf[^"']*)["']/gi
+  const found = new Set<string>()
+  let match
+  while ((match = pdfRegex.exec(html)) !== null) {
+    try {
+      const url = new URL(match[1], base).href
+      // Skip obvious non-menu PDFs
+      const lower = url.toLowerCase()
+      if (/\b(terms|privacy|policy|giftcard|gift-card|application|job|employment|contract|waiver|rules)\b/.test(lower)) {
+        continue
+      }
+      found.add(url)
+    } catch {
+      // Invalid URL, skip
+    }
+  }
+  return Array.from(found).slice(0, 6) // Cap at 6 PDFs per restaurant
+}
+
+/**
+ * Download a PDF from a URL and return it as base64 + its byte size.
+ * Throws on failure or if too large (>20 MB safety cap).
+ */
+async function fetchPdfAsBase64(url: string): Promise<{ base64: string; bytes: number }> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-MenuBot/1.0)',
+        'Accept': 'application/pdf',
+      },
+    })
+    if (!response.ok) throw new Error(`PDF HTTP ${response.status}`)
+    const buffer = await response.arrayBuffer()
+    const bytes = buffer.byteLength
+    if (bytes > 20 * 1024 * 1024) throw new Error(`PDF too large: ${bytes} bytes`)
+
+    // Base64 encode
+    const uint8 = new Uint8Array(buffer)
+    let binary = ''
+    for (let i = 0; i < uint8.length; i++) {
+      binary += String.fromCharCode(uint8[i])
+    }
+    const base64 = btoa(binary)
+    return { base64, bytes }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+/**
  * Extract dishes from menu text using Claude
  */
 async function extractMenuWithClaude(content: string, restaurantName: string): Promise<MenuExtractionResult> {
@@ -426,6 +485,74 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
   const parsed = JSON.parse(jsonMatch[0])
 
   // Validate categories
+  const validDishes = (Array.isArray(parsed.dishes) ? parsed.dishes : [])
+    .filter((d: ExtractedDish) => d.name && d.category)
+    .map((d: ExtractedDish) => ({
+      ...d,
+      category: VALID_CATEGORIES.includes(d.category) ? d.category : 'entree',
+    }))
+
+  return {
+    dishes: validDishes,
+    menu_section_order: Array.isArray(parsed.menu_section_order) ? parsed.menu_section_order : [],
+  }
+}
+
+/**
+ * Extract dishes from one or more PDFs using Sonnet's document content blocks.
+ * PDFs are base64-encoded and sent as document blocks in a single request.
+ * Uses the same MENU_EXTRACTION_PROMPT as the HTML extraction path.
+ */
+async function extractMenuFromPdfsWithClaude(
+  pdfs: Array<{ url: string; base64: string }>,
+  restaurantName: string
+): Promise<MenuExtractionResult> {
+  if (pdfs.length === 0) return { dishes: [], menu_section_order: [] }
+
+  const content: Array<Record<string, unknown>> = pdfs.map(pdf => ({
+    type: 'document',
+    source: {
+      type: 'base64',
+      media_type: 'application/pdf',
+      data: pdf.base64,
+    },
+  }))
+
+  content.push({
+    type: 'text',
+    text: `Extract the full menu from "${restaurantName}" from the ${pdfs.length === 1 ? 'attached PDF' : `${pdfs.length} attached PDFs`}. Combine all dishes into a single output. If different PDFs represent different meal services (breakfast, lunch, dinner), preserve those as menu sections.`,
+  })
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY!,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8192,
+      messages: [{ role: 'user', content }],
+      system: MENU_EXTRACTION_PROMPT,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Claude PDF API error: ${response.status} - ${errorText}`)
+  }
+
+  const data = await response.json()
+  const text = data.content?.[0]?.text || '{}'
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    return { dishes: [], menu_section_order: [] }
+  }
+
+  const parsed = JSON.parse(jsonMatch[0])
+
   const validDishes = (Array.isArray(parsed.dishes) ? parsed.dishes : [])
     .filter((d: ExtractedDish) => d.name && d.category)
     .map((d: ExtractedDish) => ({
@@ -685,6 +812,11 @@ serve(async (req) => {
           let renderError: string | null = null
           let renderedTextLen: number | null = null
 
+          // Detect PDF menu links in the HTML (many Wix/Squarespace sites embed menus as PDFs)
+          const pdfUrls = extractPdfMenuUrls(rawHtml, menuUrl)
+          let pdfsUsed = false
+          let pdfsDownloaded = 0
+
           // Fast path: compute raw hash BEFORE any Sonnet/render call.
           // If the raw HTML shell hasn't changed since last successful run, skip everything.
           // This costs some freshness on JS-rendered sites (Wix shell may not change even when
@@ -745,6 +877,9 @@ serve(async (req) => {
                 render_succeeded: renderSucceeded,
                 render_error: renderError,
                 rendered_text_len: renderedTextLen,
+                pdf_urls_found: pdfUrls.length,
+                pdfs_downloaded: pdfsDownloaded,
+                pdfs_used: pdfsUsed,
               },
               lock_expires_at: null,
               updated_at: new Date().toISOString(),
@@ -773,8 +908,35 @@ serve(async (req) => {
             }
           }
 
-          // Extract with Sonnet
-          let extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+          // Extract with Sonnet — PDFs take priority if detected, else use text extraction
+          let extracted: MenuExtractionResult
+          if (pdfUrls.length > 0) {
+            console.log(`${restaurant.name}: found ${pdfUrls.length} PDF menu(s), extracting directly`)
+            const pdfs: Array<{ url: string; base64: string }> = []
+            for (const pdfUrl of pdfUrls) {
+              try {
+                const { base64, bytes } = await fetchPdfAsBase64(pdfUrl)
+                pdfs.push({ url: pdfUrl, base64 })
+                pdfsDownloaded++
+                console.log(`${restaurant.name}: downloaded PDF ${pdfUrl} (${bytes} bytes)`)
+              } catch (pdfErr) {
+                console.error(`${restaurant.name}: failed to download PDF ${pdfUrl}:`, pdfErr)
+              }
+            }
+            if (pdfs.length > 0) {
+              try {
+                extracted = await extractMenuFromPdfsWithClaude(pdfs, restaurant.name)
+                pdfsUsed = true
+              } catch (pdfExtractErr) {
+                console.error(`${restaurant.name}: PDF extraction failed:`, pdfExtractErr)
+                extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+              }
+            } else {
+              extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+            }
+          } else {
+            extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+          }
 
           // Render fallback #2: zero dishes AND CMS requires rendering AND we haven't rendered yet
           if (extracted.dishes.length === 0 && cmsRequiresRender(cms) && !rendererAttempted) {
@@ -835,6 +997,9 @@ serve(async (req) => {
                 render_succeeded: renderSucceeded,
                 render_error: renderError,
                 rendered_text_len: renderedTextLen,
+                pdf_urls_found: pdfUrls.length,
+                pdfs_downloaded: pdfsDownloaded,
+                pdfs_used: pdfsUsed,
               },
               lock_expires_at: null,
               updated_at: new Date().toISOString(),
@@ -872,6 +1037,9 @@ serve(async (req) => {
               render_succeeded: renderSucceeded,
               render_error: renderError,
               rendered_text_len: renderedTextLen,
+              pdf_urls_found: pdfUrls.length,
+              pdfs_downloaded: pdfsDownloaded,
+              pdfs_used: pdfsUsed,
             },
             lock_expires_at: null,
             updated_at: new Date().toISOString(),
@@ -881,6 +1049,7 @@ serve(async (req) => {
             job_id: job.id, status: 'success', restaurant: restaurant.name,
             dishes: extracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
             rendered: renderSucceeded,
+            pdfs_used: pdfsUsed,
           })
 
         } catch (err) {
