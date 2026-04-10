@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { detectCms, cmsRequiresRender } from './cms-detect.ts'
+import { fetchRenderedHtml, BrowserlessError } from './browserless.ts'
 
 /**
  * Menu Refresh Edge Function
@@ -653,9 +655,75 @@ serve(async (req) => {
             continue
           }
 
-          const content = await fetchMenuContent(menuUrl)
+          // --- Fetch + extract (with render fallback for JS-rendered sites) ---
+          let rawHtml: string
+          try {
+            rawHtml = await fetchRawHtml(menuUrl)
+          } catch (fetchErr) {
+            const classified = classifyError(fetchErr)
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: { ...classified.context, menu_url: menuUrl },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'fetch_failed', restaurant: restaurant.name, error: classified.code })
+            continue
+          }
 
-          if (content.length < 50) {
+          const cms = detectCms(rawHtml, menuUrl)
+          const rawText = extractMenuTextFromHtml(rawHtml)
+          const rawTextLen = rawText.length
+          let extractionContent = rawText
+          let rendererAttempted = false
+          let renderSucceeded = false
+          let renderError: string | null = null
+          let renderedTextLen: number | null = null
+
+          // Fast path: compute raw hash BEFORE any Sonnet/render call.
+          // If the raw HTML shell hasn't changed since last successful run, skip everything.
+          // This costs some freshness on JS-rendered sites (Wix shell may not change even when
+          // the menu does), but avoids paying Sonnet and Browserless on every cron cycle.
+          // The 14-day refresh cron will eventually catch menu updates.
+          const rawHash = await hashContent(rawText)
+          if (restaurant.menu_content_hash && restaurant.menu_content_hash === rawHash) {
+            await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
+            await supabase.from('menu_import_jobs').update({
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
+              error_context: { menu_url: menuUrl, cms_detected: cms, raw_text_len: rawTextLen, reason: 'hash_unchanged' },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
+            continue
+          }
+
+          // Render fallback #1: content too short AND CMS requires rendering
+          if (extractionContent.length < 50 && cmsRequiresRender(cms)) {
+            console.log(`${restaurant.name}: content too short + ${cms} CMS, attempting render fallback`)
+            rendererAttempted = true  // mark ATTEMPTED regardless of outcome
+            try {
+              const renderedHtml = await fetchRenderedHtml(menuUrl)
+              const renderedText = extractMenuTextFromHtml(renderedHtml)
+              renderedTextLen = renderedText.length
+              if (renderedText.length >= 50) {
+                extractionContent = renderedText
+                renderSucceeded = true
+              }
+            } catch (renderErr) {
+              renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+              console.error(`${restaurant.name}: render failed:`, renderError)
+            }
+          }
+
+          if (extractionContent.length < 50) {
             const classified = classifyError(null, 'page_too_short')
             const newAttemptCount = job.attempt_count + 1
             await supabase.from('menu_import_jobs').update({
@@ -664,6 +732,17 @@ serve(async (req) => {
               run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
               error_code: classified.code,
               error_message: classified.message,
+              error_context: {
+                menu_url: menuUrl,
+                website_url: websiteUrl,
+                cms_detected: cms,
+                raw_html_len: rawHtml.length,
+                raw_text_len: rawTextLen,
+                renderer_attempted: rendererAttempted,
+                render_succeeded: renderSucceeded,
+                render_error: renderError,
+                rendered_text_len: renderedTextLen,
+              },
               lock_expires_at: null,
               updated_at: new Date().toISOString(),
             }).eq('id', job.id)
@@ -671,21 +750,8 @@ serve(async (req) => {
             continue
           }
 
-          const contentHash = await hashContent(content)
-          if (restaurant.menu_content_hash && restaurant.menu_content_hash === contentHash) {
-            await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
-            await supabase.from('menu_import_jobs').update({
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-              dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
-              lock_expires_at: null,
-              updated_at: new Date().toISOString(),
-            }).eq('id', job.id)
-            results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
-            continue
-          }
-
-          const closedSignal = detectClosed(content)
+          // Closed detection — run on whatever content we ended up with (raw or rendered)
+          const closedSignal = detectClosed(extractionContent)
           if (closedSignal) {
             await supabase.from('restaurants').update({
               is_open: false, menu_last_checked: new Date().toISOString(),
@@ -704,7 +770,45 @@ serve(async (req) => {
             }
           }
 
-          const extracted = await extractMenuWithClaude(content, restaurant.name)
+          // Extract with Sonnet
+          let extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+
+          // Render fallback #2: zero dishes AND CMS requires rendering AND we haven't rendered yet
+          if (extracted.dishes.length === 0 && cmsRequiresRender(cms) && !rendererAttempted) {
+            console.log(`${restaurant.name}: Sonnet found 0 dishes in ${cms} site, attempting render fallback`)
+            rendererAttempted = true  // mark ATTEMPTED regardless of outcome
+            try {
+              const renderedHtml = await fetchRenderedHtml(menuUrl)
+              const renderedText = extractMenuTextFromHtml(renderedHtml)
+              renderedTextLen = renderedText.length
+              if (renderedText.length >= 50) {
+                extractionContent = renderedText
+                renderSucceeded = true
+                // Re-run closed detection on rendered content (could reveal "closed for season" text)
+                const renderedClosedSignal = detectClosed(extractionContent)
+                if (renderedClosedSignal) {
+                  await supabase.from('restaurants').update({
+                    is_open: false, menu_last_checked: new Date().toISOString(),
+                  }).eq('id', restaurant.id)
+                  if (job.job_type === 'refresh') {
+                    await supabase.from('menu_import_jobs').update({
+                      status: 'completed',
+                      completed_at: new Date().toISOString(),
+                      error_message: `Closed: ${renderedClosedSignal}`,
+                      lock_expires_at: null,
+                      updated_at: new Date().toISOString(),
+                    }).eq('id', job.id)
+                    results.push({ job_id: job.id, status: 'closed', restaurant: restaurant.name })
+                    continue
+                  }
+                }
+                extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+              }
+            } catch (renderErr) {
+              renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+              console.error(`${restaurant.name}: render retry failed:`, renderError)
+            }
+          }
 
           if (extracted.dishes.length === 0) {
             const classified = classifyError(null, 'no_dishes')
@@ -715,6 +819,17 @@ serve(async (req) => {
               run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
               error_code: classified.code,
               error_message: classified.message,
+              error_context: {
+                menu_url: menuUrl,
+                website_url: websiteUrl,
+                cms_detected: cms,
+                raw_html_len: rawHtml.length,
+                raw_text_len: rawTextLen,
+                renderer_attempted: rendererAttempted,
+                render_succeeded: renderSucceeded,
+                render_error: renderError,
+                rendered_text_len: renderedTextLen,
+              },
               lock_expires_at: null,
               updated_at: new Date().toISOString(),
             }).eq('id', job.id)
@@ -722,11 +837,16 @@ serve(async (req) => {
             continue
           }
 
+          // Success path: upsert dishes, store raw hash + render telemetry
+          // Note: we hash the raw text (rawHash), not the rendered text. Next run can skip
+          // cheaply when the raw HTML shell is unchanged. Mild staleness on JS sites is
+          // acceptable; the 14-day refresh cron eventually catches updates.
+
           const stats = await upsertDishes(supabase, restaurant.id, extracted)
 
           await supabase.from('restaurants').update({
             menu_last_checked: new Date().toISOString(),
-            menu_content_hash: contentHash,
+            menu_content_hash: rawHash,
           }).eq('id', restaurant.id)
 
           await supabase.from('menu_import_jobs').update({
@@ -736,6 +856,17 @@ serve(async (req) => {
             dishes_inserted: stats.inserted,
             dishes_updated: stats.updated,
             dishes_unchanged: stats.unchanged,
+            error_context: {
+              menu_url: menuUrl,
+              website_url: websiteUrl,
+              cms_detected: cms,
+              raw_html_len: rawHtml.length,
+              raw_text_len: rawTextLen,
+              renderer_attempted: rendererAttempted,
+              render_succeeded: renderSucceeded,
+              render_error: renderError,
+              rendered_text_len: renderedTextLen,
+            },
             lock_expires_at: null,
             updated_at: new Date().toISOString(),
           }).eq('id', job.id)
@@ -743,6 +874,7 @@ serve(async (req) => {
           results.push({
             job_id: job.id, status: 'success', restaurant: restaurant.name,
             dishes: extracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
+            rendered: renderSucceeded,
           })
 
         } catch (err) {
