@@ -11,6 +11,18 @@ import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { logger } from '../utils/logger'
+import { getStorageItem, setStorageItem } from '../lib/storage'
+
+// Bayesian shrinkage — restaurants with few votes get pulled toward the global mean
+// so a 1-vote 9.5 doesn't beat a 50-vote 8.6
+var BAYESIAN_PRIOR_STRENGTH = 5
+var BAYESIAN_GLOBAL_MEAN = 7.5
+var SORT_STORAGE_KEY = 'wgh_restaurant_sort'
+
+function bayesianScore(avgRating, totalVotes) {
+  if (avgRating == null || totalVotes === 0) return 0
+  return (Number(avgRating) * totalVotes + BAYESIAN_GLOBAL_MEAN * BAYESIAN_PRIOR_STRENGTH) / (totalVotes + BAYESIAN_PRIOR_STRENGTH)
+}
 
 export function Restaurants() {
   var user = useAuth().user
@@ -26,6 +38,13 @@ export function Restaurants() {
   var [searchQuery, setSearchQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
   var [addModalOpen, setAddModalOpen] = useState(false)
+  var [sortBy, setSortBy] = useState(function () {
+    return getStorageItem(SORT_STORAGE_KEY) || 'distance'
+  })
+
+  useEffect(function () {
+    setStorageItem(SORT_STORAGE_KEY, sortBy)
+  }, [sortBy])
 
   // Fetch restaurants (distance-filtered when location available)
   var restData = useRestaurants(location, radius, permissionState)
@@ -57,7 +76,7 @@ export function Restaurants() {
   var nearbyLoading = nearbyData.loading
   var nearbyError = nearbyData.error
 
-  // Filter by open/closed tab + search, sort by distance (or alphabetical fallback)
+  // Filter by open/closed tab + search, then sort by chosen mode
   var filteredRestaurants = useMemo(function () {
     var filtered = restaurants
       .filter(function (r) {
@@ -67,11 +86,22 @@ export function Restaurants() {
         return r.name.toLowerCase().includes(searchQuery.toLowerCase())
       })
 
+    if (sortBy === 'top-rated') {
+      // Sort by Bayesian-shrunk score, fall back to name for ties
+      return filtered.slice().sort(function (a, b) {
+        var scoreA = bayesianScore(a.avg_rating, a.total_votes || 0)
+        var scoreB = bayesianScore(b.avg_rating, b.total_votes || 0)
+        if (scoreB !== scoreA) return scoreB - scoreA
+        return a.name.localeCompare(b.name)
+      })
+    }
+
+    // Default: distance when available, alphabetical otherwise
     if (!isDistanceFiltered) {
       return filtered.slice().sort(function (a, b) { return a.name.localeCompare(b.name) })
     }
     return filtered
-  }, [restaurants, restaurantTab, searchQuery, isDistanceFiltered])
+  }, [restaurants, restaurantTab, searchQuery, isDistanceFiltered, sortBy])
 
   var handleRestaurantSelect = function (restaurant) {
     capture('restaurant_viewed', {
@@ -204,6 +234,34 @@ export function Restaurants() {
             }}
           >
             Closed
+          </button>
+        </div>
+
+        {/* Sort pills */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={function () { setSortBy('distance') }}
+            aria-pressed={sortBy === 'distance'}
+            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            style={{
+              background: sortBy === 'distance' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: sortBy === 'distance' ? 'white' : 'var(--color-text-secondary)',
+              border: sortBy === 'distance' ? 'none' : '1.5px solid var(--color-divider)',
+            }}
+          >
+            Distance
+          </button>
+          <button
+            onClick={function () { setSortBy('top-rated') }}
+            aria-pressed={sortBy === 'top-rated'}
+            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            style={{
+              background: sortBy === 'top-rated' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: sortBy === 'top-rated' ? 'white' : 'var(--color-text-secondary)',
+              border: sortBy === 'top-rated' ? 'none' : '1.5px solid var(--color-divider)',
+            }}
+          >
+            Top Rated
           </button>
         </div>
 
