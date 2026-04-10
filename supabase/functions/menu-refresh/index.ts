@@ -119,6 +119,16 @@ Pick the MOST SPECIFIC category that fits. Prefer "lobster roll" over "seafood",
 8. **Prices must be numbers** (no $ sign). If range, use lower price. If no price, use null.
 9. **One category per dish** — pick the most specific match
 
+## CRITICAL: Reject placeholder/template content
+
+If the content looks like a website template with placeholder text, return an EMPTY dishes array. Signs of template garbage:
+- Generic dish names like "Burger", "Sandwich", "Salad", "Pasta" with NO specific name (e.g., no "Kahuna Burger" or "Caesar Salad")
+- Placeholder descriptions like "Add a description here", "Lorem ipsum", "Your menu item", "Sample text"
+- Multiple identical items with the same name and price (e.g., 9 items all called "Burger" at $16)
+- Generic category headers with no actual dishes underneath
+
+When in doubt: if dish names don't tell you what the actual dish IS (unique named dishes, not categories), return empty. Better to return nothing than fill the database with garbage.
+
 ## Output Format
 
 Return ONLY valid JSON (no markdown, no code fences):

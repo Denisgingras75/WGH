@@ -145,10 +145,17 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       const details = await placesApi.getDetails(prediction.placeId)
       if (details && details.lat && details.lng) {
         // Extract town from address
+        // Google Places format: "Street, City, State Zip, Country" (4 parts) or "Street, City, State Zip" (3 parts)
         var extractedTown = ''
-        const parts = (details.address || '').split(',')
-        if (parts.length >= 2) {
-          extractedTown = parts[parts.length - 2].trim().replace(/\s+\d{5}(-\d{4})?$/, '')
+        const parts = (details.address || '').split(',').map(p => p.trim())
+        // Find the part that looks like "State Zip" (2 letters + 5-digit zip)
+        const stateZipIdx = parts.findIndex(p => /^[A-Z]{2}\s+\d{5}(-\d{4})?$/.test(p))
+        if (stateZipIdx > 0) {
+          // City is the part just before State Zip
+          extractedTown = parts[stateZipIdx - 1]
+        } else if (parts.length >= 2) {
+          // Fallback: second-to-last part (minus any trailing zip)
+          extractedTown = parts[parts.length - 2].replace(/\s+\d{5}(-\d{4})?$/, '')
         }
         // Auto-detect Toast slug or ordering URL
         var ordering = detectOrderingInfo(details.websiteUrl)
