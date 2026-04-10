@@ -34,10 +34,16 @@ export function Restaurants() {
   var fetchError = restData.error
   var isDistanceFiltered = restData.isDistanceFiltered
 
-  // Google Place IDs already in DB (to filter from discovery)
-  var existingPlaceIds = useMemo(function () {
-    return []
-  }, [])
+  // Existing restaurants to filter out of discovery (by place_id OR name+proximity)
+  var existingForDiscovery = useMemo(function () {
+    return (restaurants || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      lat: r.lat,
+      lng: r.lng,
+      google_place_id: r.google_place_id,
+    }))
+  }, [restaurants])
 
   // Discover nearby restaurants from Google Places (auth only)
   var nearbyData = useNearbyPlaces({
@@ -45,7 +51,7 @@ export function Restaurants() {
     lng: location?.lng,
     radius: radius + 5,
     isAuthenticated: !!user,
-    existingPlaceIds: existingPlaceIds,
+    existingRestaurants: existingForDiscovery,
   })
   var nearbyPlaces = nearbyData.places
   var nearbyLoading = nearbyData.loading

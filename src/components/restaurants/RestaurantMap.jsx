@@ -8,6 +8,7 @@ import { logger } from '../../utils/logger'
 import { getCategoryEmoji, getDishNameIcon } from '../../constants/categories'
 import { getPosterIconSrc } from '../home/CategoryIcons'
 import { calculateDistance } from '../../utils/distance'
+import { matchesExistingRestaurant } from '../../utils/placeMatching'
 
 const MILES_TO_METERS = 1609.34
 const EXTRA_RADIUS_MI = 5
@@ -64,7 +65,7 @@ function MapClickHandler({ onMapClick }) {
 }
 
 // ─── Restaurant Mode: Google Places loader ───────────────────────────────────
-function MapPlacesLoader({ onPlacesLoaded, existingPlaceIds, userLocation, radiusMi }) {
+function MapPlacesLoader({ onPlacesLoaded, existingRestaurants, userLocation, radiusMi }) {
   const map = useMap()
   const timerRef = useRef(null)
   const lastFetchRef = useRef(null)
@@ -81,13 +82,14 @@ function MapPlacesLoader({ onPlacesLoaded, existingPlaceIds, userLocation, radiu
 
     try {
       const places = await placesApi.discoverNearby(center.lat, center.lng, clampedRadius)
-      const existingSet = new Set(existingPlaceIds || [])
-      const filtered = places.filter(p => p.lat && p.lng && !existingSet.has(p.placeId))
+      const filtered = places.filter(p =>
+        p.lat && p.lng && !matchesExistingRestaurant(p, existingRestaurants || [])
+      )
       onPlacesLoaded(filtered)
     } catch (err) {
       logger.error('Map places fetch error:', err)
     }
-  }, [map, onPlacesLoaded, existingPlaceIds, discoveryRadiusMeters])
+  }, [map, onPlacesLoaded, existingRestaurants, discoveryRadiusMeters])
 
   useMapEvents({
     moveend: () => {
@@ -374,7 +376,6 @@ export function RestaurantMap({
   onAddPlace,
   onMapClick,
   isAuthenticated,
-  existingPlaceIds,
   radiusMi,
   permissionGranted,
   compact = false,
@@ -593,7 +594,7 @@ export function RestaurantMap({
         {!isDishMode && !fullScreen && isAuthenticated && (
           <MapPlacesLoader
             onPlacesLoaded={setDiscoveredPlaces}
-            existingPlaceIds={existingPlaceIds}
+            existingRestaurants={restaurants}
             userLocation={userLocation}
             radiusMi={radiusMi || 10}
           />
