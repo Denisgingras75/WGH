@@ -710,7 +710,10 @@ serve(async (req) => {
             console.log(`${restaurant.name}: content too short + ${cms} CMS, attempting render fallback`)
             rendererAttempted = true  // mark ATTEMPTED regardless of outcome
             try {
-              const renderedHtml = await fetchRenderedHtml(menuUrl)
+              const renderedHtml = await fetchRenderedHtml(menuUrl, {
+                gotoTimeout: 45000,
+                waitForTimeoutMs: 12000,  // Wix needs time to hydrate menu API data
+              })
               const renderedText = extractMenuTextFromHtml(renderedHtml)
               renderedTextLen = renderedText.length
               if (renderedText.length >= 50) {
@@ -778,7 +781,10 @@ serve(async (req) => {
             console.log(`${restaurant.name}: Sonnet found 0 dishes in ${cms} site, attempting render fallback`)
             rendererAttempted = true  // mark ATTEMPTED regardless of outcome
             try {
-              const renderedHtml = await fetchRenderedHtml(menuUrl)
+              const renderedHtml = await fetchRenderedHtml(menuUrl, {
+                gotoTimeout: 45000,
+                waitForTimeoutMs: 12000,  // Wix needs time to hydrate menu API data
+              })
               const renderedText = extractMenuTextFromHtml(renderedHtml)
               renderedTextLen = renderedText.length
               if (renderedText.length >= 50) {

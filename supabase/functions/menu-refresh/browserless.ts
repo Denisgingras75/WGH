@@ -70,7 +70,10 @@ export async function fetchRenderedHtml(url: string, options: RenderOptions = {}
   const body: Record<string, unknown> = {
     url,
     gotoOptions: {
-      waitUntil: 'networkidle2',
+      // networkidle0 = wait for ZERO network requests for 500ms (stricter than networkidle2)
+      // Wix/Square load menu data via XHR after the initial page load, so we need
+      // to wait for ALL network activity to settle, not just most of it.
+      waitUntil: 'networkidle0',
       timeout: options.gotoTimeout ?? 30000,
     },
   }
