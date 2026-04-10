@@ -413,39 +413,6 @@ function extractPdfMenuUrls(html: string, baseUrl: string): string[] {
 }
 
 /**
- * Download a PDF from a URL and return it as base64 + its byte size.
- * Throws on failure or if too large (>20 MB safety cap).
- */
-async function fetchPdfAsBase64(url: string): Promise<{ base64: string; bytes: number }> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000)
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-MenuBot/1.0)',
-        'Accept': 'application/pdf',
-      },
-    })
-    if (!response.ok) throw new Error(`PDF HTTP ${response.status}`)
-    const buffer = await response.arrayBuffer()
-    const bytes = buffer.byteLength
-    if (bytes > 20 * 1024 * 1024) throw new Error(`PDF too large: ${bytes} bytes`)
-
-    // Base64 encode
-    const uint8 = new Uint8Array(buffer)
-    let binary = ''
-    for (let i = 0; i < uint8.length; i++) {
-      binary += String.fromCharCode(uint8[i])
-    }
-    const base64 = btoa(binary)
-    return { base64, bytes }
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
-/**
  * Extract dishes from menu text using Claude
  */
 async function extractMenuWithClaude(content: string, restaurantName: string): Promise<MenuExtractionResult> {
@@ -504,23 +471,24 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
  * Uses the same MENU_EXTRACTION_PROMPT as the HTML extraction path.
  */
 async function extractMenuFromPdfsWithClaude(
-  pdfs: Array<{ url: string; base64: string }>,
+  pdfUrls: string[],
   restaurantName: string
 ): Promise<MenuExtractionResult> {
-  if (pdfs.length === 0) return { dishes: [], menu_section_order: [] }
+  if (pdfUrls.length === 0) return { dishes: [], menu_section_order: [] }
 
-  const content: Array<Record<string, unknown>> = pdfs.map(pdf => ({
+  // Use URL source instead of base64 — Sonnet fetches the PDFs server-side,
+  // avoiding memory pressure on the Edge Function runtime.
+  const content: Array<Record<string, unknown>> = pdfUrls.map(url => ({
     type: 'document',
     source: {
-      type: 'base64',
-      media_type: 'application/pdf',
-      data: pdf.base64,
+      type: 'url',
+      url,
     },
   }))
 
   content.push({
     type: 'text',
-    text: `Extract the full menu from "${restaurantName}" from the ${pdfs.length === 1 ? 'attached PDF' : `${pdfs.length} attached PDFs`}. Combine all dishes into a single output. If different PDFs represent different meal services (breakfast, lunch, dinner), preserve those as menu sections.`,
+    text: `Extract the full menu from "${restaurantName}" from the ${pdfUrls.length === 1 ? 'attached PDF' : `${pdfUrls.length} attached PDFs`}. Combine all dishes into a single output. If different PDFs represent different meal services (breakfast, lunch, dinner), preserve those as menu sections.`,
   })
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -909,29 +877,16 @@ serve(async (req) => {
           }
 
           // Extract with Sonnet — PDFs take priority if detected, else use text extraction
+          // PDFs are passed as URL sources so Sonnet fetches them server-side (avoids Edge Function OOM)
           let extracted: MenuExtractionResult
           if (pdfUrls.length > 0) {
-            console.log(`${restaurant.name}: found ${pdfUrls.length} PDF menu(s), extracting directly`)
-            const pdfs: Array<{ url: string; base64: string }> = []
-            for (const pdfUrl of pdfUrls) {
-              try {
-                const { base64, bytes } = await fetchPdfAsBase64(pdfUrl)
-                pdfs.push({ url: pdfUrl, base64 })
-                pdfsDownloaded++
-                console.log(`${restaurant.name}: downloaded PDF ${pdfUrl} (${bytes} bytes)`)
-              } catch (pdfErr) {
-                console.error(`${restaurant.name}: failed to download PDF ${pdfUrl}:`, pdfErr)
-              }
-            }
-            if (pdfs.length > 0) {
-              try {
-                extracted = await extractMenuFromPdfsWithClaude(pdfs, restaurant.name)
-                pdfsUsed = true
-              } catch (pdfExtractErr) {
-                console.error(`${restaurant.name}: PDF extraction failed:`, pdfExtractErr)
-                extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
-              }
-            } else {
+            console.log(`${restaurant.name}: found ${pdfUrls.length} PDF menu(s), sending URLs to Sonnet`)
+            pdfsDownloaded = pdfUrls.length  // all URLs passed through (no download on our side)
+            try {
+              extracted = await extractMenuFromPdfsWithClaude(pdfUrls, restaurant.name)
+              pdfsUsed = true
+            } catch (pdfExtractErr) {
+              console.error(`${restaurant.name}: PDF extraction failed:`, pdfExtractErr)
               extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
             }
           } else {
