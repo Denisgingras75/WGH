@@ -580,14 +580,34 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
       const cms = detectCms(rawHtml, menuUrl)
       const rawText = extractMenuTextFromHtml(rawHtml)
       const rawTextLen = rawText.length
-      let content = rawText
+      let extractionContent = rawText
       let rendererAttempted = false
       let renderSucceeded = false
       let renderError: string | null = null
       let renderedTextLen: number | null = null
 
+      // Fast path: compute raw hash BEFORE any Sonnet/render call.
+      // If the raw HTML shell hasn't changed since last successful run, skip everything.
+      // This costs some freshness on JS-rendered sites (Wix shell may not change even when
+      // the menu does), but avoids paying Sonnet and Browserless on every cron cycle.
+      // The 14-day refresh cron will eventually catch menu updates.
+      const rawHash = await hashContent(rawText)
+      if (restaurant.menu_content_hash && restaurant.menu_content_hash === rawHash) {
+        await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
+        await supabase.from('menu_import_jobs').update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
+          error_context: { menu_url: menuUrl, cms_detected: cms, raw_text_len: rawTextLen, reason: 'hash_unchanged' },
+          lock_expires_at: null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', job.id)
+        results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
+        continue
+      }
+
       // Render fallback #1: content too short AND CMS requires rendering
-      if (content.length < 50 && cmsRequiresRender(cms)) {
+      if (extractionContent.length < 50 && cmsRequiresRender(cms)) {
         console.log(`${restaurant.name}: content too short + ${cms} CMS, attempting render fallback`)
         rendererAttempted = true  // mark ATTEMPTED regardless of outcome
         try {
@@ -595,7 +615,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
           const renderedText = extractMenuTextFromHtml(renderedHtml)
           renderedTextLen = renderedText.length
           if (renderedText.length >= 50) {
-            content = renderedText
+            extractionContent = renderedText
             renderSucceeded = true
           }
         } catch (renderErr) {
@@ -604,7 +624,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
         }
       }
 
-      if (content.length < 50) {
+      if (extractionContent.length < 50) {
         const classified = classifyError(null, 'page_too_short')
         const newAttemptCount = job.attempt_count + 1
         await supabase.from('menu_import_jobs').update({
@@ -632,7 +652,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
       }
 
       // Closed detection — run on whatever content we ended up with (raw or rendered)
-      const closedSignal = detectClosed(content)
+      const closedSignal = detectClosed(extractionContent)
       if (closedSignal) {
         await supabase.from('restaurants').update({
           is_open: false, menu_last_checked: new Date().toISOString(),
@@ -652,7 +672,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
       }
 
       // Extract with Sonnet
-      let extracted = await extractMenuWithClaude(content, restaurant.name)
+      let extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
 
       // Render fallback #2: zero dishes AND CMS requires rendering AND we haven't rendered yet
       if (extracted.dishes.length === 0 && cmsRequiresRender(cms) && !rendererAttempted) {
@@ -663,10 +683,10 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
           const renderedText = extractMenuTextFromHtml(renderedHtml)
           renderedTextLen = renderedText.length
           if (renderedText.length >= 50) {
-            content = renderedText
+            extractionContent = renderedText
             renderSucceeded = true
             // Re-run closed detection on rendered content (could reveal "closed for season" text)
-            const renderedClosedSignal = detectClosed(content)
+            const renderedClosedSignal = detectClosed(extractionContent)
             if (renderedClosedSignal) {
               await supabase.from('restaurants').update({
                 is_open: false, menu_last_checked: new Date().toISOString(),
@@ -683,7 +703,7 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
                 continue
               }
             }
-            extracted = await extractMenuWithClaude(content, restaurant.name)
+            extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
           }
         } catch (renderErr) {
           renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
@@ -718,23 +738,50 @@ And ends just before the `upsertDishes` call. Replace that whole block (from the
         continue
       }
 
-      // FINAL content hash — compute AFTER all fallbacks so we hash what we actually used.
-      // This prevents the next run from short-circuiting on a raw hash when we actually
-      // extracted from rendered HTML.
-      const contentHash = await hashContent(content)
-      if (restaurant.menu_content_hash && restaurant.menu_content_hash === contentHash) {
-        await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
-        await supabase.from('menu_import_jobs').update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
-          lock_expires_at: null,
-          updated_at: new Date().toISOString(),
-        }).eq('id', job.id)
-        results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
-        continue
-      }
+      // Success path: upsert dishes, store raw hash + render telemetry
+      // Note: we hash the raw text (rawHash), not the rendered text. Next run can skip
+      // cheaply when the raw HTML shell is unchanged. Mild staleness on JS sites is
+      // acceptable; the 14-day refresh cron eventually catches updates.
+
+      const stats = await upsertDishes(supabase, restaurant.id, extracted)
+
+      await supabase.from('restaurants').update({
+        menu_last_checked: new Date().toISOString(),
+        menu_content_hash: rawHash,
+      }).eq('id', restaurant.id)
+
+      await supabase.from('menu_import_jobs').update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        dishes_found: extracted.dishes.length,
+        dishes_inserted: stats.inserted,
+        dishes_updated: stats.updated,
+        dishes_unchanged: stats.unchanged,
+        error_context: {
+          menu_url: menuUrl,
+          website_url: websiteUrl,
+          cms_detected: cms,
+          raw_html_len: rawHtml.length,
+          raw_text_len: rawTextLen,
+          renderer_attempted: rendererAttempted,
+          render_succeeded: renderSucceeded,
+          render_error: renderError,
+          rendered_text_len: renderedTextLen,
+        },
+        lock_expires_at: null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', job.id)
+
+      results.push({
+        job_id: job.id, status: 'success', restaurant: restaurant.name,
+        dishes: extracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
+        rendered: renderSucceeded,
+      })
+
+      continue  // go to next job — skip the old success path below
 ```
+
+**Important:** The above block fully handles the success path. Delete the old success block that follows it in the original file (the one with `const stats = await upsertDishes...` through `results.push({ job_id: job.id, status: 'success'...` and the catch block stays). The new block above has everything the old one had, PLUS telemetry and correct hash handling.
 
 The rest of the loop (upsertDishes, marking complete, etc.) stays unchanged.
 
@@ -851,18 +898,17 @@ Manual step: In Supabase dashboard → Settings → Edge Functions → Secrets, 
 
 - [ ] **Step 2: Deploy the updated Edge Function**
 
-Use the Supabase MCP tool `mcp__claude_ai_Supabase__deploy_edge_function`:
+Deploy using the Supabase CLI if available:
 
-- project_id: `vpioftosgdkyiwvhxewy`
-- name: `menu-refresh`
-- entrypoint_path: `index.ts`
-- verify_jwt: `false`
-- files: array with all 3 files:
-  - `index.ts` (the main file)
-  - `cms-detect.ts`
-  - `browserless.ts`
+```bash
+supabase functions deploy menu-refresh --project-ref vpioftosgdkyiwvhxewy
+```
 
-Verify the deployed version number increases.
+This will bundle `index.ts`, `cms-detect.ts`, and `browserless.ts` together.
+
+If the CLI requires a login that hasn't happened: deploy via the Supabase dashboard by uploading the three files, or have the orchestrating agent (Claude Code session) deploy via its Supabase MCP tool. The exact mechanism depends on what's available — the key is that all 3 files must be bundled into the function.
+
+Verify the deployed version number increases in the Edge Functions dashboard.
 
 - [ ] **Step 3: Retry a Wix site from the dead pile**
 
