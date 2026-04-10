@@ -396,8 +396,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
-ALTER FUNCTION IF EXISTS get_dish_variants(UUID) SECURITY DEFINER;
-ALTER FUNCTION IF EXISTS get_smart_snippet(UUID) SECURITY DEFINER;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_dish_variants') THEN
+    EXECUTE 'ALTER FUNCTION get_dish_variants(UUID) SECURITY DEFINER';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_smart_snippet') THEN
+    EXECUTE 'ALTER FUNCTION get_smart_snippet(UUID) SECURITY DEFINER';
+  END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION submit_vote_atomic(
   p_dish_id UUID,
