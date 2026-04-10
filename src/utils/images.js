@@ -56,12 +56,35 @@ export function getResponsiveImageProps(url, widths = [400, 600, 800]) {
     }
   }
 
-  // Supabase storage with image transformation (if enabled)
-  // Note: Requires Supabase Pro plan for image transformations
+  // Supabase storage with image transformation
+  // Rewrites /storage/v1/object/public/... → /storage/v1/render/image/public/...?width=N&quality=80
   if (isSupabaseStorageUrl(url)) {
-    // For now, just return original URL
-    // If image transformations are enabled, could add:
-    // /render/image/public/bucket/path?width=400
+    try {
+      const urlObj = new URL(url)
+      // Only rewrite if it's an object URL (not already a render URL)
+      if (urlObj.pathname.includes('/storage/v1/object/public/')) {
+        urlObj.pathname = urlObj.pathname.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+        urlObj.searchParams.delete('width')
+        urlObj.searchParams.delete('quality')
+
+        const srcSet = widths
+          .map(w => {
+            const u = new URL(urlObj.href)
+            u.searchParams.set('width', w)
+            u.searchParams.set('quality', '80')
+            return `${u.href} ${w}w`
+          })
+          .join(', ')
+
+        const defaultWidth = widths[Math.floor(widths.length / 2)]
+        urlObj.searchParams.set('width', defaultWidth)
+        urlObj.searchParams.set('quality', '80')
+
+        return { src: urlObj.href, srcSet }
+      }
+    } catch {
+      // If URL parsing fails, fall through to original URL
+    }
     return { src: url }
   }
 
