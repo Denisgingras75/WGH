@@ -190,36 +190,9 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     }
 
     const previousVote = userVote
-
-    if (previousVote === null) {
-      setLocalTotalVotes(prev => prev + 1)
-      if (pendingVote) setLocalYesVotes(prev => prev + 1)
-    } else if (previousVote !== pendingVote) {
-      if (pendingVote) {
-        setLocalYesVotes(prev => prev + 1)
-      } else {
-        setLocalYesVotes(prev => prev - 1)
-      }
-    }
-
-    setUserVote(pendingVote)
-    setUserRating(sliderValue)
-    if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
-
-    // Track vote immediately for snappy analytics
-    capture('vote_cast', {
-      dish_id: dishId,
-      dish_name: dishName,
-      restaurant_id: restaurantId,
-      restaurant_name: restaurantName,
-      category: category,
-      price: price != null ? Number(price) : null,
-      would_order_again: pendingVote,
-      rating: sliderValue,
-      has_review: !!reviewTextToSubmit,
-      has_photo: photoAdded,
-      is_update: previousVote !== null,
-    })
+    const voteToSubmit = pendingVote
+    const ratingToSubmit = sliderValue
+    const hadPhotoAdded = photoAdded
 
     // Capture WAR badge before clearing state
     const badge = reviewTextToSubmit && jitterBoxRef.current
@@ -232,7 +205,57 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       : null
     const sessionStatsData = badge ? { isCapturing: true, keystrokes: badge.session.keystrokes, wpm: badge.session.wpm, duration: badge.session.duration } : null
 
-    // Clear UI state immediately - instant feedback
+    const attestResult = jitterScore && user
+      ? await jitterApi.attestReview({
+          userId: user.id,
+          warScore: jitterScore.score,
+          classification: jitterScore.classification,
+          flags: jitterScore.flags,
+          meta: {
+            keys: badge?.session?.keystrokes || 0,
+            paste_chars: badge?.session?.pasteChars || 0,
+            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
+          },
+        })
+      : null
+    const badgeHash = attestResult?.badge_hash || null
+    const result = await submitVote(dishId, voteToSubmit, ratingToSubmit, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+
+    if (!result.success) {
+      logger.error('Vote submission failed:', result.error)
+      setReviewError(result.error || 'Unable to submit your vote. Please try again.')
+      return
+    }
+
+    if (previousVote === null) {
+      setLocalTotalVotes(prev => prev + 1)
+      if (voteToSubmit) setLocalYesVotes(prev => prev + 1)
+    } else if (previousVote !== voteToSubmit) {
+      if (voteToSubmit) {
+        setLocalYesVotes(prev => prev + 1)
+      } else {
+        setLocalYesVotes(prev => prev - 1)
+      }
+    }
+
+    setUserVote(voteToSubmit)
+    setUserRating(ratingToSubmit)
+    if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
+
+    capture('vote_cast', {
+      dish_id: dishId,
+      dish_name: dishName,
+      restaurant_id: restaurantId,
+      restaurant_name: restaurantName,
+      category: category,
+      price: price != null ? Number(price) : null,
+      would_order_again: voteToSubmit,
+      rating: ratingToSubmit,
+      has_review: !!reviewTextToSubmit,
+      has_photo: hadPhotoAdded,
+      is_update: previousVote !== null,
+    })
+
     clearPendingVoteStorage()
     setStep(1)
     setPendingVote(null)
@@ -251,35 +274,6 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
 
     // Notify parent to refresh data
     onVote?.()
-
-    // Attest + submit in parallel (both non-blocking)
-    const attestPromise = jitterScore && user
-      ? jitterApi.attestReview({
-          userId: user.id,
-          warScore: jitterScore.score,
-          classification: jitterScore.classification,
-          flags: jitterScore.flags,
-          meta: {
-            keys: badge?.session?.keystrokes || 0,
-            paste_chars: badge?.session?.pasteChars || 0,
-            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
-          },
-        })
-      : Promise.resolve(null)
-
-    attestPromise
-      .then((attestResult) => {
-        const badgeHash = attestResult?.badge_hash || null
-        return submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
-      })
-      .then((result) => {
-        if (!result.success) {
-          logger.error('Vote submission failed:', result.error)
-        }
-      })
-      .catch((err) => {
-        logger.error('Vote submission error:', err)
-      })
   }
 
   // Intercept browser back button during vote flow — navigate between steps instead of leaving.

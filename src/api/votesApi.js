@@ -5,6 +5,7 @@ import { containsBlockedContent } from '../lib/reviewBlocklist'
 import { MAX_REVIEW_LENGTH } from '../constants/app'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+import { jitterApi } from './jitterApi'
 
 /**
  * Votes API - Centralized data fetching and mutation for votes
@@ -75,54 +76,16 @@ function normalizeVotePayload({ dishId, wouldOrderAgain, rating10 = null, review
 }
 
 async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, reviewText, purityData, jitterData, jitterScore, badgeHash }) {
-  var voteData = {
-    dish_id: dishId,
-    user_id: userId,
-    would_order_again: wouldOrderAgain,
-    rating_10: rating10,
-    source: 'user',
-  }
-
-  if (reviewText) {
-    voteData.review_text = reviewText
-    voteData.review_created_at = new Date().toISOString()
-  }
-
-  if (purityData && purityData.purity != null) {
-    voteData.purity_score = purityData.purity
-  }
-
-  if (jitterScore && jitterScore.score != null) {
-    voteData.war_score = jitterScore.score
-  }
-
-  if (badgeHash) {
-    voteData.badge_hash = badgeHash
-  }
-
-  // Partial unique index (WHERE source='user') can't be targeted by PostgREST upsert.
-  // Check for existing vote first, then update or insert.
-  var { data: existing } = await supabase
-    .from('votes')
-    .select('id')
-    .eq('dish_id', dishId)
-    .eq('user_id', userId)
-    .eq('source', 'user')
-    .maybeSingle()
-
-  var error
-  if (existing) {
-    var result = await supabase
-      .from('votes')
-      .update(voteData)
-      .eq('id', existing.id)
-    error = result.error
-  } else {
-    var result = await supabase
-      .from('votes')
-      .insert(voteData)
-    error = result.error
-  }
+  var { data: vote, error } = await supabase.rpc('submit_vote_atomic', {
+    p_dish_id: dishId,
+    p_user_id: userId,
+    p_would_order_again: wouldOrderAgain,
+    p_rating_10: rating10,
+    p_review_text: reviewText,
+    p_purity_score: purityData && purityData.purity != null ? purityData.purity : null,
+    p_war_score: jitterScore && jitterScore.score != null ? jitterScore.score : null,
+    p_badge_hash: badgeHash || null,
+  })
 
   if (error) {
     throw createClassifiedError(error)
@@ -153,7 +116,7 @@ async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, rev
     has_review: !!reviewText,
   })
 
-  return { success: true }
+  return { success: true, vote }
 }
 
 export const votesApi = {
@@ -398,7 +361,7 @@ export const votesApi = {
     try {
       // Fetch reviews (votes.user_id -> auth.users, not profiles, so no direct join)
       const { data, error } = await supabase
-        .from('votes')
+        .from('public_votes')
         .select(`
           id,
           review_text,
@@ -406,10 +369,7 @@ export const votesApi = {
           would_order_again,
           review_created_at,
           user_id,
-          source,
-          source_metadata,
-          war_score,
-          badge_hash
+          source
         `)
         .eq('dish_id', dishId)
         .not('review_text', 'is', null)
@@ -446,9 +406,6 @@ export const votesApi = {
       }
 
       // Enrich reviews with profiles and trust badges
-      const attestBase = import.meta.env.VITE_JITTER_ATTEST_URL
-      const verifyBase = attestBase ? attestBase.replace('/attest', '/verify') : null
-
       return data.map(review => ({
         ...review,
         profiles: profileMap[review.user_id] || { id: review.user_id, display_name: null },
@@ -456,9 +413,7 @@ export const votesApi = {
           ? 'ai_estimated'
           : jitterApi.getTrustBadgeType(jitterMap[review.user_id] || null),
         jitter_profile: jitterMap[review.user_id] || null,
-        verify_url: review.badge_hash && verifyBase
-          ? verifyBase + '?hash=' + review.badge_hash
-          : null,
+        verify_url: null,
       }))
     } catch (error) {
       logger.error('Error fetching reviews for dish:', error)
@@ -476,7 +431,7 @@ export const votesApi = {
     try {
       // Fetch best review (no direct FK from votes -> profiles)
       const { data, error } = await supabase
-        .from('votes')
+        .from('public_votes')
         .select(`
           review_text,
           rating_10,
@@ -525,7 +480,7 @@ export const votesApi = {
       if (!dishIds || dishIds.length === 0) return {}
 
       const { data, error } = await supabase
-        .from('votes')
+        .from('public_votes')
         .select('dish_id, rating_10')
         .in('dish_id', dishIds)
         .not('rating_10', 'is', null)
@@ -601,29 +556,38 @@ export const votesApi = {
     try {
       if (!restaurantId) return []
 
+      const { data: dishes, error: dishesError } = await supabase
+        .from('dishes')
+        .select('id, name, restaurant_id')
+        .eq('restaurant_id', restaurantId)
+
+      if (dishesError) {
+        logger.error('Error fetching restaurant dishes for reviews:', dishesError)
+        return []
+      }
+
+      const dishMap = Object.fromEntries((dishes || []).map(d => [d.id, d]))
+      const dishIds = Object.keys(dishMap)
+      if (dishIds.length === 0) return []
+
       let query = supabase
-        .from('votes')
+        .from('public_votes')
         .select(`
           id,
           review_text,
           rating_10,
           would_order_again,
-          created_at,
-          dish_id,
-          dishes!inner (
-            id,
-            name,
-            restaurant_id
-          )
+          review_created_at,
+          dish_id
         `)
-        .eq('dishes.restaurant_id', restaurantId)
+        .in('dish_id', dishIds)
         .not('review_text', 'is', null)
         .neq('review_text', '')
 
       if (sort === 'newest') {
-        query = query.order('created_at', { ascending: false })
+        query = query.order('review_created_at', { ascending: false, nullsFirst: false })
       } else {
-        query = query.order('rating_10', { ascending: false })
+        query = query.order('rating_10', { ascending: false, nullsFirst: false })
       }
 
       query = query.range(0, limit - 1)
@@ -640,9 +604,9 @@ export const votesApi = {
           review_text: v.review_text,
           rating: v.rating_10,
           would_order_again: v.would_order_again,
-          dish_name: v.dishes ? v.dishes.name : '',
+          dish_name: dishMap[v.dish_id] ? dishMap[v.dish_id].name : '',
           dish_id: v.dish_id,
-          created_at: v.created_at,
+          created_at: v.review_created_at,
         }
       })
     } catch (error) {
@@ -658,22 +622,14 @@ export const votesApi = {
       }
 
       const { data, error } = await supabase
-        .from('votes')
+        .from('public_votes')
         .select(`
           id,
           review_text,
           rating_10,
           would_order_again,
           review_created_at,
-          dish_id,
-          dishes (
-            id,
-            name,
-            photo_url,
-            category,
-            price,
-            restaurants (name, town)
-          )
+          dish_id
         `)
         .eq('user_id', userId)
         .not('review_text', 'is', null)
@@ -686,7 +642,32 @@ export const votesApi = {
         return []
       }
 
-      return data || []
+      if (!data?.length) return []
+
+      const dishIds = [...new Set(data.map(review => review.dish_id).filter(Boolean))]
+      const { data: dishes, error: dishesError } = dishIds.length
+        ? await supabase
+            .from('dishes')
+            .select(`
+              id,
+              name,
+              photo_url,
+              category,
+              price,
+              restaurants (name, town)
+            `)
+            .in('id', dishIds)
+        : { data: [], error: null }
+
+      if (dishesError) {
+        logger.warn('Error fetching dishes for user reviews:', dishesError)
+      }
+
+      const dishMap = Object.fromEntries((dishes || []).map(dish => [dish.id, dish]))
+      return data.map(review => ({
+        ...review,
+        dishes: dishMap[review.dish_id] || null,
+      }))
     } catch (error) {
       logger.error('Error fetching reviews for user:', error)
       return []

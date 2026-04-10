@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS dishes (
   cuisine TEXT,
   avg_rating DECIMAL(3, 1),
   total_votes INT DEFAULT 0,
+  weighted_vote_count NUMERIC DEFAULT 0,
   consensus_rating NUMERIC(3, 1),
   consensus_ready BOOLEAN DEFAULT FALSE,
   consensus_votes INT DEFAULT 0,
@@ -336,18 +337,9 @@ GROUP BY category;
 -- 1v-b. public_votes (view)
 -- Exposes only the fields the app needs for display. Excludes anti-abuse internals:
 -- purity_score, war_score, badge_hash, source_metadata.
---
--- MIGRATION NOTE: Components and hooks that query the votes table directly should
--- migrate to use this view instead. The underlying "Public read access" RLS policy
--- on votes still allows full table access — tighten that policy once all callers
--- have migrated to public_votes.
---
--- To migrate a caller:
---   1. Change the table reference from `votes` to `public_votes`
---   2. Remove any references to excluded columns
---   3. Once all callers are migrated, drop or restrict the RLS policy on votes
-CREATE OR REPLACE VIEW public_votes
-WITH (security_invoker = true) AS
+-- This view intentionally runs with owner privileges so public callers can read only
+-- this safe projection after votes table SELECT is restricted by RLS.
+CREATE OR REPLACE VIEW public_votes AS
 SELECT
   id,
   dish_id,
@@ -497,8 +489,12 @@ CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH 
 CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admins can delete dishes" ON dishes FOR DELETE USING (is_admin());
 
--- votes: public read, users manage own (optimized auth.uid())
-CREATE POLICY "Public read access" ON votes FOR SELECT USING (true);
+-- votes: restricted read, users manage own (optimized auth.uid())
+CREATE POLICY "Own users, admins, and service role can read votes" ON votes FOR SELECT USING (
+  auth.role() = 'service_role'
+  OR (select auth.uid()) = user_id
+  OR is_admin()
+);
 CREATE POLICY "Users can insert own votes" ON votes FOR INSERT WITH CHECK ((select auth.uid()) = user_id AND source = 'user');
 CREATE POLICY "Users can update own votes" ON votes FOR UPDATE USING ((select auth.uid()) = user_id);
 CREATE POLICY "Users can delete own votes" ON votes FOR DELETE USING ((select auth.uid()) = user_id);
@@ -695,7 +691,7 @@ $$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 -- Prior strength (m): start at 3 for early data. See NOTES.md for schedule.
 CREATE OR REPLACE FUNCTION dish_search_score(
   p_avg_rating DECIMAL,
-  p_total_votes BIGINT,
+  p_total_votes NUMERIC,
   p_distance_miles DECIMAL DEFAULT NULL,
   p_recent_votes_14d INT DEFAULT 0,
   p_global_mean DECIMAL DEFAULT 7.0
@@ -733,8 +729,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 
--- Get ranked dishes with bounding box optimization, town filter, variant aggregation
--- Intentionally NOT SECURITY DEFINER: all referenced tables (restaurants, dishes, votes) have public SELECT
+-- Get ranked dishes with bounding box optimization, town filter, variant aggregation.
+-- SECURITY DEFINER is required because votes RLS restricts direct table reads;
+-- this function returns only public aggregate fields.
 CREATE OR REPLACE FUNCTION get_ranked_dishes(
   user_lat DECIMAL,
   user_lng DECIMAL,
@@ -815,13 +812,13 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::BIGINT AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::BIGINT AS total_child_yes
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
+      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::BIGINT AS yes_count
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
+        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
     WHERE d.parent_dish_id IS NOT NULL
@@ -917,7 +914,7 @@ BEGIN
                          ELSE 0 END), 0)
         )::NUMERIC, 1), 0),
       COALESCE(vs.total_child_votes,
-        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::BIGINT,
+        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::NUMERIC,
       fr.distance,
       COALESCE(rvc.recent_votes, 0),
       (SELECT global_mean FROM global_stats)
@@ -949,7 +946,7 @@ BEGIN
            bp.photo_url
   ORDER BY search_score DESC NULLS LAST, total_votes DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SET search_path = public;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- Get dishes for a specific restaurant with variant aggregation
 CREATE OR REPLACE FUNCTION get_restaurant_dishes(
@@ -981,8 +978,8 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::BIGINT AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::BIGINT AS total_child_yes,
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
+      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes,
       CASE
         WHEN SUM(COALESCE(ds.vote_count, 0)) > 0
         THEN ROUND((SUM(COALESCE(ds.rating_sum, 0)) / NULLIF(SUM(COALESCE(ds.vote_count, 0)), 0))::NUMERIC, 1)
@@ -991,8 +988,8 @@ BEGIN
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::BIGINT AS yes_count,
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
+        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count,
         SUM(COALESCE(v.rating_10, 0) * (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::DECIMAL AS rating_sum
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
@@ -1054,7 +1051,7 @@ BEGIN
     END DESC,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0) DESC;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Get variants for a parent dish
 CREATE OR REPLACE FUNCTION get_dish_variants(
@@ -1089,7 +1086,7 @@ BEGIN
   GROUP BY d.id, d.name, d.price, d.photo_url, d.display_order
   ORDER BY d.display_order, d.name;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Get best review snippet for a dish
 CREATE OR REPLACE FUNCTION get_smart_snippet(p_dish_id UUID)
@@ -1113,7 +1110,7 @@ BEGIN
     v.review_created_at DESC NULLS LAST
   LIMIT 1;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 
 -- =============================================
@@ -1711,6 +1708,65 @@ RETURNS JSONB LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT check_and_record_rate_limit('vote', 10, 60);
 $$;
 
+-- Atomic user vote upsert. Targets the partial unique index:
+-- votes_user_unique ON votes (dish_id, user_id) WHERE source = 'user'.
+CREATE OR REPLACE FUNCTION submit_vote_atomic(
+  p_dish_id UUID,
+  p_user_id UUID,
+  p_would_order_again BOOLEAN,
+  p_rating_10 DECIMAL DEFAULT NULL,
+  p_review_text TEXT DEFAULT NULL,
+  p_purity_score DECIMAL DEFAULT NULL,
+  p_war_score DECIMAL DEFAULT NULL,
+  p_badge_hash TEXT DEFAULT NULL
+)
+RETURNS votes AS $$
+DECLARE
+  submitted_vote votes;
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  INSERT INTO votes (
+    dish_id,
+    user_id,
+    would_order_again,
+    rating_10,
+    review_text,
+    review_created_at,
+    purity_score,
+    war_score,
+    badge_hash,
+    source
+  )
+  VALUES (
+    p_dish_id,
+    p_user_id,
+    p_would_order_again,
+    p_rating_10,
+    p_review_text,
+    CASE WHEN p_review_text IS NOT NULL THEN NOW() ELSE NULL END,
+    p_purity_score,
+    p_war_score,
+    p_badge_hash,
+    'user'
+  )
+  ON CONFLICT (dish_id, user_id) WHERE source = 'user'
+  DO UPDATE SET
+    would_order_again = EXCLUDED.would_order_again,
+    rating_10 = EXCLUDED.rating_10,
+    review_text = COALESCE(EXCLUDED.review_text, votes.review_text),
+    review_created_at = COALESCE(EXCLUDED.review_created_at, votes.review_created_at),
+    purity_score = COALESCE(EXCLUDED.purity_score, votes.purity_score),
+    war_score = COALESCE(EXCLUDED.war_score, votes.war_score),
+    badge_hash = COALESCE(EXCLUDED.badge_hash, votes.badge_hash)
+  RETURNING * INTO submitted_vote;
+
+  RETURN submitted_vote;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- Convenience: photo upload rate limiting (5 per minute)
 CREATE OR REPLACE FUNCTION check_photo_upload_rate_limit()
 RETURNS JSONB LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
@@ -1965,7 +2021,10 @@ CREATE TRIGGER consensus_check_trigger AFTER INSERT ON votes FOR EACH ROW EXECUT
 CREATE OR REPLACE FUNCTION update_dish_avg_rating()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE dishes SET avg_rating = sub.avg_r, total_votes = sub.cnt
+  UPDATE dishes
+  SET avg_rating = sub.avg_r,
+      total_votes = sub.raw_count,
+      weighted_vote_count = sub.weighted_count
   FROM (
     SELECT
       ROUND(
@@ -1973,7 +2032,8 @@ BEGIN
          NULLIF(SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END), 0)
         )::NUMERIC, 1
       ) AS avg_r,
-      SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS cnt
+      COUNT(*)::INT AS raw_count,
+      COALESCE(SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END), 0)::NUMERIC AS weighted_count
     FROM votes WHERE dish_id = COALESCE(NEW.dish_id, OLD.dish_id) AND rating_10 IS NOT NULL
   ) sub
   WHERE dishes.id = COALESCE(NEW.dish_id, OLD.dish_id);
@@ -2714,10 +2774,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 -- 14. GRANTS
 -- =============================================
 
+GRANT SELECT ON public_votes TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION check_and_record_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_vote_rate_limit TO authenticated;
+GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION check_photo_upload_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_restaurant_create_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_dish_create_rate_limit TO authenticated;
