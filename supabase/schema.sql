@@ -1219,9 +1219,9 @@ LANGUAGE SQL STABLE SET search_path = public AS $$
   )
   SELECT
     COUNT(*)::INT AS shared_dishes,
-    ROUND(AVG(ABS(rating_a - rating_b)), 1) AS avg_difference,
+    ROUND(AVG(ABS(rating_a - rating_b))::NUMERIC, 1) AS avg_difference,
     CASE
-      WHEN COUNT(*) >= 3 THEN ROUND(100 - (AVG(ABS(rating_a - rating_b)) / 9.0 * 100))::INT
+      WHEN COUNT(*) >= 3 THEN ROUND((100 - (AVG(ABS(rating_a - rating_b))::NUMERIC / 9.0 * 100)))::INT
       ELSE NULL
     END AS compatibility_pct
   FROM shared;
@@ -1241,7 +1241,7 @@ RETURNS TABLE (
 LANGUAGE SQL STABLE SET search_path = public AS $$
   WITH candidates AS (
     SELECT b.user_id AS other_id, COUNT(*)::INT AS shared,
-      ROUND(100 - (AVG(ABS(a.rating_10 - b.rating_10)) / 9.0 * 100))::INT AS compat
+      ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT AS compat
     FROM votes a
     JOIN votes b ON a.dish_id = b.dish_id AND b.user_id != p_user_id AND b.rating_10 IS NOT NULL
     WHERE a.user_id = p_user_id AND a.rating_10 IS NOT NULL
@@ -2511,7 +2511,7 @@ AS $$
     CASE
       WHEN p_viewer_id IS NOT NULL AND p_viewer_id != ll.user_id THEN (
         SELECT CASE
-          WHEN COUNT(*) >= 3 THEN ROUND(100 - (AVG(ABS(a.rating_10 - b.rating_10)) / 9.0 * 100))::INT
+          WHEN COUNT(*) >= 3 THEN ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT
           ELSE NULL
         END
         FROM votes a
