@@ -9,6 +9,7 @@ import { RadiusSheet } from '../components/LocationPicker'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { ModeFAB } from '../components/ModeFAB'
 import { HomeListMode, MapCategoryBar } from '../components/home'
+import { getSessionItem, setSessionItem } from '../lib/storage'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -23,9 +24,7 @@ export function Map() {
   var { location, radius, setRadius, permissionState, requestLocation } = useLocationContext()
 
   var [mode, setMode] = useState(function () {
-    try {
-      return sessionStorage.getItem('wgh_home_mode') || 'list'
-    } catch (e) { return 'list' }
+    return getSessionItem('wgh_home_mode') || 'list'
   })
   var [selectedCategory, setSelectedCategory] = useState(null)
   var [radiusSheetOpen, setRadiusSheetOpen] = useState(false)
@@ -51,7 +50,7 @@ export function Map() {
   useEffect(function () {
     if (focusDishFromRoute) {
       setMode('map')
-      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'map')
       setFocusDishId(null)
       // Delay to let map component mount and restaurantGroups populate
       setTimeout(function () { setFocusDishId(focusDishFromRoute) }, 300)
@@ -68,10 +67,10 @@ export function Map() {
       // Inherit active category from list mode
       setMapCategory(selectedCategory || expandedCategory || null)
       setMode('map')
-      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'map')
     } else {
       setMode('list')
-      try { sessionStorage.setItem('wgh_home_mode', 'list') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'list')
     }
   }, [mode, selectedCategory, expandedCategory])
 
@@ -461,4 +460,3 @@ export function Map() {
     </main>
   )
 }
-

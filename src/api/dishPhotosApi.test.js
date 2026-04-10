@@ -102,7 +102,11 @@ describe('Dish Photos API', () => {
       const mockRestaurantPhoto = { id: 'photo-1', source_type: 'restaurant' }
       const mockSelect = vi.fn(() => ({
         eq: vi.fn(function() { return this }),
-        maybeSingle: vi.fn().mockResolvedValueOnce({ data: mockRestaurantPhoto, error: null }),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValueOnce({ data: mockRestaurantPhoto, error: null }),
+          })),
+        })),
       }))
       supabase.from.mockReturnValueOnce({ select: mockSelect })
 
@@ -115,7 +119,11 @@ describe('Dish Photos API', () => {
       // First call - no restaurant photo
       const mockSelect1 = vi.fn(() => ({
         eq: vi.fn(function() { return this }),
-        maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
+          })),
+        })),
       }))
       supabase.from.mockReturnValueOnce({ select: mockSelect1 })
 
@@ -140,7 +148,11 @@ describe('Dish Photos API', () => {
       // First call succeeds with null
       const mockSelect1 = vi.fn(() => ({
         eq: vi.fn(function() { return this }),
-        maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
+          })),
+        })),
       }))
       supabase.from.mockReturnValueOnce({ select: mockSelect1 })
 

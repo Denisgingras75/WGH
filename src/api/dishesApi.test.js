@@ -226,7 +226,7 @@ describe('dishesApi', () => {
     it('should return null when dish has no parent', async () => {
       const selectChain = {
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { parent_dish_id: null }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { parent_dish_id: null }, error: null }),
       }
       supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue(selectChain),
@@ -253,14 +253,14 @@ describe('dishesApi', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnThis(),
-              single: vi.fn().mockResolvedValue({ data: { parent_dish_id: 'parent-1' }, error: null }),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { parent_dish_id: 'parent-1' }, error: null }),
             }),
           }
         }
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: mockParent, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: mockParent, error: null }),
           }),
         }
       })
@@ -274,7 +274,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
         }),
       })
 
@@ -289,7 +289,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { parent_dish_id: null }, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { parent_dish_id: null }, error: null }),
         }),
       })
 
@@ -304,7 +304,7 @@ describe('dishesApi', () => {
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { parent_dish_id: 'parent-1' }, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { parent_dish_id: 'parent-1' }, error: null }),
         }),
       })
       supabase.rpc.mockResolvedValueOnce({ data: mockVariants, error: null })

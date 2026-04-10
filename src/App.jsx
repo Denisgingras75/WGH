@@ -10,6 +10,7 @@ import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
 import { RouteProgress } from './components/RouteProgress'
+import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
 import { preloadCategoryImages } from './constants/categories'
 
@@ -33,12 +34,12 @@ function lazyWithRetry(importFn, namedExport) {
     importFn()
       .then(m => {
         // Successful load — clear any reload flag
-        sessionStorage.removeItem(RELOAD_KEY)
+        removeSessionItem(RELOAD_KEY)
         return { default: namedExport ? m[namedExport] : m.default }
       })
       .catch((error) => {
-        if (isChunkLoadError(error) && !sessionStorage.getItem(RELOAD_KEY)) {
-          sessionStorage.setItem(RELOAD_KEY, '1')
+        if (isChunkLoadError(error) && !getSessionItem(RELOAD_KEY)) {
+          setSessionItem(RELOAD_KEY, '1')
           window.location.reload()
           return { default: () => null }
         }

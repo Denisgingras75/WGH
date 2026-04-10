@@ -1,65 +1,67 @@
-import { assertEquals } from 'https://deno.land/std@0.177.0/testing/asserts.ts'
+import { describe, expect, it } from 'vitest'
 import { detectCms, cmsRequiresRender } from './cms-detect.ts'
 
-Deno.test('detects Wix by wixstatic URL', () => {
+describe('cms-detect', () => {
+it('detects Wix by wixstatic URL', () => {
   const html = '<html><link href="https://static.wixstatic.com/main.css"></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'wix')
+  expect(detectCms(html, 'http://example.com')).toBe('wix')
 })
 
-Deno.test('detects Wix by wixsite in URL', () => {
+it('detects Wix by wixsite in URL', () => {
   const html = '<html></html>'
-  assertEquals(detectCms(html, 'https://example.wixsite.com/mysite'), 'wix')
+  expect(detectCms(html, 'https://example.wixsite.com/mysite')).toBe('wix')
 })
 
-Deno.test('detects Wix by parastorage asset URL', () => {
+it('detects Wix by parastorage asset URL', () => {
   const html = '<html><script src="https://static.parastorage.com/services/wix-thunderbolt/dist/main.js"></script></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'wix')
+  expect(detectCms(html, 'http://example.com')).toBe('wix')
 })
 
-Deno.test('detects Wix Thunderbolt framework marker', () => {
+it('detects Wix Thunderbolt framework marker', () => {
   const html = '<html><script>window.viewerModel = {}; // Wix Thunderbolt</script></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'wix')
+  expect(detectCms(html, 'http://example.com')).toBe('wix')
 })
 
-Deno.test('detects Square Online by square-cdn', () => {
+it('detects Square Online by square-cdn', () => {
   const html = '<html><link href="https://square-cdn.com/styles.css"></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'square')
+  expect(detectCms(html, 'http://example.com')).toBe('square')
 })
 
-Deno.test('detects Square Online by square.site URL', () => {
+it('detects Square Online by square.site URL', () => {
   const html = '<html></html>'
-  assertEquals(detectCms(html, 'https://example.square.site/'), 'square')
+  expect(detectCms(html, 'https://example.square.site/')).toBe('square')
 })
 
-Deno.test('detects Weebly by weeblycloud asset', () => {
+it('detects Weebly by weeblycloud asset', () => {
   const html = '<html><link href="https://cdn2.editmysite.com/css/main.css"></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'weebly')
+  expect(detectCms(html, 'http://example.com')).toBe('weebly')
 })
 
-Deno.test('detects Squarespace by squarespace-cdn', () => {
+it('detects Squarespace by squarespace-cdn', () => {
   const html = '<html><link href="https://static1.squarespace.com/static/main.css"></html>'
-  assertEquals(detectCms(html, 'http://example.com'), 'squarespace')
+  expect(detectCms(html, 'http://example.com')).toBe('squarespace')
 })
 
-Deno.test('returns null for plain HTML with no CMS signatures', () => {
+it('returns null for plain HTML with no CMS signatures', () => {
   const html = '<html><body><h1>My Restaurant</h1><p>Menu items here</p></body></html>'
-  assertEquals(detectCms(html, 'http://example.com'), null)
+  expect(detectCms(html, 'http://example.com')).toBeNull()
 })
 
-Deno.test('returns null for WordPress (not a JS-rendered CMS)', () => {
+it('returns null for WordPress (not a JS-rendered CMS)', () => {
   const html = '<html><link href="https://example.com/wp-content/themes/main.css"></html>'
-  assertEquals(detectCms(html, 'http://example.com'), null)
+  expect(detectCms(html, 'http://example.com')).toBeNull()
 })
 
-Deno.test('case-insensitive URL matching', () => {
+it('case-insensitive URL matching', () => {
   const html = '<html></html>'
-  assertEquals(detectCms(html, 'https://EXAMPLE.WIXSITE.COM/'), 'wix')
+  expect(detectCms(html, 'https://EXAMPLE.WIXSITE.COM/')).toBe('wix')
 })
 
-Deno.test('cmsRequiresRender: wix/square/weebly need render, squarespace does not', () => {
-  assertEquals(cmsRequiresRender('wix'), true)
-  assertEquals(cmsRequiresRender('square'), true)
-  assertEquals(cmsRequiresRender('weebly'), true)
-  assertEquals(cmsRequiresRender('squarespace'), false)
-  assertEquals(cmsRequiresRender(null), false)
+it('cmsRequiresRender: wix/square/weebly need render, squarespace does not', () => {
+  expect(cmsRequiresRender('wix')).toBe(true)
+  expect(cmsRequiresRender('square')).toBe(true)
+  expect(cmsRequiresRender('weebly')).toBe(true)
+  expect(cmsRequiresRender('squarespace')).toBe(false)
+  expect(cmsRequiresRender(null)).toBe(false)
+})
 })

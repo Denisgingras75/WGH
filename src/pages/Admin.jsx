@@ -510,10 +510,12 @@ export function Admin() {
               {searchResults.map((dish) => (
                 <div
                   key={dish.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${
-                    editingDishId === dish.id ? 'ring-2 ring-emerald-500' : ''
-                  }`}
-                  style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                  className="flex items-center justify-between p-3 rounded-lg border"
+                  style={{
+                    background: 'var(--color-bg)',
+                    borderColor: 'var(--color-divider)',
+                    boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
+                  }}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
@@ -557,10 +559,12 @@ export function Admin() {
             {recentDishes.map((dish) => (
               <div
                 key={dish.id}
-                className={`flex items-center justify-between p-3 rounded-lg border ${
-                  editingDishId === dish.id ? 'ring-2 ring-emerald-500' : ''
-                }`}
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="flex items-center justify-between p-3 rounded-lg border"
+                style={{
+                  background: 'var(--color-bg)',
+                  borderColor: 'var(--color-divider)',
+                  boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>

@@ -349,6 +349,8 @@ export const dishPhotosApi = {
         .select('*')
         .eq('dish_id', dishId)
         .eq('source_type', 'restaurant')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (!restError && restaurantPhoto) {

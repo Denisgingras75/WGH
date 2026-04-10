@@ -52,10 +52,8 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Google Places Details API error:', errorText)
-      console.error('API key present:', !!GOOGLE_API_KEY, 'Key prefix:', GOOGLE_API_KEY?.slice(0, 10))
-      return new Response(JSON.stringify({ error: 'Places API error', details: errorText, keyPresent: !!GOOGLE_API_KEY }), {
+      console.error('Google Places Details upstream error')
+      return new Response(JSON.stringify({ error: 'Upstream service error' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

@@ -367,7 +367,7 @@ export const dishesApi = {
         .from('dishes')
         .select('parent_dish_id')
         .eq('id', dishId)
-        .single()
+        .maybeSingle()
 
       if (dishError || !dish?.parent_dish_id) {
         return null
@@ -387,7 +387,7 @@ export const dishesApi = {
           )
         `)
         .eq('id', dish.parent_dish_id)
-        .single()
+        .maybeSingle()
 
       if (parentError) {
         logger.error('Error fetching parent dish:', parentError)
@@ -413,7 +413,7 @@ export const dishesApi = {
         .from('dishes')
         .select('parent_dish_id')
         .eq('id', dishId)
-        .single()
+        .maybeSingle()
 
       if (dishError || !dish?.parent_dish_id) {
         return []
