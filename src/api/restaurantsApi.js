@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { checkRestaurantCreateRateLimit } from '../lib/rateLimiter'
 import { logger } from '../utils/logger'
 import { sanitizeSearchQuery } from '../utils/sanitize'
 import { createClassifiedError } from '../utils/errorHandler'
@@ -179,6 +180,11 @@ export const restaurantsApi = {
       const contentError = validateUserContent(name, 'Restaurant name')
       if (contentError) throw new Error(contentError)
 
+      const clientRateLimit = checkRestaurantCreateRateLimit()
+      if (!clientRateLimit.allowed) {
+        throw new Error(clientRateLimit.message)
+      }
+
       // Check rate limit first
       const { data: rateCheck, error: rateError } = await supabase.rpc('check_restaurant_create_rate_limit')
       if (rateError) throw createClassifiedError(rateError)
@@ -265,7 +271,7 @@ export const restaurantsApi = {
       return data
     } catch (error) {
       logger.error('Error finding restaurant by place ID:', error)
-      return null
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 

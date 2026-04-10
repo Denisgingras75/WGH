@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { checkDishCreateRateLimit } from '../lib/rateLimiter'
 import { createClassifiedError } from '../utils/errorHandler'
 
 import { validateUserContent } from '../lib/reviewBlocklist'
@@ -505,6 +506,11 @@ export const dishesApi = {
       // Content moderation
       const contentError = validateUserContent(name, 'Dish name')
       if (contentError) throw new Error(contentError)
+
+      const clientRateLimit = checkDishCreateRateLimit()
+      if (!clientRateLimit.allowed) {
+        throw new Error(clientRateLimit.message)
+      }
 
       // Check rate limit first
       const { data: rateCheck, error: rateError } = await supabase.rpc('check_dish_create_rate_limit')

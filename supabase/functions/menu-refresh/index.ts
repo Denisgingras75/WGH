@@ -116,7 +116,7 @@ Pick the MOST SPECIFIC category that fits. Prefer "lobster roll" over "seafood",
 5. **Skip side dishes** — mashed potatoes, green beans, rice, coleslaw, steamed veggies, etc. NOT rateable.
 6. **EXCEPTION: Fries and onion rings ARE included** — people rate these. Keep them.
 7. **Deduplicate sizes** — keep only the larger/dinner version
-8. **Prices must be numbers** (no $ sign). If range, use lower price. If no price, use null.
+8. **Prices: NEVER INVENT OR GUESS PRICES.** Only set a price if you can see an exact dollar amount next to that specific dish on the source page. If no explicit price is shown for a dish, the price field MUST be \`null\`. Do NOT infer prices from nearby dishes, category averages, or typical market values. Do NOT fill in \`18\` or any default. A null price is always better than a guessed price. If a range is shown (e.g. "$14-18"), use the lower number.
 9. **One category per dish** — pick the most specific match
 
 ## CRITICAL: Reject placeholder/template content
@@ -183,10 +183,11 @@ function sleep(ms: number): Promise<void> {
 const GOOGLE_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')
 
 const MENU_PATHS = [
-  '/menu', '/menus', '/food-menu', '/dinner-menu', '/food',
-  '/food-drink', '/food--drinks', '/eat', '/dining', '/our-menu',
-  '/breakfast-menu', '/lunch-menu', '/brunch-menu', '/dinner',
-  '/breakfast', '/lunch', '/order', '/order-online',
+  // More specific paths first — less likely to hit a wrong page
+  '/food-menu', '/dinner-menu', '/lunch-menu', '/breakfast-menu', '/brunch-menu',
+  '/our-menu', '/menus', '/food-drink', '/food--drinks',
+  '/menu', '/food', '/eat', '/dining', '/dinner', '/breakfast', '/lunch',
+  '/order', '/order-online',
 ]
 
 /**
@@ -365,7 +366,7 @@ async function fetchMenuContent(url: string): Promise<string> {
     if (menuScripts.length > 0) parts.push('=== EMBEDDED DATA ===\n' + menuScripts.join('\n'))
     parts.push('=== PAGE TEXT ===\n' + plainText)
 
-    return parts.join('\n\n').slice(0, 15000)
+    return parts.join('\n\n').slice(0, 60000)
   } finally {
     clearTimeout(timeout)
   }
@@ -384,7 +385,7 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [
         {
           role: 'user',

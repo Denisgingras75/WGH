@@ -472,9 +472,10 @@ ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 -- restaurants: public read, admin write (+ manager policies below)
 CREATE POLICY "Public read access" ON restaurants FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR INSERT WITH CHECK (
-  auth.uid() IS NOT NULL
+  (SELECT auth.uid()) IS NOT NULL
+  AND created_by = (SELECT auth.uid())
   AND (is_admin()
-    OR (SELECT count(*) FROM restaurants WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 5)
+    OR (SELECT count(*) FROM restaurants WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 5)
 );
 CREATE POLICY "Admins can update restaurants" ON restaurants FOR UPDATE USING (is_admin());
 CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (is_admin());
@@ -482,9 +483,10 @@ CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (i
 -- dishes: public read, admin + manager write
 CREATE POLICY "Public read access" ON dishes FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH CHECK (
-  auth.uid() IS NOT NULL
+  (SELECT auth.uid()) IS NOT NULL
+  AND created_by = (SELECT auth.uid())
   AND (is_admin() OR auth.role() = 'service_role'
-    OR (SELECT count(*) FROM dishes WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 20)
+    OR (SELECT count(*) FROM dishes WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 20)
 );
 CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admins can delete dishes" ON dishes FOR DELETE USING (is_admin());

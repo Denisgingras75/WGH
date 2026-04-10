@@ -154,7 +154,7 @@ export const votesApi = {
   },
 
   /**
-   * Submit multiple votes sequentially with a single upfront rate-limit check
+   * Submit multiple votes sequentially with per-vote rate-limit checks
    * @param {Object} params
    * @param {Array<Object>} params.votes - Vote payloads matching submitVote shape
    * @returns {Promise<Object>} Submission result with count metadata
@@ -170,12 +170,12 @@ export const votesApi = {
       })
 
       var user = await getAuthenticatedUser()
-      await checkVoteRateLimitOnce()
 
       var submittedDishIds = []
 
       for (var i = 0; i < normalizedVotes.length; i += 1) {
         try {
+          await checkVoteRateLimitOnce()
           await upsertVoteRecord({
             userId: user.id,
             ...normalizedVotes[i],
@@ -379,7 +379,7 @@ export const votesApi = {
 
       if (error) {
         logger.error('Error fetching reviews for dish:', error)
-        return [] // Graceful degradation
+        throw createClassifiedError(error)
       }
 
       if (!data?.length) return []
@@ -417,7 +417,7 @@ export const votesApi = {
       }))
     } catch (error) {
       logger.error('Error fetching reviews for dish:', error)
-      return [] // Graceful degradation - don't break the UI
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 

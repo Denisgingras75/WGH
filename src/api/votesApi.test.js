@@ -447,7 +447,7 @@ describe('votesApi', () => {
       expect('trust_badge' in result[0]).toBe(true)
     })
 
-    it('should return empty array on error (graceful degradation)', async () => {
+    it('should throw classified error on failure', async () => {
       supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -462,9 +462,7 @@ describe('votesApi', () => {
         }),
       })
 
-      const result = await votesApi.getReviewsForDish('dish-1')
-
-      expect(result).toEqual([])
+      await expect(votesApi.getReviewsForDish('dish-1')).rejects.toThrow('Error')
     })
   })
 

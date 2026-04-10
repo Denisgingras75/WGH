@@ -1,6 +1,12 @@
 import { supabase } from '../lib/supabase'
 import { logger } from '../utils/logger'
 import { createClassifiedError } from '../utils/errorHandler'
+import { validateUserContent } from '../lib/reviewBlocklist'
+
+function validateContentField(value, label) {
+  const contentError = validateUserContent(value, label)
+  if (contentError) throw new Error(contentError)
+}
 
 export const localListsApi = {
   async getForHomepage(viewerId) {
@@ -72,6 +78,11 @@ export const localListsApi = {
 
   async saveMyList({ tagline, items }) {
     try {
+      validateContentField(tagline, 'Curator tagline')
+      for (const item of (items || [])) {
+        validateContentField(item.note, 'Local list note')
+      }
+
       const { data, error } = await supabase.rpc('save_my_local_list', {
         p_tagline: tagline || null,
         p_items: JSON.stringify(items),

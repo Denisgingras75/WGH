@@ -131,7 +131,15 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     setError(null)
 
     // Check if this Google Place already exists in DB
-    const existing = await restaurantsApi.findByGooglePlaceId(prediction.placeId)
+    let existing = null
+    try {
+      existing = await restaurantsApi.findByGooglePlaceId(prediction.placeId)
+    } catch (err) {
+      logger.error('Failed to check existing restaurant:', err)
+      setError('Could not verify whether this restaurant already exists. Please try again.')
+      setSubmitting(false)
+      return
+    }
     if (existing) {
       onClose()
       navigate(`/restaurants/${existing.id}`)
@@ -191,7 +199,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
           has_order_url: !!ordering.orderUrl,
         })
         // Fire-and-forget: auto-import menu
-        menuImportApi.createJob(restaurant.id, 'initial').catch(() => {})
+        menuImportApi.createJob(restaurant.id, 'initial').catch(err => logger.warn('Menu import enqueue failed', { restaurantId: restaurant.id, error: err?.message || String(err) }))
         setSubmitting(false)
         onClose()
         navigate('/restaurants/' + restaurant.id)
@@ -300,7 +308,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
 
       // Fire-and-forget: auto-discover website + import menu
       // Edge Function handles everything: Google Places lookup → website probe → menu extraction
-      menuImportApi.createJob(restaurant.id, 'initial').catch(() => {})
+      menuImportApi.createJob(restaurant.id, 'initial').catch(err => logger.warn('Menu import enqueue failed', { restaurantId: restaurant.id, error: err?.message || String(err) }))
 
       onClose()
       navigate(`/restaurants/${restaurant.id}`)

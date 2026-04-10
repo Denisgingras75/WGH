@@ -126,7 +126,7 @@ export const profileApi = {
       return data?.categoryStats || []
     } catch (error) {
       logger.error('Error fetching taste stats:', error)
-      return []
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 

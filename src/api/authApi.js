@@ -4,6 +4,7 @@ import { checkRateLimit, RATE_LIMITS } from '../lib/rateLimiter'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 import { sanitizeSearchQuery } from '../utils/sanitize'
+import { validateUserContent } from '../lib/reviewBlocklist'
 
 /**
  * Auth API - Centralized authentication operations
@@ -121,6 +122,9 @@ export const authApi = {
       }
 
       capture('signup_started', { method: 'password' })
+
+      const contentError = validateUserContent(username, 'Display name')
+      if (contentError) throw new Error(contentError)
 
       // Check if username is already taken
       // Sanitize username for safe database query
