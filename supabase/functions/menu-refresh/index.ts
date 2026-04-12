@@ -188,7 +188,8 @@ const MENU_PATHS = [
   // More specific paths first — less likely to hit a wrong page
   '/food-menu', '/dinner-menu', '/lunch-menu', '/breakfast-menu', '/brunch-menu',
   '/our-menu', '/menus', '/food-drink', '/food--drinks',
-  '/menu', '/food', '/eat', '/dining', '/dinner', '/breakfast', '/lunch',
+  '/menu', '/menu-1', '/menu-2', '/food', '/eat', '/dining',
+  '/dinner', '/breakfast', '/lunch',
   '/order', '/order-online',
 ]
 
