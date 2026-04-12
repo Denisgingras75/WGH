@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS votes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   dish_id UUID REFERENCES dishes(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  would_order_again BOOLEAN NOT NULL,
+  would_order_again BOOLEAN,
   rating_10 DECIMAL(3, 1),
   review_text TEXT,
   review_created_at TIMESTAMP WITH TIME ZONE,
@@ -1715,7 +1715,7 @@ $$;
 CREATE OR REPLACE FUNCTION submit_vote_atomic(
   p_dish_id UUID,
   p_user_id UUID,
-  p_would_order_again BOOLEAN,
+  p_would_order_again BOOLEAN DEFAULT NULL,
   p_rating_10 DECIMAL DEFAULT NULL,
   p_review_text TEXT DEFAULT NULL,
   p_purity_score DECIMAL DEFAULT NULL,
@@ -1725,9 +1725,24 @@ CREATE OR REPLACE FUNCTION submit_vote_atomic(
 RETURNS votes AS $$
 DECLARE
   submitted_vote votes;
+  v_effective_would_order BOOLEAN;
 BEGIN
   IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
     RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  -- Shadow-write compatibility (Phase 1): if caller omits the binary (new
+  -- clients), derive it from the rating. Stale PWA bundles that still pass
+  -- a boolean are honored as-is. Threshold 7.0 is duplicated in
+  -- supabase/functions/seed-reviews/index.ts; both sites must stay aligned
+  -- through Phase 1 and are deleted together in Phase 2.
+  IF p_would_order_again IS NULL THEN
+    IF p_rating_10 IS NULL THEN
+      RAISE EXCEPTION 'rating_10 is required';
+    END IF;
+    v_effective_would_order := (p_rating_10 >= 7.0);
+  ELSE
+    v_effective_would_order := p_would_order_again;
   END IF;
 
   INSERT INTO votes (
@@ -1745,7 +1760,7 @@ BEGIN
   VALUES (
     p_dish_id,
     p_user_id,
-    p_would_order_again,
+    v_effective_would_order,
     p_rating_10,
     p_review_text,
     CASE WHEN p_review_text IS NOT NULL THEN NOW() ELSE NULL END,
