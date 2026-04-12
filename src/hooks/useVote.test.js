@@ -18,22 +18,21 @@ describe('useVote Hook', () => {
   })
 
   describe('submitVote', () => {
-    it('should submit a vote successfully', async () => {
+    it('calls votesApi.submitVote with positional args minus wouldOrderAgain', async () => {
       votesApi.submitVote.mockResolvedValueOnce({ success: true })
 
       const { result } = renderHook(() => useVote())
 
       let response
       await act(async () => {
-        response = await result.current.submitVote('dish-1', true, 8)
+        response = await result.current.submitVote('dish-1', 8.5, 'great review', null, null, null, null)
       })
 
       expect(response.success).toBe(true)
       expect(votesApi.submitVote).toHaveBeenCalledWith({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
-        rating10: 8,
-        reviewText: null,
+        rating10: 8.5,
+        reviewText: 'great review',
         purityData: null,
         jitterData: null,
         jitterScore: null,
@@ -49,7 +48,7 @@ describe('useVote Hook', () => {
 
       let response
       await act(async () => {
-        response = await result.current.submitVote('dish-1', true, 8)
+        response = await result.current.submitVote('dish-1', 8)
       })
 
       expect(response.success).toBe(false)
@@ -72,7 +71,7 @@ describe('useVote Hook', () => {
       // Start the submission but don't await it yet
       let submitPromise
       act(() => {
-        submitPromise = result.current.submitVote('dish-1', true)
+        submitPromise = result.current.submitVote('dish-1', 8)
       })
 
       // Now submitting should be true (API hasn't resolved yet)
@@ -88,18 +87,17 @@ describe('useVote Hook', () => {
       expect(result.current.submitting).toBe(false)
     })
 
-    it('should handle votes without a rating', async () => {
+    it('should handle votes without an explicit rating', async () => {
       votesApi.submitVote.mockResolvedValueOnce({ success: true })
 
       const { result } = renderHook(() => useVote())
 
       await act(async () => {
-        await result.current.submitVote('dish-1', false)
+        await result.current.submitVote('dish-1')
       })
 
       expect(votesApi.submitVote).toHaveBeenCalledWith({
         dishId: 'dish-1',
-        wouldOrderAgain: false,
         rating10: undefined,
         reviewText: null,
         purityData: null,
