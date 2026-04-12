@@ -40,13 +40,9 @@ async function checkVoteRateLimitOnce() {
   }
 }
 
-function normalizeVotePayload({ dishId, wouldOrderAgain, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+function normalizeVotePayload({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
   if (!dishId) {
     throw new Error('Dish is required')
-  }
-
-  if (typeof wouldOrderAgain !== 'boolean') {
-    throw new Error('Vote selection is required')
   }
 
   if (rating10 != null && (rating10 < 0 || rating10 > 10)) {
@@ -65,7 +61,6 @@ function normalizeVotePayload({ dishId, wouldOrderAgain, rating10 = null, review
 
   return {
     dishId,
-    wouldOrderAgain,
     rating10,
     reviewText: reviewText?.trim() || null,
     purityData,
@@ -75,11 +70,10 @@ function normalizeVotePayload({ dishId, wouldOrderAgain, rating10 = null, review
   }
 }
 
-async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, reviewText, purityData, jitterData, jitterScore, badgeHash }) {
+async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityData, jitterData, jitterScore, badgeHash }) {
   var { data: vote, error } = await supabase.rpc('submit_vote_atomic', {
     p_dish_id: dishId,
     p_user_id: userId,
-    p_would_order_again: wouldOrderAgain,
     p_rating_10: rating10,
     p_review_text: reviewText,
     p_purity_score: purityData && purityData.purity != null ? purityData.purity : null,
@@ -109,11 +103,24 @@ async function upsertVoteRecord({ userId, dishId, wouldOrderAgain, rating10, rev
     }
   }
 
+  // Analytics compat window: dual-emit during Phase 1 rollout.
+  //   - `vote_submitted` keeps existing PostHog funnels working. `would_order_again`
+  //     is derived from rating (>=7.0) so downstream dashboards don't break.
+  //   - `rating_submitted` is the new canonical event; Phase 2 drops `vote_submitted`.
+  //   - `binary_removed: true` tags both events so we can filter stale-client traffic.
+  var derivedWouldOrderAgain = rating10 != null ? rating10 >= 7.0 : null
   capture('vote_submitted', {
     dish_id: dishId,
-    would_order_again: wouldOrderAgain,
+    would_order_again: derivedWouldOrderAgain,
     rating: rating10,
     has_review: !!reviewText,
+    binary_removed: true,
+  })
+  capture('rating_submitted', {
+    dish_id: dishId,
+    rating: rating10,
+    has_review: !!reviewText,
+    binary_removed: true,
   })
 
   return { success: true, vote }
@@ -124,12 +131,11 @@ export const votesApi = {
    * Submit or update a vote for a dish
    * @param {Object} params
    * @param {string} params.dishId - Dish ID
-   * @param {boolean} params.wouldOrderAgain - Vote value
-   * @param {number} params.rating10 - Optional 1-10 rating
+   * @param {number} params.rating10 - 1-10 rating (sole vote signal; server derives legacy binary shadow)
    * @param {string} params.reviewText - Optional review text (max 200 chars)
    * @returns {Promise<Object>} Success status
    */
-  async submitVote({ dishId, wouldOrderAgain, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+  async submitVote({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
     try {
       var user = await getAuthenticatedUser()
       await checkVoteRateLimitOnce()
@@ -138,7 +144,6 @@ export const votesApi = {
         userId: user.id,
         ...normalizeVotePayload({
           dishId,
-          wouldOrderAgain,
           rating10,
           reviewText,
           purityData,
