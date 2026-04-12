@@ -51,9 +51,14 @@ BEGIN
   -- are honored as-is so we don't lose their intent.
   -- Column is nullable now, but Phase 1 still writes a concrete boolean so
   -- downstream aggregations (ranking, percent-worth-it) keep working.
+  --
+  -- Threshold 7.0 is duplicated in supabase/functions/seed-reviews/index.ts
+  -- (direct table insert, does not go through this RPC). Both sites must stay
+  -- aligned during Phase 1; Phase 2 deletes both. See spec "Phase 1 — Seed
+  -- function" in docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md.
   IF p_would_order_again IS NULL THEN
     IF p_rating_10 IS NULL THEN
-      RAISE EXCEPTION 'rating_10 is required when would_order_again is omitted';
+      RAISE EXCEPTION 'rating_10 is required';
     END IF;
     v_effective_would_order := (p_rating_10 >= 7.0);
   ELSE
