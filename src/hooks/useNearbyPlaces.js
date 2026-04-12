@@ -1,24 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { placesApi } from '../api/placesApi'
 import { logger } from '../utils/logger'
+import { matchesExistingRestaurant } from '../utils/placeMatching'
 
 const MILES_TO_METERS = 1609.34
 const MAX_DISCOVERY_RADIUS_MI = 25
 
 /**
  * Discover nearby restaurants via Google Places that aren't already in the DB.
- * Requires authentication (edge functions need JWT) and GPS coordinates.
- * Search radius is capped at 25 miles.
+ * Filters by Google Place ID AND by name+proximity to catch duplicates Google
+ * lists under slightly different Place IDs.
  *
  * @param {Object} params
  * @param {number} params.lat - User latitude
  * @param {number} params.lng - User longitude
  * @param {number} params.radius - Radius in miles (capped at 25)
  * @param {boolean} params.isAuthenticated - Whether user is logged in
- * @param {string[]} params.existingPlaceIds - Google Place IDs already in DB
+ * @param {Array} params.existingRestaurants - Existing restaurants with id, name, lat, lng, google_place_id
  */
-export function useNearbyPlaces({ lat, lng, radius, isAuthenticated, existingPlaceIds = [] }) {
+export function useNearbyPlaces({ lat, lng, radius, isAuthenticated, existingRestaurants = [] }) {
   // Auth is required because edge functions require JWT for rate limiting
   const enabled = !!isAuthenticated && !!lat && !!lng
   const searchRadius = Math.min(radius || 5, MAX_DISCOVERY_RADIUS_MI)
@@ -34,9 +35,11 @@ export function useNearbyPlaces({ lat, lng, radius, isAuthenticated, existingPla
     retry: false, // Google Places API is rate-limited — retries make it worse
   })
 
-  // Filter out places already in the DB
-  const existingSet = new Set(existingPlaceIds)
-  const places = (data || []).filter(p => !existingSet.has(p.placeId))
+  // Filter out places that match existing restaurants
+  const places = useMemo(
+    () => (data || []).filter(p => !matchesExistingRestaurant(p, existingRestaurants)),
+    [data, existingRestaurants]
+  )
 
   useEffect(() => {
     if (error) logger.error('Error discovering nearby places:', error?.message || error)

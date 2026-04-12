@@ -1,6 +1,30 @@
 import { supabase } from '../lib/supabase'
+import { checkDishCreateRateLimit } from '../lib/rateLimiter'
+import { validateUserContent } from '../lib/reviewBlocklist'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+
+async function checkDishCreateRateLimitOnce() {
+  const clientRateLimit = checkDishCreateRateLimit()
+  if (!clientRateLimit.allowed) {
+    throw new Error(clientRateLimit.message)
+  }
+
+  const { data: rateCheck, error: rateError } = await supabase.rpc('check_dish_create_rate_limit')
+  if (rateError) {
+    throw createClassifiedError(rateError)
+  }
+  if (rateCheck && !rateCheck.allowed) {
+    const err = new Error(rateCheck.message || 'Too many dishes created. Please wait.')
+    err.type = 'RATE_LIMIT'
+    throw err
+  }
+}
+
+function validateContentField(value, label) {
+  const contentError = validateUserContent(value, label)
+  if (contentError) throw new Error(contentError)
+}
 
 export const restaurantManagerApi = {
   /**
@@ -262,8 +286,15 @@ export const restaurantManagerApi = {
    * @param {Object} params
    * @returns {Promise<Object>}
    */
-  async addDish({ restaurantId, name, category, price, photoUrl }) {
+  async addDish({ restaurantId, name, description, category, price, photoUrl }) {
     try {
+      validateContentField(name, 'Dish name')
+      validateContentField(description, 'Dish description')
+      await checkDishCreateRateLimitOnce()
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw createClassifiedError(new Error('Not authenticated'))
+
       const { data, error } = await supabase
         .from('dishes')
         .insert({
@@ -272,6 +303,7 @@ export const restaurantManagerApi = {
           category: category.toLowerCase(),
           price: price != null && price !== '' ? parseFloat(price) : null,
           photo_url: photoUrl?.trim() || null,
+          created_by: user.id,
         })
         .select()
         .single()
@@ -294,10 +326,16 @@ export const restaurantManagerApi = {
    * @param {Object} updates
    * @returns {Promise<Object>}
    */
-  async updateDish(dishId, { name, price, photoUrl, category }) {
+  async updateDish(dishId, { name, description, price, photoUrl, category }) {
     try {
       const updates = {}
-      if (name !== undefined) updates.name = name.trim()
+      if (name !== undefined) {
+        validateContentField(name, 'Dish name')
+        updates.name = name.trim()
+      }
+      if (description !== undefined) {
+        validateContentField(description, 'Dish description')
+      }
       if (price !== undefined) updates.price = price != null && price !== '' ? parseFloat(price) : null
       if (photoUrl !== undefined) updates.photo_url = photoUrl?.trim() || null
       if (category !== undefined) updates.category = category.toLowerCase()
@@ -357,6 +395,9 @@ export const restaurantManagerApi = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw createClassifiedError(new Error('Not authenticated'))
 
+      validateContentField(dealName, 'Special name')
+      validateContentField(description, 'Special description')
+
       const { data, error } = await supabase
         .from('specials')
         .insert({
@@ -392,8 +433,14 @@ export const restaurantManagerApi = {
   async updateSpecial(id, updates) {
     try {
       const allowed = {}
-      if (updates.deal_name !== undefined) allowed.deal_name = updates.deal_name
-      if (updates.description !== undefined) allowed.description = updates.description
+      if (updates.deal_name !== undefined) {
+        validateContentField(updates.deal_name, 'Special name')
+        allowed.deal_name = updates.deal_name
+      }
+      if (updates.description !== undefined) {
+        validateContentField(updates.description, 'Special description')
+        allowed.description = updates.description
+      }
       if (updates.price !== undefined) allowed.price = updates.price
       if (updates.expires_at !== undefined) allowed.expires_at = updates.expires_at
       if (updates.is_active !== undefined) allowed.is_active = updates.is_active
@@ -462,6 +509,9 @@ export const restaurantManagerApi = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw createClassifiedError(new Error('Not authenticated'))
 
+      validateContentField(eventName, 'Event name')
+      validateContentField(description, 'Event description')
+
       const { data, error } = await supabase
         .from('events')
         .insert({
@@ -501,8 +551,14 @@ export const restaurantManagerApi = {
   async updateEvent(id, updates) {
     try {
       const allowed = {}
-      if (updates.event_name !== undefined) allowed.event_name = updates.event_name
-      if (updates.description !== undefined) allowed.description = updates.description
+      if (updates.event_name !== undefined) {
+        validateContentField(updates.event_name, 'Event name')
+        allowed.event_name = updates.event_name
+      }
+      if (updates.description !== undefined) {
+        validateContentField(updates.description, 'Event description')
+        allowed.description = updates.description
+      }
       if (updates.event_date !== undefined) allowed.event_date = updates.event_date
       if (updates.start_time !== undefined) allowed.start_time = updates.start_time
       if (updates.end_time !== undefined) allowed.end_time = updates.end_time
@@ -571,11 +627,21 @@ export const restaurantManagerApi = {
    */
   async bulkAddDishes(restaurantId, dishes) {
     try {
+      for (const dish of dishes) {
+        validateContentField(dish.name, 'Dish name')
+        validateContentField(dish.description, 'Dish description')
+        await checkDishCreateRateLimitOnce()
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw createClassifiedError(new Error('Not authenticated'))
+
       const rows = dishes.map(d => ({
         restaurant_id: restaurantId,
         name: d.name.trim(),
         category: d.category.toLowerCase(),
         price: d.price != null && d.price !== '' ? parseFloat(d.price) : null,
+        created_by: user.id,
       }))
 
       const { data, error } = await supabase

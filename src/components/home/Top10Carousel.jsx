@@ -1,18 +1,27 @@
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishListItem } from '../DishListItem'
+import { CategoryIcon } from './CategoryIcons'
 
 var CAROUSEL_TABS = [{ id: 'nearby', label: 'Near You' }].concat(
   BROWSE_CATEGORIES.map(function (c) { return { id: c.id, label: c.label } })
 )
 
+var INITIAL_LIMIT = 10
+var LOAD_MORE_COUNT = 5
+
 /**
  * Top10Carousel — horizontally swipeable set of vertical top-10 lists.
  * "Near You" is the first page, then one page per BROWSE_CATEGORY.
  * All filtering is client-side from the full ranked dishes array.
+ *
+ * Props:
+ *   dishes          - full ranked dishes array
+ *   onCategoryChange - callback(categoryId | null) when active tab changes (for map sync)
  */
-export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
+export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategoryChange }, ref) {
   var [activeIndex, setActiveIndex] = useState(0)
+  var [limits, setLimits] = useState({}) // { tabId: visibleCount }
   var scrollRef = useRef(null)
   var tabsRef = useRef(null)
 
@@ -44,6 +53,14 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
     }
   }, [])
 
+  // Notify parent when active category changes (for map sync)
+  useEffect(function () {
+    if (onCategoryChange) {
+      var tab = CAROUSEL_TABS[activeIndex]
+      onCategoryChange(tab && tab.id !== 'nearby' ? tab.id : null)
+    }
+  }, [activeIndex, onCategoryChange])
+
   // Auto-scroll tab bar to keep active tab visible
   useEffect(function () {
     if (!tabsRef.current) return
@@ -54,12 +71,26 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
     }
   }, [activeIndex])
 
-  // Filter dishes for a given tab
-  function getDishesForTab(tab) {
-    if (tab.id === 'nearby') return (dishes || []).slice(0, 10)
+  // Get all dishes for a tab (unsliced)
+  function getAllDishesForTab(tab) {
+    if (tab.id === 'nearby') return dishes || []
     return (dishes || []).filter(function (d) {
       return d.category && d.category.toLowerCase() === tab.id.toLowerCase()
-    }).slice(0, 10)
+    })
+  }
+
+  // Get visible limit for a tab
+  function getLimit(tabId) {
+    return limits[tabId] || INITIAL_LIMIT
+  }
+
+  // Show more for a specific tab
+  function handleShowMore(tabId) {
+    setLimits(function (prev) {
+      var newLimits = Object.assign({}, prev)
+      newLimits[tabId] = (prev[tabId] || INITIAL_LIMIT) + LOAD_MORE_COUNT
+      return newLimits
+    })
   }
 
   // Tab click → scroll carousel to that page
@@ -70,7 +101,9 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
   }
 
   var activeTab = CAROUSEL_TABS[activeIndex] || CAROUSEL_TABS[0]
-  var activeTabDishes = getDishesForTab(activeTab)
+  var allActiveTabDishes = getAllDishesForTab(activeTab)
+  var activeLimit = getLimit(activeTab.id)
+  var visibleCount = Math.min(allActiveTabDishes.length, activeLimit)
 
   return (
     <div className="pt-1">
@@ -81,13 +114,14 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
         opacity: 0.12,
       }} />
 
-      {/* Tab pills — horizontal scroll */}
+      {/* Category icons — food icons as carousel navigation */}
       <div
         ref={tabsRef}
-        className="flex gap-2 overflow-x-auto px-4 pb-2"
+        className="flex overflow-x-auto px-3 pb-1"
         style={{
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x pan-y',
         }}
       >
         {CAROUSEL_TABS.map(function (tab, i) {
@@ -96,20 +130,40 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
             <button
               key={tab.id}
               onClick={function () { handleTabClick(i) }}
-              className="flex-shrink-0 active:scale-[0.96] transition-transform"
+              className="flex-shrink-0 flex flex-col items-center justify-center active:scale-[0.94] transition-transform"
               style={{
-                padding: '5px 14px',
-                borderRadius: '20px',
-                fontSize: '13px',
-                fontWeight: isActive ? 700 : 500,
-                background: isActive ? 'var(--color-text-primary)' : 'transparent',
-                color: isActive ? 'var(--color-surface-elevated)' : 'var(--color-text-secondary)',
-                border: isActive ? '1.5px solid var(--color-text-primary)' : '1.5px solid var(--color-divider)',
+                padding: '0',
+                minWidth: '64px',
+                background: 'transparent',
+                border: 'none',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                opacity: isActive ? 1 : 0.45,
+                transition: 'opacity 0.15s',
               }}
             >
-              {tab.label}
+              {tab.id === 'nearby' ? (
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '22px',
+                }}>
+                  📍
+                </div>
+              ) : (
+                <CategoryIcon categoryId={tab.id} size={56} />
+              )}
+              <span style={{
+                marginTop: '1px',
+                fontSize: '9px',
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                lineHeight: 1.2,
+              }}>
+                {tab.label}
+              </span>
             </button>
           )
         })}
@@ -134,7 +188,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
         }}>
-          {activeTabDishes.length} {activeTabDishes.length === 1 ? 'dish' : 'dishes'}
+          {visibleCount}{allActiveTabDishes.length > activeLimit ? '+' : ''} {visibleCount === 1 ? 'dish' : 'dishes'}
         </span>
       </div>
 
@@ -151,8 +205,15 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
           width: '100%',
         }}
       >
-        {CAROUSEL_TABS.map(function (tab) {
-          var tabDishes = getDishesForTab(tab)
+        {CAROUSEL_TABS.map(function (tab, tabIndex) {
+          // Only render content for active page ± 1 neighbor (lazy rendering)
+          var isNearActive = Math.abs(tabIndex - activeIndex) <= 1
+          var allTabDishes = isNearActive ? getAllDishesForTab(tab) : []
+          var tabLimit = getLimit(tab.id)
+          var visibleDishes = allTabDishes.slice(0, tabLimit)
+          var hasMore = allTabDishes.length > tabLimit
+          var remaining = allTabDishes.length - tabLimit
+
           return (
             <div
               key={tab.id}
@@ -165,18 +226,38 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes }, ref) {
                 boxSizing: 'border-box',
               }}
             >
-              {tabDishes.length > 0 ? (
-                tabDishes.map(function (dish, i) {
-                  return (
-                    <DishListItem
-                      key={dish.dish_id || dish.id}
-                      dish={dish}
-                      rank={i + 1}
-                      variant="ranked"
-                      isLast={i === tabDishes.length - 1}
-                    />
-                  )
-                })
+              {!isNearActive ? (
+                <div style={{ minHeight: '200px' }} />
+              ) : visibleDishes.length > 0 ? (
+                <>
+                  {visibleDishes.map(function (dish, i) {
+                    return (
+                      <DishListItem
+                        key={dish.dish_id || dish.id}
+                        dish={dish}
+                        rank={i + 1}
+                        variant="ranked"
+                        isLast={!hasMore && i === visibleDishes.length - 1}
+                      />
+                    )
+                  })}
+                  {hasMore && (
+                    <button
+                      onClick={function () { handleShowMore(tab.id) }}
+                      className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+                      style={{
+                        fontSize: '14px',
+                        color: 'var(--color-accent-gold)',
+                        background: 'var(--color-card)',
+                        border: '1.5px solid var(--color-divider)',
+                        marginTop: '8px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Show {remaining > LOAD_MORE_COUNT ? LOAD_MORE_COUNT : remaining} more
+                    </button>
+                  )}
+                </>
               ) : (
                 <p className="py-8 text-center" style={{
                   fontSize: '14px',

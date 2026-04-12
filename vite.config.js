@@ -52,21 +52,9 @@ export default defineConfig({
               },
             },
           },
-          {
-            // Network-first for API calls (want fresh data)
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5, // 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
+          // Note: Supabase REST is NOT cached by the service worker.
+          // React Query handles staleness and revalidation — caching here
+          // would serve stale votes/reviews during flaky network.
         ],
       },
       // Minimal manifest (no installable PWA, just service worker)

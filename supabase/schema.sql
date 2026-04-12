@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS dishes (
   cuisine TEXT,
   avg_rating DECIMAL(3, 1),
   total_votes INT DEFAULT 0,
+  weighted_vote_count NUMERIC DEFAULT 0,
   consensus_rating NUMERIC(3, 1),
   consensus_ready BOOLEAN DEFAULT FALSE,
   consensus_votes INT DEFAULT 0,
@@ -333,6 +334,24 @@ WHERE price IS NOT NULL AND price > 0 AND total_votes >= 8
 GROUP BY category;
 
 
+-- 1v-b. public_votes (view)
+-- Exposes only the fields the app needs for display. Excludes anti-abuse internals:
+-- purity_score, war_score, badge_hash, source_metadata.
+-- This view intentionally runs with owner privileges so public callers can read only
+-- this safe projection after votes table SELECT is restricted by RLS.
+CREATE OR REPLACE VIEW public_votes AS
+SELECT
+  id,
+  dish_id,
+  would_order_again,
+  rating_10,
+  review_text,
+  review_created_at,
+  user_id,
+  source
+FROM votes;
+
+
 -- =============================================
 -- 2. INDEXES
 -- =============================================
@@ -453,9 +472,10 @@ ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 -- restaurants: public read, admin write (+ manager policies below)
 CREATE POLICY "Public read access" ON restaurants FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR INSERT WITH CHECK (
-  auth.uid() IS NOT NULL
+  (SELECT auth.uid()) IS NOT NULL
+  AND created_by = (SELECT auth.uid())
   AND (is_admin()
-    OR (SELECT count(*) FROM restaurants WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 5)
+    OR (SELECT count(*) FROM restaurants WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 5)
 );
 CREATE POLICY "Admins can update restaurants" ON restaurants FOR UPDATE USING (is_admin());
 CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (is_admin());
@@ -463,15 +483,20 @@ CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (i
 -- dishes: public read, admin + manager write
 CREATE POLICY "Public read access" ON dishes FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH CHECK (
-  auth.uid() IS NOT NULL
+  (SELECT auth.uid()) IS NOT NULL
+  AND created_by = (SELECT auth.uid())
   AND (is_admin() OR auth.role() = 'service_role'
-    OR (SELECT count(*) FROM dishes WHERE created_by = auth.uid() AND created_at > now() - interval '1 hour') < 20)
+    OR (SELECT count(*) FROM dishes WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 20)
 );
 CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admins can delete dishes" ON dishes FOR DELETE USING (is_admin());
 
--- votes: public read, users manage own (optimized auth.uid())
-CREATE POLICY "Public read access" ON votes FOR SELECT USING (true);
+-- votes: restricted read, users manage own (optimized auth.uid())
+CREATE POLICY "Own users, admins, and service role can read votes" ON votes FOR SELECT USING (
+  auth.role() = 'service_role'
+  OR (select auth.uid()) = user_id
+  OR is_admin()
+);
 CREATE POLICY "Users can insert own votes" ON votes FOR INSERT WITH CHECK ((select auth.uid()) = user_id AND source = 'user');
 CREATE POLICY "Users can update own votes" ON votes FOR UPDATE USING ((select auth.uid()) = user_id);
 CREATE POLICY "Users can delete own votes" ON votes FOR DELETE USING ((select auth.uid()) = user_id);
@@ -479,12 +504,11 @@ CREATE POLICY "Users can delete own votes" ON votes FOR DELETE USING ((select au
 -- profiles: public read (if display_name set), users manage own
 CREATE POLICY "profiles_select_public_or_own" ON profiles FOR SELECT USING ((select auth.uid()) = id OR display_name IS NOT NULL);
 CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT WITH CHECK ((select auth.uid()) = id);
-CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE USING ((select auth.uid()) = id) WITH CHECK (
-  (select auth.uid()) = id
-  AND is_local_curator = (SELECT is_local_curator FROM profiles WHERE id = (select auth.uid()))
-  AND follower_count = (SELECT follower_count FROM profiles WHERE id = (select auth.uid()))
-  AND following_count = (SELECT following_count FROM profiles WHERE id = (select auth.uid()))
-);
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
+  USING ((select auth.uid()) = id)
+  WITH CHECK ((select auth.uid()) = id);
+-- Protected fields (is_local_curator, follower_count, following_count) are guarded by
+-- protect_profile_fields_trigger (BEFORE UPDATE) — not RLS — to avoid infinite recursion.
 -- No DELETE policy on profiles — users must not delete their own profile row (orphans FKs)
 
 -- favorites: users manage own only
@@ -669,7 +693,7 @@ $$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 -- Prior strength (m): start at 3 for early data. See NOTES.md for schedule.
 CREATE OR REPLACE FUNCTION dish_search_score(
   p_avg_rating DECIMAL,
-  p_total_votes BIGINT,
+  p_total_votes NUMERIC,
   p_distance_miles DECIMAL DEFAULT NULL,
   p_recent_votes_14d INT DEFAULT 0,
   p_global_mean DECIMAL DEFAULT 7.0
@@ -707,8 +731,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE SET search_path = public;
 
--- Get ranked dishes with bounding box optimization, town filter, variant aggregation
--- Intentionally NOT SECURITY DEFINER: all referenced tables (restaurants, dishes, votes) have public SELECT
+-- Get ranked dishes with bounding box optimization, town filter, variant aggregation.
+-- SECURITY DEFINER is required because votes RLS restricts direct table reads;
+-- this function returns only public aggregate fields.
 CREATE OR REPLACE FUNCTION get_ranked_dishes(
   user_lat DECIMAL,
   user_lng DECIMAL,
@@ -789,13 +814,13 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::BIGINT AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::BIGINT AS total_child_yes
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
+      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::BIGINT AS yes_count
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
+        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
     WHERE d.parent_dish_id IS NOT NULL
@@ -891,7 +916,7 @@ BEGIN
                          ELSE 0 END), 0)
         )::NUMERIC, 1), 0),
       COALESCE(vs.total_child_votes,
-        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::BIGINT,
+        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::NUMERIC,
       fr.distance,
       COALESCE(rvc.recent_votes, 0),
       (SELECT global_mean FROM global_stats)
@@ -923,7 +948,7 @@ BEGIN
            bp.photo_url
   ORDER BY search_score DESC NULLS LAST, total_votes DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SET search_path = public;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- Get dishes for a specific restaurant with variant aggregation
 CREATE OR REPLACE FUNCTION get_restaurant_dishes(
@@ -955,8 +980,8 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::BIGINT AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::BIGINT AS total_child_yes,
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
+      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes,
       CASE
         WHEN SUM(COALESCE(ds.vote_count, 0)) > 0
         THEN ROUND((SUM(COALESCE(ds.rating_sum, 0)) / NULLIF(SUM(COALESCE(ds.vote_count, 0)), 0))::NUMERIC, 1)
@@ -965,8 +990,8 @@ BEGIN
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::BIGINT AS yes_count,
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
+        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count,
         SUM(COALESCE(v.rating_10, 0) * (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::DECIMAL AS rating_sum
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
@@ -1028,7 +1053,7 @@ BEGIN
     END DESC,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0) DESC;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Get variants for a parent dish
 CREATE OR REPLACE FUNCTION get_dish_variants(
@@ -1063,7 +1088,7 @@ BEGIN
   GROUP BY d.id, d.name, d.price, d.photo_url, d.display_order
   ORDER BY d.display_order, d.name;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Get best review snippet for a dish
 CREATE OR REPLACE FUNCTION get_smart_snippet(p_dish_id UUID)
@@ -1087,7 +1112,7 @@ BEGIN
     v.review_created_at DESC NULLS LAST
   LIMIT 1;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 
 -- =============================================
@@ -1194,9 +1219,9 @@ LANGUAGE SQL STABLE SET search_path = public AS $$
   )
   SELECT
     COUNT(*)::INT AS shared_dishes,
-    ROUND(AVG(ABS(rating_a - rating_b)), 1) AS avg_difference,
+    ROUND(AVG(ABS(rating_a - rating_b))::NUMERIC, 1) AS avg_difference,
     CASE
-      WHEN COUNT(*) >= 3 THEN ROUND(100 - (AVG(ABS(rating_a - rating_b)) / 9.0 * 100))::INT
+      WHEN COUNT(*) >= 3 THEN ROUND((100 - (AVG(ABS(rating_a - rating_b))::NUMERIC / 9.0 * 100)))::INT
       ELSE NULL
     END AS compatibility_pct
   FROM shared;
@@ -1216,7 +1241,7 @@ RETURNS TABLE (
 LANGUAGE SQL STABLE SET search_path = public AS $$
   WITH candidates AS (
     SELECT b.user_id AS other_id, COUNT(*)::INT AS shared,
-      ROUND(100 - (AVG(ABS(a.rating_10 - b.rating_10)) / 9.0 * 100))::INT AS compat
+      ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT AS compat
     FROM votes a
     JOIN votes b ON a.dish_id = b.dish_id AND b.user_id != p_user_id AND b.rating_10 IS NOT NULL
     WHERE a.user_id = p_user_id AND a.rating_10 IS NOT NULL
@@ -1685,6 +1710,65 @@ RETURNS JSONB LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT check_and_record_rate_limit('vote', 10, 60);
 $$;
 
+-- Atomic user vote upsert. Targets the partial unique index:
+-- votes_user_unique ON votes (dish_id, user_id) WHERE source = 'user'.
+CREATE OR REPLACE FUNCTION submit_vote_atomic(
+  p_dish_id UUID,
+  p_user_id UUID,
+  p_would_order_again BOOLEAN,
+  p_rating_10 DECIMAL DEFAULT NULL,
+  p_review_text TEXT DEFAULT NULL,
+  p_purity_score DECIMAL DEFAULT NULL,
+  p_war_score DECIMAL DEFAULT NULL,
+  p_badge_hash TEXT DEFAULT NULL
+)
+RETURNS votes AS $$
+DECLARE
+  submitted_vote votes;
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  INSERT INTO votes (
+    dish_id,
+    user_id,
+    would_order_again,
+    rating_10,
+    review_text,
+    review_created_at,
+    purity_score,
+    war_score,
+    badge_hash,
+    source
+  )
+  VALUES (
+    p_dish_id,
+    p_user_id,
+    p_would_order_again,
+    p_rating_10,
+    p_review_text,
+    CASE WHEN p_review_text IS NOT NULL THEN NOW() ELSE NULL END,
+    p_purity_score,
+    p_war_score,
+    p_badge_hash,
+    'user'
+  )
+  ON CONFLICT (dish_id, user_id) WHERE source = 'user'
+  DO UPDATE SET
+    would_order_again = EXCLUDED.would_order_again,
+    rating_10 = EXCLUDED.rating_10,
+    review_text = COALESCE(EXCLUDED.review_text, votes.review_text),
+    review_created_at = COALESCE(EXCLUDED.review_created_at, votes.review_created_at),
+    purity_score = COALESCE(EXCLUDED.purity_score, votes.purity_score),
+    war_score = COALESCE(EXCLUDED.war_score, votes.war_score),
+    badge_hash = COALESCE(EXCLUDED.badge_hash, votes.badge_hash)
+  RETURNING * INTO submitted_vote;
+
+  RETURN submitted_vote;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- Convenience: photo upload rate limiting (5 per minute)
 CREATE OR REPLACE FUNCTION check_photo_upload_rate_limit()
 RETURNS JSONB LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
@@ -1939,7 +2023,10 @@ CREATE TRIGGER consensus_check_trigger AFTER INSERT ON votes FOR EACH ROW EXECUT
 CREATE OR REPLACE FUNCTION update_dish_avg_rating()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE dishes SET avg_rating = sub.avg_r, total_votes = sub.cnt
+  UPDATE dishes
+  SET avg_rating = sub.avg_r,
+      total_votes = sub.raw_count,
+      weighted_vote_count = sub.weighted_count
   FROM (
     SELECT
       ROUND(
@@ -1947,7 +2034,8 @@ BEGIN
          NULLIF(SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END), 0)
         )::NUMERIC, 1
       ) AS avg_r,
-      SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::BIGINT AS cnt
+      COUNT(*)::INT AS raw_count,
+      COALESCE(SUM(CASE WHEN source = 'ai_estimated' THEN 0.5 ELSE 1.0 END), 0)::NUMERIC AS weighted_count
     FROM votes WHERE dish_id = COALESCE(NEW.dish_id, OLD.dish_id) AND rating_10 IS NOT NULL
   ) sub
   WHERE dishes.id = COALESCE(NEW.dish_id, OLD.dish_id);
@@ -2257,7 +2345,9 @@ RETURNS TABLE (
   website_url TEXT,
   phone TEXT,
   distance_miles DECIMAL,
-  dish_count BIGINT
+  dish_count BIGINT,
+  avg_rating DECIMAL,
+  total_votes BIGINT
 ) AS $$
 DECLARE
   lat_delta DECIMAL := p_radius_miles / 69.0;
@@ -2284,7 +2374,9 @@ BEGIN
     n.id, n.name, n.address, n.lat, n.lng, n.is_open, n.cuisine, n.town,
     n.google_place_id, n.website_url, n.phone,
     n.distance_miles,
-    COUNT(d.id)::BIGINT AS dish_count
+    COUNT(d.id)::BIGINT AS dish_count,
+    ROUND(AVG(d.avg_rating) FILTER (WHERE d.avg_rating IS NOT NULL AND d.total_votes > 0)::NUMERIC, 1) AS avg_rating,
+    COALESCE(SUM(d.total_votes), 0)::BIGINT AS total_votes
   FROM nearby n
   LEFT JOIN dishes d ON d.restaurant_id = n.id AND d.parent_dish_id IS NULL
   WHERE n.distance_miles <= p_radius_miles
@@ -2352,9 +2444,10 @@ CREATE POLICY "local_lists_admin_delete"
 -- RLS for local_list_items
 ALTER TABLE local_list_items ENABLE ROW LEVEL SECURITY;
 
+-- Only expose items whose parent list is active. Prevents leaking unpublished curator drafts.
 CREATE POLICY "local_list_items_public_read"
   ON local_list_items FOR SELECT
-  USING (true);
+  USING (EXISTS (SELECT 1 FROM local_lists ll WHERE ll.id = list_id AND ll.is_active = true));
 
 CREATE POLICY "local_list_items_admin_insert"
   ON local_list_items FOR INSERT
@@ -2418,7 +2511,7 @@ AS $$
     CASE
       WHEN p_viewer_id IS NOT NULL AND p_viewer_id != ll.user_id THEN (
         SELECT CASE
-          WHEN COUNT(*) >= 3 THEN ROUND(100 - (AVG(ABS(a.rating_10 - b.rating_10)) / 9.0 * 100))::INT
+          WHEN COUNT(*) >= 3 THEN ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT
           ELSE NULL
         END
         FROM votes a
@@ -2433,6 +2526,73 @@ AS $$
   WHERE ll.is_active = true
   ORDER BY RANDOM()
   LIMIT 8;
+$$;
+
+-- RPC: Aggregate locals picks for homepage chalkboard cards
+DROP FUNCTION IF EXISTS get_locals_aggregate();
+
+CREATE OR REPLACE FUNCTION get_locals_aggregate()
+RETURNS TABLE (
+  top_dish_id UUID,
+  top_dish_name TEXT,
+  top_dish_restaurant_name TEXT,
+  top_dish_restaurant_id UUID,
+  top_dish_list_count INT,
+  top_restaurant_id UUID,
+  top_restaurant_name TEXT,
+  top_restaurant_town TEXT,
+  top_restaurant_list_count INT,
+  total_lists INT
+)
+LANGUAGE SQL STABLE
+AS $$
+  WITH list_count AS (
+    SELECT COUNT(DISTINCT ll.id)::INT AS total
+    FROM local_lists ll
+    JOIN local_list_items li ON li.list_id = ll.id
+  ),
+  dish_counts AS (
+    SELECT
+      li.dish_id,
+      d.name AS dish_name,
+      r.name AS restaurant_name,
+      d.restaurant_id,
+      COUNT(DISTINCT ll.id)::INT AS list_count,
+      MAX(d.avg_rating) AS avg_rating
+    FROM local_list_items li
+    JOIN local_lists ll ON ll.id = li.list_id
+    JOIN dishes d ON d.id = li.dish_id
+    JOIN restaurants r ON r.id = d.restaurant_id
+    GROUP BY li.dish_id, d.name, r.name, d.restaurant_id
+    ORDER BY list_count DESC, avg_rating DESC NULLS LAST
+    LIMIT 1
+  ),
+  restaurant_counts AS (
+    SELECT
+      d.restaurant_id,
+      r.name AS restaurant_name,
+      r.town,
+      COUNT(DISTINCT ll.id)::INT AS list_count
+    FROM local_list_items li
+    JOIN local_lists ll ON ll.id = li.list_id
+    JOIN dishes d ON d.id = li.dish_id
+    JOIN restaurants r ON r.id = d.restaurant_id
+    GROUP BY d.restaurant_id, r.name, r.town
+    ORDER BY list_count DESC
+    LIMIT 1
+  )
+  SELECT
+    dc.dish_id AS top_dish_id,
+    dc.dish_name AS top_dish_name,
+    dc.restaurant_name AS top_dish_restaurant_name,
+    dc.restaurant_id AS top_dish_restaurant_id,
+    dc.list_count AS top_dish_list_count,
+    rc.restaurant_id AS top_restaurant_id,
+    rc.restaurant_name AS top_restaurant_name,
+    rc.town AS top_restaurant_town,
+    rc.list_count AS top_restaurant_list_count,
+    lc.total AS total_lists
+  FROM dish_counts dc, restaurant_counts rc, list_count lc;
 $$;
 
 -- RPC: Full list detail by user ID (for profile pages)
@@ -2683,10 +2843,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 -- 14. GRANTS
 -- =============================================
 
+GRANT SELECT ON public_votes TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION check_and_record_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_vote_rate_limit TO authenticated;
+GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION check_photo_upload_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_restaurant_create_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_dish_create_rate_limit TO authenticated;
@@ -2823,3 +2985,193 @@ CREATE TRIGGER on_auth_user_created
 
 -- 18. CLEANUP: Duplicate production-only policies have been dropped.
 -- See supabase/migrations/cleanup_rls_policies.sql for the migration that was run.
+
+-- =============================================
+-- 19. MENU IMPORT QUEUE
+-- Persistent job queue for menu-refresh pipeline.
+-- Workers call claim_menu_import_jobs() to atomically dequeue batches.
+-- pg_cron fires menu-refresh Edge Function every minute to drain the queue.
+-- =============================================
+
+-- Table
+CREATE TABLE IF NOT EXISTS menu_import_jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  job_type TEXT NOT NULL DEFAULT 'initial',
+  status TEXT NOT NULL DEFAULT 'pending',
+  priority INT NOT NULL DEFAULT 0,
+  attempt_count INT NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  max_attempts INT NOT NULL DEFAULT 3 CHECK (max_attempts > 0),
+  run_after TIMESTAMPTZ NOT NULL DEFAULT now(),
+  lock_expires_at TIMESTAMPTZ,
+  dishes_found INT,
+  dishes_inserted INT,
+  dishes_updated INT,
+  dishes_unchanged INT,
+  error_message TEXT,
+  error_code TEXT,
+  error_context JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT menu_import_jobs_status_check
+    CHECK (status IN ('pending', 'processing', 'completed', 'dead')),
+  CONSTRAINT menu_import_jobs_job_type_check
+    CHECK (job_type IN ('initial', 'refresh', 'manual'))
+);
+
+-- Indexes
+CREATE UNIQUE INDEX IF NOT EXISTS menu_import_jobs_one_active_per_restaurant
+  ON menu_import_jobs (restaurant_id)
+  WHERE status IN ('pending', 'processing');
+
+CREATE INDEX IF NOT EXISTS menu_import_jobs_dequeue_idx
+  ON menu_import_jobs (priority DESC, run_after, created_at)
+  WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS menu_import_jobs_stalled_idx
+  ON menu_import_jobs (lock_expires_at)
+  WHERE status = 'processing';
+
+CREATE INDEX IF NOT EXISTS menu_import_jobs_restaurant_history_idx
+  ON menu_import_jobs (restaurant_id, created_at DESC);
+
+-- RLS: service-role only
+ALTER TABLE menu_import_jobs ENABLE ROW LEVEL SECURITY;
+
+-- RPC: enqueue_menu_import (truly idempotent under concurrency)
+CREATE OR REPLACE FUNCTION enqueue_menu_import(
+  p_restaurant_id UUID,
+  p_job_type TEXT DEFAULT 'initial',
+  p_priority INT DEFAULT 10
+)
+RETURNS TABLE (
+  job_id UUID,
+  job_status TEXT,
+  is_new BOOLEAN
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_new_id UUID;
+BEGIN
+  INSERT INTO menu_import_jobs (restaurant_id, job_type, priority)
+  VALUES (p_restaurant_id, p_job_type, p_priority)
+  ON CONFLICT ON CONSTRAINT menu_import_jobs_one_active_per_restaurant DO NOTHING
+  RETURNING menu_import_jobs.id INTO v_new_id;
+
+  IF v_new_id IS NOT NULL THEN
+    RETURN QUERY SELECT v_new_id, 'pending'::TEXT, true;
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT mij.id, mij.status, false
+  FROM menu_import_jobs mij
+  WHERE mij.restaurant_id = p_restaurant_id
+    AND mij.status IN ('pending', 'processing')
+  LIMIT 1;
+END;
+$$;
+
+-- RPC: get_menu_import_status
+CREATE OR REPLACE FUNCTION get_menu_import_status(
+  p_restaurant_id UUID
+)
+RETURNS TABLE (
+  job_status TEXT,
+  job_dishes_found INT,
+  job_created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT mij.status, mij.dishes_found, mij.created_at
+  FROM menu_import_jobs mij
+  WHERE mij.restaurant_id = p_restaurant_id
+  ORDER BY
+    CASE WHEN mij.status IN ('pending', 'processing') THEN 0 ELSE 1 END,
+    mij.created_at DESC
+  LIMIT 1;
+END;
+$$;
+
+-- RPC: atomic dequeue with FOR UPDATE SKIP LOCKED
+CREATE OR REPLACE FUNCTION claim_menu_import_jobs(p_limit INT DEFAULT 3)
+RETURNS SETOF menu_import_jobs
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE menu_import_jobs
+  SET
+    status = 'processing',
+    started_at = now(),
+    lock_expires_at = now() + interval '10 minutes',
+    updated_at = now()
+  WHERE id IN (
+    SELECT mij.id FROM menu_import_jobs mij
+    WHERE mij.status = 'pending' AND mij.run_after <= now()
+    ORDER BY mij.priority DESC, mij.run_after, mij.created_at
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  )
+  RETURNING *;
+END;
+$$;
+
+-- Enable pg_net for HTTP calls from cron
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- pg_cron: process queue every 60 seconds
+SELECT cron.schedule(
+  'process-menu-import-queue',
+  '* * * * *',
+  $$
+  SELECT net.http_post(
+    url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'supabase_url' LIMIT 1) || '/functions/v1/menu-refresh',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1)
+    ),
+    body := '{"mode": "queue"}'::jsonb
+  );
+  $$
+);
+
+-- Remove old biweekly menu refresh cron (replaced by job queue)
+SELECT cron.unschedule('biweekly-menu-refresh');
+
+-- pg_cron: create refresh jobs for stale menus (daily at 3 AM)
+SELECT cron.schedule(
+  'create-menu-refresh-jobs',
+  '0 3 * * *',
+  $$
+  INSERT INTO menu_import_jobs (restaurant_id, job_type, priority)
+  SELECT r.id, 'refresh', 0
+  FROM restaurants r
+  WHERE r.is_open = true
+    AND r.menu_url IS NOT NULL
+    AND (r.menu_last_checked IS NULL OR r.menu_last_checked < NOW() - INTERVAL '14 days')
+    AND NOT EXISTS (
+      SELECT 1 FROM menu_import_jobs mij
+      WHERE mij.restaurant_id = r.id
+        AND mij.status IN ('pending', 'processing')
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM menu_import_jobs mij
+      WHERE mij.restaurant_id = r.id
+        AND mij.status = 'dead'
+        AND mij.created_at > NOW() - INTERVAL '30 days'
+    )
+  $$
+);

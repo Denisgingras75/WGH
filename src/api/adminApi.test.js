@@ -86,6 +86,9 @@ describe('Admin API', () => {
 
   describe('addDish', () => {
     it('should insert dish with correct params', async () => {
+      supabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } },
+      })
       const mockInsert = vi.fn(() => ({
         select: vi.fn().mockResolvedValueOnce({
           data: [{ id: 'dish-1', name: 'Test Dish' }],
@@ -110,10 +113,14 @@ describe('Admin API', () => {
         category: 'burger',
         price: 12.99,
         photo_url: 'https://example.com/photo.jpg',
+        created_by: 'user-123',
       })
     })
 
     it('should throw on database error', async () => {
+      supabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'user-123' } },
+      })
       const mockInsert = vi.fn(() => ({
         select: vi.fn().mockResolvedValueOnce({
           data: null,

@@ -83,6 +83,9 @@ export const adminApi = {
    */
   async addDish({ restaurantId, name, category, price, photoUrl }) {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw createClassifiedError(new Error('Not authenticated'))
+
       const { data, error } = await supabase
         .from('dishes')
         .insert({
@@ -91,6 +94,7 @@ export const adminApi = {
           category: category.toLowerCase(),
           price: price != null && price !== '' ? parseFloat(price) : null,
           photo_url: photoUrl?.trim() || null,
+          created_by: user.id,
         })
         .select()
 

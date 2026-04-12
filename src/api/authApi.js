@@ -1,8 +1,10 @@
 import { supabase } from '../lib/supabase'
 import { capture } from '../lib/analytics'
+import { checkRateLimit, RATE_LIMITS } from '../lib/rateLimiter'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 import { sanitizeSearchQuery } from '../utils/sanitize'
+import { validateUserContent } from '../lib/reviewBlocklist'
 
 /**
  * Auth API - Centralized authentication operations
@@ -48,6 +50,11 @@ export const authApi = {
    */
   async signInWithGoogle(redirectUrl = null) {
     try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
       capture('login_started', { method: 'google' })
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -75,6 +82,11 @@ export const authApi = {
    */
   async signInWithMagicLink(email, redirectUrl = null) {
     try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
       capture('login_started', { method: 'magic_link' })
 
       const { error } = await supabase.auth.signInWithOtp({
@@ -104,7 +116,15 @@ export const authApi = {
    */
   async signUpWithPassword(email, password, username) {
     try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
       capture('signup_started', { method: 'password' })
+
+      const contentError = validateUserContent(username, 'Display name')
+      if (contentError) throw new Error(contentError)
 
       // Check if username is already taken
       // Sanitize username for safe database query
@@ -166,6 +186,11 @@ export const authApi = {
    */
   async signInWithPassword(email, password) {
     try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
       capture('login_started', { method: 'password' })
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -193,6 +218,11 @@ export const authApi = {
    */
   async resetPassword(email) {
     try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })

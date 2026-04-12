@@ -216,8 +216,8 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
               aria-live="polite"
               className="mb-6 p-4 rounded-xl text-sm font-medium"
               style={message.type === 'error'
-                ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-bg))', color: 'var(--color-danger)' }
-                : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-bg))', color: 'var(--color-success)' }
+                ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
+                : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
               }
             >
               {message.text}

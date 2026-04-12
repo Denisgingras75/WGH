@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
@@ -19,8 +20,10 @@ import { logger } from '../utils/logger'
 import { hapticLight, hapticSuccess } from '../utils/haptics'
 import { PhotoUploadButton } from './PhotoUploadButton'
 import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
+import { validateUserContent } from '../lib/reviewBlocklist'
 
 export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
   const { getPurity, getJitterProfile, attachToTextarea, reset: resetPurity } = usePurityTracker()
@@ -158,6 +161,14 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       setReviewError(`${reviewText.length - MAX_REVIEW_LENGTH} characters over limit`)
       return
     }
+    // Validate review content against blocklist
+    if (reviewText.trim()) {
+      const contentError = validateUserContent(reviewText, 'Review')
+      if (contentError) {
+        setReviewError(contentError)
+        return
+      }
+    }
     setReviewError(null)
     await doSubmit(reviewText.trim() || null)
   }
@@ -179,36 +190,9 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
     }
 
     const previousVote = userVote
-
-    if (previousVote === null) {
-      setLocalTotalVotes(prev => prev + 1)
-      if (pendingVote) setLocalYesVotes(prev => prev + 1)
-    } else if (previousVote !== pendingVote) {
-      if (pendingVote) {
-        setLocalYesVotes(prev => prev + 1)
-      } else {
-        setLocalYesVotes(prev => prev - 1)
-      }
-    }
-
-    setUserVote(pendingVote)
-    setUserRating(sliderValue)
-    if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
-
-    // Track vote immediately for snappy analytics
-    capture('vote_cast', {
-      dish_id: dishId,
-      dish_name: dishName,
-      restaurant_id: restaurantId,
-      restaurant_name: restaurantName,
-      category: category,
-      price: price != null ? Number(price) : null,
-      would_order_again: pendingVote,
-      rating: sliderValue,
-      has_review: !!reviewTextToSubmit,
-      has_photo: photoAdded,
-      is_update: previousVote !== null,
-    })
+    const voteToSubmit = pendingVote
+    const ratingToSubmit = sliderValue
+    const hadPhotoAdded = photoAdded
 
     // Capture WAR badge before clearing state
     const badge = reviewTextToSubmit && jitterBoxRef.current
@@ -221,7 +205,57 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       : null
     const sessionStatsData = badge ? { isCapturing: true, keystrokes: badge.session.keystrokes, wpm: badge.session.wpm, duration: badge.session.duration } : null
 
-    // Clear UI state immediately - instant feedback
+    const attestResult = jitterScore && user
+      ? await jitterApi.attestReview({
+          userId: user.id,
+          warScore: jitterScore.score,
+          classification: jitterScore.classification,
+          flags: jitterScore.flags,
+          meta: {
+            keys: badge?.session?.keystrokes || 0,
+            paste_chars: badge?.session?.pasteChars || 0,
+            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
+          },
+        })
+      : null
+    const badgeHash = attestResult?.badge_hash || null
+    const result = await submitVote(dishId, voteToSubmit, ratingToSubmit, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+
+    if (!result.success) {
+      logger.error('Vote submission failed:', result.error)
+      setReviewError(result.error || 'Unable to submit your vote. Please try again.')
+      return
+    }
+
+    if (previousVote === null) {
+      setLocalTotalVotes(prev => prev + 1)
+      if (voteToSubmit) setLocalYesVotes(prev => prev + 1)
+    } else if (previousVote !== voteToSubmit) {
+      if (voteToSubmit) {
+        setLocalYesVotes(prev => prev + 1)
+      } else {
+        setLocalYesVotes(prev => prev - 1)
+      }
+    }
+
+    setUserVote(voteToSubmit)
+    setUserRating(ratingToSubmit)
+    if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
+
+    capture('vote_cast', {
+      dish_id: dishId,
+      dish_name: dishName,
+      restaurant_id: restaurantId,
+      restaurant_name: restaurantName,
+      category: category,
+      price: price != null ? Number(price) : null,
+      would_order_again: voteToSubmit,
+      rating: ratingToSubmit,
+      has_review: !!reviewTextToSubmit,
+      has_photo: hadPhotoAdded,
+      is_update: previousVote !== null,
+    })
+
     clearPendingVoteStorage()
     setStep(1)
     setPendingVote(null)
@@ -240,35 +274,6 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
 
     // Notify parent to refresh data
     onVote?.()
-
-    // Attest + submit in parallel (both non-blocking)
-    const attestPromise = jitterScore && user
-      ? jitterApi.attestReview({
-          userId: user.id,
-          warScore: jitterScore.score,
-          classification: jitterScore.classification,
-          flags: jitterScore.flags,
-          meta: {
-            keys: badge?.session?.keystrokes || 0,
-            paste_chars: badge?.session?.pasteChars || 0,
-            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
-          },
-        })
-      : Promise.resolve(null)
-
-    attestPromise
-      .then((attestResult) => {
-        const badgeHash = attestResult?.badge_hash || null
-        return submitVote(dishId, pendingVote, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
-      })
-      .then((result) => {
-        if (!result.success) {
-          logger.error('Vote submission failed:', result.error)
-        }
-      })
-      .catch((err) => {
-        logger.error('Vote submission error:', err)
-      })
   }
 
   // Intercept browser back button during vote flow — navigate between steps instead of leaving.
@@ -325,6 +330,30 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
             </div>
           </div>
         )}
+        {/* Rate Your Meal nudge — sit-down restaurants often mean multiple dishes */}
+        {restaurantId && (
+          <button
+            onClick={() => navigate('/restaurants/' + restaurantId + '/rate')}
+            className="w-full py-3 px-4 rounded-xl flex items-center justify-between transition-all active:scale-[0.98]"
+            style={{
+              background: 'var(--color-primary-muted)',
+              border: '1px solid var(--color-primary)',
+            }}
+          >
+            <div className="text-left">
+              <p className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>
+                Had more at {restaurantName || 'this restaurant'}?
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                Rate your whole meal in one go
+              </p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        )}
+
         <button
           onClick={() => {
             setPendingVote(userVote)

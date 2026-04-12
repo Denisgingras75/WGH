@@ -74,6 +74,33 @@ export function extractSafeFilename(url, expectedUserId) {
 }
 
 /**
+ * Sanitize a URL to prevent stored XSS via javascript:/data:/vbscript: schemes.
+ * Only allows http: and https: schemes.
+ * @param {string} url - URL from user-supplied or database data
+ * @returns {string|null} The original url if safe, or null if dangerous/falsy
+ */
+export function sanitizeUrl(url) {
+  if (!url || typeof url !== 'string') return null
+
+  var trimmed = url.trim()
+  if (!trimmed) return null
+
+  try {
+    var parsed = new URL(trimmed)
+    var scheme = parsed.protocol.toLowerCase()
+    if (scheme !== 'http:' && scheme !== 'https:') {
+      logger.warn('sanitizeUrl: blocked unsafe URL scheme:', scheme)
+      return null
+    }
+    return trimmed
+  } catch (_e) {
+    // Not a valid absolute URL — block it
+    logger.warn('sanitizeUrl: blocked invalid URL:', trimmed.slice(0, 80))
+    return null
+  }
+}
+
+/**
  * Validate a UUID format
  * @param {string} id - String to validate
  * @returns {boolean} True if valid UUID format

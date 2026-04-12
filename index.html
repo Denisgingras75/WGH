@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/wgh-icon.png" />
 
     <!-- Preconnect to critical origins for faster resource loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#F0ECE8" />
     <meta name="description" content="Find the best dishes at restaurants near you. See what's worth ordering and what to avoid." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -43,24 +44,6 @@
     <link rel="canonical" href="https://whats-good-here.vercel.app" />
 
     <title>What's Good Here</title>
-
-    <!-- Prevent flash of wrong theme on load -->
-    <script>
-      try { if (localStorage.getItem('wgh_theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(e) {}
-    </script>
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "What's Good Here",
-      "description": "Find the best dishes at restaurants near you. See what's worth ordering and what to avoid.",
-      "url": "https://whats-good-here.vercel.app",
-      "applicationCategory": "FoodEstablishment",
-      "operatingSystem": "Any"
-    }
-    </script>
   </head>
   <body>
     <div id="root"></div>

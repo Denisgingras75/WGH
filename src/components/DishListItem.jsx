@@ -7,6 +7,7 @@ import { RestaurantAvatar } from './RestaurantAvatar'
 import { ThumbsUpIcon } from './ThumbsUpIcon'
 import { ThumbsDownIcon } from './ThumbsDownIcon'
 import { HearingIcon } from './HearingIcon'
+import { sanitizeUrl } from '../utils/sanitize'
 /**
  * DishListItem — the ONE component for showing a dish in any list.
  *
@@ -80,9 +81,12 @@ export const DishListItem = memo(function DishListItem({
   var isPodium = rank != null && rank <= 3
 
   return (
-    <button
+    <div
       data-dish-id={dishId}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
       className={'w-full text-left active:scale-[0.98]' + (isPodium ? ' rounded-xl' : '')}
       style={{
         background: highlighted
@@ -153,7 +157,7 @@ export const DishListItem = memo(function DishListItem({
           className="flex-shrink-0 rounded-lg overflow-hidden relative"
           style={{ width: '48px', height: '48px', marginLeft: '6px' }}
         >
-          <RestaurantAvatar name={restaurantName} town={restaurantTown} fill />
+          <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill />
         </div>
       )}
 
@@ -193,11 +197,11 @@ export const DishListItem = memo(function DishListItem({
           </p>
         </div>
         {/* Action buttons — Order / Directions */}
-        {(toastSlug || orderUrl || restaurantLat) && (
+        {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
           <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
-            {(toastSlug || orderUrl) && (
+            {(toastSlug || sanitizeUrl(orderUrl)) && (
               <a
-                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : orderUrl}
+                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : sanitizeUrl(orderUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
@@ -271,7 +275,7 @@ export const DishListItem = memo(function DishListItem({
       </div>
       </div>
 
-    </button>
+    </div>
   )
 
   // --- VOTED CARD RENDERER ---
@@ -313,7 +317,7 @@ export const DishListItem = memo(function DishListItem({
                 loading="lazy"
               />
             ) : (
-              <RestaurantAvatar name={restaurantName} town={restaurantTown} fill className="absolute inset-0" />
+              <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill className="absolute inset-0" />
             )}
           </div>
 

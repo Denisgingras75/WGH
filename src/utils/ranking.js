@@ -151,7 +151,7 @@ export function getConfidenceIndicator(totalVotes) {
       text: `Not enough votes yet (${totalVotes} ${totalVotes === 1 ? 'vote' : 'votes'})`,
       icon: '📊',
       color: 'var(--color-accent-gold)',
-      style: { color: 'var(--color-accent-gold)', borderColor: 'var(--color-accent-gold)', background: 'color-mix(in srgb, var(--color-accent-gold) 10%, var(--color-bg))' },
+      style: { color: 'var(--color-accent-gold)', borderColor: 'var(--color-accent-gold)', background: 'rgba(var(--color-accent-gold-rgb), 0.1)' },
     },
     medium: {
       level: 'medium',
@@ -165,7 +165,7 @@ export function getConfidenceIndicator(totalVotes) {
       text: `${totalVotes} votes`,
       icon: '✓',
       color: 'var(--color-rating)',
-      style: { color: 'var(--color-rating)', borderColor: 'var(--color-rating)', background: 'color-mix(in srgb, var(--color-rating) 10%, var(--color-bg))' },
+      style: { color: 'var(--color-rating)', borderColor: 'var(--color-rating)', background: 'rgba(var(--color-rating-rgb), 0.1)' },
     },
   }
 

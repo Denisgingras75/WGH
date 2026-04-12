@@ -40,9 +40,9 @@ export default async function middleware(request) {
 
     // Return response with CORS headers
     const responseHeaders = new Headers(response.headers)
-    responseHeaders.set('Access-Control-Allow-Origin', '*')
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    responseHeaders.set('Access-Control-Allow-Origin', 'https://whats-good-here.vercel.app')
+    responseHeaders.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type')
 
     return new Response(response.body, {
       status: response.status,

@@ -127,7 +127,7 @@ export const BrowseResults = memo(function BrowseResults({
           </div>
         ) : error ? (
           <div className="py-16 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger, var(--color-primary)) 15%, var(--color-bg))' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.15)' }}>
               <span className="text-2xl">⚠️</span>
             </div>
             <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger, var(--color-primary))' }}>{error?.message || 'Something went wrong'}</p>

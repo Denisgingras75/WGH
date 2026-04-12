@@ -11,6 +11,18 @@ import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { logger } from '../utils/logger'
+import { getStorageItem, setStorageItem } from '../lib/storage'
+
+// Bayesian shrinkage — restaurants with few votes get pulled toward the global mean
+// so a 1-vote 9.5 doesn't beat a 50-vote 8.6
+var BAYESIAN_PRIOR_STRENGTH = 5
+var BAYESIAN_GLOBAL_MEAN = 7.5
+var SORT_STORAGE_KEY = 'wgh_restaurant_sort'
+
+function bayesianScore(avgRating, totalVotes) {
+  if (avgRating == null || totalVotes === 0) return 0
+  return (Number(avgRating) * totalVotes + BAYESIAN_GLOBAL_MEAN * BAYESIAN_PRIOR_STRENGTH) / (totalVotes + BAYESIAN_PRIOR_STRENGTH)
+}
 
 export function Restaurants() {
   var user = useAuth().user
@@ -26,6 +38,13 @@ export function Restaurants() {
   var [searchQuery, setSearchQuery] = useState('')
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
   var [addModalOpen, setAddModalOpen] = useState(false)
+  var [sortBy, setSortBy] = useState(function () {
+    return getStorageItem(SORT_STORAGE_KEY) || 'distance'
+  })
+
+  useEffect(function () {
+    setStorageItem(SORT_STORAGE_KEY, sortBy)
+  }, [sortBy])
 
   // Fetch restaurants (distance-filtered when location available)
   var restData = useRestaurants(location, radius, permissionState)
@@ -34,10 +53,16 @@ export function Restaurants() {
   var fetchError = restData.error
   var isDistanceFiltered = restData.isDistanceFiltered
 
-  // Google Place IDs already in DB (to filter from discovery)
-  var existingPlaceIds = useMemo(function () {
-    return []
-  }, [])
+  // Existing restaurants to filter out of discovery (by place_id OR name+proximity)
+  var existingForDiscovery = useMemo(function () {
+    return (restaurants || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      lat: r.lat,
+      lng: r.lng,
+      google_place_id: r.google_place_id,
+    }))
+  }, [restaurants])
 
   // Discover nearby restaurants from Google Places (auth only)
   var nearbyData = useNearbyPlaces({
@@ -45,13 +70,13 @@ export function Restaurants() {
     lng: location?.lng,
     radius: radius + 5,
     isAuthenticated: !!user,
-    existingPlaceIds: existingPlaceIds,
+    existingRestaurants: existingForDiscovery,
   })
   var nearbyPlaces = nearbyData.places
   var nearbyLoading = nearbyData.loading
   var nearbyError = nearbyData.error
 
-  // Filter by open/closed tab + search, sort alphabetically
+  // Filter by open/closed tab + search, then sort by chosen mode
   var filteredRestaurants = useMemo(function () {
     var filtered = restaurants
       .filter(function (r) {
@@ -61,11 +86,22 @@ export function Restaurants() {
         return r.name.toLowerCase().includes(searchQuery.toLowerCase())
       })
 
+    if (sortBy === 'top-rated') {
+      // Sort by Bayesian-shrunk score, fall back to name for ties
+      return filtered.slice().sort(function (a, b) {
+        var scoreA = bayesianScore(a.avg_rating, a.total_votes || 0)
+        var scoreB = bayesianScore(b.avg_rating, b.total_votes || 0)
+        if (scoreB !== scoreA) return scoreB - scoreA
+        return a.name.localeCompare(b.name)
+      })
+    }
+
+    // Default: distance when available, alphabetical otherwise
     if (!isDistanceFiltered) {
       return filtered.slice().sort(function (a, b) { return a.name.localeCompare(b.name) })
     }
     return filtered
-  }, [restaurants, restaurantTab, searchQuery, isDistanceFiltered])
+  }, [restaurants, restaurantTab, searchQuery, isDistanceFiltered, sortBy])
 
   var handleRestaurantSelect = function (restaurant) {
     capture('restaurant_viewed', {
@@ -201,6 +237,34 @@ export function Restaurants() {
           </button>
         </div>
 
+        {/* Sort pills */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={function () { setSortBy('distance') }}
+            aria-pressed={sortBy === 'distance'}
+            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            style={{
+              background: sortBy === 'distance' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: sortBy === 'distance' ? 'white' : 'var(--color-text-secondary)',
+              border: sortBy === 'distance' ? 'none' : '1.5px solid var(--color-divider)',
+            }}
+          >
+            Distance
+          </button>
+          <button
+            onClick={function () { setSortBy('top-rated') }}
+            aria-pressed={sortBy === 'top-rated'}
+            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            style={{
+              background: sortBy === 'top-rated' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: sortBy === 'top-rated' ? 'white' : 'var(--color-text-secondary)',
+              border: sortBy === 'top-rated' ? 'none' : '1.5px solid var(--color-divider)',
+            }}
+          >
+            Top Rated
+          </button>
+        </div>
+
         {/* Restaurant List */}
         {fetchError ? (
           <div className="text-center py-12">
@@ -231,10 +295,9 @@ export function Restaurants() {
           <div className="space-y-3">
             {filteredRestaurants.map(function (restaurant) {
               return (
-                <button
+                <div
                   key={restaurant.id}
-                  onClick={function () { handleRestaurantSelect(restaurant) }}
-                  className="w-full rounded-xl p-4 text-left transition-all active:scale-[0.98]"
+                  className="w-full rounded-xl p-4 transition-all"
                   style={{
                     background: restaurant.is_open
                       ? 'var(--color-surface-elevated)'
@@ -243,73 +306,109 @@ export function Restaurants() {
                     boxShadow: restaurant.is_open ? '0 2px 12px rgba(0, 0, 0, 0.06)' : 'none',
                   }}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3
+                  <button
+                    onClick={function () { handleRestaurantSelect(restaurant) }}
+                    className="w-full text-left active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className="font-bold"
+                          style={{
+                            color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                            fontSize: restaurant.is_open ? '18px' : '14px',
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {restaurant.name}
+                        </h3>
+                        {restaurant.is_open && restaurant.town && (
+                          <p
+                            className="mt-0.5 font-medium"
+                            style={{
+                              fontSize: '12px',
+                              color: 'var(--color-text-tertiary)',
+                              letterSpacing: '0.02em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {restaurant.town}
+                            {restaurant.distance_miles != null && (
+                              ' · ' + restaurant.distance_miles + ' mi'
+                            )}
+                          </p>
+                        )}
+                        {!restaurant.is_open && (
+                          <span
+                            className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
+                            style={{
+                              fontSize: '10px',
+                              background: 'rgba(228, 68, 10, 0.08)',
+                              color: 'var(--color-primary)',
+                              border: '1px solid var(--color-primary)',
+                            }}
+                          >
+                            Closed for Season
+                          </span>
+                        )}
+                        {restaurant.knownFor && (
+                          <p
+                            className="mt-1.5 font-medium"
+                            style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
+                          >
+                            Known for{' '}
+                            <span style={{ color: 'var(--color-text-secondary)' }}>
+                              {restaurant.knownFor.name}
+                            </span>
+                            {' · '}
+                            <span
+                              className="font-bold"
+                              style={{ color: getRatingColor(restaurant.knownFor.rating) }}
+                            >
+                              {restaurant.knownFor.rating}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Chevron */}
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Rating row — tappable, navigates to reviews */}
+                  {restaurant.is_open && restaurant.avg_rating != null && (
+                    <button
+                      onClick={function (e) {
+                        e.stopPropagation()
+                        navigate('/restaurants/' + restaurant.id + '/reviews')
+                      }}
+                      className="flex items-center gap-2 mt-2.5 pt-2.5 w-full text-left active:opacity-70 transition-opacity"
+                      style={{ borderTop: '1px solid var(--color-divider)' }}
+                    >
+                      <span
                         className="font-bold"
                         style={{
-                          color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                          fontSize: restaurant.is_open ? '18px' : '14px',
-                          letterSpacing: '-0.01em',
+                          fontSize: '18px',
+                          color: getRatingColor(restaurant.avg_rating),
                         }}
                       >
-                        {restaurant.name}
-                      </h3>
-                      {restaurant.is_open && restaurant.town && (
-                        <p
-                          className="mt-0.5 font-medium"
-                          style={{
-                            fontSize: '12px',
-                            color: 'var(--color-text-tertiary)',
-                            letterSpacing: '0.02em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {restaurant.town}
-                          {restaurant.distance_miles != null && (
-                            ' · ' + restaurant.distance_miles + ' mi'
-                          )}
-                        </p>
-                      )}
-                      {!restaurant.is_open && (
-                        <span
-                          className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
-                          style={{
-                            fontSize: '10px',
-                            background: 'rgba(228, 68, 10, 0.08)',
-                            color: 'var(--color-primary)',
-                            border: '1px solid var(--color-primary)',
-                          }}
-                        >
-                          Closed for Season
-                        </span>
-                      )}
-                      {restaurant.knownFor && (
-                        <p
-                          className="mt-1.5 font-medium"
-                          style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
-                        >
-                          Known for{' '}
-                          <span style={{ color: 'var(--color-text-secondary)' }}>
-                            {restaurant.knownFor.name}
-                          </span>
-                          {' · '}
-                          <span
-                            className="font-bold"
-                            style={{ color: getRatingColor(restaurant.knownFor.rating) }}
-                          >
-                            {restaurant.knownFor.rating}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Chevron */}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </div>
-                </button>
+                        {restaurant.avg_rating}
+                      </span>
+                      <span
+                        className="font-medium"
+                        style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
+                      >
+                        WGH Score · {restaurant.total_votes || 0} vote{(restaurant.total_votes || 0) === 1 ? '' : 's'}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               )
             })}
 

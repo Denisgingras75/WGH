@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { detectCms, cmsRequiresRender } from './cms-detect.ts'
+import { fetchRenderedHtml, BrowserlessError } from './browserless.ts'
 
 /**
  * Menu Refresh Edge Function
@@ -22,75 +24,116 @@ const corsHeaders = {
 }
 
 const VALID_CATEGORIES = [
-  'pizza', 'burger', 'taco', 'wings', 'sushi', 'breakfast',
-  'breakfast sandwich', 'lobster roll', 'chowder', 'pasta', 'steak',
-  'sandwich', 'salad', 'seafood', 'fish', 'tendys', 'fried chicken',
-  'apps', 'fries', 'entree', 'dessert', 'donuts', 'pokebowl',
-  'asian', 'chicken', 'quesadilla', 'soup',
-  'ribs', 'sides', 'duck', 'lamb', 'pork', 'clams',
-  'oysters', 'coffee', 'cocktails', 'ice cream',
+  'pizza', 'burger', 'lobster roll', 'wings', 'sushi', 'breakfast',
+  'seafood', 'chowder', 'pasta', 'steak', 'sandwich', 'salad',
+  'taco', 'tendys', 'dessert', 'ice cream', 'fish', 'clams',
+  'chicken', 'pork', 'breakfast sandwich', 'fried chicken', 'apps',
+  'fries', 'entree', 'donuts', 'pokebowl', 'asian', 'quesadilla',
+  'soup', 'ribs', 'duck', 'lamb', 'bruschetta', 'burrito',
+  'calamari', 'crab', 'curry', 'lobster', 'mussels', 'onion rings',
+  'pancakes', 'scallops', 'shrimp', 'waffles', 'wrap',
+  'fish-and-chips', 'fish-sandwich', 'eggs-benedict',
+  'oysters', 'pastry',
 ]
 
-const MENU_EXTRACTION_PROMPT = `You are a menu data extraction assistant for a food discovery app.
+const MENU_EXTRACTION_PROMPT = `You are extracting a restaurant menu for a food discovery app. Your job is to produce output that mirrors the restaurant's actual menu — a user reading it should feel like they're looking at the real thing.
 
-Given raw menu text from a restaurant webpage, extract every food AND drink item and return structured JSON.
+## Your #1 Priority: Faithfulness to the Source
 
-## Category Vocabulary (use ONLY these exact IDs)
+The menu_section field and menu_section_order array must use the restaurant's EXACT section headings. If the menu says "From The Sea", you write "From The Sea" — not "Seafood", not "Fish Entrees". Copy the headings verbatim, preserving capitalization and punctuation.
 
-| Category ID | Use For |
+Keep sections in the same order they appear on the menu. If "Raw Bar" comes before "Entrees" on the restaurant's menu, it comes first in your output.
+
+Use the restaurant's exact dish names. If they call it "The Big Kahuna Burger", write that — don't shorten to "Kahuna Burger".
+
+## WGH Category (Internal — Separate from Menu Section)
+
+Each dish also gets a "category" field. This is OUR internal classification, NOT the restaurant's. A dish in the restaurant's "From The Sea" section might get category "lobster roll" or "scallops" or "fish-and-chips" depending on what it actually is.
+
+Pick the MOST SPECIFIC category that fits. Prefer "lobster roll" over "seafood", "fish-and-chips" over "fish", "eggs-benedict" over "breakfast", "scallops" over "seafood", "calamari" over "apps".
+
+### Valid Category IDs (use ONLY these)
+
+| ID | Use For |
 |---|---|
-| pizza | Pizza |
+| pizza | Pizza, flatbreads |
 | burger | Burgers |
-| taco | Tacos, burritos, quesadillas |
+| lobster roll | Lobster rolls specifically |
+| lobster | Lobster entrees (not rolls) |
 | wings | Wings |
 | sushi | Sushi, sashimi, rolls |
-| breakfast | Breakfast plates, waffles, pancakes, eggs |
-| breakfast sandwich | Breakfast sandwiches, breakfast burritos |
-| lobster roll | Lobster rolls specifically |
-| chowder | Clam chowder, any chowder |
-| pasta | Pasta, risotto |
-| steak | Steak entrees |
-| sandwich | Sandwiches, wraps, BLTs, clubs, grilled cheese, hot dogs |
-| salad | Salads |
-| seafood | Seafood entrees (salmon, cod, swordfish, shellfish, crab cakes). NOT lobster roll, NOT chowder |
-| fish | Fish & chips, fish sandwiches, fish tacos — casual/fried fish items |
-| oysters | Oysters (raw bar, oyster plates) |
+| breakfast | Breakfast plates, eggs, omelets (not benedict, not pancakes/waffles) |
+| eggs-benedict | Eggs benedict, lobster benedict |
+| pancakes | Pancakes, french toast |
+| waffles | Waffles |
+| breakfast sandwich | Breakfast sandwiches, breakfast burritos, breakfast wraps |
+| seafood | Seafood entrees that don't fit a more specific category |
+| fish | Fish entrees (salmon, cod, swordfish, halibut, mahi) |
+| fish-and-chips | Fish & chips, cod & chips |
+| fish-sandwich | Fish sandwiches |
+| scallops | Scallop dishes |
+| shrimp | Shrimp dishes |
+| crab | Crab cakes, crab entrees |
+| calamari | Calamari, fried calamari |
+| mussels | Mussel dishes |
 | clams | Clam dishes (steamers, stuffed clams, clam strips) |
+| oysters | Oysters (raw bar, oyster plates) |
+| chowder | Clam chowder, any chowder |
+| pasta | Pasta, risotto, linguine, ravioli |
+| steak | Steak entrees, filet, ribeye, sirloin |
+| sandwich | Sandwiches, BLTs, clubs, grilled cheese, hot dogs |
+| wrap | Wraps |
+| salad | Salads |
+| taco | Tacos |
+| burrito | Burritos |
+| quesadilla | Quesadillas |
 | tendys | Chicken tenders |
 | fried chicken | Fried chicken sandwiches, fried chicken plates |
-| apps | Appetizers, starters, shareable plates |
-| fries | Fries, onion rings, tater tots |
-| sides | Non-fries side dishes: vegetables, rice, beans, coleslaw |
-| entree | Other entrees that don't fit a specific category |
-| ribs | Ribs |
-| pork | Pork entrees |
-| lamb | Lamb entrees |
-| duck | Duck entrees |
 | chicken | Chicken entrees (not fried chicken, not tenders) |
-| dessert | Cakes, pies, ice cream, brownies, sundaes |
-| donuts | Donuts, fritters |
-| pokebowl | Poke bowls |
-| asian | Asian entrees (pad thai, curry, stir-fry) |
+| pork | Pork entrees, pork chops |
+| ribs | Ribs |
+| duck | Duck entrees |
+| lamb | Lamb entrees |
+| bruschetta | Bruschetta |
+| apps | Appetizers, starters, shareable plates (only if no specific category fits) |
+| fries | Fries, tater tots |
+| onion rings | Onion rings |
+| veggies | Vegetable-focused ENTREES only (veggie burger, veggie stir-fry) — not side dishes |
 | soup | Soups (non-chowder) |
-| cocktails | Cocktails, mixed drinks, signature drinks |
-| coffee | Coffee drinks, espresso, lattes |
+| dessert | Cakes, pies, brownies, sundaes |
 | ice cream | Ice cream, gelato, frozen treats, milkshakes |
-| quesadilla | Quesadillas |
+| donuts | Donuts, fritters |
+| pastry | Pastries, croissants, scones, muffins |
+| pokebowl | Poke bowls |
+| asian | Asian entrees (pad thai, stir-fry) |
+| curry | Curry dishes |
+| entree | Catch-all for entrees that don't fit any specific category |
 
 ## Rules
 
-1. **Include cocktails, coffee, and specialty drinks** — these are important categories
-2. **Skip generic beverages** — no beer/wine lists, no soda, no plain water/juice
-3. **Skip condiment-level items under ~$4** — extra sauce, bread roll, etc.
-4. **Include substantive sides $4+**
-5. **Deduplicate sizes** — keep only the larger/dinner version
-6. **Use exact dish names from the menu**
-7. **Prices must be numbers** (no $ sign). If range, use lower price. If no price, use null.
-8. **One category per dish** — pick the most specific match
+1. **Extract EVERY food dish on the menu** — be thorough, don't skip items
+2. **Skip ALL drinks** — no cocktails, beer, wine, coffee, soda, juice, or any beverages
+3. **Skip kids meals**
+4. **Skip condiments** — extra sauce, side of dressing, bread roll
+5. **Skip side dishes** — mashed potatoes, green beans, rice, coleslaw, steamed veggies, etc. NOT rateable.
+6. **EXCEPTION: Fries and onion rings ARE included** — people rate these. Keep them.
+7. **Deduplicate sizes** — keep only the larger/dinner version
+8. **Prices: NEVER INVENT OR GUESS PRICES.** Only set a price if you can see an exact dollar amount next to that specific dish on the source page. If no explicit price is shown for a dish, the price field MUST be \`null\`. Do NOT infer prices from nearby dishes, category averages, or typical market values. Do NOT fill in \`18\` or any default. A null price is always better than a guessed price. If a range is shown (e.g. "$14-18"), use the lower number.
+9. **One category per dish** — pick the most specific match
+
+## CRITICAL: Reject placeholder/template content
+
+If the content looks like a website template with placeholder text, return an EMPTY dishes array. Signs of template garbage:
+- Generic dish names like "Burger", "Sandwich", "Salad", "Pasta" with NO specific name (e.g., no "Kahuna Burger" or "Caesar Salad")
+- Placeholder descriptions like "Add a description here", "Lorem ipsum", "Your menu item", "Sample text"
+- Multiple identical items with the same name and price (e.g., 9 items all called "Burger" at $16)
+- Generic category headers with no actual dishes underneath
+
+When in doubt: if dish names don't tell you what the actual dish IS (unique named dishes, not categories), return empty. Better to return nothing than fill the database with garbage.
 
 ## Output Format
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON (no markdown, no code fences):
 {
   "dishes": [
     { "name": "Dish Name", "category": "category_id", "menu_section": "Section Name", "price": 18.00 }
@@ -139,6 +182,80 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+const GOOGLE_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')
+
+const MENU_PATHS = [
+  // More specific paths first — less likely to hit a wrong page
+  '/food-menu', '/dinner-menu', '/lunch-menu', '/breakfast-menu', '/brunch-menu',
+  '/our-menu', '/menus', '/food-drink', '/food--drinks',
+  '/menu', '/menu-1', '/menu-2', '/food', '/eat', '/dining',
+  '/dinner', '/breakfast', '/lunch',
+  '/order', '/order-online',
+]
+
+/**
+ * Probe a website for common menu URL paths (HEAD requests)
+ */
+async function findMenuUrl(websiteUrl: string): Promise<string | null> {
+  if (!websiteUrl) return null
+  let base = websiteUrl.replace(/\/+$/, '')
+  if (!base.startsWith('http')) base = 'https://' + base
+
+  for (const path of MENU_PATHS) {
+    const candidate = base + path
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      const res = await fetch(candidate, {
+        method: 'HEAD',
+        signal: controller.signal,
+        redirect: 'follow',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-Bot/1.0)' },
+      })
+      clearTimeout(timeout)
+      if (res.ok) return candidate
+    } catch {
+      // skip
+    }
+  }
+  return null
+}
+
+/**
+ * Search Google Places for a restaurant by name + address to find its website
+ */
+async function findWebsiteViaGoogle(name: string, address: string): Promise<{ websiteUrl: string | null; googlePlaceId: string | null }> {
+  if (!GOOGLE_API_KEY) return { websiteUrl: null, googlePlaceId: null }
+
+  try {
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.websiteUri',
+      },
+      body: JSON.stringify({
+        textQuery: `${name} ${address}`,
+        maxResultCount: 1,
+      }),
+    })
+
+    if (!response.ok) return { websiteUrl: null, googlePlaceId: null }
+
+    const data = await response.json()
+    const place = data.places?.[0]
+    if (!place) return { websiteUrl: null, googlePlaceId: null }
+
+    return {
+      websiteUrl: place.websiteUri || null,
+      googlePlaceId: place.id || null,
+    }
+  } catch {
+    return { websiteUrl: null, googlePlaceId: null }
+  }
+}
+
 /**
  * Simple content hash — if the page hasn't changed, skip the Claude call
  */
@@ -152,10 +269,48 @@ async function hashContent(text: string): Promise<string> {
     .slice(0, 16) // 16 hex chars = 64 bits, plenty for change detection
 }
 
+type ErrorCode = 'no_menu_url' | 'fetch_timeout' | 'fetch_error' | 'claude_error' | 'parse_error' | 'no_dishes' | 'page_too_short'
+
+function classifyError(error: unknown, context?: string): { code: ErrorCode; message: string; context: Record<string, unknown> } {
+  const message = error instanceof Error ? error.message : String(error)
+
+  if (context === 'no_menu_url') {
+    return { code: 'no_menu_url', message: 'No menu URL found', context: {} }
+  }
+  if (context === 'no_dishes') {
+    return { code: 'no_dishes', message: 'No dishes extracted from content', context: {} }
+  }
+  if (context === 'page_too_short') {
+    return { code: 'page_too_short', message: 'Page content too short (<50 chars)', context: {} }
+  }
+  if (message.includes('abort') || message.includes('timeout')) {
+    return { code: 'fetch_timeout', message, context: {} }
+  }
+  if (message.includes('HTTP ')) {
+    const statusMatch = message.match(/HTTP (\d+)/)
+    return { code: 'fetch_error', message, context: { http_status: statusMatch?.[1] } }
+  }
+  if (message.includes('Claude API error')) {
+    return { code: 'claude_error', message, context: {} }
+  }
+  if (message.includes('JSON') || message.includes('parse')) {
+    return { code: 'parse_error', message, context: {} }
+  }
+  return { code: 'claude_error', message, context: {} }
+}
+
+function calculateBackoff(attemptCount: number): Date {
+  const minutes = 5 * Math.pow(6, attemptCount - 1)
+  const backoff = new Date()
+  backoff.setMinutes(backoff.getMinutes() + minutes)
+  return backoff
+}
+
 /**
- * Fetch and strip HTML from a menu URL
+ * Fetch raw HTML from a URL with a browser-ish User-Agent and 20s timeout.
+ * Returns the full HTML text. Caller is responsible for extracting content.
  */
-async function fetchMenuContent(url: string): Promise<string> {
+async function fetchRawHtml(url: string): Promise<string> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 20000)
 
@@ -172,53 +327,90 @@ async function fetchMenuContent(url: string): Promise<string> {
       throw new Error(`HTTP ${response.status}`)
     }
 
-    const html = await response.text()
-
-    // Strategy 1: Extract JSON-LD structured data (common on Squarespace/Wix)
-    const jsonLdMatches = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
-    const jsonLdText = jsonLdMatches
-      .map(m => m.replace(/<\/?script[^>]*>/gi, ''))
-      .join(' ')
-
-    // Strategy 2: Extract text from data attributes and visible content
-    // Keep script tags that contain menu-related data (prices, items)
-    const menuScripts: string[] = []
-    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi
-    let match
-    while ((match = scriptRegex.exec(html)) !== null) {
-      const content = match[1]
-      // Keep scripts that look like they contain menu/price data
-      if (content.match(/\$\d+|\bprice\b|\bmenu\b.*\d{1,3}\.\d{2}/i) && content.length < 5000) {
-        menuScripts.push(content)
-      }
-    }
-
-    // Strategy 3: Standard HTML text extraction
-    const plainText = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;|&apos;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    // Combine all sources, prioritizing structured data
-    const parts: string[] = []
-    if (jsonLdText.length > 20) parts.push('=== STRUCTURED DATA ===\n' + jsonLdText)
-    if (menuScripts.length > 0) parts.push('=== EMBEDDED DATA ===\n' + menuScripts.join('\n'))
-    parts.push('=== PAGE TEXT ===\n' + plainText)
-
-    return parts.join('\n\n').slice(0, 15000)
+    return await response.text()
   } finally {
     clearTimeout(timeout)
   }
+}
+
+/**
+ * Extract menu-relevant text from HTML using 3 strategies, combined.
+ * Returns up to 60k chars of text suitable for Sonnet extraction.
+ */
+function extractMenuTextFromHtml(html: string): string {
+  // Strategy 1: Extract JSON-LD structured data (common on Squarespace/Wix)
+  const jsonLdMatches = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
+  const jsonLdText = jsonLdMatches
+    .map(m => m.replace(/<\/?script[^>]*>/gi, ''))
+    .join(' ')
+
+  // Strategy 2: Extract script tags that look like menu data (prices, items)
+  const menuScripts: string[] = []
+  const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi
+  let match
+  while ((match = scriptRegex.exec(html)) !== null) {
+    const content = match[1]
+    if (content.match(/\$\d+|\bprice\b|\bmenu\b.*\d{1,3}\.\d{2}/i) && content.length < 5000) {
+      menuScripts.push(content)
+    }
+  }
+
+  // Strategy 3: Standard HTML text extraction
+  const plainText = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&apos;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const parts: string[] = []
+  if (jsonLdText.length > 20) parts.push('=== STRUCTURED DATA ===\n' + jsonLdText)
+  if (menuScripts.length > 0) parts.push('=== EMBEDDED DATA ===\n' + menuScripts.join('\n'))
+  parts.push('=== PAGE TEXT ===\n' + plainText)
+
+  return parts.join('\n\n').slice(0, 60000)
+}
+
+/**
+ * Legacy wrapper — same signature as before so existing callers still work.
+ */
+async function fetchMenuContent(url: string): Promise<string> {
+  const html = await fetchRawHtml(url)
+  return extractMenuTextFromHtml(html)
+}
+
+/**
+ * Extract PDF URLs from HTML that look like menu documents.
+ * Returns absolute URLs. Skips PDFs that clearly aren't menus (gift cards, terms, etc).
+ */
+function extractPdfMenuUrls(html: string, baseUrl: string): string[] {
+  const base = new URL(baseUrl)
+  // Match href="..."pdf and src="..."pdf
+  const pdfRegex = /(?:href|src)=["']([^"']*\.pdf[^"']*)["']/gi
+  const found = new Set<string>()
+  let match
+  while ((match = pdfRegex.exec(html)) !== null) {
+    try {
+      const url = new URL(match[1], base).href
+      // Skip obvious non-menu PDFs
+      const lower = url.toLowerCase()
+      if (/\b(terms|privacy|policy|giftcard|gift-card|application|job|employment|contract|waiver|rules)\b/.test(lower)) {
+        continue
+      }
+      found.add(url)
+    } catch {
+      // Invalid URL, skip
+    }
+  }
+  return Array.from(found).slice(0, 6) // Cap at 6 PDFs per restaurant
 }
 
 /**
@@ -233,8 +425,8 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8192,
       messages: [
         {
           role: 'user',
@@ -261,6 +453,75 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
   const parsed = JSON.parse(jsonMatch[0])
 
   // Validate categories
+  const validDishes = (Array.isArray(parsed.dishes) ? parsed.dishes : [])
+    .filter((d: ExtractedDish) => d.name && d.category)
+    .map((d: ExtractedDish) => ({
+      ...d,
+      category: VALID_CATEGORIES.includes(d.category) ? d.category : 'entree',
+    }))
+
+  return {
+    dishes: validDishes,
+    menu_section_order: Array.isArray(parsed.menu_section_order) ? parsed.menu_section_order : [],
+  }
+}
+
+/**
+ * Extract dishes from one or more PDFs using Sonnet's document content blocks.
+ * PDFs are base64-encoded and sent as document blocks in a single request.
+ * Uses the same MENU_EXTRACTION_PROMPT as the HTML extraction path.
+ */
+async function extractMenuFromPdfsWithClaude(
+  pdfUrls: string[],
+  restaurantName: string
+): Promise<MenuExtractionResult> {
+  if (pdfUrls.length === 0) return { dishes: [], menu_section_order: [] }
+
+  // Use URL source instead of base64 — Sonnet fetches the PDFs server-side,
+  // avoiding memory pressure on the Edge Function runtime.
+  const content: Array<Record<string, unknown>> = pdfUrls.map(url => ({
+    type: 'document',
+    source: {
+      type: 'url',
+      url,
+    },
+  }))
+
+  content.push({
+    type: 'text',
+    text: `Extract the full menu from "${restaurantName}" from the ${pdfUrls.length === 1 ? 'attached PDF' : `${pdfUrls.length} attached PDFs`}. Combine all dishes into a single output. If different PDFs represent different meal services (breakfast, lunch, dinner), preserve those as menu sections.`,
+  })
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY!,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8192,
+      messages: [{ role: 'user', content }],
+      system: MENU_EXTRACTION_PROMPT,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Claude PDF API error: ${response.status} - ${errorText}`)
+  }
+
+  const data = await response.json()
+  const text = data.content?.[0]?.text || '{}'
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    return { dishes: [], menu_section_order: [] }
+  }
+
+  const parsed = JSON.parse(jsonMatch[0])
+
   const validDishes = (Array.isArray(parsed.dishes) ? parsed.dishes : [])
     .filter((d: ExtractedDish) => d.name && d.category)
     .map((d: ExtractedDish) => ({
@@ -446,25 +707,432 @@ serve(async (req) => {
       // Empty body = batch mode
     }
 
-    let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
+    // === Queue processing mode ===
+    if (body.mode === 'queue') {
+      // --- Recovery pass: reset stalled jobs ---
+      const { data: stalledJobs } = await supabase
+        .from('menu_import_jobs')
+        .select('id, attempt_count, max_attempts')
+        .eq('status', 'processing')
+        .lt('lock_expires_at', new Date().toISOString())
 
-    if (body.restaurant_id) {
-      // Single restaurant mode
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('id, name, menu_url, menu_content_hash')
-        .eq('id', body.restaurant_id)
-        .not('menu_url', 'is', null)
-        .single()
+      for (const stalled of (stalledJobs || [])) {
+        const newAttemptCount = stalled.attempt_count + 1
+        if (newAttemptCount >= stalled.max_attempts) {
+          await supabase
+            .from('menu_import_jobs')
+            .update({
+              status: 'dead',
+              attempt_count: newAttemptCount,
+              error_message: 'Worker crashed or timed out',
+              error_code: 'fetch_timeout',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', stalled.id)
+        } else {
+          await supabase
+            .from('menu_import_jobs')
+            .update({
+              status: 'pending',
+              attempt_count: newAttemptCount,
+              run_after: new Date().toISOString(),
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', stalled.id)
+        }
+      }
 
-      if (error || !data) {
-        return new Response(JSON.stringify({ error: 'Restaurant not found or no menu_url' }), {
-          status: 404,
+      // --- Atomic dequeue ---
+      const { data: jobs, error: dequeueErr } = await supabase.rpc('claim_menu_import_jobs', { p_limit: 3 })
+
+      if (dequeueErr || !jobs || jobs.length === 0) {
+        return new Response(JSON.stringify({
+          message: jobs?.length === 0 ? 'No jobs to process' : 'Dequeue error',
+          recovered: stalledJobs?.length || 0,
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      restaurants = [data]
-    } else {
+
+      const results: Array<Record<string, unknown>> = []
+
+      for (const job of jobs) {
+        try {
+          const { data: restaurant, error: restErr } = await supabase
+            .from('restaurants')
+            .select('id, name, address, menu_url, website_url, google_place_id, menu_content_hash')
+            .eq('id', job.restaurant_id)
+            .single()
+
+          if (restErr || !restaurant) {
+            await supabase.from('menu_import_jobs').update({
+              status: 'dead',
+              error_code: 'fetch_error',
+              error_message: 'Restaurant not found',
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'error', reason: 'restaurant not found' })
+            continue
+          }
+
+          let menuUrl = restaurant.menu_url
+          let websiteUrl = restaurant.website_url
+          const dbUpdates: Record<string, unknown> = {}
+
+          if (!websiteUrl && !menuUrl) {
+            const googleResult = await findWebsiteViaGoogle(restaurant.name, restaurant.address || '')
+            if (googleResult.websiteUrl) {
+              websiteUrl = googleResult.websiteUrl
+              dbUpdates.website_url = websiteUrl
+            }
+            if (googleResult.googlePlaceId && !restaurant.google_place_id) {
+              dbUpdates.google_place_id = googleResult.googlePlaceId
+            }
+          }
+
+          if (!menuUrl && websiteUrl) {
+            const found = await findMenuUrl(websiteUrl)
+            if (found) {
+              menuUrl = found
+              dbUpdates.menu_url = menuUrl
+            }
+          }
+
+          if (Object.keys(dbUpdates).length > 0) {
+            await supabase.from('restaurants').update(dbUpdates).eq('id', restaurant.id)
+          }
+
+          if (!menuUrl) {
+            const classified = classifyError(null, 'no_menu_url')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: { website_discovered: websiteUrl },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'no_menu_url', restaurant: restaurant.name })
+            continue
+          }
+
+          // --- Fetch + extract (with render fallback for JS-rendered sites) ---
+          let rawHtml: string
+          try {
+            rawHtml = await fetchRawHtml(menuUrl)
+          } catch (fetchErr) {
+            const classified = classifyError(fetchErr)
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: { ...classified.context, menu_url: menuUrl },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'fetch_failed', restaurant: restaurant.name, error: classified.code })
+            continue
+          }
+
+          const cms = detectCms(rawHtml, menuUrl)
+          const rawText = extractMenuTextFromHtml(rawHtml)
+          const rawTextLen = rawText.length
+          let extractionContent = rawText
+          let rendererAttempted = false
+          let renderSucceeded = false
+          let renderError: string | null = null
+          let renderedTextLen: number | null = null
+
+          // Detect PDF menu links in the HTML (many Wix/Squarespace sites embed menus as PDFs)
+          const pdfUrls = extractPdfMenuUrls(rawHtml, menuUrl)
+          let pdfsUsed = false
+          let pdfsDownloaded = 0
+
+          // Fast path: compute raw hash BEFORE any Sonnet/render call.
+          // If the raw HTML shell hasn't changed since last successful run, skip everything.
+          // This costs some freshness on JS-rendered sites (Wix shell may not change even when
+          // the menu does), but avoids paying Sonnet and Browserless on every cron cycle.
+          // The 14-day refresh cron will eventually catch menu updates.
+          const rawHash = await hashContent(rawText)
+          if (restaurant.menu_content_hash && restaurant.menu_content_hash === rawHash) {
+            await supabase.from('restaurants').update({ menu_last_checked: new Date().toISOString() }).eq('id', restaurant.id)
+            await supabase.from('menu_import_jobs').update({
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              dishes_found: 0, dishes_inserted: 0, dishes_updated: 0, dishes_unchanged: 0,
+              error_context: { menu_url: menuUrl, cms_detected: cms, raw_text_len: rawTextLen, reason: 'hash_unchanged' },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'unchanged', restaurant: restaurant.name })
+            continue
+          }
+
+          // Render fallback #1: content too short AND CMS requires rendering
+          if (extractionContent.length < 50 && cmsRequiresRender(cms)) {
+            console.log(`${restaurant.name}: content too short + ${cms} CMS, attempting render fallback`)
+            rendererAttempted = true  // mark ATTEMPTED regardless of outcome
+            try {
+              const renderedHtml = await fetchRenderedHtml(menuUrl, {
+                gotoTimeout: 45000,
+                waitForTimeoutMs: 12000,  // Wix needs time to hydrate menu API data
+              })
+              const renderedText = extractMenuTextFromHtml(renderedHtml)
+              renderedTextLen = renderedText.length
+              if (renderedText.length >= 50) {
+                extractionContent = renderedText
+                renderSucceeded = true
+              }
+            } catch (renderErr) {
+              renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+              console.error(`${restaurant.name}: render failed:`, renderError)
+            }
+          }
+
+          if (extractionContent.length < 50) {
+            const classified = classifyError(null, 'page_too_short')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: {
+                menu_url: menuUrl,
+                website_url: websiteUrl,
+                cms_detected: cms,
+                raw_html_len: rawHtml.length,
+                raw_text_len: rawTextLen,
+                renderer_attempted: rendererAttempted,
+                render_succeeded: renderSucceeded,
+                render_error: renderError,
+                rendered_text_len: renderedTextLen,
+                pdf_urls_found: pdfUrls.length,
+                pdfs_downloaded: pdfsDownloaded,
+                pdfs_used: pdfsUsed,
+              },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'page_too_short', restaurant: restaurant.name })
+            continue
+          }
+
+          // Closed detection — run on whatever content we ended up with (raw or rendered)
+          const closedSignal = detectClosed(extractionContent)
+          if (closedSignal) {
+            await supabase.from('restaurants').update({
+              is_open: false, menu_last_checked: new Date().toISOString(),
+            }).eq('id', restaurant.id)
+
+            if (job.job_type === 'refresh') {
+              await supabase.from('menu_import_jobs').update({
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                error_message: `Closed: ${closedSignal}`,
+                lock_expires_at: null,
+                updated_at: new Date().toISOString(),
+              }).eq('id', job.id)
+              results.push({ job_id: job.id, status: 'closed', restaurant: restaurant.name })
+              continue
+            }
+          }
+
+          // Extract with Sonnet — PDFs take priority if detected, else use text extraction
+          // PDFs are passed as URL sources so Sonnet fetches them server-side (avoids Edge Function OOM)
+          let extracted: MenuExtractionResult
+          if (pdfUrls.length > 0) {
+            console.log(`${restaurant.name}: found ${pdfUrls.length} PDF menu(s), sending URLs to Sonnet`)
+            pdfsDownloaded = pdfUrls.length  // all URLs passed through (no download on our side)
+            try {
+              extracted = await extractMenuFromPdfsWithClaude(pdfUrls, restaurant.name)
+              pdfsUsed = true
+            } catch (pdfExtractErr) {
+              console.error(`${restaurant.name}: PDF extraction failed:`, pdfExtractErr)
+              extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+            }
+          } else {
+            extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+          }
+
+          // Render fallback #2: zero dishes AND CMS requires rendering AND we haven't rendered yet
+          if (extracted.dishes.length === 0 && cmsRequiresRender(cms) && !rendererAttempted) {
+            console.log(`${restaurant.name}: Sonnet found 0 dishes in ${cms} site, attempting render fallback`)
+            rendererAttempted = true  // mark ATTEMPTED regardless of outcome
+            try {
+              const renderedHtml = await fetchRenderedHtml(menuUrl, {
+                gotoTimeout: 45000,
+                waitForTimeoutMs: 12000,  // Wix needs time to hydrate menu API data
+              })
+              const renderedText = extractMenuTextFromHtml(renderedHtml)
+              renderedTextLen = renderedText.length
+              if (renderedText.length >= 50) {
+                extractionContent = renderedText
+                renderSucceeded = true
+                // Re-run closed detection on rendered content (could reveal "closed for season" text)
+                const renderedClosedSignal = detectClosed(extractionContent)
+                if (renderedClosedSignal) {
+                  await supabase.from('restaurants').update({
+                    is_open: false, menu_last_checked: new Date().toISOString(),
+                  }).eq('id', restaurant.id)
+                  if (job.job_type === 'refresh') {
+                    await supabase.from('menu_import_jobs').update({
+                      status: 'completed',
+                      completed_at: new Date().toISOString(),
+                      error_message: `Closed: ${renderedClosedSignal}`,
+                      lock_expires_at: null,
+                      updated_at: new Date().toISOString(),
+                    }).eq('id', job.id)
+                    results.push({ job_id: job.id, status: 'closed', restaurant: restaurant.name })
+                    continue
+                  }
+                }
+                extracted = await extractMenuWithClaude(extractionContent, restaurant.name)
+              }
+            } catch (renderErr) {
+              renderError = renderErr instanceof Error ? renderErr.message : String(renderErr)
+              console.error(`${restaurant.name}: render retry failed:`, renderError)
+            }
+          }
+
+          if (extracted.dishes.length === 0) {
+            const classified = classifyError(null, 'no_dishes')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: {
+                menu_url: menuUrl,
+                website_url: websiteUrl,
+                cms_detected: cms,
+                raw_html_len: rawHtml.length,
+                raw_text_len: rawTextLen,
+                renderer_attempted: rendererAttempted,
+                render_succeeded: renderSucceeded,
+                render_error: renderError,
+                rendered_text_len: renderedTextLen,
+                pdf_urls_found: pdfUrls.length,
+                pdfs_downloaded: pdfsDownloaded,
+                pdfs_used: pdfsUsed,
+              },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'no_dishes', restaurant: restaurant.name })
+            continue
+          }
+
+          // Success path: upsert dishes, store raw hash + render telemetry
+          // Note: we hash the raw text (rawHash), not the rendered text. Next run can skip
+          // cheaply when the raw HTML shell is unchanged. Mild staleness on JS sites is
+          // acceptable; the 14-day refresh cron eventually catches updates.
+
+          const stats = await upsertDishes(supabase, restaurant.id, extracted)
+
+          await supabase.from('restaurants').update({
+            menu_last_checked: new Date().toISOString(),
+            menu_content_hash: rawHash,
+          }).eq('id', restaurant.id)
+
+          await supabase.from('menu_import_jobs').update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            dishes_found: extracted.dishes.length,
+            dishes_inserted: stats.inserted,
+            dishes_updated: stats.updated,
+            dishes_unchanged: stats.unchanged,
+            error_context: {
+              menu_url: menuUrl,
+              website_url: websiteUrl,
+              cms_detected: cms,
+              raw_html_len: rawHtml.length,
+              raw_text_len: rawTextLen,
+              renderer_attempted: rendererAttempted,
+              render_succeeded: renderSucceeded,
+              render_error: renderError,
+              rendered_text_len: renderedTextLen,
+              pdf_urls_found: pdfUrls.length,
+              pdfs_downloaded: pdfsDownloaded,
+              pdfs_used: pdfsUsed,
+            },
+            lock_expires_at: null,
+            updated_at: new Date().toISOString(),
+          }).eq('id', job.id)
+
+          results.push({
+            job_id: job.id, status: 'success', restaurant: restaurant.name,
+            dishes: extracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
+            rendered: renderSucceeded,
+            pdfs_used: pdfsUsed,
+          })
+
+        } catch (err) {
+          console.error(`Job ${job.id} failed:`, err)
+          const classified = classifyError(err)
+          const newAttemptCount = job.attempt_count + 1
+
+          await supabase.from('menu_import_jobs').update({
+            status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+            attempt_count: newAttemptCount,
+            run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+            error_code: classified.code,
+            error_message: classified.message,
+            error_context: classified.context,
+            lock_expires_at: null,
+            updated_at: new Date().toISOString(),
+          }).eq('id', job.id)
+
+          results.push({ job_id: job.id, status: 'error', error: classified.code })
+        }
+
+        if (jobs.length > 1) await sleep(2000)
+      }
+
+      return new Response(JSON.stringify({
+        processed: jobs.length,
+        recovered: stalledJobs?.length || 0,
+        results,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // === Backward compatibility: single restaurant_id enqueues a job ===
+    if (body.restaurant_id) {
+      const { data, error } = await supabase.rpc('enqueue_menu_import', {
+        p_restaurant_id: body.restaurant_id as string,
+        p_job_type: 'initial',
+        p_priority: 10,
+      })
+      if (error) {
+        return new Response(JSON.stringify({ error: 'Failed to enqueue job', details: error.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({
+        message: 'Job enqueued',
+        job: data?.[0],
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // === Batch fallback mode: find stale menus ===
+    let restaurants: Array<{ id: string; name: string; menu_url: string; menu_content_hash: string | null }>
+
+    {
       // Batch mode: find stale menus
       const staleDate = new Date()
       staleDate.setDate(staleDate.getDate() - STALE_DAYS)

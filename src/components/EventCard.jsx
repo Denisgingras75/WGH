@@ -77,7 +77,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full"
               style={{
-                background: 'color-mix(in srgb, var(--color-primary) 20%, var(--color-card))',
+                background: 'rgba(var(--color-primary-rgb), 0.2)',
                 color: 'var(--color-primary)',
               }}
             >

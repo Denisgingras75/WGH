@@ -85,7 +85,7 @@ export function WelcomeSplash({ onComplete }) {
             whiteSpace: 'nowrap',
           }}
         >
-          What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
+          What's <span style={{ color: '#1A1A1A' }}>Good</span> Here
         </h1>
       </div>
     </div>

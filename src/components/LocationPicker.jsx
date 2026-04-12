@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
-var RADIUS_OPTIONS = [1, 5, 10, 20, 25, 50, 100, 250, 0]
+var RADIUS_OPTIONS = [1, 5, 10, 25, 0]
 
 var DISMISS_THRESHOLD = 80
 

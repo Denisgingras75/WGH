@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
 import { DishListItem } from '../DishListItem'
-import { CategoryChips } from '../CategoryChips'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
 import { LocalListsSection, Top10Carousel } from './'
+import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
 
 export const HomeListMode = memo(function HomeListMode({
   listScrollRef,
@@ -15,6 +15,7 @@ export const HomeListMode = memo(function HomeListMode({
   rankedLoading,
   activeDishes,
   allRankedDishes,
+  expandedCategory,
   topRestaurant,
   mostVotedDish,
   bestValueMeal,
@@ -25,15 +26,13 @@ export const HomeListMode = memo(function HomeListMode({
   onSearchChange,
   onRadiusSheetOpen,
   onExpandedCategoryChange,
+  onCategoryChange,
   onLocalListExpanded,
 }) {
   var navigate = useNavigate()
   var carouselRef = useRef(null)
-
-  // Compute filtered categories — recalculates on each render so time-of-day is fresh
-  var hour = new Date().getHours()
-  var hideId = hour < 11 ? 'breakfast' : hour < 16 ? 'lobster roll' : 'pizza'
-  var filteredCategories = BROWSE_CATEGORIES.filter(function (c) { return c.id !== hideId })
+  var localsAggregateData = useLocalsAggregate()
+  var localsAggregate = localsAggregateData.aggregate
 
   var handleCategorySelect = useCallback(function (cat) {
     onExpandedCategoryChange(cat)
@@ -44,7 +43,8 @@ export const HomeListMode = memo(function HomeListMode({
       var el = document.getElementById('top10-carousel')
       if (el) {
         var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+        var offset = el.getBoundingClientRect().top + window.scrollY - 8
+        window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
       }
     }, 100)
   }, [onExpandedCategoryChange])
@@ -180,6 +180,7 @@ export const HomeListMode = memo(function HomeListMode({
               mostVotedDish={mostVotedDish}
               bestValueMeal={bestValueMeal}
               bestIceCream={bestIceCream}
+              localsAggregate={localsAggregate}
               onExpandCategory={function (cat) {
                 onExpandedCategoryChange(cat)
                 if (carouselRef.current) {
@@ -189,44 +190,20 @@ export const HomeListMode = memo(function HomeListMode({
                   var el = document.getElementById('top10-carousel')
                   if (el) {
                     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+                    var offset = el.getBoundingClientRect().top + window.scrollY - 8
+                    window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
                   }
                 }, 100)
               }}
             />
 
-            {/* Browse by Category */}
-            <div style={{ paddingTop: '2px', paddingBottom: 0 }}>
-              <div className="flex items-center gap-3 px-5" style={{ paddingBottom: 0 }}>
-                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to right, transparent, #C4BDB5)' }} />
-                <h2 style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  color: 'var(--color-text-primary)',
-                  margin: 0,
-                  whiteSpace: 'nowrap',
-                  padding: '0 4px',
-                }}>
-                  Browse by Category
-                </h2>
-                <div className="flex-1" style={{ height: '1px', background: 'linear-gradient(to left, transparent, #C4BDB5)' }} />
-              </div>
-              <CategoryChips
-                categories={filteredCategories}
-                selected={null}
-                onSelect={handleCategorySelect}
-                maxVisible={22}
-              />
-            </div>
+            {/* Local Lists — horizontal scroll above the food icon tabs */}
+            <LocalListsSection onListExpanded={onLocalListExpanded} />
 
             {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
             <div id="top10-carousel">
-              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} />
+              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} onCategoryChange={onCategoryChange} />
             </div>
-
-            {/* Local Lists */}
-            <LocalListsSection onListExpanded={onLocalListExpanded} />
           </>
         ) : (
           <div className="px-4 pt-4">
@@ -240,6 +217,8 @@ export const HomeListMode = memo(function HomeListMode({
 
 // Chalkboard styles — module-level constants (no re-creation per render)
 var BOARD_OUTER = { flexShrink: 0, width: '175px' }
+var BOARD_OUTER_WIDE = { flexShrink: 0, width: '185px' }
+var COUNT_BADGE = { fontFamily: "'Outfit', sans-serif", display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(196, 138, 18, 0.2)', color: 'var(--color-accent-gold)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', marginTop: '4px' }
 var BOARD_SURFACE = { position: 'relative', background: '#363B3F', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
 var BOARD_FRAME = { position: 'absolute', inset: '3px', border: '2.5px solid #1A1D1F', borderRadius: '2px', pointerEvents: 'none', zIndex: 2 }
 var BOARD_DUST = { position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.03) 0%, transparent 60%)', pointerEvents: 'none' }
@@ -254,7 +233,9 @@ var LEG_STYLE = { width: '2.5px', height: '10px', background: '#6B7280', borderR
 var LEG_LEFT = Object.assign({}, LEG_STYLE, { transform: 'rotate(6deg)', transformOrigin: 'top center' })
 var LEG_RIGHT = Object.assign({}, LEG_STYLE, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })
 
-function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
+var BOARD_ICON_STYLE = { display: 'inline-block', verticalAlign: 'middle', width: '20px', height: '20px', objectFit: 'contain', marginRight: '3px' }
+
+function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick, icon, bottomIcon }) {
   return (
     <button
       onClick={onClick}
@@ -265,12 +246,42 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
         <div style={BOARD_FRAME} />
         <div style={BOARD_DUST} />
         <div style={BOARD_CONTENT}>
-          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>{tag}</p>
+          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>
+            {icon && <img src={icon} alt="" style={BOARD_ICON_STYLE} />}
+            <span>{tag}</span>
+          </p>
           <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
           {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
           <div style={CHALK_LINE} />
           {stat && <p style={Object.assign({}, CHALK_BRIGHT, { fontSize: '16px', margin: 0 })}>{stat}</p>}
           {stat && <div style={CHALK_LINE} />}
+          <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
+          {bottomIcon && <img src={bottomIcon} alt="" style={ICE_CREAM_MELTING_STYLE} />}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+var ICE_CREAM_MELTING_STYLE = { display: 'block', margin: '4px auto -2px', width: '40px', height: '40px', objectFit: 'contain' }
+
+function LocalsChalkboardCard({ tag, title, titleSize, sub, countText, cta, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="active:scale-[0.97] transition-transform"
+      style={BOARD_OUTER_WIDE}
+    >
+      <div style={BOARD_SURFACE}>
+        <div style={BOARD_FRAME} />
+        <div style={BOARD_DUST} />
+        <div style={BOARD_CONTENT}>
+          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '13px', margin: 0 })}>{tag}</p>
+          <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
+          {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
+          <div style={CHALK_LINE} />
+          {countText && <span style={COUNT_BADGE}>{countText}</span>}
+          {countText && <div style={{ marginTop: '4px' }} />}
           <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
         </div>
       </div>
@@ -278,15 +289,15 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick }) {
   )
 }
 
-function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, onExpandCategory }) {
+function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
   var navigate = useNavigate()
 
   var hour = new Date().getHours()
   var timeCallout = hour < 11
-    ? { category: 'breakfast', tag: '\u2600\uFE0F good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
+    ? { category: 'breakfast', icon: '/categories/icons/breakfast.webp', tag: 'good morning', title: 'Breakfast', sub: 'on the island', stat: '#1 searched morning food', cta: 'best breakfasts \u2192' }
     : hour < 18
-      ? { category: 'lobster roll', tag: '\uD83E\uDD9E #1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
-      : { category: 'pizza', tag: '\uD83C\uDF55 tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
+      ? { category: 'lobster roll', icon: '/categories/icons/lobster-roll.webp', tag: '#1 searched on MV', title: 'Lobster Roll', sub: '', stat: '', cta: 'find the best one \u2192' }
+      : { category: 'pizza', icon: '/categories/icons/pizza.webp', tag: 'tonight', title: 'Pizza', sub: '', stat: '', cta: 'find the best pizza \u2192' }
 
   return (
     <div
@@ -300,6 +311,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
     >
       {/* Board 1: Time of day */}
       <ChalkboardCard
+        icon={timeCallout.icon}
         tag={timeCallout.tag}
         title={timeCallout.title}
         sub={timeCallout.sub}
@@ -311,7 +323,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 2: Top Restaurant */}
       {topRestaurant && (
         <ChalkboardCard
-          tag={'\u2B50 highest rated restaurant'}
+          icon="/categories/icons/star.png"
+          tag={'highest rated restaurant'}
           title={topRestaurant.name}
           sub={'avg dish rating ' + topRestaurant.avg}
           cta={'see the menu \u2192'}
@@ -321,7 +334,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 3: Chowder */}
       <ChalkboardCard
-        tag={'\uD83E\uDD63 the great debate'}
+        icon="/categories/icons/chowder.webp"
+        tag={'the great debate'}
         title="Chowder"
         sub="ranked by the people"
         cta={'see the rankings \u2192'}
@@ -331,7 +345,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 4: Most Talked About */}
       {mostVotedDish && (
         <ChalkboardCard
-          tag={'\uD83D\uDCAC most talked about'}
+          icon="/categories/icons/speech-bubble.png"
+          tag={'most talked about'}
           title={mostVotedDish.dish_name || mostVotedDish.name}
           titleSize="28px"
           sub={mostVotedDish.restaurant_name}
@@ -344,7 +359,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       {/* Board 5: Best Meal Under $15 */}
       {bestValueMeal && (
         <ChalkboardCard
-          tag={'\uD83D\uDCB0 best value'}
+          icon="/categories/icons/money-bag.png"
+          tag={'best value'}
           title={bestValueMeal.dish_name || bestValueMeal.name}
           titleSize="28px"
           sub={bestValueMeal.restaurant_name}
@@ -354,16 +370,42 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
         />
       )}
 
-      {/* Board 6: Best Ice Cream */}
+      {/* Board 6: Best Ice Cream — clean cone top, melting cone bottom */}
       {bestIceCream && (
         <ChalkboardCard
-          tag={'\uD83C\uDF66 island scoops'}
+          icon="/categories/icons/ice-cream-clean.png"
+          tag={'island scoops'}
           title={bestIceCream.dish_name || bestIceCream.name}
           titleSize="28px"
           sub={bestIceCream.restaurant_name}
           stat={(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + Number(bestIceCream.avg_rating || 0).toFixed(1)}
           cta={'best ice cream \u2192'}
           onClick={function () { navigate('/dish/' + bestIceCream.dish_id) }}
+          bottomIcon="/categories/icons/ice-cream-melting.png"
+        />
+      )}
+
+      {/* Board 7: Locals Agree — most-appearing dish */}
+      {localsAggregate && localsAggregate.top_dish_id && localsAggregate.total_lists >= 2 && (
+        <LocalsChalkboardCard
+          tag={'\uD83C\uDFC6 locals agree'}
+          title={localsAggregate.top_dish_name}
+          sub={localsAggregate.top_dish_restaurant_name}
+          countText={'On ' + localsAggregate.top_dish_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
+          cta={'see why \u2192'}
+          onClick={function () { navigate('/dish/' + localsAggregate.top_dish_id) }}
+        />
+      )}
+
+      {/* Board 8: Island Favorite — most-appearing restaurant */}
+      {localsAggregate && localsAggregate.top_restaurant_id && localsAggregate.total_lists >= 2 && (
+        <LocalsChalkboardCard
+          tag={'\uD83D\uDCCD island favorite'}
+          title={localsAggregate.top_restaurant_name}
+          sub={localsAggregate.top_restaurant_town || ''}
+          countText={localsAggregate.top_restaurant_list_count >= localsAggregate.total_lists ? 'On every local list' : 'On ' + localsAggregate.top_restaurant_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
+          cta={'see the menu \u2192'}
+          onClick={function () { navigate('/restaurants/' + localsAggregate.top_restaurant_id) }}
         />
       )}
     </div>

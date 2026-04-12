@@ -91,8 +91,8 @@ export function ResetPassword() {
         <div
           className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
           style={message.type === 'error'
-            ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)' }
-            : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)', border: '1px solid color-mix(in srgb, var(--color-success) 30%, transparent)' }
+            ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(var(--color-danger-rgb), 0.3)' }
+            : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)', border: '1px solid rgba(var(--color-success-rgb), 0.3)' }
           }
         >
           {message.text}

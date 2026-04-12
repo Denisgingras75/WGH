@@ -67,8 +67,9 @@ describe('votesApi', () => {
     })
 
     it('should submit a basic vote successfully', async () => {
-      const upsertMock = vi.fn().mockResolvedValue({ error: null })
-      supabase.from.mockReturnValue({ upsert: upsertMock })
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       const result = await votesApi.submitVote({
         dishId: 'dish-1',
@@ -76,21 +77,19 @@ describe('votesApi', () => {
         rating10: 8,
       })
 
-      expect(upsertMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dish_id: 'dish-1',
-          user_id: 'user-1',
-          would_order_again: true,
-          rating_10: 8,
-        }),
-        { onConflict: 'dish_id,user_id' }
-      )
-      expect(result).toEqual({ success: true })
+      expect(supabase.rpc).toHaveBeenCalledWith('submit_vote_atomic', expect.objectContaining({
+        p_dish_id: 'dish-1',
+        p_user_id: 'user-1',
+        p_would_order_again: true,
+        p_rating_10: 8,
+      }))
+      expect(result).toEqual({ success: true, vote: { id: 'vote-1' } })
     })
 
     it('should submit vote with review text', async () => {
-      const upsertMock = vi.fn().mockResolvedValue({ error: null })
-      supabase.from.mockReturnValue({ upsert: upsertMock })
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       await votesApi.submitVote({
         dishId: 'dish-1',
@@ -99,18 +98,15 @@ describe('votesApi', () => {
         reviewText: 'Amazing lobster roll!',
       })
 
-      expect(upsertMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          review_text: 'Amazing lobster roll!',
-          review_created_at: expect.any(String),
-        }),
-        { onConflict: 'dish_id,user_id' }
-      )
+      expect(supabase.rpc).toHaveBeenCalledWith('submit_vote_atomic', expect.objectContaining({
+        p_review_text: 'Amazing lobster roll!',
+      }))
     })
 
     it('should trim review text and treat empty string as null', async () => {
-      const upsertMock = vi.fn().mockResolvedValue({ error: null })
-      supabase.from.mockReturnValue({ upsert: upsertMock })
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       await votesApi.submitVote({
         dishId: 'dish-1',
@@ -118,9 +114,8 @@ describe('votesApi', () => {
         reviewText: '   ',
       })
 
-      // Should NOT include review fields for empty/whitespace review
-      const callArg = upsertMock.mock.calls[0][0]
-      expect(callArg.review_text).toBeUndefined()
+      const submitCall = supabase.rpc.mock.calls.find(call => call[0] === 'submit_vote_atomic')
+      expect(submitCall[1].p_review_text).toBeNull()
     })
 
     it('should throw if client rate limit exceeded', async () => {
@@ -186,8 +181,9 @@ describe('votesApi', () => {
     })
 
     it('should track vote submission in PostHog', async () => {
-      const upsertMock = vi.fn().mockResolvedValue({ error: null })
-      supabase.from.mockReturnValue({ upsert: upsertMock })
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       await votesApi.submitVote({
         dishId: 'dish-1',
@@ -205,9 +201,9 @@ describe('votesApi', () => {
     })
 
     it('should throw classified error on database failure', async () => {
-      supabase.from.mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: { message: 'DB error', code: 'PGRST' } }),
-      })
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: null, error: { message: 'DB error', code: 'PGRST' } })
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
@@ -451,7 +447,7 @@ describe('votesApi', () => {
       expect('trust_badge' in result[0]).toBe(true)
     })
 
-    it('should return empty array on error (graceful degradation)', async () => {
+    it('should throw classified error on failure', async () => {
       supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -466,9 +462,7 @@ describe('votesApi', () => {
         }),
       })
 
-      const result = await votesApi.getReviewsForDish('dish-1')
-
-      expect(result).toEqual([])
+      await expect(votesApi.getReviewsForDish('dish-1')).rejects.toThrow('Error')
     })
   })
 
@@ -586,19 +580,31 @@ describe('votesApi', () => {
         },
       ]
 
-      supabase.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            not: vi.fn().mockReturnValue({
-              neq: vi.fn().mockReturnValue({
-                order: vi.fn().mockReturnValue({
-                  range: vi.fn().mockResolvedValue({ data: mockReviews, error: null }),
+      const publicVotesRows = mockReviews.map(({ dishes, ...review }) => review)
+      const dishRows = mockReviews.map(review => review.dishes)
+
+      supabase.from
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              not: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  order: vi.fn().mockReturnValue({
+                    range: vi.fn().mockResolvedValue({ data: publicVotesRows, error: null }),
+                  }),
                 }),
               }),
             }),
           }),
-        }),
-      })
+        })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: dishRows,
+              error: null,
+            }),
+          }),
+        })
 
       const result = await votesApi.getReviewsForUser('user-1', { limit: 20, offset: 0 })
 

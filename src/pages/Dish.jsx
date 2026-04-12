@@ -15,6 +15,7 @@ import { EarIconTooltip } from '../components/EarIconTooltip'
 import { DishHero, DishEvidence } from '../components/dish'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
+import { sanitizeUrl } from '../utils/sanitize'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -241,9 +242,9 @@ export function Dish() {
           {/* LAYER 3: THE ACTION */}
           <div className="px-3 pt-3">
             <div className="flex gap-2">
-              {dish.website_url && (
+              {sanitizeUrl(dish.website_url) && (
                 <a
-                  href={dish.website_url}
+                  href={sanitizeUrl(dish.website_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => capture('order_link_clicked', {
@@ -315,9 +316,9 @@ export function Dish() {
             backdropFilter: 'blur(16px)',
           }}
         >
-          {(dish.toast_slug || dish.order_url) ? (
+          {(dish.toast_slug || sanitizeUrl(dish.order_url)) ? (
             <a
-              href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : dish.order_url}
+              href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : sanitizeUrl(dish.order_url)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={function () { capture('order_clicked', {
@@ -338,9 +339,9 @@ export function Dish() {
               </svg>
               Order Now
             </a>
-          ) : dish.website_url ? (
+          ) : sanitizeUrl(dish.website_url) ? (
             <a
-              href={dish.website_url}
+              href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"

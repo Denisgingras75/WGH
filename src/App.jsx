@@ -10,6 +10,7 @@ import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
 import { RouteProgress } from './components/RouteProgress'
+import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
 import { preloadCategoryImages } from './constants/categories'
 
@@ -33,12 +34,12 @@ function lazyWithRetry(importFn, namedExport) {
     importFn()
       .then(m => {
         // Successful load — clear any reload flag
-        sessionStorage.removeItem(RELOAD_KEY)
+        removeSessionItem(RELOAD_KEY)
         return { default: namedExport ? m[namedExport] : m.default }
       })
       .catch((error) => {
-        if (isChunkLoadError(error) && !sessionStorage.getItem(RELOAD_KEY)) {
-          sessionStorage.setItem(RELOAD_KEY, '1')
+        if (isChunkLoadError(error) && !getSessionItem(RELOAD_KEY)) {
+          setSessionItem(RELOAD_KEY, '1')
           window.location.reload()
           return { default: () => null }
         }
@@ -52,6 +53,7 @@ const Browse = lazyWithRetry(() => import('./pages/Browse'), 'Browse')
 const Dish = lazyWithRetry(() => import('./pages/Dish'), 'Dish')
 const Restaurants = lazyWithRetry(() => import('./pages/Restaurants'), 'Restaurants')
 const RestaurantDetail = lazyWithRetry(() => import('./pages/RestaurantDetail'), 'RestaurantDetail')
+const RateYourMeal = lazyWithRetry(() => import('./pages/RateYourMeal'), 'RateYourMeal')
 const Profile = lazyWithRetry(() => import('./pages/Profile'), 'Profile')
 const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin')
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login')
@@ -67,6 +69,7 @@ const MapPage = lazyWithRetry(() => import('./pages/Map'), 'Map')
 const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'HowReviewsWork')
 const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'ForRestaurants')
 const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
+const RestaurantReviews = lazyWithRetry(() => import('./pages/RestaurantReviews'), 'RestaurantReviews')
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
 // Prefetch functions for smoother navigation - call on hover/focus
@@ -130,6 +133,8 @@ function App() {
               <Route path="/dish/:dishId" element={<Layout><Dish /></Layout>} />
               <Route path="/restaurants" element={<Layout><Restaurants /></Layout>} />
               <Route path="/restaurants/:restaurantId" element={<Layout><RestaurantDetail /></Layout>} />
+              <Route path="/restaurants/:restaurantId/rate" element={<Layout><RateYourMeal /></Layout>} />
+              <Route path="/restaurants/:restaurantId/reviews" element={<Layout><RestaurantReviews /></Layout>} />
               <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
               <Route path="/user/:userId" element={<Layout><UserProfile /></Layout>} />
               <Route path="/login" element={<Login />} />

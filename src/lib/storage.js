@@ -6,6 +6,7 @@ import { logger } from '../utils/logger'
  */
 
 const cache = new Map()
+const sessionCache = new Map()
 
 /**
  * Get item from localStorage with in-memory caching
@@ -53,12 +54,45 @@ export function removeStorageItem(key) {
 }
 
 /**
- * Remove item from sessionStorage
+ * Get item from sessionStorage with in-memory caching
+ * @param {string} key - Storage key
+ * @returns {string|null} - Stored value or null
+ */
+export function getSessionItem(key) {
+  if (sessionCache.has(key)) {
+    return sessionCache.get(key)
+  }
+  try {
+    const value = sessionStorage.getItem(key)
+    sessionCache.set(key, value)
+    return value
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Set item in sessionStorage and update cache
+ * @param {string} key - Storage key
+ * @param {string} value - Value to store
+ */
+export function setSessionItem(key, value) {
+  try {
+    sessionStorage.setItem(key, value)
+    sessionCache.set(key, value)
+  } catch {
+    // sessionStorage may be unavailable in private browsing
+  }
+}
+
+/**
+ * Remove item from sessionStorage and cache
  * @param {string} key - Storage key
  */
 export function removeSessionItem(key) {
   try {
     sessionStorage.removeItem(key)
+    sessionCache.delete(key)
   } catch {
     // sessionStorage may be unavailable in private browsing
   }
@@ -69,6 +103,7 @@ export function removeSessionItem(key) {
  */
 export function clearCache() {
   cache.clear()
+  sessionCache.clear()
 }
 
 /**
@@ -76,7 +111,10 @@ export function clearCache() {
  * @param {string[]} keys - Keys to clear from cache
  */
 export function clearCacheKeys(keys) {
-  keys.forEach(key => cache.delete(key))
+  keys.forEach((key) => {
+    cache.delete(key)
+    sessionCache.delete(key)
+  })
 }
 
 // Storage key constants

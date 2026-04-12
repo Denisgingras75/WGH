@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { checkRestaurantCreateRateLimit } from '../lib/rateLimiter'
 import { logger } from '../utils/logger'
 import { sanitizeSearchQuery } from '../utils/sanitize'
 import { createClassifiedError } from '../utils/errorHandler'
@@ -34,7 +35,7 @@ export const restaurantsApi = {
         throw createClassifiedError(error)
       }
 
-      // Transform to include dish count and "known for" dish
+      // Transform to include dish count, "known for" dish, and aggregate score
       return (data || []).map(r => {
         const dishList = r.dishes || []
 
@@ -48,10 +49,19 @@ export const restaurantsApi = {
           }
         })
 
+        // Compute aggregate restaurant score from dish ratings
+        const ratedDishes = dishList.filter(d => d.avg_rating != null && (d.total_votes || 0) > 0)
+        const totalVotes = ratedDishes.reduce((sum, d) => sum + (d.total_votes || 0), 0)
+        const avgRating = ratedDishes.length > 0
+          ? Number((ratedDishes.reduce((sum, d) => sum + Number(d.avg_rating), 0) / ratedDishes.length).toFixed(1))
+          : null
+
         return {
           ...r,
           dishCount: dishList.length,
           knownFor,
+          avg_rating: avgRating,
+          total_votes: totalVotes,
           dishes: undefined,
         }
       })
@@ -170,6 +180,11 @@ export const restaurantsApi = {
       const contentError = validateUserContent(name, 'Restaurant name')
       if (contentError) throw new Error(contentError)
 
+      const clientRateLimit = checkRestaurantCreateRateLimit()
+      if (!clientRateLimit.allowed) {
+        throw new Error(clientRateLimit.message)
+      }
+
       // Check rate limit first
       const { data: rateCheck, error: rateError } = await supabase.rpc('check_restaurant_create_rate_limit')
       if (rateError) throw createClassifiedError(rateError)
@@ -256,7 +271,7 @@ export const restaurantsApi = {
       return data
     } catch (error) {
       logger.error('Error finding restaurant by place ID:', error)
-      return null
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 
@@ -280,6 +295,27 @@ export const restaurantsApi = {
     } catch (error) {
       logger.error('Error fetching restaurants by distance:', error)
       throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
+   * Trigger menu import for a restaurant via menu-refresh Edge Function.
+   * Fire-and-forget — does not throw on failure.
+   */
+  async refreshMenu(restaurantId) {
+    try {
+      const { data, error } = await supabase.functions.invoke('menu-refresh', {
+        body: { restaurant_id: restaurantId },
+      })
+      if (error) {
+        logger.warn('Menu refresh failed (non-blocking):', error)
+        return null
+      }
+      logger.info('Menu refresh triggered:', data)
+      return data
+    } catch (error) {
+      logger.warn('Menu refresh failed (non-blocking):', error)
+      return null
     }
   },
 

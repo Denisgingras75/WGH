@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { getSessionItem, setSessionItem } from '../lib/storage'
 
 function ErrorFallback({ error, resetError }) {
   return (
@@ -65,8 +66,8 @@ export class ErrorBoundary extends Component {
       msg.includes('Loading chunk') ||
       msg.includes('Failed to fetch')
     )
-    if (isChunkError && !sessionStorage.getItem('wgh_chunk_reload')) {
-      sessionStorage.setItem('wgh_chunk_reload', '1')
+    if (isChunkError && !getSessionItem('wgh_chunk_reload')) {
+      setSessionItem('wgh_chunk_reload', '1')
       window.location.reload()
       return
     }

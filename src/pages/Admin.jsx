@@ -299,7 +299,7 @@ export function Admin() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
             <span className="text-2xl">🔒</span>
           </div>
           <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -360,8 +360,8 @@ export function Admin() {
           <div
             className="mb-4 p-3 rounded-lg text-sm font-medium"
             style={message.type === 'error'
-              ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)' }
-              : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)' }
+              ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
+              : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
             }
           >
             {message.text}
@@ -510,10 +510,12 @@ export function Admin() {
               {searchResults.map((dish) => (
                 <div
                   key={dish.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${
-                    editingDishId === dish.id ? 'ring-2 ring-emerald-500' : ''
-                  }`}
-                  style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                  className="flex items-center justify-between p-3 rounded-lg border"
+                  style={{
+                    background: 'var(--color-bg)',
+                    borderColor: 'var(--color-divider)',
+                    boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
+                  }}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
@@ -557,10 +559,12 @@ export function Admin() {
             {recentDishes.map((dish) => (
               <div
                 key={dish.id}
-                className={`flex items-center justify-between p-3 rounded-lg border ${
-                  editingDishId === dish.id ? 'ring-2 ring-emerald-500' : ''
-                }`}
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="flex items-center justify-between p-3 rounded-lg border"
+                style={{
+                  background: 'var(--color-bg)',
+                  borderColor: 'var(--color-divider)',
+                  boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>

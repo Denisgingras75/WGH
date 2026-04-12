@@ -8,7 +8,8 @@ import { DishSearch } from '../components/DishSearch'
 import { RadiusSheet } from '../components/LocationPicker'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { ModeFAB } from '../components/ModeFAB'
-import { HomeListMode } from '../components/home'
+import { HomeListMode, MapCategoryBar } from '../components/home'
+import { getSessionItem, setSessionItem } from '../lib/storage'
 import { logger } from '../utils/logger'
 
 var RestaurantMap = lazy(function () {
@@ -23,9 +24,7 @@ export function Map() {
   var { location, radius, setRadius, permissionState, requestLocation } = useLocationContext()
 
   var [mode, setMode] = useState(function () {
-    try {
-      return sessionStorage.getItem('wgh_home_mode') || 'list'
-    } catch (e) { return 'list' }
+    return getSessionItem('wgh_home_mode') || 'list'
   })
   var [selectedCategory, setSelectedCategory] = useState(null)
   var [radiusSheetOpen, setRadiusSheetOpen] = useState(false)
@@ -36,6 +35,7 @@ export function Map() {
   var [pinSelected, setPinSelected] = useState(false)
   var [listLimit, setListLimit] = useState(10)
   var [expandedCategory, setExpandedCategory] = useState(null)
+  var [mapCategory, setMapCategory] = useState(null)
   var [activeLocalList, setActiveLocalList] = useState(null)
   var [activeLocalListName, setActiveLocalListName] = useState(null)
 
@@ -50,7 +50,7 @@ export function Map() {
   useEffect(function () {
     if (focusDishFromRoute) {
       setMode('map')
-      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'map')
       setFocusDishId(null)
       // Delay to let map component mount and restaurantGroups populate
       setTimeout(function () { setFocusDishId(focusDishFromRoute) }, 300)
@@ -64,13 +64,15 @@ export function Map() {
       if (listScrollRef.current) {
         scrollPositionRef.current = listScrollRef.current.scrollTop
       }
+      // Inherit active category from list mode
+      setMapCategory(selectedCategory || expandedCategory || null)
       setMode('map')
-      try { sessionStorage.setItem('wgh_home_mode', 'map') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'map')
     } else {
       setMode('list')
-      try { sessionStorage.setItem('wgh_home_mode', 'list') } catch (e) {}
+      setSessionItem('wgh_home_mode', 'list')
     }
-  }, [mode])
+  }, [mode, selectedCategory, expandedCategory])
 
   // Restore scroll position when switching back to list
   useEffect(function () {
@@ -117,7 +119,8 @@ export function Map() {
   var searchLoading = searchData.loading
 
   // Ranked dishes — single source of truth for both modes
-  var rankedData = useDishes(location, radius, selectedCategory, null, null)
+  // Always fetch ALL dishes — carousel does client-side category filtering
+  var rankedData = useDishes(location, radius, null, null, null)
   var rankedDishes = rankedData.dishes
   var rankedLoading = rankedData.loading || rankedData.isFetching
 
@@ -127,15 +130,15 @@ export function Map() {
 
   var allRanked = rankedDishes || []
   var listDishes = selectedCategory ? allRanked.slice(0, listLimit) : allRanked.slice(0, 10)
-  var mapDishes = allRanked.slice(0, 10)
-
-  // Expanded category dishes for map — only fetch when a category is actually expanded
-  var expandedCategoryData = useDishes(
-    expandedCategory ? location : null, radius,
-    expandedCategory,
-    null, null
-  )
-  var expandedDishes = expandedCategory ? (expandedCategoryData.dishes || []) : []
+  // Map pins: filter by mapCategory (inherited from list or set via floating bar)
+  var mapDishes = useMemo(function () {
+    if (mapCategory) {
+      return allRanked.filter(function (d) {
+        return d.category && d.category.toLowerCase() === mapCategory.toLowerCase()
+      }).slice(0, 10)
+    }
+    return allRanked.slice(0, 10)
+  }, [allRanked, mapCategory])
 
   var dishesWithCoords = mapDishes.filter(function (d) {
     return d.restaurant_lat != null && d.restaurant_lng != null
@@ -151,9 +154,7 @@ export function Map() {
       ? searchResults.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
       : activeLocalList && localListWithCoords.length > 0
         ? localListWithCoords
-        : expandedCategory && expandedDishes.length > 0
-          ? expandedDishes.filter(function (d) { return d.restaurant_lat != null && d.restaurant_lng != null })
-          : dishesWithCoords
+        : dishesWithCoords
 
   var activeDishes = searchQuery ? searchResults : listDishes
 
@@ -252,10 +253,14 @@ export function Map() {
   var rankingContext = useMemo(function () {
     if (searchQuery) return 'for \u201c' + searchQuery + '\u201d'
     if (activeLocalListName) return activeLocalListName + '\u2019s picks'
-    var categoryLabel = selectedCategoryLabel ? selectedCategoryLabel.label : null
-    if (categoryLabel) return categoryLabel + ' nearby'
+    // Use mapCategory when in map mode, selectedCategory when in list mode
+    var activeCat = mode === 'map' ? mapCategory : (selectedCategoryLabel ? selectedCategoryLabel.id : null)
+    if (activeCat) {
+      var catInfo = BROWSE_CATEGORIES.find(function (c) { return c.id === activeCat })
+      return (catInfo ? catInfo.label : activeCat) + ' nearby'
+    }
     return 'nearby'
-  }, [searchQuery, selectedCategoryLabel, activeLocalListName])
+  }, [searchQuery, selectedCategoryLabel, activeLocalListName, mode, mapCategory])
 
   var [selectedDishLocation, setSelectedDishLocation] = useState(null)
 
@@ -308,6 +313,7 @@ export function Map() {
           rankedLoading={rankedLoading}
           activeDishes={activeDishes}
           allRankedDishes={allRanked}
+          expandedCategory={expandedCategory}
           topRestaurant={topRestaurant}
           mostVotedDish={mostVotedDish}
           bestValueMeal={bestValueMeal}
@@ -318,6 +324,7 @@ export function Map() {
           onSearchChange={handleSearchChange}
           onRadiusSheetOpen={handleRadiusSheetOpen}
           onExpandedCategoryChange={setExpandedCategory}
+          onCategoryChange={setSelectedCategory}
           onLocalListExpanded={handleLocalListExpanded}
         />
       )}
@@ -393,6 +400,11 @@ export function Map() {
                 />
               </div>
             </div>
+
+            {/* Floating category bar */}
+            <div className="mt-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
+              <MapCategoryBar activeCategory={mapCategory} onCategoryChange={setMapCategory} />
+            </div>
           </div>
         </>
       )}
@@ -448,4 +460,3 @@ export function Map() {
     </main>
   )
 }
-

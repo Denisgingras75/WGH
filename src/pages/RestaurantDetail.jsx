@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { shareOrCopy } from '../utils/share'
+import { sanitizeUrl } from '../utils/sanitize'
 import { restaurantsApi } from '../api/restaurantsApi'
+import { placesApi } from '../api/placesApi'
+import { votesApi } from '../api/votesApi'
 import { followsApi } from '../api/followsApi'
 import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
 import { useFavorites } from '../hooks/useFavorites'
 import { LoginModal } from '../components/Auth/LoginModal'
-import { RestaurantDishes, RestaurantMenu } from '../components/restaurants'
+import { RestaurantDishes, RestaurantMenu, MenuImportStatus } from '../components/restaurants'
+import { useMenuImportStatus } from '../hooks/useMenuImportStatus'
 import { useNearbyRestaurant } from '../hooks/useNearbyRestaurant'
 import { useRestaurantSpecials } from '../hooks/useSpecials'
 import { useRestaurantEvents } from '../hooks/useEvents'
@@ -31,6 +35,7 @@ export function RestaurantDetail() {
   const [dishSearchQuery, setDishSearchQuery] = useState('')
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [friendsVotesByDish, setFriendsVotesByDish] = useState({})
+  const [expandedReview, setExpandedReview] = useState(null)
 
   // Fetch restaurant by ID
   useEffect(() => {
@@ -69,6 +74,53 @@ export function RestaurantDetail() {
     location, radius, null, restaurantId
   )
 
+  // Poll menu import status and auto-refetch dishes when a job completes
+  const { status: importStatus } = useMenuImportStatus(restaurantId)
+  const prevImportStatus = useRef(importStatus)
+  useEffect(() => {
+    if (prevImportStatus.current === 'processing' && importStatus === 'completed') {
+      refetch()
+    }
+    prevImportStatus.current = importStatus
+  }, [importStatus, refetch])
+
+  // Compute WGH Food Score — aggregated from dish ratings
+  var ratedDishes = (dishes || []).filter(function (d) { return d.avg_rating != null && (d.total_votes || 0) > 0 })
+  var totalVotes = ratedDishes.reduce(function (sum, d) { return sum + (d.total_votes || 0) }, 0)
+  var wghFoodScore = null
+  if (ratedDishes.length > 0) {
+    var avgRating = ratedDishes.reduce(function (sum, d) { return sum + Number(d.avg_rating) }, 0) / ratedDishes.length
+    wghFoodScore = avgRating.toFixed(1)
+  }
+
+  // Fetch review snippets for "What People Are Saying"
+  var [reviewSnippets, setReviewSnippets] = useState([])
+  useEffect(function () {
+    if (!restaurantId) return
+    setReviewSnippets([])
+    votesApi.getReviewsForRestaurant(restaurantId, { limit: 5 })
+      .then(setReviewSnippets)
+      .catch(function (err) {
+        logger.error('Failed to fetch restaurant reviews:', err)
+      })
+  }, [restaurantId])
+
+  // Fetch Google rating if restaurant has a google_place_id
+  var [googleRating, setGoogleRating] = useState(null)
+  useEffect(function () {
+    setGoogleRating(null)
+    if (!restaurant || !restaurant.google_place_id) return
+    placesApi.getDetails(restaurant.google_place_id)
+      .then(function (details) {
+        if (details && details.googleRating) {
+          setGoogleRating({ rating: details.googleRating, count: details.googleReviewCount })
+        }
+      })
+      .catch(function (err) {
+        logger.error('Failed to fetch Google rating:', err)
+      })
+  }, [restaurant])
+
   // Auto-detect best default tab: Menu if no votes yet, Top Rated if votes exist
   useEffect(() => {
     if (activeTab !== null || dishesLoading || !dishes) return
@@ -86,6 +138,7 @@ export function RestaurantDetail() {
   // Fetch specials and events for this restaurant
   const { specials } = useRestaurantSpecials(restaurantId)
   const { events } = useRestaurantEvents(restaurantId)
+  var showRateYourMeal = !dishesLoading && (dishes?.length || 0) > 0 && (activeTab || 'top') === 'top'
 
   // Fetch friend votes
   useEffect(() => {
@@ -198,7 +251,7 @@ export function RestaurantDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-40" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">{restaurant.name}</h1>
 
       {/* Sticky header with back button */}
@@ -239,6 +292,40 @@ export function RestaurantDetail() {
                 <span> · {restaurant.distance_miles} mi away</span>
               )}
             </p>
+            {/* Scores row */}
+            {(wghFoodScore || googleRating) && (
+              <div className="flex items-center gap-4" style={{ marginTop: '6px' }}>
+                {wghFoodScore && (
+                  <div className="flex items-center gap-1.5">
+                    <span style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: 'var(--color-rating)',
+                    }}>
+                      {wghFoodScore}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+                      WGH · {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+                    </span>
+                  </div>
+                )}
+                {googleRating && (
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: '14px' }}>⭐</span>
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: 'var(--color-text-primary)',
+                    }}>
+                      {googleRating.rating}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+                      Google{googleRating.count ? ' · ' + googleRating.count : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={async () => {
@@ -260,6 +347,76 @@ export function RestaurantDetail() {
         </div>
       </div>
 
+      {/* What People Are Saying — horizontal swipeable row */}
+      {reviewSnippets.length > 0 && (
+        <div className="pt-2 pb-3">
+          <h3
+            className="font-semibold mb-2 px-4"
+            style={{
+              fontFamily: "'Amatic SC', cursive",
+              fontSize: '22px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              color: 'var(--color-text-primary)',
+            }}
+          >
+            What People Are Saying
+          </h3>
+          <div
+            className="flex gap-2 overflow-x-auto px-4"
+            style={{
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            {reviewSnippets.map(function (review, i) {
+              var isExpanded = expandedReview === i
+              return (
+                <button
+                  key={i}
+                  onClick={function () { setExpandedReview(isExpanded ? null : i) }}
+                  className="flex-shrink-0 text-left transition-all"
+                  style={{
+                    scrollSnapAlign: 'start',
+                    width: isExpanded ? '320px' : '280px',
+                    padding: '10px 14px',
+                    background: 'var(--color-card)',
+                    borderRadius: '12px',
+                    border: isExpanded ? '1.5px solid var(--color-accent-gold)' : '1px solid var(--color-divider)',
+                  }}
+                >
+                  <p style={{
+                    fontSize: '13px',
+                    color: 'var(--color-text-secondary)',
+                    fontStyle: 'italic',
+                    lineHeight: 1.4,
+                    margin: 0,
+                    display: isExpanded ? 'block' : '-webkit-box',
+                    WebkitLineClamp: isExpanded ? undefined : 2,
+                    WebkitBoxOrient: isExpanded ? undefined : 'vertical',
+                    overflow: isExpanded ? 'visible' : 'hidden',
+                  }}>
+                    &ldquo;{review.review_text}&rdquo;
+                  </p>
+                  <p style={{
+                    fontSize: '11px',
+                    color: 'var(--color-text-tertiary)',
+                    marginTop: '4px',
+                  }}>
+                    on <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{review.dish_name}</span>
+                    {review.rating != null && (
+                      <span> · <span style={{ fontWeight: 700, color: 'var(--color-rating)' }}>{review.rating}</span></span>
+                    )}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Restaurant Details Card */}
       <div className="px-4 py-4 relative" style={{ background: 'var(--color-bg)' }}>
         <div
@@ -270,28 +427,26 @@ export function RestaurantDetail() {
           }}
         />
         <div className="space-y-3">
-          {restaurant.address && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-3 hover:text-orange-400 transition-colors group"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mt-0.5 flex-shrink-0 group-hover:opacity-80" style={{ color: 'var(--color-text-tertiary)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-              <span className="text-sm">{restaurant.address}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mt-0.5 flex-shrink-0 group-hover:text-orange-400" style={{ color: 'var(--color-divider)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-            </a>
-          )}
-
-          {/* Contact info row */}
-          {(restaurant.phone || restaurant.website_url || restaurant.facebook_url || restaurant.instagram_url) && (
+          {/* Contact info row — Directions, Phone, Website, etc. */}
+          {(restaurant.address || restaurant.phone || restaurant.website_url || restaurant.facebook_url || restaurant.instagram_url) && (
             <div className="flex items-center gap-3 flex-wrap">
+              {restaurant.address && (
+                <a
+                  href={restaurant.lat && restaurant.lng
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${restaurant.lat},${restaurant.lng}`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(restaurant.address)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
+                  style={{ color: 'var(--color-accent-gold)' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+                  </svg>
+                  Directions
+                </a>
+              )}
               {restaurant.phone && (
                 <a
                   href={`tel:${restaurant.phone}`}
@@ -304,9 +459,9 @@ export function RestaurantDetail() {
                   {restaurant.phone}
                 </a>
               )}
-              {restaurant.website_url && (
+              {sanitizeUrl(restaurant.website_url) && (
                 <a
-                  href={restaurant.website_url}
+                  href={sanitizeUrl(restaurant.website_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -318,9 +473,9 @@ export function RestaurantDetail() {
                   Website
                 </a>
               )}
-              {restaurant.facebook_url && (
+              {sanitizeUrl(restaurant.facebook_url) && (
                 <a
-                  href={restaurant.facebook_url}
+                  href={sanitizeUrl(restaurant.facebook_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -332,9 +487,9 @@ export function RestaurantDetail() {
                   Facebook
                 </a>
               )}
-              {restaurant.instagram_url && (
+              {sanitizeUrl(restaurant.instagram_url) && (
                 <a
-                  href={restaurant.instagram_url}
+                  href={sanitizeUrl(restaurant.instagram_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-80"
@@ -396,6 +551,11 @@ export function RestaurantDetail() {
         />
       </div>
 
+      {/* Menu import status — shown only when no dishes yet */}
+      {!dishesLoading && (
+        <MenuImportStatus restaurantId={restaurantId} dishCount={dishes?.length ?? 0} />
+      )}
+
       {/* Dish Content */}
       {(activeTab || 'top') === 'top' ? (
         <RestaurantDishes
@@ -420,8 +580,8 @@ export function RestaurantDetail() {
         />
       )}
 
-      {/* Happening Here - Specials & Events */}
-      {(specials.length > 0 || events.length > 0) && (
+      {/* Happening Here - Specials & Events (hidden until Launch 2.0 — stale scraped data) */}
+      {false && (specials.length > 0 || events.length > 0) && (
         <div className="px-4 py-4">
           <div
             className="mb-3 h-px"
@@ -459,18 +619,17 @@ export function RestaurantDetail() {
 
       {/* Sticky bottom action bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-3"
+        className="fixed left-0 right-0 z-30 px-4 pt-3 pb-3"
         style={{
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          backdropFilter: 'blur(12px)',
           boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <div className="flex gap-2 pb-2">
-          {(restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) && (
+        <div className="flex gap-2">
+          {(restaurant.toast_slug || sanitizeUrl(restaurant.order_url)) && (
             <a
-              href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : restaurant.order_url}
+              href={restaurant.toast_slug ? 'https://order.toasttab.com/online/' + restaurant.toast_slug : sanitizeUrl(restaurant.order_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
@@ -485,24 +644,28 @@ export function RestaurantDetail() {
               Order Now
             </a>
           )}
-          <a
-            href={restaurant.lat && restaurant.lng
-              ? 'https://www.google.com/maps/dir/?api=1&destination=' + restaurant.lat + ',' + restaurant.lng
-              : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(restaurant.address || (restaurant.name + ', ' + (restaurant.town || "Martha's Vineyard") + ', MA'))
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className={((restaurant.toast_slug || (restaurant.order_url && restaurant.order_url.startsWith('http'))) ? 'flex-1' : 'w-full') + ' flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]'}
-            style={{
-              background: 'var(--color-accent-gold)',
-              color: 'var(--color-bg)',
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-            </svg>
-            Directions
-          </a>
+          {showRateYourMeal && (
+            <button
+              onClick={function () {
+                if (!user) {
+                  setLoginModalOpen(true)
+                  return
+                }
+
+                navigate('/restaurants/' + restaurantId + '/rate')
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m6.75 2.25A8.25 8.25 0 1 1 5.25 12a8.25 8.25 0 0 1 16.5 0Z" />
+              </svg>
+              Rate Your Meal
+            </button>
+          )}
         </div>
       </div>
     </div>

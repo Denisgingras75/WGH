@@ -52,6 +52,8 @@ export const RATE_LIMITS = {
   photoUpload: { maxAttempts: 5, windowMs: 60000 }, // 5 uploads per minute
   search: { maxAttempts: 30, windowMs: 60000 },     // 30 searches per minute
   auth: { maxAttempts: 5, windowMs: 300000 },       // 5 auth attempts per 5 minutes
+  dishCreate: { maxAttempts: 20, windowMs: 3600000 },       // 20 dishes per hour
+  restaurantCreate: { maxAttempts: 5, windowMs: 3600000 },  // 5 restaurants per hour
 }
 
 /**
@@ -66,6 +68,20 @@ export function checkVoteRateLimit() {
  */
 export function checkPhotoUploadRateLimit() {
   return checkRateLimit('photo-upload', RATE_LIMITS.photoUpload)
+}
+
+/**
+ * Convenience function to check dish creation rate limit
+ */
+export function checkDishCreateRateLimit() {
+  return checkRateLimit('dish_create', RATE_LIMITS.dishCreate)
+}
+
+/**
+ * Convenience function to check restaurant creation rate limit
+ */
+export function checkRestaurantCreateRateLimit() {
+  return checkRateLimit('restaurant_create', RATE_LIMITS.restaurantCreate)
 }
 
 /**

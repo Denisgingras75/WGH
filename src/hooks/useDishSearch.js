@@ -10,9 +10,10 @@ import { searchDishes } from '../utils/dishSearch'
  * @returns {Object} { results, loading, error }
  */
 export function useDishSearch(query, limit = 5) {
-  const { dishes, loading: cacheLoading, error } = useAllDishes()
-
   const trimmedQuery = query?.trim() || ''
+  const isActive = trimmedQuery.length >= 2
+
+  const { dishes, loading: cacheLoading, error } = useAllDishes({ enabled: isActive })
 
   const results = useMemo(() => {
     if (trimmedQuery.length < 2) return []

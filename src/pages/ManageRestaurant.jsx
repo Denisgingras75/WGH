@@ -192,7 +192,7 @@ export function ManageRestaurant() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--color-danger) 20%, var(--color-bg))' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
             <span className="text-2xl">🔒</span>
           </div>
           <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -242,8 +242,8 @@ export function ManageRestaurant() {
           <div
             className="p-3 rounded-lg text-sm font-medium"
             style={message.type === 'error'
-              ? { background: 'color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-elevated))', color: 'var(--color-danger)' }
-              : { background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface-elevated))', color: 'var(--color-success)' }
+              ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
+              : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
             }
           >
             {message.text}

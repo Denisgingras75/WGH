@@ -1,98 +1,103 @@
 import { memo } from 'react'
+import { getCategoryNeonImage } from '../constants/categories'
 
 /**
- * Town colors - each reflects the town's unique vibe
- * Colors complement the dark Island Depths theme
+ * Map restaurant cuisine to category icon.
+ * Falls back to the restaurant's most common dish category,
+ * then to a generic initial letter.
  */
-const TOWN_COLORS = {
-  'Oak Bluffs': { bg: '#3D5A80', text: '#F5E6D3' },      // Blue collar denim blue
-  'Edgartown': { bg: '#8B2942', text: '#F5E6D3' },       // Fancy lobster red
-  'Vineyard Haven': { bg: '#8E7F6D', text: '#F5E6D3' },  // Quiet, warm sand/driftwood
-  'West Tisbury': { bg: '#4A5D4A', text: '#F5E6D3' },    // Rural forest green
-  'Chilmark': { bg: '#6B5344', text: '#F5E6D3' },        // Rustic pastoral brown
-  // Aquinnah uses gradient - handled separately
+var CUISINE_TO_CATEGORY = {
+  'seafood': 'seafood',
+  'pizza': 'pizza',
+  'sushi': 'sushi',
+  'japanese': 'sushi',
+  'mexican': 'tacos',
+  'italian': 'pasta',
+  'chinese': 'asian',
+  'asian': 'asian',
+  'thai': 'asian',
+  'indian': 'curry',
+  'breakfast': 'breakfast',
+  'bakery': 'bakery',
+  'burgers': 'burger',
+  'american': 'burger',
+  'bbq': 'steak',
+  'steakhouse': 'steak',
 }
 
-// Gay Head Cliffs gradient for Aquinnah (deep reds, oranges, mustard, white, brown, purple)
-const AQUINNAH_GRADIENT = 'linear-gradient(135deg, #8B1E3F 0%, #D4573B 20%, #E8923B 40%, #D4A849 55%, #F5F0E6 70%, #6B4423 85%, #4A2040 100%)'
-
-// Default color for unknown towns
-const DEFAULT_COLOR = { bg: '#5C6B73', text: '#F5E6D3' } // Slate
-
-/**
- * Generate initials from restaurant name
- * "Cozy Corner" → "CC"
- * "The Black Dog" → "BD" (skip "The")
- * "Nancy's" → "N"
- */
-function getInitials(name) {
-  if (!name) return '?'
-
-  // Words to skip
-  const skipWords = new Set(['the', 'a', 'an', '&', 'and', 'of'])
-
-  const words = name
-    .split(/[\s-]+/)
-    .filter(word => !skipWords.has(word.toLowerCase()))
-
-  if (words.length === 0) return name.charAt(0).toUpperCase()
-  if (words.length === 1) return words[0].charAt(0).toUpperCase()
-
-  // Take first letter of first two meaningful words
-  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase()
-}
-
-/**
- * Get color/style based on restaurant's town
- */
-export function getTownStyle(town) {
-  if (!town) return { bg: DEFAULT_COLOR.bg, text: DEFAULT_COLOR.text, isGradient: false }
-
-  // Special handling for Aquinnah - use cliff gradient
-  if (town === 'Aquinnah') {
-    return { bg: AQUINNAH_GRADIENT, text: '#2C2416', isGradient: true }
+function getCuisineIcon(cuisine, dishCategory) {
+  // Try cuisine first
+  if (cuisine) {
+    var key = cuisine.toLowerCase().trim()
+    var mapped = CUISINE_TO_CATEGORY[key]
+    if (mapped) {
+      var src = getCategoryNeonImage(mapped)
+      if (src) return src
+    }
   }
-
-  const colors = TOWN_COLORS[town] || DEFAULT_COLOR
-  return { bg: colors.bg, text: colors.text, isGradient: false }
+  // Fall back to dish category
+  if (dishCategory) {
+    var src2 = getCategoryNeonImage(dishCategory)
+    if (src2) return src2
+  }
+  return null
 }
 
 /**
- * RestaurantAvatar - Auto-generated initial avatar for restaurants
- * Color is based on the restaurant's town vibe
+ * RestaurantAvatar - Shows food category icon for the restaurant
+ * Replaces the old town-colored initial circles
  */
-export const RestaurantAvatar = memo(function RestaurantAvatar({
+export var RestaurantAvatar = memo(function RestaurantAvatar({
   name,
   town,
+  cuisine,
+  dishCategory,
   size = 48,
   fill = false,
   className = ''
 }) {
-  const initials = getInitials(name)
-  const townStyle = getTownStyle(town)
+  var iconSrc = getCuisineIcon(cuisine, dishCategory)
 
-  const fontSize = fill ? undefined : (size < 40 ? size * 0.4 : size * 0.35)
+  // Fallback: show first letter if no icon found
+  if (!iconSrc) {
+    var initial = name ? name.charAt(0).toUpperCase() : '?'
+    return (
+      <div
+        className={fill ? '' : 'rounded-lg flex items-center justify-center flex-shrink-0 ' + className}
+        style={fill
+          ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
+          : { width: size, height: size, background: 'var(--color-surface)', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
+        }
+        aria-label={(name || 'Restaurant') + ' icon'}
+      >
+        {initial}
+      </div>
+    )
+  }
 
   return (
     <div
-      className={`${fill ? '' : 'rounded-lg'} flex items-center justify-center flex-shrink-0 ${className}`}
-      style={{
-        ...(fill
-          ? { position: 'absolute', inset: 0, width: '100%', height: '100%' }
-          : { width: size, height: size }
-        ),
-        background: townStyle.bg,
-        color: townStyle.text,
-        fontSize: fill ? 'clamp(24px, 8vw, 64px)' : `${fontSize}px`,
-        fontWeight: 700,
-        letterSpacing: '-0.02em',
-        // Add subtle text shadow for gradient backgrounds to ensure readability
-        textShadow: townStyle.isGradient ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
-      }}
-      aria-label={`${name} logo`}
-      title={town || 'Restaurant'}
+      className={fill ? '' : 'rounded-lg flex items-center justify-center flex-shrink-0 ' + className}
+      style={fill
+        ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+        : { width: size, height: size, background: 'var(--color-surface)' }
+      }
+      aria-label={(name || 'Restaurant') + ' icon'}
     >
-      {initials}
+      <img
+        src={iconSrc}
+        alt=""
+        style={{
+          width: size * 0.7,
+          height: size * 0.7,
+          objectFit: 'contain',
+        }}
+      />
     </div>
   )
 })
+
+// Keep getTownStyle export for backwards compat (used by EventCard, SpecialCard)
+export function getTownStyle(town) {
+  return { bg: 'var(--color-surface)', text: 'var(--color-text-tertiary)', isGradient: false }
+}
