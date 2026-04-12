@@ -37,9 +37,10 @@ The `votes.would_order_again` column stays in the database for historical integr
 
 ### Vote entry
 
-- Dish detail page is **read-only by default**. Existing dish info (hero, stats, reviews, photos) stays as a browsing surface.
+- Dish detail page is **read-only by default**. Existing dish info (hero, stats, reviews, photos) stays as a browsing surface. There is **no separate in-page vote summary card** with its own edit affordance — the CTA is the single entry point to editing a rating.
 - A primary **"Rate this dish"** CTA button opens the rate flow.
-- If the user already has a vote on this dish, the CTA label becomes **"Update your rating."** The flow opens prefilled with their prior rating, review text, and photo.
+- If the user already has a vote on this dish, the CTA label becomes **"Update your rating."** The flow opens prefilled with their prior rating and review text.
+- **Photo prefill behavior** (file inputs cannot be literally prefilled): if the prior vote has a photo, show the existing photo as a **thumbnail preview** in the photo area. Three options offered: **Keep** (default — no change on submit), **Replace** (opens file picker; newly selected file replaces), **Remove** (deletes the photo on submit). If the user doesn't touch the photo UI, the existing photo is preserved.
 - Auth gate: if the user is logged out, tap on the CTA opens `LoginModal`. On successful login, `ReviewFlow` opens directly (intent preservation — not a bounce back to dish page). Same pattern as `Browse.jsx`.
 
 ### Single-dish rate flow (`ReviewFlow`)
@@ -111,12 +112,15 @@ The DB change is phased to avoid hard-breaking stale PWA bundles that read `woul
 - `public_votes` view: unchanged.
 
 **Seed function.**
-- `supabase/functions/seed-reviews/index.ts` stops writing `would_order_again` on new inserts (passes `NULL`; the RPC derives from rating). Historical seed rows untouched.
+- `supabase/functions/seed-reviews/index.ts` inserts **directly** into the `votes` table — it does NOT go through `submit_vote_atomic`, so the shadow-write in the RPC does not apply here.
+- Phase 1: seed keeps writing a compatibility boolean directly, derived from its existing rating computation (`rating_10 >= 7.0 → true`, else `false`). Any snippet-generation logic still reading the boolean keeps working.
+- Phase 2: seed switches to inserting `NULL` and its snippet-generation logic is updated to no longer depend on the boolean.
+- Historical seed rows untouched.
 
 **API layer (`src/api/`).**
 - `votesApi.submitVote()` drops the `wouldOrderAgain` argument and its `typeof !== 'boolean'` validation. Called with only rating, review, photo.
 - `selectFields` strings + `.map()` transforms in `dishesApi`, `votesApi`, `followsApi` drop `yes_votes`, `percent_worth_it`, `would_order_again` from the projected output — even though RPCs still return them, the app stops passing them to the UI layer.
-- `src/api/dishesApi.js:479` direct `.eq('would_order_again', true)` query: replaced with rating-based count (e.g., `.gte('rating_10', 7)`) or removed if dead.
+- `src/api/dishesApi.js:472–486` direct `.eq('would_order_again', true)` query in the `Promise.all` inside `getDishById` (computes `yesVotes` for dish detail display): **deleted**. Since the UI stops displaying yes-vote count, the count itself is dead. Collapses the `Promise.all` to a single `hasVariants(dishId)` call; `yesVotes` is removed from the returned dish shape.
 
 **Direct consumer audit (all must be updated in this release):**
 - `api/share.ts:101–105` — drops the `.eq('would_order_again', true)` query. Social description becomes `"${rating}/10 · ${votes} ratings · ${town}"`. Restaurant-level copy ("worth ordering") also scrubbed.
@@ -221,5 +225,5 @@ From the pre-spec code survey + Codex audit:
 - Dish detail has a primary "Rate this dish" CTA (or "Update your rating" if the user already has a vote on this dish).
 - Profile has a single "My Ratings" shelf, sorted by most recent first, no split tabs.
 - OG / share images show the `${rating}/10 · ${votes} ratings` format, with the low-data fallback for votes < 5.
-- PostHog funnels keep reporting through the release window — verified by dual-emit.
+- PostHog funnels keep reporting through the release window — verified concretely by confirming both old event names and new event names show non-zero counts in PostHog for the same 24h window after phase 1 deploys.
 - Stale PWA bundles continue to submit votes successfully after phase 1 ships — verified by manual test against an old bundle (devtools "disable cache" off, pinned to pre-release build).
