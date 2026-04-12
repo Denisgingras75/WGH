@@ -134,14 +134,14 @@ export function Dish() {
             Dish not found
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={handleBack}
             className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
             style={{
               background: 'var(--color-primary)',
               color: '#FFFFFF',
             }}
           >
-            Go Home
+            Go Back
           </button>
         </div>
       </div>

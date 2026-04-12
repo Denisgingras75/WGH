@@ -140,7 +140,7 @@ export function Profile() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--color-surface)' }}>
       <h1 className="sr-only">Your Profile</h1>
 
       {user && (

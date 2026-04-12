@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { toast } from 'sonner'
 import { logger } from '../utils/logger'
 import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
@@ -14,6 +13,7 @@ import { BROWSE_CATEGORIES } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getPendingVoteFromStorage } from '../lib/storage'
 import { LoginModal } from '../components/Auth/LoginModal'
+import { AddRestaurantModal } from '../components/AddRestaurantModal'
 import { ImpactFeedback, getImpactMessage } from '../components/ImpactFeedback'
 import { RadiusSheet } from '../components/LocationPicker'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
@@ -30,6 +30,7 @@ export function Browse() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [addRestaurantQuery, setAddRestaurantQuery] = useState(null)
   const [impactFeedback, setImpactFeedback] = useState(null)
   const [pendingVoteData, setPendingVoteData] = useState(null)
   const [sortBy, setSortBy] = useState('top_rated')
@@ -319,10 +320,10 @@ export function Browse() {
     } else if (suggestion.type === 'restaurant') {
       navigate(`/restaurants/${suggestion.id}`)
     } else if (suggestion.type === 'place') {
-      // Google Places result — not in our DB yet
-      toast('This restaurant hasn\'t been added yet', { duration: 2000 })
+      // Google Places result — open Add Restaurant modal with the place name prefilled
+      setAddRestaurantQuery(suggestion.data?.name || suggestion.data?.description || searchQuery)
     }
-  }, [navigate, openDishPage])
+  }, [navigate, openDishPage, searchQuery])
 
   // Handle keyboard navigation in autocomplete
   const handleSearchKeyDown = useCallback((e) => {
@@ -498,6 +499,12 @@ export function Browse() {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
+      />
+
+      <AddRestaurantModal
+        isOpen={addRestaurantQuery !== null}
+        onClose={() => setAddRestaurantQuery(null)}
+        initialQuery={addRestaurantQuery || ''}
       />
 
       {/* Impact feedback toast */}
