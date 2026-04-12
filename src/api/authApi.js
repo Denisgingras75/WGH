@@ -301,7 +301,7 @@ export const authApi = {
 
       const { data, error } = await supabase
         .from('votes')
-        .select('would_order_again, rating_10, review_text, review_created_at')
+        .select('rating_10, review_text, review_created_at')
         .eq('dish_id', dishId)
         .eq('user_id', userId)
         .maybeSingle()
