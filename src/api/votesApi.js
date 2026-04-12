@@ -228,7 +228,7 @@ export const votesApi = {
 
       var { data, error } = await supabase
         .from('votes')
-        .select('dish_id, would_order_again, rating_10')
+        .select('dish_id, rating_10')
         .eq('user_id', user.id)
 
       if (error) {
@@ -238,7 +238,6 @@ export const votesApi = {
       // Return as a map for easy lookup
       return (data || []).reduce((acc, vote) => {
         acc[vote.dish_id] = {
-          wouldOrderAgain: vote.would_order_again,
           rating10: vote.rating_10,
         }
         return acc
@@ -266,7 +265,6 @@ export const votesApi = {
         .from('votes')
         .select(`
           id,
-          would_order_again,
           rating_10,
           review_text,
           created_at,
@@ -371,7 +369,6 @@ export const votesApi = {
           id,
           review_text,
           rating_10,
-          would_order_again,
           review_created_at,
           user_id,
           source
@@ -581,7 +578,6 @@ export const votesApi = {
           id,
           review_text,
           rating_10,
-          would_order_again,
           review_created_at,
           dish_id
         `)
@@ -608,7 +604,6 @@ export const votesApi = {
         return {
           review_text: v.review_text,
           rating: v.rating_10,
-          would_order_again: v.would_order_again,
           dish_name: dishMap[v.dish_id] ? dishMap[v.dish_id].name : '',
           dish_id: v.dish_id,
           created_at: v.review_created_at,
@@ -632,7 +627,6 @@ export const votesApi = {
           id,
           review_text,
           rating_10,
-          would_order_again,
           review_created_at,
           dish_id
         `)

@@ -262,8 +262,8 @@ describe('votesApi', () => {
       supabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
 
       const mockVotes = [
-        { dish_id: 'dish-1', would_order_again: true, rating_10: 9 },
-        { dish_id: 'dish-2', would_order_again: false, rating_10: 5 },
+        { dish_id: 'dish-1', rating_10: 9 },
+        { dish_id: 'dish-2', rating_10: 5 },
       ]
 
       supabase.from.mockReturnValue({
@@ -275,8 +275,8 @@ describe('votesApi', () => {
       const result = await votesApi.getUserVotes()
 
       expect(result).toEqual({
-        'dish-1': { wouldOrderAgain: true, rating10: 9 },
-        'dish-2': { wouldOrderAgain: false, rating10: 5 },
+        'dish-1': { rating10: 9 },
+        'dish-2': { rating10: 5 },
       })
     })
 
@@ -315,7 +315,6 @@ describe('votesApi', () => {
       const mockVotes = [
         {
           id: 'vote-1',
-          would_order_again: true,
           rating_10: 9,
           created_at: '2024-01-01',
           dishes: {
@@ -442,7 +441,6 @@ describe('votesApi', () => {
           id: 'review-1',
           review_text: 'Great!',
           rating_10: 9,
-          would_order_again: true,
           review_created_at: '2024-01-01',
           user_id: 'user-1',
           source: null,
@@ -603,7 +601,6 @@ describe('votesApi', () => {
           id: 'review-1',
           review_text: 'Delicious!',
           rating_10: 9,
-          would_order_again: true,
           review_created_at: '2024-01-01',
           dish_id: 'dish-1',
           dishes: {

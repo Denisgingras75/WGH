@@ -384,7 +384,6 @@ export const followsApi = {
         .from('votes')
         .select(`
           rating_10,
-          would_order_again,
           created_at,
           dishes (
             id,
@@ -414,11 +413,11 @@ export const followsApi = {
     profile.follower_count = followerResult.count || 0
     profile.following_count = followingResult.count || 0
 
-    // Calculate stats from votes (no separate query needed)
+    // Calculate stats from votes (no separate query needed).
+    // worth_it / avoid counts are zeroed — the binary vote is gone. UI surfaces
+    // that used them are being migrated to rating-only displays in Tasks 12–19.
     const voteList = votesResult.data || []
     const totalVotes = voteList.length
-    const worthItCount = voteList.filter(v => v.would_order_again).length
-    const avoidCount = voteList.filter(v => !v.would_order_again).length
     const ratedVotes = voteList.filter(v => v.rating_10 != null)
     const avgRating = ratedVotes.length > 0
       ? Math.round((ratedVotes.reduce((sum, v) => sum + v.rating_10, 0) / ratedVotes.length) * 10) / 10
@@ -440,13 +439,12 @@ export const followsApi = {
       ...profile,
       stats: {
         total_votes: totalVotes,
-        worth_it: worthItCount,
-        avoid: avoidCount,
+        worth_it: 0,
+        avoid: 0,
         avg_rating: avgRating,
       },
       recent_votes: voteList.map(v => ({
         rating: v.rating_10,
-        would_order_again: v.would_order_again,
         voted_at: v.created_at,
         dish: v.dishes ? {
           id: v.dishes.id,
