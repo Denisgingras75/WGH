@@ -356,7 +356,9 @@ export function Map() {
             </ErrorBoundary>
           </div>
 
-          {/* Floating controls: search + zoom (hidden when pin selected) */}
+          {/* Floating controls: search + zoom.
+              Hide when a pin is selected AND we have location (the "How far?" button takes over).
+              If no location, keep controls visible so the user isn't stuck with only the FAB. */}
           <div
             className="fixed left-0 right-0"
             style={{
@@ -364,11 +366,11 @@ export function Map() {
               zIndex: 15,
               padding: '12px 12px 0',
               pointerEvents: 'none',
-              opacity: pinSelected ? 0 : 1,
+              opacity: (pinSelected && location) ? 0 : 1,
               transition: 'opacity 200ms ease',
             }}
           >
-            <div className="flex items-center gap-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
+            <div className="flex items-center gap-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
               <div className="flex-1" style={{
                 borderRadius: '14px',
                 boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
@@ -402,7 +404,7 @@ export function Map() {
             </div>
 
             {/* Floating category bar */}
-            <div className="mt-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
+            <div className="mt-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
               <MapCategoryBar activeCategory={mapCategory} onCategoryChange={setMapCategory} />
             </div>
           </div>
