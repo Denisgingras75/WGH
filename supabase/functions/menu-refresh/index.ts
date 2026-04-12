@@ -352,6 +352,45 @@ async function upsertDishes(
   return { inserted, updated, unchanged }
 }
 
+/**
+ * Validate URL to prevent SSRF — block private/internal IPs and non-http schemes
+ */
+function isUrlSafe(urlStr: string): boolean {
+  try {
+    const url = new URL(urlStr)
+
+    // Only allow http/https
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+
+    const hostname = url.hostname
+
+    // Block localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') return false
+
+    // Block private IP ranges
+    const parts = hostname.split('.').map(Number)
+    if (parts.length === 4 && parts.every(p => !isNaN(p))) {
+      // 10.0.0.0/8
+      if (parts[0] === 10) return false
+      // 172.16.0.0/12
+      if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return false
+      // 192.168.0.0/16
+      if (parts[0] === 192 && parts[1] === 168) return false
+      // 169.254.0.0/16 (link-local)
+      if (parts[0] === 169 && parts[1] === 254) return false
+      // 0.0.0.0
+      if (parts.every(p => p === 0)) return false
+    }
+
+    // Block metadata endpoints (cloud providers)
+    if (hostname === '169.254.169.254' || hostname === 'metadata.google.internal') return false
+
+    return true
+  } catch {
+    return false
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -366,8 +405,38 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    // --- Auth gate: require authenticated admin ---
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    const { data: admin } = await supabase.from('admins').select('id').eq('user_id', user.id).maybeSingle()
+    if (!admin) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Check if single restaurant mode
     let body: Record<string, unknown> = {}
@@ -436,6 +505,12 @@ serve(async (req) => {
     for (const restaurant of restaurants) {
       try {
         console.log(`Processing menu for: ${restaurant.name}`)
+
+        // SSRF check — block private/internal URLs
+        if (!isUrlSafe(restaurant.menu_url)) {
+          results.push({ restaurant_id: restaurant.id, name: restaurant.name, status: 'skipped: unsafe URL' })
+          continue
+        }
 
         // Fetch menu content
         const content = await fetchMenuContent(restaurant.menu_url)

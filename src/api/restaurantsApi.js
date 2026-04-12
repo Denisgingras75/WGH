@@ -308,6 +308,22 @@ export const restaurantsApi = {
    * @param {number} days - How many days back to look
    * @returns {Promise<Array>} Array of recently added restaurants
    */
+  /**
+   * Trigger menu-refresh Edge Function for a restaurant (fire-and-forget).
+   * Imports menu items via Claude Haiku if the restaurant has a menu_url.
+   * @param {string} restaurantId - Restaurant ID
+   */
+  async refreshMenu(restaurantId) {
+    try {
+      await supabase.functions.invoke('menu-refresh', {
+        body: { restaurant_id: restaurantId },
+      })
+    } catch (error) {
+      // Fire-and-forget — log but don't throw
+      logger.error('Background menu refresh failed:', error)
+    }
+  },
+
   async getRecentlyAdded(limit = 10, days = 14) {
     try {
       const since = new Date()

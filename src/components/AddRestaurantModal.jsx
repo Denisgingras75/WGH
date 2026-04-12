@@ -252,6 +252,11 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         has_order_url: !!orderUrl,
       })
 
+      // Fire-and-forget: auto-import menu items if restaurant has a menu URL
+      if (menuUrl.trim()) {
+        restaurantsApi.refreshMenu(restaurant.id)
+      }
+
       // Optionally create first dish
       if (dishName.trim() && dishCategory) {
         try {
