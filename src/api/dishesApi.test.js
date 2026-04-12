@@ -115,8 +115,8 @@ describe('dishesApi', () => {
   describe('getDishesForRestaurant', () => {
     it('should call rpc with restaurant ID', async () => {
       const mockData = [
-        { id: '1', name: 'Fish Tacos', percent_worth_it: 92 },
-        { id: '2', name: 'Nachos', percent_worth_it: 78 },
+        { id: '1', name: 'Fish Tacos', avg_rating: 9.2 },
+        { id: '2', name: 'Nachos', avg_rating: 7.8 },
       ]
       supabase.rpc.mockResolvedValueOnce({ data: mockData, error: null })
 
@@ -319,7 +319,7 @@ describe('dishesApi', () => {
   })
 
   describe('getDishById', () => {
-    it('should fetch dish with restaurant info and calculate vote stats', async () => {
+    it('should fetch dish with restaurant info and vote stats from dish columns', async () => {
       const mockDish = {
         id: 'dish-1',
         name: 'Lobster Roll',
@@ -340,15 +340,7 @@ describe('dishesApi', () => {
           maybeSingle: vi.fn().mockResolvedValue({ data: { ...mockDish, avg_rating: 8, total_votes: 3 }, error: null }),
         }),
       })
-      // Second call: count yes_votes (head: true count query)
-      supabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ count: 2, error: null }),
-          }),
-        }),
-      })
-      // Third call: check variants
+      // Second call: hasVariants count query
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
@@ -358,9 +350,10 @@ describe('dishesApi', () => {
       const result = await dishesApi.getDishById('dish-1')
 
       expect(result.total_votes).toBe(3)
-      expect(result.yes_votes).toBe(2)
       expect(result.avg_rating).toBe(8)
       expect(result.has_variants).toBe(false)
+      // Binary-derived field is gone.
+      expect(result).not.toHaveProperty('yes_votes')
     })
 
     it('should handle dish with no votes', async () => {
@@ -374,13 +367,6 @@ describe('dishesApi', () => {
       })
       supabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
-          }),
-        }),
-      })
-      supabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
         }),
       })
@@ -388,8 +374,8 @@ describe('dishesApi', () => {
       const result = await dishesApi.getDishById('dish-1')
 
       expect(result.total_votes).toBe(0)
-      expect(result.yes_votes).toBe(0)
       expect(result.avg_rating).toBeNull()
+      expect(result).not.toHaveProperty('yes_votes')
     })
 
     it('should throw error when dish not found', async () => {
@@ -401,39 +387,6 @@ describe('dishesApi', () => {
       })
 
       await expect(dishesApi.getDishById('invalid-id')).rejects.toThrow()
-    })
-
-    it('should continue with dish data if yes_votes count fails (graceful degradation)', async () => {
-      const mockDish = { id: 'dish-1', name: 'Lobster Roll', avg_rating: 8, total_votes: 3, restaurants: {} }
-
-      supabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: mockDish, error: null }),
-        }),
-      })
-      // yes_votes count query fails
-      supabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ count: null, error: { message: 'Votes error' } }),
-          }),
-        }),
-      })
-      // check variants
-      supabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
-        }),
-      })
-
-      const result = await dishesApi.getDishById('dish-1')
-
-      // Should return dish with yes_votes defaulting to 0
-      expect(result.id).toBe('dish-1')
-      expect(result.avg_rating).toBe(8)
-      expect(result.total_votes).toBe(3)
-      expect(result.yes_votes).toBe(0)
     })
   })
 })
