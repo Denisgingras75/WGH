@@ -247,19 +247,19 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
       setError('Address is required')
       return
     }
-    if (lat == null || lng == null) {
+    let resolvedLat = lat
+    let resolvedLng = lng
+    if (resolvedLat == null || resolvedLng == null) {
       // Try fetching coordinates from Google Place ID first
       if (googlePlaceId) {
         try {
           setSubmitting(true)
           const details = await placesApi.getDetails(googlePlaceId)
           if (details && details.lat && details.lng) {
+            resolvedLat = details.lat
+            resolvedLng = details.lng
             setLat(details.lat)
             setLng(details.lng)
-            setSubmitting(false)
-            setError(null)
-            handleSubmit()
-            return
           }
         } catch {
           // Fall through to GPS
@@ -267,29 +267,36 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
         setSubmitting(false)
       }
       // Fall back to device GPS
-      if (hasLocation && location) {
-        setLat(location.lat)
-        setLng(location.lng)
-      } else {
-        setError('Could not determine location. Please enable location access and try again.')
-        return
+      if (resolvedLat == null || resolvedLng == null) {
+        if (hasLocation && location) {
+          resolvedLat = location.lat
+          resolvedLng = location.lng
+          setLat(location.lat)
+          setLng(location.lng)
+        } else {
+          setError('Could not determine location. Please enable location access and try again.')
+          return
+        }
       }
     }
     setError(null)
-    handleSubmit()
+    handleSubmit({ lat: resolvedLat, lng: resolvedLng })
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async ({ lat: overrideLat, lng: overrideLng } = {}) => {
     setSubmitting(true)
     setError(null)
+
+    const finalLat = overrideLat ?? lat
+    const finalLng = overrideLng ?? lng
 
     try {
       // Create restaurant
       const restaurant = await restaurantsApi.create({
         name: name.trim(),
         address: address.trim(),
-        lat,
-        lng,
+        lat: finalLat,
+        lng: finalLng,
         town: town.trim() || null,
         googlePlaceId,
         websiteUrl: websiteUrl.trim() || null,
