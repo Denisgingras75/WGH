@@ -268,7 +268,48 @@ export function Dish() {
             parentDish={parentDish}
           />
 
-          {/* LAYER 2: THE EVIDENCE */}
+          {/* LAYER 2: THE ACTION — Rate CTA + inline rate flow */}
+          <div className="p-4 space-y-3">
+            <button
+              type="button"
+              onClick={handleRateClick}
+              aria-expanded={showRateFlow}
+              aria-controls="rate-flow-panel"
+              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              {showRateFlow
+                ? 'Close'
+                : priorVote ? 'Update your rating' : 'Rate this dish'}
+            </button>
+            {showRateFlow && (
+              <div
+                id="rate-flow-panel"
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  border: '1px solid var(--color-divider)',
+                }}
+              >
+                <ReviewFlow
+                  dishId={dish.dish_id}
+                  dishName={dish.dish_name}
+                  restaurantId={dish.restaurant_id}
+                  restaurantName={dish.restaurant_name}
+                  category={dish.category}
+                  price={dish.price}
+                  totalVotes={dish.total_votes}
+                  isRanked={isRanked}
+                  existingPhotoUrl={null}
+                  onVote={handleVoteSubmitted}
+                  onLoginRequired={handleLoginRequired}
+                  onPhotoUploaded={handlePhotoUploaded}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* LAYER 3: THE EVIDENCE (reviews) */}
           <DishEvidence
             dish={dish}
             dishId={dishId}
@@ -285,91 +326,33 @@ export function Dish() {
             isVariant={isVariant}
           />
 
-          {/* LAYER 3: THE ACTION */}
-          <div className="px-3 pt-3">
-            <div className="flex gap-2">
-              {sanitizeUrl(dish.website_url) && (
-                <a
-                  href={sanitizeUrl(dish.website_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => capture('order_link_clicked', {
-                    dish_id: dish.dish_id,
-                    dish_name: dish.dish_name,
-                    restaurant_id: dish.restaurant_id,
-                    restaurant_name: dish.restaurant_name,
-                  })}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                  }}
-                >
-                  Order Online
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              )}
+          {/* LAYER 4: SECONDARY ACTION */}
+          {sanitizeUrl(dish.website_url) && (
+            <div className="px-3 pt-3">
+              <a
+                href={sanitizeUrl(dish.website_url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => capture('order_link_clicked', {
+                  dish_id: dish.dish_id,
+                  dish_name: dish.dish_name,
+                  restaurant_id: dish.restaurant_id,
+                  restaurant_name: dish.restaurant_name,
+                })}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                }}
+              >
+                Order Online
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-          </div>
-
-          {/* Rate CTA — opens the rate flow overlay */}
-          <div className="p-4">
-            <button
-              type="button"
-              onClick={handleRateClick}
-              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-            >
-              {priorVote ? 'Update your rating' : 'Rate this dish'}
-            </button>
-          </div>
+          )}
         </>
-      )}
-
-      {/* Rate flow overlay */}
-      {showRateFlow && dish && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={priorVote ? 'Update your rating' : 'Rate ' + dish.dish_name}
-          className="fixed inset-0 z-50 overflow-y-auto"
-          style={{ background: 'var(--color-bg)' }}
-        >
-          <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
-            <h2 className="text-lg font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
-              {priorVote ? 'Update your rating' : dish.dish_name}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowRateFlow(false)}
-              aria-label="Close"
-              className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="max-w-md mx-auto px-4 py-5">
-            <ReviewFlow
-              dishId={dish.dish_id}
-              dishName={dish.dish_name}
-              restaurantId={dish.restaurant_id}
-              restaurantName={dish.restaurant_name}
-              category={dish.category}
-              price={dish.price}
-              totalVotes={dish.total_votes}
-              isRanked={isRanked}
-              existingPhotoUrl={null}
-              onVote={handleVoteSubmitted}
-              onLoginRequired={handleLoginRequired}
-              onPhotoUploaded={handlePhotoUploaded}
-            />
-          </div>
-        </div>
       )}
 
       {/* Floating action bar */}
