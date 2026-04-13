@@ -34,11 +34,7 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
       const aRating = a.avg_rating || 0
       const bRating = b.avg_rating || 0
       if (bRating !== aRating) return bRating - aRating
-      // Tie-breaker: percent_worth_it
-      const aPct = a.percent_worth_it || 0
-      const bPct = b.percent_worth_it || 0
-      if (bPct !== aPct) return bPct - aPct
-      // Final tie-breaker: vote count, then alphabetical
+      // Tie-breaker: vote count, then alphabetical
       const voteDiff = (b.total_votes || 0) - (a.total_votes || 0)
       if (voteDiff !== 0) return voteDiff
       return (a.dish_name || '').localeCompare(b.dish_name || '')
