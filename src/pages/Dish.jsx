@@ -82,6 +82,10 @@ export function Dish() {
   const handleLoginRequired = () => setLoginModalOpen(true)
 
   const handleRateClick = () => {
+    if (showRateFlow) {
+      setShowRateFlow(false)
+      return
+    }
     if (!user) {
       setPendingAction('rate')
       setLoginModalOpen(true)
