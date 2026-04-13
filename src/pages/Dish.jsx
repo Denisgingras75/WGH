@@ -16,6 +16,7 @@ import { DishHero, DishEvidence } from '../components/dish'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { sanitizeUrl } from '../utils/sanitize'
+import { authApi } from '../api/authApi'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -33,11 +34,36 @@ export function Dish() {
   } = useDishDetail(dishId, user)
 
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [showRateFlow, setShowRateFlow] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
+  const [priorVote, setPriorVote] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
   const tooltipChecked = useRef(false)
+
+  // Fetch prior vote to decide CTA label and preserve it after submit.
+  useEffect(() => {
+    if (!user || !dishId) {
+      setPriorVote(null)
+      return
+    }
+    let cancelled = false
+    authApi.getUserVoteForDish(dishId, user.id)
+      .then((vote) => { if (!cancelled) setPriorVote(vote) })
+      .catch((err) => { logger.error('Failed to fetch prior vote:', err) })
+    return () => { cancelled = true }
+  }, [dishId, user])
+
+  // Auth-gate intent preservation: once the user finishes logging in,
+  // resume straight into the rate flow.
+  useEffect(() => {
+    if (user && pendingAction === 'rate') {
+      setPendingAction(null)
+      setShowRateFlow(true)
+    }
+  }, [user, pendingAction])
 
   useEffect(() => {
     if (dish && !tooltipChecked.current) {
@@ -54,6 +80,26 @@ export function Dish() {
   }
 
   const handleLoginRequired = () => setLoginModalOpen(true)
+
+  const handleRateClick = () => {
+    if (!user) {
+      setPendingAction('rate')
+      setLoginModalOpen(true)
+      return
+    }
+    setShowRateFlow(true)
+  }
+
+  const handleVoteSubmitted = () => {
+    setShowRateFlow(false)
+    // Refresh prior-vote state so the CTA label updates to "Update your rating".
+    if (user && dishId) {
+      authApi.getUserVoteForDish(dishId, user.id)
+        .then(setPriorVote)
+        .catch((err) => { logger.error('Failed to refresh prior vote:', err) })
+    }
+    handleVote?.()
+  }
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -268,36 +314,62 @@ export function Dish() {
             </div>
           </div>
 
-          {/* Vote Flow */}
+          {/* Rate CTA — opens the rate flow overlay */}
           <div className="p-4">
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-              }}
+            <button
+              type="button"
+              onClick={handleRateClick}
+              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
-              <ReviewFlow
-                dishId={dish.dish_id}
-                dishName={dish.dish_name}
-                restaurantId={dish.restaurant_id}
-                restaurantName={dish.restaurant_name}
-                category={dish.category}
-                price={dish.price}
-                totalVotes={dish.total_votes}
-                yesVotes={dish.yes_votes}
-                percentWorthIt={dish.percent_worth_it}
-                isRanked={isRanked}
-                hasPhotos={allPhotos.length > 0}
-                onVote={handleVote}
-                onLoginRequired={handleLoginRequired}
-                onPhotoUploaded={handlePhotoUploaded}
-                onToggleFavorite={handleToggleSave}
-                isFavorite={isFavorite?.(dishId)}
-              />
-            </div>
+              {priorVote ? 'Update your rating' : 'Rate this dish'}
+            </button>
           </div>
         </>
+      )}
+
+      {/* Rate flow overlay */}
+      {showRateFlow && dish && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={priorVote ? 'Update your rating' : 'Rate ' + dish.dish_name}
+          className="fixed inset-0 z-50 overflow-y-auto"
+          style={{ background: 'var(--color-bg)' }}
+        >
+          <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
+            <h2 className="text-lg font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+              {priorVote ? 'Update your rating' : dish.dish_name}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowRateFlow(false)}
+              aria-label="Close"
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="max-w-md mx-auto px-4 py-5">
+            <ReviewFlow
+              dishId={dish.dish_id}
+              dishName={dish.dish_name}
+              restaurantId={dish.restaurant_id}
+              restaurantName={dish.restaurant_name}
+              category={dish.category}
+              price={dish.price}
+              totalVotes={dish.total_votes}
+              isRanked={isRanked}
+              existingPhotoUrl={null}
+              onVote={handleVoteSubmitted}
+              onLoginRequired={handleLoginRequired}
+              onPhotoUploaded={handlePhotoUploaded}
+            />
+          </div>
+        </div>
       )}
 
       {/* Floating action bar */}
