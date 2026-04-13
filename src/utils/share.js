@@ -85,20 +85,3 @@ export function buildRestaurantShareData(restaurant) {
     text: `Check out ${restaurant.name}${restaurant.town ? ` in ${restaurant.town}` : ''} on What's Good Here!`,
   }
 }
-
-/**
- * Build share payload after voting on a dish.
- * @param {{ dish_id: string, dish_name: string, restaurant_name: string }} dish
- * @param {boolean} wouldOrderAgain
- * @param {number} rating - 0-10 rating
- * @returns {{ url: string, title: string, text: string }}
- */
-export function buildPostVoteShareData(dish, wouldOrderAgain, rating) {
-  const url = `${window.location.origin}/dish/${dish.dish_id}`
-  const verdict = wouldOrderAgain ? 'worth ordering' : 'one to skip'
-  return {
-    url,
-    title: `${dish.dish_name} at ${dish.restaurant_name}`,
-    text: `I rated ${dish.dish_name} at ${dish.restaurant_name} a ${rating.toFixed(1)}/10 — ${verdict}. What do you think?`,
-  }
-}
