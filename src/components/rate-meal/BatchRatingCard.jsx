@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react'
 import { FoodRatingSlider } from '../FoodRatingSlider'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
 import { MAX_REVIEW_LENGTH } from '../../constants/app'
 
 export function BatchRatingCard({
@@ -98,46 +96,15 @@ export function BatchRatingCard({
             </p>
           </div>
 
-          <p className="text-sm font-medium text-center mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
-            Worth ordering again?
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={function () { updateValue({ wouldOrderAgain: true }) }}
-              className="rounded-2xl px-4 py-4 transition-all active:scale-[0.98]"
-              style={value.wouldOrderAgain === true
-                ? { background: 'linear-gradient(to bottom right, var(--color-success), var(--color-green-deep))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-success-border)' }
-                : { background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1.5px solid var(--color-divider)' }}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <ThumbsUpIcon size={36} active={value.wouldOrderAgain === true} />
-                <span className="font-bold text-sm">Yes</span>
-              </div>
-            </button>
-            <button
-              onClick={function () { updateValue({ wouldOrderAgain: false }) }}
-              className="rounded-2xl px-4 py-4 transition-all active:scale-[0.98]"
-              style={value.wouldOrderAgain === false
-                ? { background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-danger))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-primary-glow)' }
-                : { background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1.5px solid var(--color-divider)' }}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <ThumbsDownIcon size={36} active={value.wouldOrderAgain === false} />
-                <span className="font-bold text-sm">No</span>
-              </div>
-            </button>
-          </div>
-
-          <div className="mt-6">
-            <FoodRatingSlider
-              value={value.rating10}
-              onChange={function (nextRating) { updateValue({ rating10: nextRating }) }}
-              min={0}
-              max={10}
-              step={0.1}
-              category={dish.category}
-            />
-          </div>
+          <FoodRatingSlider
+            value={value.rating10 ?? 0}
+            unrated={value.rating10 == null || value.rating10 === 0}
+            onChange={function (nextRating) { updateValue({ rating10: nextRating }) }}
+            min={0}
+            max={10}
+            step={0.1}
+            category={dish.category}
+          />
 
           <div className="mt-6">
             <button
@@ -242,11 +209,11 @@ export function BatchRatingCard({
       >
         <button
           onClick={onNext}
-          disabled={value.wouldOrderAgain == null || reviewOverLimit}
+          disabled={value.rating10 == null || value.rating10 === 0 || reviewOverLimit}
           className="w-full rounded-2xl py-3.5 font-bold text-sm transition-all"
           style={{
-            background: (value.wouldOrderAgain == null || reviewOverLimit) ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-            color: (value.wouldOrderAgain == null || reviewOverLimit) ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
+            background: (value.rating10 == null || value.rating10 === 0 || reviewOverLimit) ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
+            color: (value.rating10 == null || value.rating10 === 0 || reviewOverLimit) ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
           }}
         >
           {index === total - 1 ? 'Review' : 'Next'}
