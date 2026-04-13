@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'dish') {
       const { data: dish } = await supabase
         .from('dishes')
-        .select('name, category, price, photo_url, restaurant_id')
+        .select('name, category, price, photo_url, restaurant_id, avg_rating, total_votes')
         .eq('id', id)
         .maybeSingle()
 
@@ -49,25 +49,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         subtitle = restaurant ? `${restaurant.name} · ${restaurant.town || ''}` : ''
 
-        // Get vote stats
+        // Rating-first stats (no binary vote)
         const { count: totalVotes } = await supabase
           .from('votes')
           .select('*', { count: 'exact', head: true })
           .eq('dish_id', id)
 
-        const { count: yesVotes } = await supabase
-          .from('votes')
-          .select('*', { count: 'exact', head: true })
-          .eq('dish_id', id)
-          .eq('would_order_again', true)
+        const votes = dish.total_votes ?? totalVotes ?? 0
+        const avg = dish.avg_rating != null ? Number(dish.avg_rating) : null
 
-        if (totalVotes && totalVotes >= 5) {
-          const pct = Math.round(((yesVotes || 0) / totalVotes) * 100)
-          rating = `${pct}% Would Order Again`
-          if (pct >= 90) badge = 'GREAT'
-          else if (pct >= 80) badge = 'Great Here'
-        } else if (totalVotes && totalVotes > 0) {
-          rating = `${totalVotes} vote${totalVotes === 1 ? '' : 's'}`
+        if (votes >= 5 && avg != null) {
+          rating = `${avg.toFixed(1)}/10 · ${votes} ratings`
+          if (avg >= 9.0) badge = 'GREAT'
+          else if (avg >= 8.0) badge = 'Great Here'
+        } else if (votes > 0) {
+          rating = `${votes} rating${votes === 1 ? '' : 's'}`
         }
 
         if (dish.price) {
