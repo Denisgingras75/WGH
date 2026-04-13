@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { authApi } from '../../api/authApi'
 import { getPendingVoteFromStorage } from '../../lib/storage'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { logger } from '../../utils/logger'
 
@@ -18,8 +16,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken'
 
   // Check for pending vote from storage
-  const pendingVote = getPendingVoteFromStorage()
-  const hasPendingVote = pendingVote !== null
+  const hasPendingVote = getPendingVoteFromStorage() !== null
 
   // Reset state when modal closes
   useEffect(() => {
@@ -186,14 +183,14 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
           </button>
 
           {/* Icon */}
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: hasPendingVote ? (pendingVote.vote ? 'var(--color-emerald)' : 'var(--color-red)') : 'var(--color-primary)' }}>
-            <span className="text-3xl">{hasPendingVote ? (pendingVote.vote ? <ThumbsUpIcon size={40} /> : <ThumbsDownIcon size={40} />) : '🍽️'}</span>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'var(--color-primary)' }}>
+            <span className="text-3xl">{hasPendingVote ? '⭐' : '🍽️'}</span>
           </div>
 
           {/* Header */}
           <div className="text-center mb-6">
             <h2 id="login-modal-title" className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-              {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : hasPendingVote ? 'Sign in to save your vote' : 'Sign in to vote'}
+              {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : hasPendingVote ? 'Sign in to save your rating' : 'Sign in to rate'}
             </h2>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {mode === 'signup'
@@ -203,7 +200,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                 : mode === 'forgot'
                 ? "Enter your email and we'll send you a reset link"
                 : hasPendingVote
-                ? `Your ${pendingVote.vote ? '"Yes"' : '"No"'} vote is ready`
+                ? 'Your rating is ready'
                 : 'Join the community and discover the best dishes'
               }
             </p>

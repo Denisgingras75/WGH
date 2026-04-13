@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { authApi } from '../api/authApi'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
-import { ThumbsUpIcon } from '../components/ThumbsUpIcon'
-import { ThumbsDownIcon } from '../components/ThumbsDownIcon'
 import { CameraIcon } from '../components/CameraIcon'
 import { WghLogo } from '../components/WghLogo'
 
@@ -264,12 +262,8 @@ export function Login() {
               </h3>
               <div className="space-y-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg flex items-center gap-0.5"><ThumbsUpIcon size={26} /><ThumbsDownIcon size={26} /></span>
-                  <p><strong style={{ color: 'var(--color-text-primary)' }}>Would you order it again?</strong> Quick yes or no vote</p>
-                </div>
-                <div className="flex items-center gap-3">
                   <span className="text-lg">⭐</span>
-                  <p><strong style={{ color: 'var(--color-text-primary)' }}>Rate 1-10</strong> for more detail on how good it was</p>
+                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)' }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <CameraIcon size={20} />

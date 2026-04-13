@@ -10,7 +10,7 @@ import { followsApi } from '../api/followsApi'
 import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
-import { FoodMap, ShelfFilter, JournalFeed, LocalListCard } from '../components/profile'
+import { FoodMap, JournalFeed, LocalListCard } from '../components/profile'
 import { useLocalListDetail } from '../hooks/useLocalListDetail'
 import { TrustBadge, ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
@@ -29,11 +29,9 @@ function formatLocationName(slug) {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase() })
 }
 
-const PUBLIC_SHELVES = [
-  { id: 'all', label: 'All' },
-  { id: 'good-here', label: 'Good Here' },
-  { id: 'not-good-here', label: "Wasn't Good Here" },
-]
+// Shelves collapsed to a single "My Ratings" feed — Worth-It/Avoid split retired
+// with the binary vote (Apr 2026). The shelf filter UI is no longer rendered;
+// kept only for search-history compatibility.
 
 /**
  * Compute rating style from average rating and variance
@@ -80,7 +78,6 @@ export function UserProfile() {
   const [userReviews, setUserReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   // selectedReview state removed — ReviewDetailModal doesn't exist yet
-  const [activeShelf, setActiveShelf] = useState('all')
   const [tasteCompat, setTasteCompat] = useState(null)
   const [ratingBias, setRatingBias] = useState(null)
   const [standoutPicks, setStandoutPicks] = useState({})
@@ -322,15 +319,13 @@ export function UserProfile() {
     }
   }
 
-  // Compute stats and split votes from recent votes
-  const { uniqueRestaurants, foodMapStats, worthItVotes, avoidVotes, ratingStyle } = useMemo(() => {
+  // Compute stats from recent votes — single "My Ratings" shelf, sorted by recency.
+  const { uniqueRestaurants, foodMapStats, ratingStyle } = useMemo(() => {
     if (!profile?.recent_votes?.length) {
-      return { uniqueRestaurants: 0, foodMapStats: { totalVotes: 0, uniqueRestaurants: 0, categoryCounts: {} }, worthItVotes: [], avoidVotes: [], ratingStyle: null }
+      return { uniqueRestaurants: 0, foodMapStats: { totalVotes: 0, uniqueRestaurants: 0, categoryCounts: {} }, ratingStyle: null }
     }
     const restaurantNames = new Set()
     const catCounts = {}
-    const worthIt = []
-    const avoid = []
     const ratings = []
     profile.recent_votes.forEach(vote => {
       if (vote.dish?.restaurant_name) {
@@ -338,11 +333,6 @@ export function UserProfile() {
       }
       if (vote.dish?.category) {
         catCounts[vote.dish.category] = (catCounts[vote.dish.category] || 0) + 1
-      }
-      if (vote.would_order_again) {
-        worthIt.push(vote)
-      } else {
-        avoid.push(vote)
       }
       if (vote.rating != null) {
         ratings.push(vote.rating)
@@ -367,54 +357,36 @@ export function UserProfile() {
         uniqueRestaurants: restaurantNames.size,
         categoryCounts: catCounts,
       },
-      worthItVotes: worthIt,
-      avoidVotes: avoid,
       ratingStyle: style,
     }
   }, [profile?.recent_votes])
 
-  // Transform votes into JournalFeed shape
-  var journalWorthIt = worthItVotes.map(function (vote) {
-    var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
-    return {
-      dish_id: vote.dish && vote.dish.id,
-      dish_name: vote.dish && vote.dish.name,
-      restaurant_name: vote.dish && vote.dish.restaurant_name,
-      restaurant_town: vote.dish && vote.dish.restaurant_town,
-      category: vote.dish && vote.dish.category,
-      photo_url: vote.dish && vote.dish.photo_url,
-      rating_10: vote.rating,
-      community_avg: vote.dish && vote.dish.avg_rating,
-      voted_at: vote.voted_at,
-      review_text: review && review.review_text,
-      would_order_again: true,
-    }
-  })
-  var journalAvoid = avoidVotes.map(function (vote) {
-    var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
-    return {
-      dish_id: vote.dish && vote.dish.id,
-      dish_name: vote.dish && vote.dish.name,
-      restaurant_name: vote.dish && vote.dish.restaurant_name,
-      restaurant_town: vote.dish && vote.dish.restaurant_town,
-      category: vote.dish && vote.dish.category,
-      photo_url: vote.dish && vote.dish.photo_url,
-      rating_10: vote.rating,
-      community_avg: vote.dish && vote.dish.avg_rating,
-      voted_at: vote.voted_at,
-      review_text: review && review.review_text,
-      would_order_again: false,
-    }
-  })
+  // Transform votes into JournalFeed shape — one shelf, sorted most-recent-first.
+  var journalRatings = (profile?.recent_votes || [])
+    .slice()
+    .sort(function (a, b) {
+      return new Date(b.voted_at || 0).getTime() - new Date(a.voted_at || 0).getTime()
+    })
+    .map(function (vote) {
+      var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
+      return {
+        dish_id: vote.dish && vote.dish.id,
+        dish_name: vote.dish && vote.dish.name,
+        restaurant_name: vote.dish && vote.dish.restaurant_name,
+        restaurant_town: vote.dish && vote.dish.restaurant_town,
+        category: vote.dish && vote.dish.category,
+        photo_url: vote.dish && vote.dish.photo_url,
+        rating_10: vote.rating,
+        community_avg: vote.dish && vote.dish.avg_rating,
+        voted_at: vote.voted_at,
+        review_text: review && review.review_text,
+      }
+    })
 
   // Apply location filter if present in URL
   if (locationFilter) {
     var locLower = locationFilter.toLowerCase().replace(/-/g, ' ')
-    journalWorthIt = journalWorthIt.filter(function (d) {
-      var town = (d.restaurant_town || '').toLowerCase()
-      return town.indexOf(locLower) !== -1 || locLower.indexOf(town) !== -1
-    })
-    journalAvoid = journalAvoid.filter(function (d) {
+    journalRatings = journalRatings.filter(function (d) {
       var town = (d.restaurant_town || '').toLowerCase()
       return town.indexOf(locLower) !== -1 || locLower.indexOf(town) !== -1
     })
@@ -759,19 +731,24 @@ export function UserProfile() {
         </div>
       )}
 
-      {/* Shelf Filters */}
-      <ShelfFilter
-        shelves={PUBLIC_SHELVES}
-        active={activeShelf}
-        onSelect={setActiveShelf}
-      />
+      {/* My Ratings shelf title */}
+      <div className="px-4 pt-5 pb-1">
+        <h2
+          style={{
+            fontFamily: "'Amatic SC', cursive",
+            color: 'var(--color-text-primary)',
+            fontSize: '32px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+          }}
+        >
+          {profile.display_name}'s Ratings
+        </h2>
+      </div>
 
-      {/* Journal Feed */}
+      {/* Journal Feed — single chronological shelf */}
       <JournalFeed
-        worthIt={journalWorthIt}
-        avoid={journalAvoid}
-        heard={[]}
-        activeShelf={activeShelf}
+        ratings={journalRatings}
         loading={reviewsLoading}
       />
 

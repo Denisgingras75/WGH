@@ -16,6 +16,7 @@ import { DishHero, DishEvidence } from '../components/dish'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { sanitizeUrl } from '../utils/sanitize'
+import { authApi } from '../api/authApi'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -33,11 +34,36 @@ export function Dish() {
   } = useDishDetail(dishId, user)
 
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [showRateFlow, setShowRateFlow] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
+  const [priorVote, setPriorVote] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
   const tooltipChecked = useRef(false)
+
+  // Fetch prior vote to decide CTA label and preserve it after submit.
+  useEffect(() => {
+    if (!user || !dishId) {
+      setPriorVote(null)
+      return
+    }
+    let cancelled = false
+    authApi.getUserVoteForDish(dishId, user.id)
+      .then((vote) => { if (!cancelled) setPriorVote(vote) })
+      .catch((err) => { logger.error('Failed to fetch prior vote:', err) })
+    return () => { cancelled = true }
+  }, [dishId, user])
+
+  // Auth-gate intent preservation: once the user finishes logging in,
+  // resume straight into the rate flow.
+  useEffect(() => {
+    if (user && pendingAction === 'rate') {
+      setPendingAction(null)
+      setShowRateFlow(true)
+    }
+  }, [user, pendingAction])
 
   useEffect(() => {
     if (dish && !tooltipChecked.current) {
@@ -54,6 +80,30 @@ export function Dish() {
   }
 
   const handleLoginRequired = () => setLoginModalOpen(true)
+
+  const handleRateClick = () => {
+    if (showRateFlow) {
+      setShowRateFlow(false)
+      return
+    }
+    if (!user) {
+      setPendingAction('rate')
+      setLoginModalOpen(true)
+      return
+    }
+    setShowRateFlow(true)
+  }
+
+  const handleVoteSubmitted = () => {
+    setShowRateFlow(false)
+    // Refresh prior-vote state so the CTA label updates to "Update your rating".
+    if (user && dishId) {
+      authApi.getUserVoteForDish(dishId, user.id)
+        .then(setPriorVote)
+        .catch((err) => { logger.error('Failed to refresh prior vote:', err) })
+    }
+    handleVote?.()
+  }
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -222,7 +272,48 @@ export function Dish() {
             parentDish={parentDish}
           />
 
-          {/* LAYER 2: THE EVIDENCE */}
+          {/* LAYER 2: THE ACTION — Rate CTA + inline rate flow */}
+          <div className="p-4 space-y-3">
+            <button
+              type="button"
+              onClick={handleRateClick}
+              aria-expanded={showRateFlow}
+              aria-controls="rate-flow-panel"
+              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              {showRateFlow
+                ? 'Close'
+                : priorVote ? 'Update your rating' : 'Rate this dish'}
+            </button>
+            {showRateFlow && (
+              <div
+                id="rate-flow-panel"
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  border: '1px solid var(--color-divider)',
+                }}
+              >
+                <ReviewFlow
+                  dishId={dish.dish_id}
+                  dishName={dish.dish_name}
+                  restaurantId={dish.restaurant_id}
+                  restaurantName={dish.restaurant_name}
+                  category={dish.category}
+                  price={dish.price}
+                  totalVotes={dish.total_votes}
+                  isRanked={isRanked}
+                  existingPhotoUrl={null}
+                  onVote={handleVoteSubmitted}
+                  onLoginRequired={handleLoginRequired}
+                  onPhotoUploaded={handlePhotoUploaded}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* LAYER 3: THE EVIDENCE (reviews) */}
           <DishEvidence
             dish={dish}
             dishId={dishId}
@@ -239,64 +330,32 @@ export function Dish() {
             isVariant={isVariant}
           />
 
-          {/* LAYER 3: THE ACTION */}
-          <div className="px-3 pt-3">
-            <div className="flex gap-2">
-              {sanitizeUrl(dish.website_url) && (
-                <a
-                  href={sanitizeUrl(dish.website_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => capture('order_link_clicked', {
-                    dish_id: dish.dish_id,
-                    dish_name: dish.dish_name,
-                    restaurant_id: dish.restaurant_id,
-                    restaurant_name: dish.restaurant_name,
-                  })}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                  }}
-                >
-                  Order Online
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              )}
+          {/* LAYER 4: SECONDARY ACTION */}
+          {sanitizeUrl(dish.website_url) && (
+            <div className="px-3 pt-3">
+              <a
+                href={sanitizeUrl(dish.website_url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => capture('order_link_clicked', {
+                  dish_id: dish.dish_id,
+                  dish_name: dish.dish_name,
+                  restaurant_id: dish.restaurant_id,
+                  restaurant_name: dish.restaurant_name,
+                })}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                }}
+              >
+                Order Online
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-          </div>
-
-          {/* Vote Flow */}
-          <div className="p-4">
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              <ReviewFlow
-                dishId={dish.dish_id}
-                dishName={dish.dish_name}
-                restaurantId={dish.restaurant_id}
-                restaurantName={dish.restaurant_name}
-                category={dish.category}
-                price={dish.price}
-                totalVotes={dish.total_votes}
-                yesVotes={dish.yes_votes}
-                percentWorthIt={dish.percent_worth_it}
-                isRanked={isRanked}
-                hasPhotos={allPhotos.length > 0}
-                onVote={handleVote}
-                onLoginRequired={handleLoginRequired}
-                onPhotoUploaded={handlePhotoUploaded}
-                onToggleFavorite={handleToggleSave}
-                isFavorite={isFavorite?.(dishId)}
-              />
-            </div>
-          </div>
+          )}
         </>
       )}
 

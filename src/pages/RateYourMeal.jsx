@@ -25,7 +25,6 @@ function getSpecialClientId(specialDishName) {
 
 function createInitialRatingState(previousValue) {
   return previousValue || {
-    wouldOrderAgain: null,
     rating10: 0,
     reviewText: '',
     photoFile: null,
@@ -104,7 +103,6 @@ export function RateYourMeal() {
 
           votes.push({
             dishId: resolvedDish.dishId,
-            wouldOrderAgain: rating.wouldOrderAgain,
             rating10: rating.rating10,
             reviewText: rating.reviewText,
           })

@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CategoryIcon } from '../home/CategoryIcons'
 import { TrustBadge } from '../jitter'
 import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
-import { getRatingColor, getPercentColor, formatScore10 } from '../../utils/ranking'
+import { getRatingColor, formatScore10 } from '../../utils/ranking'
 
 /**
  * Dish hero section: photo, name, restaurant, price, score, jitter trust.
@@ -126,26 +126,9 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
                 {formatScore10(dish.avg_rating)}
               </span>
             </div>
-            <div className="text-right space-y-1" style={{ minWidth: '120px' }}>
-              <p className="text-sm font-bold" style={{ color: getPercentColor(dish.percent_worth_it) }}>
-                {dish.percent_worth_it}% would reorder
-              </p>
-              <div style={{
-                height: '4px',
-                borderRadius: '2px',
-                background: 'var(--color-divider, #e5e7eb)',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  height: '100%',
-                  width: dish.percent_worth_it + '%',
-                  borderRadius: '2px',
-                  background: getPercentColor(dish.percent_worth_it),
-                  transition: 'width 0.4s ease',
-                }} />
-              </div>
-              <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'}
+            <div className="text-right" style={{ minWidth: '120px' }}>
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                {dish.total_votes} rating{dish.total_votes === 1 ? '' : 's'}
               </p>
             </div>
           </div>

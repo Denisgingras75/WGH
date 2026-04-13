@@ -135,11 +135,15 @@ describe('Auth API', () => {
     })
 
     it('should fetch user vote successfully', async () => {
-      const mockVote = { would_order_again: true, rating_10: 8 }
-      const selectFn = vi.fn(() => ({
-        eq: vi.fn(function() { return this }),
-        maybeSingle: vi.fn().mockResolvedValueOnce({ data: mockVote, error: null }),
-      }))
+      const mockVote = { rating_10: 8, review_text: null, review_created_at: null }
+      const selectFn = vi.fn((fields) => {
+        // Ensure binary vote field is not projected any more.
+        expect(fields).not.toMatch(/would_order_again/)
+        return {
+          eq: vi.fn(function() { return this }),
+          maybeSingle: vi.fn().mockResolvedValueOnce({ data: mockVote, error: null }),
+        }
+      })
 
       supabase.from.mockReturnValueOnce({ select: selectFn })
 

@@ -4,13 +4,13 @@ import { getCategoryNeonImage } from '../constants/categories'
 
 const BURGER_FALLBACK = '/categories/icons/burger.webp'
 
-export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.1, category }) {
+export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.1, category, unrated = false }) {
   const iconSrc = getCategoryNeonImage(category) || BURGER_FALLBACK
   const lastValue = useRef(value)
   const lastBiteSoundTime = useRef(0)
 
   // How much food is eaten (0 = full, 1 = fully eaten)
-  const eatenPercent = (value - min) / (max - min)
+  const eatenPercent = unrated ? 0 : (value - min) / (max - min)
 
   const handleChange = (e) => {
     const newValue = parseFloat(e.target.value)
@@ -65,15 +65,21 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
 
         {/* Rating display overlaid */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-          <span className="text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
-          <span className="text-xl" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
+          {unrated ? (
+            <span className="text-lg font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Tap to rate</span>
+          ) : (
+            <>
+              <span className="text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
+              <span className="text-xl" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
+            </>
+          )}
         </div>
       </div>
 
       {/* Label based on rating */}
       <div className="text-center">
-        <span className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          {getRatingLabel(value)}
+        <span className="text-lg font-semibold" style={{ color: unrated ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
+          {unrated ? 'Slide to rate' : getRatingLabel(value)}
         </span>
       </div>
 
@@ -88,11 +94,11 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
           step={step}
           value={value}
           onChange={handleChange}
-          aria-label={`Rating: ${value.toFixed(1)} out of 10. ${getRatingLabel(value)}`}
+          aria-label={unrated ? 'Rate this dish from 0 to 10' : `Rating: ${value.toFixed(1)} out of 10. ${getRatingLabel(value)}`}
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={value}
-          aria-valuetext={`${value.toFixed(1)} out of 10: ${getRatingLabel(value)}`}
+          aria-valuetext={unrated ? 'Not rated yet' : `${value.toFixed(1)} out of 10: ${getRatingLabel(value)}`}
           className="rating-slider w-full h-3 rounded-full appearance-none cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-9 [&::-webkit-slider-thumb]:h-9
             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-xl
@@ -103,7 +109,9 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
             [&::-moz-range-thumb]:shadow-xl [&::-moz-range-thumb]:border-4
             [&::-moz-range-thumb]:cursor-pointer"
           style={{
-            background: 'linear-gradient(90deg, var(--color-red-light), var(--color-yellow), var(--color-emerald-light))',
+            background: unrated
+              ? 'var(--color-divider)'
+              : 'linear-gradient(90deg, var(--color-red-light), var(--color-yellow), var(--color-emerald-light))',
           }}
         />
         <div className="flex justify-between text-xs mt-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>

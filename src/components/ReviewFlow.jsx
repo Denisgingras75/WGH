@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
@@ -8,12 +7,9 @@ import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
 import { FoodRatingSlider } from './FoodRatingSlider'
-import { ThumbsUpIcon } from './ThumbsUpIcon'
-import { ThumbsDownIcon } from './ThumbsDownIcon'
 import { MAX_REVIEW_LENGTH } from '../constants/app'
 import {
   getPendingVoteFromStorage,
-  setPendingVoteToStorage,
   clearPendingVoteStorage,
 } from '../lib/storage'
 import { logger } from '../utils/logger'
@@ -22,111 +18,100 @@ import { PhotoUploadButton } from './PhotoUploadButton'
 import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
 import { validateUserContent } from '../lib/reviewBlocklist'
 
-export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, category, price, totalVotes = 0, yesVotes = 0, percentWorthIt = 0, isRanked = false, hasPhotos = false, onVote, onLoginRequired, onPhotoUploaded, onToggleFavorite, isFavorite }) {
+// Single-screen rating flow.
+// - Slider defaults to null; submit stays disabled until the user touches it.
+// - Review + photo are optional and collapsed by default.
+// - No "would you order again?" step. Rating alone is the signal.
+export function ReviewFlow({
+  dishId,
+  dishName,
+  restaurantId,
+  restaurantName,
+  category,
+  price,
+  totalVotes = 0,
+  isRanked = false,
+  existingPhotoUrl = null,
+  onVote,
+  onLoginRequired,
+  onPhotoUploaded,
+}) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { submitVote, submitting } = useVote()
   const { getPurity, getJitterProfile, attachToTextarea, reset: resetPurity } = usePurityTracker()
   const jitterBoxRef = useRef(null)
-  const [userVote, setUserVote] = useState(null)
-  const [userRating, setUserRating] = useState(null)
-  const [userReviewText, setUserReviewText] = useState(null)
 
-  const [localTotalVotes, setLocalTotalVotes] = useState(totalVotes)
-  const [localYesVotes, setLocalYesVotes] = useState(yesVotes)
+  // Prior-vote state: used to prefill and to decide "Update" vs "Submit" label.
+  const [priorRating, setPriorRating] = useState(null)
+  const [priorReviewText, setPriorReviewText] = useState(null)
 
-  // Flow: 1 = yes/no, 2 = rate + extras (review + photo)
-  // Initialize from localStorage if there's a pending vote for this dish (survives page reload after magic link)
-  const [step, setStep] = useState(() => {
-    const stored = getPendingVoteFromStorage()
-    return (stored && stored.dishId === dishId) ? 2 : 1
-  })
-  const [pendingVote, setPendingVote] = useState(() => {
-    const stored = getPendingVoteFromStorage()
-    return (stored && stored.dishId === dishId) ? stored.vote : null
-  })
-  const [sliderValue, setSliderValue] = useState(0)
+  // Form state.
+  // sliderValue = null means "unrated" — submit button stays disabled.
+  const [sliderValue, setSliderValue] = useState(null)
+  const [reviewExpanded, setReviewExpanded] = useState(false)
   const [reviewText, setReviewText] = useState('')
   const [reviewError, setReviewError] = useState(null)
 
-  const [awaitingLogin, setAwaitingLogin] = useState(false)
-  const [announcement, setAnnouncement] = useState('') // For screen reader announcements
+  const [photoExpanded, setPhotoExpanded] = useState(false)
   const [photoAdded, setPhotoAdded] = useState(false)
+  const [existingPhotoAction, setExistingPhotoAction] = useState('keep') // keep | replace | remove
+
+  const [announcement, setAnnouncement] = useState('')
   const reviewTextareaRef = useRef(null)
-  // Combined ref: partner's focus ref + Denis's purity tracker ref
+
   const combinedTextareaRef = (el) => {
     reviewTextareaRef.current = el
     attachToTextarea(el)
   }
 
-  const noVotes = localTotalVotes - localYesVotes
-  const yesPercent = localTotalVotes > 0 ? Math.round((localYesVotes / localTotalVotes) * 100) : 0
-  const noPercent = localTotalVotes > 0 ? 100 - yesPercent : 0
+  const isUpdate = priorRating !== null
+  const hasDraft =
+    (sliderValue !== null && sliderValue !== priorRating) ||
+    (reviewText.trim() && reviewText.trim() !== (priorReviewText || '')) ||
+    photoAdded ||
+    existingPhotoAction !== 'keep'
 
+  // Load prior vote (if any) to prefill.
   useEffect(() => {
-    setLocalTotalVotes(totalVotes)
-    setLocalYesVotes(yesVotes)
-  }, [totalVotes, yesVotes])
-
-  useEffect(() => {
+    let cancelled = false
     async function fetchUserVote() {
       if (!user) {
-        setUserVote(null)
-        setUserRating(null)
-        setUserReviewText(null)
+        setPriorRating(null)
+        setPriorReviewText(null)
         return
       }
       try {
         const vote = await authApi.getUserVoteForDish(dishId, user.id)
+        if (cancelled) return
         if (vote) {
-          setUserVote(vote.would_order_again)
-          setUserRating(vote.rating_10)
-          setUserReviewText(vote.review_text || null)
-          if (vote.rating_10) setSliderValue(vote.rating_10)
-          if (vote.review_text) setReviewText(vote.review_text)
+          setPriorRating(vote.rating_10 ?? null)
+          setPriorReviewText(vote.review_text || null)
+          if (vote.rating_10 != null) setSliderValue(vote.rating_10)
+          if (vote.review_text) {
+            setReviewText(vote.review_text)
+            setReviewExpanded(true)
+          }
         }
       } catch (error) {
         logger.error('Error fetching user vote:', error)
       }
     }
     fetchUserVote()
+    return () => { cancelled = true }
   }, [dishId, user])
 
-  // Continue flow after successful login (including OAuth redirect)
+  // Clear any stale pending-vote localStorage from the old thumbs-first flow.
   useEffect(() => {
-    if (user && awaitingLogin && pendingVote !== null) {
-      // User just logged in and we have a pending vote - continue to rating step
-      setAwaitingLogin(false)
-      setStep(2)
+    const stored = getPendingVoteFromStorage()
+    if (stored && stored.dishId === dishId) {
       clearPendingVoteStorage()
     }
-  }, [user, awaitingLogin, pendingVote])
+  }, [dishId])
 
-  // Check for pending vote in localStorage after OAuth redirect
+  // Attach JitterBox to textarea when expanded.
   useEffect(() => {
-    if (user && step === 1 && pendingVote === null) {
-      const stored = getPendingVoteFromStorage()
-      if (stored && stored.dishId === dishId) {
-        // User just logged in after OAuth redirect - restore their vote and continue
-        setPendingVote(stored.vote)  // Set the pending vote BEFORE changing step
-        setStep(2)
-        clearPendingVoteStorage()
-      }
-    }
-  }, [user, dishId, step, pendingVote])
-
-  // Auth guard: if on step 2 without auth, kick back to step 1
-  useEffect(() => {
-    if (step === 2 && !user) {
-      setStep(1)
-      setAwaitingLogin(true)
-      onLoginRequired?.()
-    }
-  }, [step, user, onLoginRequired])
-
-  // Attach JitterBox to textarea when it mounts (step 2)
-  useEffect(() => {
-    if (reviewTextareaRef.current && !jitterBoxRef.current) {
+    if (reviewExpanded && reviewTextareaRef.current && !jitterBoxRef.current) {
       jitterBoxRef.current = JitterBox.attach(reviewTextareaRef.current)
     }
     return () => {
@@ -135,33 +120,39 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
         jitterBoxRef.current = null
       }
     }
-  }, [step]) // re-run when step changes (textarea mounts on step 2)
+  }, [reviewExpanded])
 
-  const handleVoteClick = (wouldOrderAgain) => {
-    setPendingVote(wouldOrderAgain)
-    hapticLight() // Tactile feedback on selection
+  // Intercept browser back during unsaved drafts: prompt before leaving.
+  useEffect(() => {
+    if (!hasDraft) {
+      clearBackButtonInterceptor()
+      return
+    }
+    const currentUrl = window.location.href
+    const currentState = window.history.state
+    setBackButtonInterceptor(() => {
+      // Restore the URL first so the draft page stays visible during the confirm.
+      window.history.pushState(currentState, '', currentUrl)
+      if (window.confirm('Discard draft?')) {
+        clearBackButtonInterceptor()
+        window.history.back()
+      }
+    })
+    return () => clearBackButtonInterceptor()
+  }, [hasDraft])
 
-    // Auth gate: check if user is logged in BEFORE showing confirmation
+  const handleSubmit = async () => {
+    if (sliderValue === null) return // safety guard — button should already be disabled
     if (!user) {
-      // Save to localStorage so it survives OAuth redirect
-      setPendingVoteToStorage(dishId, wouldOrderAgain)
-      setAwaitingLogin(true)
       onLoginRequired?.()
-      // Don't show confirmation animation - go straight to login
       return
     }
 
-    // User is authenticated — expand rating UI immediately
-    setStep(2)
-  }
-
-  const handleSubmit = async () => {
-    // Validate review length if they wrote something
+    // Review validation
     if (reviewText.length > MAX_REVIEW_LENGTH) {
       setReviewError(`${reviewText.length - MAX_REVIEW_LENGTH} characters over limit`)
       return
     }
-    // Validate review content against blocklist
     if (reviewText.trim()) {
       const contentError = validateUserContent(reviewText, 'Review')
       if (contentError) {
@@ -170,40 +161,20 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
       }
     }
     setReviewError(null)
-    await doSubmit(reviewText.trim() || null)
-  }
 
-  const doSubmit = async (reviewTextToSubmit) => {
-    // Prevent double submission
-    if (submitting) return
-    if (pendingVote === null) return
-
-    if (!user) {
-      onLoginRequired?.()
-      return
-    }
-
-    // Validate rating is within acceptable range
     if (sliderValue < 0 || sliderValue > 10) {
       logger.error('Invalid rating value:', sliderValue)
       return
     }
 
-    const previousVote = userVote
-    const voteToSubmit = pendingVote
-    const ratingToSubmit = sliderValue
-    const hadPhotoAdded = photoAdded
+    const reviewTextToSubmit = reviewText.trim() || null
 
-    // Capture WAR badge before clearing state
-    const badge = reviewTextToSubmit && jitterBoxRef.current
-      ? jitterBoxRef.current.score()
-      : null
+    const badge = reviewTextToSubmit && jitterBoxRef.current ? jitterBoxRef.current.score() : null
     const purityData = badge ? { purity: badge.purity } : (reviewTextToSubmit ? getPurity() : null)
     const jitterData = badge ? badge.profile : (reviewTextToSubmit ? getJitterProfile() : null)
     const jitterScore = badge
       ? { score: badge.war, flags: badge.flags, classification: badge.classification }
       : null
-    const sessionStatsData = badge ? { isCapturing: true, keystrokes: badge.session.keystrokes, wpm: badge.session.wpm, duration: badge.session.duration } : null
 
     const attestResult = jitterScore && user
       ? await jitterApi.attestReview({
@@ -219,308 +190,163 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
         })
       : null
     const badgeHash = attestResult?.badge_hash || null
-    const result = await submitVote(dishId, voteToSubmit, ratingToSubmit, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+
+    const result = await submitVote(dishId, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
 
     if (!result.success) {
       logger.error('Vote submission failed:', result.error)
-      setReviewError(result.error || 'Unable to submit your vote. Please try again.')
+      setReviewError(result.error || 'Unable to submit your rating. Please try again.')
       return
     }
 
-    if (previousVote === null) {
-      setLocalTotalVotes(prev => prev + 1)
-      if (voteToSubmit) setLocalYesVotes(prev => prev + 1)
-    } else if (previousVote !== voteToSubmit) {
-      if (voteToSubmit) {
-        setLocalYesVotes(prev => prev + 1)
-      } else {
-        setLocalYesVotes(prev => prev - 1)
-      }
-    }
+    // Analytics: votesApi.submitVote already dual-emits vote_submitted +
+    // rating_submitted for every vote. Dashboards that need dish/restaurant
+    // context can join against dish_id in PostHog.
 
-    setUserVote(voteToSubmit)
-    setUserRating(ratingToSubmit)
-    if (reviewTextToSubmit) setUserReviewText(reviewTextToSubmit)
-
-    capture('vote_cast', {
-      dish_id: dishId,
-      dish_name: dishName,
-      restaurant_id: restaurantId,
-      restaurant_name: restaurantName,
-      category: category,
-      price: price != null ? Number(price) : null,
-      would_order_again: voteToSubmit,
-      rating: ratingToSubmit,
-      has_review: !!reviewTextToSubmit,
-      has_photo: hadPhotoAdded,
-      is_update: previousVote !== null,
-    })
-
-    clearPendingVoteStorage()
-    setStep(1)
-    setPendingVote(null)
-    setReviewText('')
-    setReviewError(null)
+    setPriorRating(sliderValue)
+    if (reviewTextToSubmit) setPriorReviewText(reviewTextToSubmit)
     setPhotoAdded(false)
+    setExistingPhotoAction('keep')
+    setReviewError(null)
     resetPurity()
     if (jitterBoxRef.current) jitterBoxRef.current.reset()
 
-    // Haptic success feedback
     hapticSuccess()
-
-    // Announce for screen readers
-    setAnnouncement('Vote submitted successfully')
+    setAnnouncement('Rating saved')
     setTimeout(() => setAnnouncement(''), 1000)
 
-    // Notify parent to refresh data
     onVote?.()
   }
 
-  // Intercept browser back button during vote flow — navigate between steps instead of leaving.
-  // The interceptor was registered in main.jsx BEFORE React Router, so its popstate listener
-  // fires first (AT_TARGET phase = registration order). It calls stopImmediatePropagation to
-  // prevent React Router from processing the navigation, then pushes the dish URL back.
-  useEffect(() => {
-    if (step <= 1) {
-      clearBackButtonInterceptor()
-      return
-    }
-
-    // Save the dish page URL/state now — by the time popstate fires, the browser
-    // has already changed the URL to the previous page
-    const currentUrl = window.location.href
-    const currentState = window.history.state
-
-    setBackButtonInterceptor(() => {
-      // Restore the dish page in the history stack
-      window.history.pushState(currentState, '', currentUrl)
-      setStep(1)
-    })
-
-    return () => clearBackButtonInterceptor()
-  }, [step])
-
-  // Already voted - show summary
-  if (userVote !== null && userRating !== null && step === 1) {
-    return (
-      <div className="space-y-3">
-        <div className="p-4 rounded-xl" style={{ background: 'var(--color-success-light)', border: '1.5px solid var(--color-success)' }}>
-          <p className="text-sm font-medium text-center mb-2" style={{ color: 'var(--color-success)' }}>Your review</p>
-          <div className="flex items-center justify-center gap-4">
-            {userVote ? <ThumbsUpIcon size={32} /> : <ThumbsDownIcon size={32} />}
-            <span className="text-xl font-bold" style={{ color: 'var(--color-success)' }}>{Number(userRating).toFixed(1)}</span>
-          </div>
-          {userReviewText && (
-            <p className="mt-3 text-sm text-center italic" style={{ color: 'var(--color-text-tertiary)' }}>
-              "{userReviewText}"
-            </p>
-          )}
-        </div>
-        {isRanked && (
-          <div>
-            <div
-              className="w-full overflow-hidden"
-              style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}
-            >
-              <div style={{ width: `${yesPercent}%`, height: '100%', borderRadius: '3px', background: 'var(--color-success)' }} />
-            </div>
-            <div className="flex items-baseline gap-1.5 mt-1.5">
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-success)' }}>{yesPercent}%</span>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>would order again</span>
-            </div>
-          </div>
-        )}
-        {/* Rate Your Meal nudge — sit-down restaurants often mean multiple dishes */}
-        {restaurantId && (
-          <button
-            onClick={() => navigate('/restaurants/' + restaurantId + '/rate')}
-            className="w-full py-3 px-4 rounded-xl flex items-center justify-between transition-all active:scale-[0.98]"
-            style={{
-              background: 'var(--color-primary-muted)',
-              border: '1px solid var(--color-primary)',
-            }}
-          >
-            <div className="text-left">
-              <p className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>
-                Had more at {restaurantName || 'this restaurant'}?
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
-                Rate your whole meal in one go
-              </p>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-        )}
-
-        <button
-          onClick={() => {
-            setPendingVote(userVote)
-            setSliderValue(userRating)
-            if (userReviewText) {
-              setReviewText(userReviewText)
-            }
-            setUserVote(null)
-            setUserRating(null)
-            setUserReviewText(null)
-            setStep(1)
-          }}
-          className="w-full py-2 text-sm transition-colors"
-          style={{ color: 'var(--color-text-tertiary)' }}
-        >
-          Update your review
-        </button>
-
-        {/* Post-vote prompts for missing content */}
-        {!userReviewText && (
-          <button
-            onClick={() => {
-              setPendingVote(userVote)
-              setSliderValue(userRating)
-              setStep(2)
-              setTimeout(() => {
-                const el = document.getElementById('review-text')
-                if (el) el.focus()
-              }, 100)
-            }}
-            className="w-full py-2 text-sm font-medium transition-colors"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            Be the first to describe this dish
-          </button>
-        )}
-        {!hasPhotos && (
-          <PhotoUploadButton
-            dishId={dishId}
-            onPhotoUploaded={(photo) => {
-              onPhotoUploaded?.(photo)
-            }}
-            onLoginRequired={onLoginRequired}
-            label="Add a photo — be the first"
-          />
-        )}
-      </div>
-    )
-  }
-
-  // Show pending selection state when awaiting login
-  const showPendingYes = awaitingLogin && pendingVote === true
-  const showPendingNo = awaitingLogin && pendingVote === false
-  const isYesSelected = step === 2 && pendingVote === true
-  const isNoSelected = step === 2 && pendingVote === false
+  const canSubmit = sliderValue !== null && !submitting && reviewText.length <= MAX_REVIEW_LENGTH
+  const submitLabel = submitting ? 'Saving…' : isUpdate ? 'Update rating' : 'Submit rating'
 
   return (
-    <div className="space-y-3">
-      {/* Screen reader announcement region */}
+    <div className="space-y-4">
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
-      <p className="text-sm font-medium text-center" style={{ color: 'var(--color-text-tertiary)' }}>Worth ordering again?</p>
 
-      {/* Show "sign in to continue" note when awaiting login */}
-      {awaitingLogin && pendingVote !== null && (
-        <div className="p-3 rounded-xl text-center" style={{ background: 'var(--color-primary-muted)' }}>
-          <p className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
-            {pendingVote ? <ThumbsUpIcon size={22} /> : <ThumbsDownIcon size={22} />} Vote selected — sign in to save it
-          </p>
+      {/* Rating slider — the single required input. */}
+      <FoodRatingSlider
+        value={sliderValue ?? 0}
+        unrated={sliderValue === null}
+        onChange={(v) => {
+          setSliderValue(v)
+          hapticLight()
+        }}
+        min={0}
+        max={10}
+        step={0.1}
+        category={category}
+      />
+
+      {!isRanked && sliderValue === null && (
+        <p className="text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+          {totalVotes === 0
+            ? 'Be the first to rate this dish.'
+            : `${totalVotes} rating${totalVotes === 1 ? '' : 's'} so far \u00B7 ${Math.max(0, 5 - totalVotes)} more to rank`}
+        </p>
+      )}
+
+      {/* Review — collapsed by default */}
+      {!reviewExpanded ? (
+        <button
+          type="button"
+          onClick={() => setReviewExpanded(true)}
+          className="w-full py-3 text-sm rounded-xl transition-colors"
+          style={{ color: 'var(--color-text-secondary)', border: '1px dashed var(--color-divider)' }}
+        >
+          + Add a review (optional)
+        </button>
+      ) : (
+        <div className="relative">
+          <label htmlFor="review-text" className="sr-only">Your review</label>
+          <textarea
+            ref={combinedTextareaRef}
+            id="review-text"
+            value={reviewText}
+            onChange={(e) => {
+              setReviewText(e.target.value)
+              if (reviewError) setReviewError(null)
+            }}
+            placeholder="What stood out?"
+            aria-label="Write your review"
+            aria-describedby={reviewError ? 'review-error' : 'review-char-count'}
+            aria-invalid={!!reviewError}
+            maxLength={MAX_REVIEW_LENGTH + 50}
+            rows={3}
+            className="w-full p-4 rounded-xl text-sm resize-none focus:outline-none focus-ring"
+            style={{
+              background: 'var(--color-surface-elevated)',
+              border: reviewError ? '2px solid var(--color-primary)' : '1px solid var(--color-divider)',
+              color: 'var(--color-text-primary)',
+            }}
+          />
+          {reviewText.length > 0 && (
+            <div
+              id="review-char-count"
+              className="absolute bottom-2 right-3 text-xs"
+              style={{ color: reviewText.length > MAX_REVIEW_LENGTH ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
+            >
+              {reviewText.length}/{MAX_REVIEW_LENGTH}
+            </div>
+          )}
+          {reviewError && (
+            <p id="review-error" role="alert" className="text-sm text-center mt-1" style={{ color: 'var(--color-primary)' }}>
+              {reviewError}
+            </p>
+          )}
         </div>
       )}
 
-      {!isRanked && !awaitingLogin && step === 1 ? (
-        <p className="text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
-          {localTotalVotes === 0
-            ? 'Be the first to rank this dish!'
-            : `${localTotalVotes} vote${localTotalVotes === 1 ? '' : 's'} so far \u00B7 ${5 - localTotalVotes} more to rank`
-          }
-        </p>
-      ) : null}
-
-      {/* Yes/No buttons — always visible, selected one stays highlighted */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => handleVoteClick(true)}
-          className="relative overflow-hidden flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ease-out focus-ring active:scale-95"
-          style={isYesSelected || showPendingYes
-            ? { background: 'linear-gradient(to bottom right, var(--color-success), var(--color-green-deep))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-success-border)', transform: 'scale(1.05)' }
-            : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-divider)' }}
+      {/* Photo — collapsed by default; if user had a prior photo, show thumbnail + keep/replace/remove. */}
+      {existingPhotoUrl && !photoAdded ? (
+        <div
+          className="p-3 rounded-xl space-y-2"
+          style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}
         >
-          <ThumbsUpIcon size={30} /><span>Yes</span>
-        </button>
-        <button
-          onClick={() => handleVoteClick(false)}
-          className="relative overflow-hidden flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ease-out focus-ring active:scale-95"
-          style={isNoSelected || showPendingNo
-            ? { background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-danger))', color: 'var(--color-text-on-primary)', boxShadow: '0 10px 15px -3px var(--color-primary-glow)', transform: 'scale(1.05)' }
-            : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-divider)' }}
-        >
-          <ThumbsDownIcon size={30} /><span>No</span>
-        </button>
-      </div>
-
-      {/* Step 2: Rating + review + photo — expands inline below yes/no */}
-      {step === 2 && (
-        <div className="space-y-4 animate-fadeIn">
-          <p className="text-sm font-medium text-center" style={{ color: 'var(--color-text-tertiary)' }}>How good was it?</p>
-
-          {/* Food Rating Slider */}
-          <FoodRatingSlider
-            value={sliderValue}
-            onChange={setSliderValue}
-            min={0}
-            max={10}
-            step={0.1}
-            category={category}
-          />
-
-          {/* Review textarea — always visible, starts compact */}
-          <div className="relative">
-            <label htmlFor="review-text" className="sr-only">Your review</label>
-            <textarea
-              ref={combinedTextareaRef}
-              id="review-text"
-              value={reviewText}
-              onChange={(e) => {
-                setReviewText(e.target.value)
-                if (reviewError) setReviewError(null)
-              }}
-              onFocus={(e) => {
-                e.target.rows = 3
-              }}
-              placeholder="What stood out?"
-              aria-label="Write your review"
-              aria-describedby={reviewError ? 'review-error' : 'review-char-count'}
-              aria-invalid={!!reviewError}
-              maxLength={MAX_REVIEW_LENGTH + 50}
-              rows={1}
-              className="w-full p-4 rounded-xl text-sm resize-none focus:outline-none focus-ring"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                border: reviewError ? '2px solid var(--color-primary)' : '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
-              }}
-            />
-            {reviewText.length > 0 && (
-              <div id="review-char-count" className="absolute bottom-2 right-3 text-xs" style={{ color: reviewText.length > MAX_REVIEW_LENGTH ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}>
-                {reviewText.length}/{MAX_REVIEW_LENGTH}
+          <div className="flex items-center gap-3">
+            <img src={existingPhotoUrl} alt="Your existing photo" className="w-16 h-16 rounded-lg object-cover" />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Your photo</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExistingPhotoAction('keep')}
+                  className="text-xs px-2 py-1 rounded-md"
+                  style={{
+                    background: existingPhotoAction === 'keep' ? 'var(--color-primary)' : 'transparent',
+                    color: existingPhotoAction === 'keep' ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-divider)',
+                  }}
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setExistingPhotoAction('replace'); setPhotoExpanded(true) }}
+                  className="text-xs px-2 py-1 rounded-md"
+                  style={{ color: 'var(--color-text-secondary)', border: '1px solid var(--color-divider)' }}
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExistingPhotoAction('remove')}
+                  className="text-xs px-2 py-1 rounded-md"
+                  style={{
+                    background: existingPhotoAction === 'remove' ? 'var(--color-danger)' : 'transparent',
+                    color: existingPhotoAction === 'remove' ? 'var(--color-text-on-primary)' : 'var(--color-danger)',
+                    border: '1px solid var(--color-divider)',
+                  }}
+                >
+                  Remove
+                </button>
               </div>
-            )}
-            {reviewError && (
-              <p id="review-error" role="alert" className="text-sm text-center mt-1" style={{ color: 'var(--color-primary)' }}>
-                {reviewError}
-              </p>
-            )}
-          </div>
-
-          {/* Photo upload — inline */}
-          {photoAdded ? (
-            <div className="flex items-center gap-2 p-3 rounded-xl" style={{ background: 'var(--color-success-muted)', border: '1px solid var(--color-success-border)' }}>
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-success)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>Photo added</span>
             </div>
-          ) : (
+          </div>
+          {existingPhotoAction === 'replace' && photoExpanded && (
             <PhotoUploadButton
               dishId={dishId}
               onPhotoUploaded={(photo) => {
@@ -530,18 +356,79 @@ export function ReviewFlow({ dishId, dishName, restaurantId, restaurantName, cat
               onLoginRequired={onLoginRequired}
             />
           )}
-
-          {/* Submit button */}
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || reviewText.length > MAX_REVIEW_LENGTH}
-            className={`w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring
-              ${submitting || reviewText.length > MAX_REVIEW_LENGTH ? 'opacity-50 cursor-not-allowed' : 'active:scale-98 hover:shadow-xl'}`}
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            {submitting ? 'Saving...' : (reviewText.trim() || photoAdded) ? 'Submit' : 'Submit Rating'}
-          </button>
         </div>
+      ) : !photoExpanded && !photoAdded ? (
+        <button
+          type="button"
+          onClick={() => setPhotoExpanded(true)}
+          className="w-full py-3 text-sm rounded-xl transition-colors"
+          style={{ color: 'var(--color-text-secondary)', border: '1px dashed var(--color-divider)' }}
+        >
+          + Add a photo (optional)
+        </button>
+      ) : photoAdded ? (
+        <div
+          className="flex items-center gap-2 p-3 rounded-xl"
+          style={{ background: 'var(--color-success-muted)', border: '1px solid var(--color-success-border)' }}
+        >
+          <svg
+            className="w-5 h-5 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            style={{ color: 'var(--color-success)' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>Photo added</span>
+        </div>
+      ) : (
+        <PhotoUploadButton
+          dishId={dishId}
+          onPhotoUploaded={(photo) => {
+            setPhotoAdded(true)
+            onPhotoUploaded?.(photo)
+          }}
+          onLoginRequired={onLoginRequired}
+        />
+      )}
+
+      <button
+        onClick={handleSubmit}
+        disabled={!canSubmit}
+        className={`w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring ${canSubmit ? 'active:scale-98 hover:shadow-xl' : 'opacity-50 cursor-not-allowed'}`}
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+      >
+        {submitLabel}
+      </button>
+
+      {restaurantId && !hasDraft && isUpdate && (
+        <button
+          onClick={() => navigate('/restaurants/' + restaurantId + '/rate')}
+          className="w-full py-3 px-4 rounded-xl flex items-center justify-between transition-all active:scale-[0.98]"
+          style={{ background: 'var(--color-primary-muted)', border: '1px solid var(--color-primary)' }}
+        >
+          <div className="text-left">
+            <p className="text-sm font-bold" style={{ color: 'var(--color-primary)' }}>
+              Had more at {restaurantName || 'this restaurant'}?
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+              Rate your whole meal in one go
+            </p>
+          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5 flex-shrink-0"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
       )}
     </div>
   )

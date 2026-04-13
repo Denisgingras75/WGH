@@ -80,7 +80,7 @@ export const HomeListMode = memo(function HomeListMode({
             textTransform: 'uppercase',
             margin: '5px 0 0',
           }}>
-            Dishes worth ordering again
+            Top-rated dishes near you
           </p>
         </div>
         {/* Search bar */}

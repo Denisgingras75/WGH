@@ -891,10 +891,7 @@ export function RestaurantMap({
                   : rank === 3 ? 'var(--color-medal-bronze)'
                   : 'var(--color-text-tertiary)'
 
-                var pct = dish.percent_worth_it || 0
-                var barColor = pct >= 80 ? 'var(--color-rating)'
-                  : pct >= 60 ? 'var(--color-accent-gold)'
-                  : 'var(--color-text-tertiary)'
+                var voteCount = dish.total_votes || 0
 
                 return (
                   <button
@@ -951,30 +948,14 @@ export function RestaurantMap({
                         </span>
                       </div>
 
-                      {/* Would order again bar */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                        <div style={{
-                          flex: 1,
-                          height: '4px',
-                          borderRadius: '2px',
-                          background: 'var(--color-divider)',
-                          overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            width: pct + '%',
-                            height: '100%',
-                            borderRadius: '2px',
-                            background: barColor,
-                          }} />
-                        </div>
+                      {/* Vote count */}
+                      <div style={{ marginTop: '4px' }}>
                         <span style={{
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          color: barColor,
-                          flexShrink: 0,
-                          whiteSpace: 'nowrap',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          color: 'var(--color-text-secondary)',
                         }}>
-                          {pct}% would reorder
+                          {voteCount} rating{voteCount === 1 ? '' : 's'}
                         </span>
                       </div>
                     </div>

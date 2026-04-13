@@ -19,23 +19,20 @@ function getDateLabel(timestamp) {
 /**
  * JournalFeed — reverse-chronological feed of food journal entries.
  *
- * Merges worthIt and avoid data sources into a single chronological feed.
- * Shelf filtering narrows to a specific category (for UserProfile compatibility).
+ * Single "My Ratings" shelf (Worth-It/Avoid split retired with the binary vote).
  * Date group headers separate entries by recency.
  *
  * Props:
- *   worthIt     - array of "Good Here" dishes (from useUserVotes)
- *   avoid       - array of "Wasn't Good Here" dishes (from useUserVotes)
- *   activeShelf - 'all' | 'good-here' | 'not-good-here'
- *   loading     - show loading skeletons
+ *   ratings - array of rated dish entries (pre-sorted most-recent-first preferred)
+ *   loading - show loading skeletons
  */
-export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
+export function JournalFeed({ ratings = [], loading }) {
   var [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
-  // Reset to first page when shelf changes
+  // Reset to first page when the ratings source changes substantially.
   useEffect(function () {
     setVisibleCount(PAGE_SIZE)
-  }, [activeShelf])
+  }, [ratings.length])
 
   if (loading) {
     return (
@@ -54,26 +51,9 @@ export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
     )
   }
 
-  // Tag each entry with its type and normalize the timestamp field
-  var entries = []
-
-  if (activeShelf === 'all' || activeShelf === 'good-here') {
-    var tagged = (worthIt || []).map(function (d) {
-      return { dish: d, variant: 'good-here', time: d.voted_at }
-    })
-    entries = entries.concat(tagged)
-  }
-
-  if (activeShelf === 'all' || activeShelf === 'not-good-here') {
-    var taggedAvoid = (avoid || []).map(function (d) {
-      return { dish: d, variant: 'not-good-here', time: d.voted_at }
-    })
-    entries = entries.concat(taggedAvoid)
-  }
-
-  // Sort reverse chronological
-  entries = entries.slice().sort(function (a, b) {
-    return new Date(b.time || 0) - new Date(a.time || 0)
+  // Sort reverse chronological (idempotent if caller pre-sorted).
+  var entries = (ratings || []).slice().sort(function (a, b) {
+    return new Date(b.voted_at || 0) - new Date(a.voted_at || 0)
   })
 
   if (entries.length === 0) {
@@ -96,9 +76,7 @@ export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
             className="mt-1"
             style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}
           >
-            {activeShelf === 'good-here' && "Dishes you'd order again will show up here"}
-            {activeShelf === 'not-good-here' && "Dishes that weren't good will show up here"}
-            {(activeShelf === 'all' || !activeShelf) && "Start rating dishes to build your food journal"}
+            Start rating dishes to build your food journal
           </p>
         </div>
       </div>
@@ -113,13 +91,13 @@ export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
   var renderItems = []
   var lastLabel = null
   for (var i = 0; i < visibleEntries.length; i++) {
-    var entry = visibleEntries[i]
-    var label = getDateLabel(entry.time)
+    var dish = visibleEntries[i]
+    var label = getDateLabel(dish.voted_at)
     if (label && label !== lastLabel) {
       renderItems.push({ type: 'header', label: label, key: 'header-' + label + '-' + i })
       lastLabel = label
     }
-    renderItems.push({ type: 'entry', entry: entry, key: entry.variant + '-' + (entry.dish.dish_id || entry.dish.id) })
+    renderItems.push({ type: 'entry', dish: dish, key: 'entry-' + (dish.dish_id || dish.id || i) })
   }
 
   return (
@@ -147,7 +125,7 @@ export function JournalFeed({ worthIt, avoid, activeShelf, loading }) {
           return (
             <JournalCard
               key={item.key}
-              dish={item.entry.dish}
+              dish={item.dish}
             />
           )
         })}

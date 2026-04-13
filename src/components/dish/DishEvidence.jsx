@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { TrustBadge, TrustSummary, JitterExplainer } from '../jitter'
 import { VariantSelector } from '../VariantPicker'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
 import { getRatingColor, formatScore10 } from '../../utils/ranking'
 import { formatRelativeTime } from '../../utils/formatters'
 
@@ -211,14 +209,17 @@ export function DishEvidence({
                 aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
               />
             </div>
-            <div className="space-y-4">
+            <div
+              className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               {filteredReviews.map(function (review) {
                 var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
                 return (
                   <div
                     key={review.id}
-                    className="p-4 rounded-xl"
-                    style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
+                    className="p-4 rounded-xl flex-shrink-0 snap-start"
+                    style={{ width: '280px', background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
                   >
                     <Link to={'/user/' + review.user_id} className="flex items-center gap-3 mb-2.5 min-w-0">
                       <div
@@ -255,19 +256,16 @@ export function DishEvidence({
                       </div>
                     </Link>
 
-                    <div className="flex items-center gap-2 mb-2.5">
-                      {review.rating_10 ? (
+                    {review.rating_10 ? (
+                      <div className="flex items-center gap-2 mb-2.5">
                         <span
                           className="rounded-full px-2.5 py-0.5 font-bold text-sm"
                           style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
                         >
                           {formatScore10(review.rating_10)}
                         </span>
-                      ) : null}
-                      <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {review.would_order_again ? <><ThumbsUpIcon size={18} /> Would order again</> : <><ThumbsDownIcon size={18} /> Would skip</>}
-                      </span>
-                    </div>
+                      </div>
+                    ) : null}
 
                     {review.review_text && (
                       <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>

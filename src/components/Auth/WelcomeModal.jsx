@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
 import { WghLogo } from '../WghLogo'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
 import { capture } from '../../lib/analytics'
 
 const STEPS = [
@@ -11,14 +9,14 @@ const STEPS = [
     id: 'welcome',
     title: 'Find the best dishes near you',
     subtitle: 'Real ratings from locals & visitors like you',
-    description: 'No more guessing. See what\'s actually worth ordering.',
+    description: 'Find the best food faster.',
   },
   {
     id: 'how-it-works',
-    icon: 'thumbsUp',
-    title: 'Vote on dishes you\'ve tried',
-    subtitle: 'Good Here or Not Good — it\'s that simple',
-    description: 'Rate 1-10, and watch dishes climb the rankings as the community votes.',
+    icon: 'star',
+    title: "Rate dishes you've actually tried, 1–10.",
+    subtitle: 'Find the best food faster.',
+    description: 'Your ratings help locals and visitors discover what\'s actually good.',
   },
   {
     id: 'photos',
@@ -227,7 +225,7 @@ export function WelcomeModal() {
               className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all"
               style={{ background: 'var(--color-primary)' }}
             >
-              {currentStep.icon === 'thumbsUp' ? <ThumbsUpIcon size={52} />
+              {currentStep.icon === 'star' ? <span className="text-4xl">⭐</span>
                 : currentStep.icon === 'camera' ? (
                   <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -252,21 +250,32 @@ export function WelcomeModal() {
             )}
           </div>
 
-          {/* How it works visual */}
+          {/* How it works visual — rating-first rail */}
           {currentStep.id === 'how-it-works' && (
-            <div className="flex justify-center gap-4 mb-6">
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(107, 179, 132, 0.15)' }}>
-                <span className="text-2xl mb-1"><ThumbsUpIcon size={32} /></span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-rating)' }}>Good Here</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(232, 102, 60, 0.1)' }}>
-                <span className="text-2xl mb-1"><ThumbsDownIcon size={32} /></span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Not Good</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
-                <span className="text-2xl mb-1">⭐</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-accent-gold)' }}>Rate 1-10</span>
-              </div>
+            <div className="flex justify-center items-center gap-2 mb-6">
+              {[3, 5, 7, 9, 10].map((n) => (
+                <div
+                  key={n}
+                  className="flex flex-col items-center justify-center rounded-xl"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    background: n >= 8
+                      ? 'rgba(22, 163, 74, 0.15)'
+                      : n >= 6
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : 'rgba(220, 38, 38, 0.08)',
+                    color: n >= 8
+                      ? 'var(--color-rating)'
+                      : n >= 6
+                        ? 'var(--color-accent-gold)'
+                        : 'var(--color-text-secondary)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {n}
+                </div>
+              ))}
             </div>
           )}
 

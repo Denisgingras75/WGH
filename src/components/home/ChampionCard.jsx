@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { getRatingColor, getPercentColor } from '../../utils/ranking'
+import { getRatingColor } from '../../utils/ranking'
 import { CategoryIcon } from './CategoryIcons'
 
 /**
@@ -12,7 +12,6 @@ export function ChampionCard({ dish }) {
 
   var rating = dish.avg_rating
   var votes = dish.total_votes || 0
-  var pct = dish.percent_worth_it || (dish.yes_votes && votes ? Math.round((dish.yes_votes / votes) * 100) : 0)
 
   return (
     <button
@@ -88,7 +87,7 @@ export function ChampionCard({ dish }) {
         </div>
       </div>
 
-      {/* Score row — big rating + reorder % */}
+      {/* Score row — big rating + vote count */}
       <div className="flex items-end justify-between" style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1.5px solid var(--color-divider)' }}>
         <div className="flex items-baseline gap-1">
           <span style={{
@@ -104,17 +103,8 @@ export function ChampionCard({ dish }) {
         </div>
 
         <div className="text-right">
-          {pct > 0 && (
-            <p style={{
-              fontSize: '14px',
-              fontWeight: 700,
-              color: getPercentColor(pct),
-            }}>
-              {pct}% would reorder
-            </p>
-          )}
-          <p style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
-            {votes} vote{votes === 1 ? '' : 's'}
+          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+            {votes} rating{votes === 1 ? '' : 's'}
           </p>
         </div>
       </div>
