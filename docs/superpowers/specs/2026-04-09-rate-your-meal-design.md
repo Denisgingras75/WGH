@@ -1,5 +1,11 @@
 # Rate Your Meal — Design Spec
 
+> **Amendment 2026-04-12:** Binary vote ("Would you order again?") removed from
+> the product. This flow no longer includes thumbs up/down — each card is
+> rating + review + photo only. Supersedes the earlier thumbs-based flow
+> described below. See
+> `docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md` for context.
+
 ## Problem
 
 Users eat multiple dishes at a restaurant but WGH only supports rating one dish at a time. This friction means:
@@ -31,7 +37,6 @@ A batch rating flow triggered from the restaurant detail page. Select all dishes
 - Progress indicator at top: dots or "1 of 4" text
 - Each card contains:
   - Dish name prominently displayed
-  - Thumbs up / thumbs down toggle
   - 1-10 rating slider
   - "What stood out?" tap-to-expand review text field (same as existing ReviewFlow)
   - Photo upload button (optional, inline)
@@ -40,7 +45,7 @@ A batch rating flow triggered from the restaurant detail page. Select all dishes
 - Last dish shows "Review" instead of "Next"
 
 ### Screen 3 — Summary
-- All rated dishes listed with their thumbs + rating number
+- All rated dishes listed with their rating number and optional review snippet
 - Tap any dish row to jump back to its rating card for editing
 - "Submit All" button — submits all votes as individual vote records
 - Loading state during submission
