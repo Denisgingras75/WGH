@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
@@ -200,22 +199,9 @@ export function ReviewFlow({
       return
     }
 
-    // Canonical analytics event. votesApi.submitVote dual-emits simpler
-    // vote_submitted + rating_submitted events; this one carries the full
-    // dish/restaurant context that analytics dashboards depend on.
-    capture('rating_submitted', {
-      dish_id: dishId,
-      dish_name: dishName,
-      restaurant_id: restaurantId,
-      restaurant_name: restaurantName,
-      category,
-      price: price != null ? Number(price) : null,
-      rating: sliderValue,
-      has_review: !!reviewTextToSubmit,
-      has_photo: photoAdded,
-      is_update: isUpdate,
-      binary_removed: true,
-    })
+    // Analytics: votesApi.submitVote already dual-emits vote_submitted +
+    // rating_submitted for every vote. Dashboards that need dish/restaurant
+    // context can join against dish_id in PostHog.
 
     setPriorRating(sliderValue)
     if (reviewTextToSubmit) setPriorReviewText(reviewTextToSubmit)
