@@ -216,11 +216,6 @@ export function RestaurantReviews() {
                         {review.rating}
                       </span>
                     )}
-                    {review.would_order_again != null && (
-                      <span style={{ fontSize: '14px' }}>
-                        {review.would_order_again ? '👍' : '👎'}
-                      </span>
-                    )}
                   </div>
                 </div>
 
