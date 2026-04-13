@@ -16,9 +16,6 @@ export function JournalCard({ dish }) {
   var photoUrl = dish.photo_url
   var rating = dish.rating_10
   var reviewText = dish.review_text
-  var wouldOrderAgain = dish.would_order_again
-
-  var isMuted = wouldOrderAgain === false
 
   return (
     <Link
@@ -32,7 +29,6 @@ export function JournalCard({ dish }) {
         marginBottom: '8px',
         display: 'flex',
         textDecoration: 'none',
-        opacity: isMuted ? '0.7' : '1',
       }}
     >
       {/* Icon area: 56x56, 12px border-radius, category-strip bg */}
@@ -93,6 +89,7 @@ export function JournalCard({ dish }) {
       {rating != null && (
         <div className="flex-shrink-0 flex flex-col items-end justify-center" style={{ minWidth: '36px' }}>
           <span
+            data-testid="journal-card-rating"
             style={{
               color: getRatingColor(rating),
               fontSize: '28px',

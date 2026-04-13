@@ -13,7 +13,6 @@ const mockDish = {
   review_text: 'Best on the island, hands down.',
   voted_at: '2026-02-20T12:00:00Z',
   photo_url: null,
-  would_order_again: true,
 }
 
 describe('JournalCard', () => {
@@ -47,15 +46,45 @@ describe('JournalCard', () => {
     expect(link.getAttribute('href')).toBe('/dish/1')
   })
 
-  it('applies muted opacity when would_order_again is false', () => {
+  it('colors the rating green for high scores (>= 8)', () => {
     render(
       <MemoryRouter>
-        <JournalCard dish={{ ...mockDish, would_order_again: false }} />
+        <JournalCard dish={{ ...mockDish, rating_10: 8.5 }} />
       </MemoryRouter>
     )
-    expect(screen.getByText('Lobster Roll')).toBeTruthy()
+    var rating = screen.getByTestId('journal-card-rating')
+    expect(rating.style.color).toBe('var(--color-green-deep)')
+  })
+
+  it('colors the rating amber for mid scores (6-7.9)', () => {
+    render(
+      <MemoryRouter>
+        <JournalCard dish={{ ...mockDish, rating_10: 6.5 }} />
+      </MemoryRouter>
+    )
+    var rating = screen.getByTestId('journal-card-rating')
+    expect(rating.style.color).toBe('var(--color-amber)')
+  })
+
+  it('colors the rating red for low scores (< 6)', () => {
+    render(
+      <MemoryRouter>
+        <JournalCard dish={{ ...mockDish, rating_10: 4.0 }} />
+      </MemoryRouter>
+    )
+    var rating = screen.getByTestId('journal-card-rating')
+    expect(rating.style.color).toBe('var(--color-red)')
+  })
+
+  it('does not apply opacity muting regardless of rating', () => {
+    render(
+      <MemoryRouter>
+        <JournalCard dish={{ ...mockDish, rating_10: 4.0 }} />
+      </MemoryRouter>
+    )
     var card = screen.getByTestId('journal-card')
-    expect(card.style.opacity).toBe('0.7')
+    expect(card.style.opacity).not.toBe('0.7')
+    expect(card.style.opacity).not.toBe('0.5')
   })
 
   it('does not show rating when rating_10 is absent', () => {
