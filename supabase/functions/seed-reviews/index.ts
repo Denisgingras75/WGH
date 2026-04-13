@@ -357,7 +357,9 @@ serve(async (req) => {
             totalMatched++
 
             const rating10 = mapToWghRating(review.rating, mention.sentiment)
-            const wouldOrderAgain = rating10 >= 5.0
+            // Phase 1 compat: mirror submit_vote_atomic's rating>=7.0 derivation. Phase 2 will pass NULL and drop snippet dependence.
+            const wghRating = rating10
+            const wouldOrderAgain = wghRating != null ? wghRating >= 7.0 : null
 
             // Check if we already seeded this dish (avoid duplicates)
             const { data: existing } = await supabase
@@ -370,7 +372,7 @@ serve(async (req) => {
             // Max 3 AI votes per dish to avoid over-seeding
             if ((existing?.length || 0) >= 3) continue
 
-            const reviewSnippet = buildReviewSnippet(mention.descriptive_phrases, wouldOrderAgain)
+            const reviewSnippet = buildReviewSnippet(mention.descriptive_phrases, wouldOrderAgain ?? false)
 
             const { error: insertErr } = await supabase.from('votes').insert({
               dish_id: matched.id,
