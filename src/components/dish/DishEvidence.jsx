@@ -209,14 +209,17 @@ export function DishEvidence({
                 aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
               />
             </div>
-            <div className="space-y-4">
+            <div
+              className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               {filteredReviews.map(function (review) {
                 var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
                 return (
                   <div
                     key={review.id}
-                    className="p-4 rounded-xl"
-                    style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
+                    className="p-4 rounded-xl flex-shrink-0 snap-start"
+                    style={{ width: '280px', background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
                   >
                     <Link to={'/user/' + review.user_id} className="flex items-center gap-3 mb-2.5 min-w-0">
                       <div
