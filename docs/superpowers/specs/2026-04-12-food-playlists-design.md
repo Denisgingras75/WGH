@@ -127,6 +127,7 @@ Dropped from earlier draft: the bare `(is_public)` partial index — low cardina
 - `tr_user_playlist_items_count` — AFTER INSERT / DELETE on `user_playlist_items`: `UPDATE user_playlists SET item_count = item_count ± 1 WHERE id = NEW.playlist_id`
 - `tr_user_playlist_follows_count` — same pattern for `follower_count`
 - `tr_user_playlists_updated_at` — touch `updated_at` on UPDATE
+- `tr_user_playlist_items_compact_positions` — AFTER DELETE on `user_playlist_items`: single-pass `ROW_NUMBER() OVER (ORDER BY position)` UPDATE to compact positions for the affected playlist, under the deferred `(playlist_id, position)` unique constraint. Fires for manual RPC deletes AND cascade deletes — one authoritative compaction path so RPCs never need to compact themselves.
 
 ### Access control — client-read-only tables, RPC-only writes
 
@@ -161,11 +162,13 @@ When a creator flips `is_public` from true to false:
 
 - Creator deletes account → `user_playlists` cascades → items and followers cascade too. **Followers lose their saved relationship silently** — there's no follow row left to show a tombstone for. This is consistent with Spotify-style "account deleted" behavior. The "tombstone" pattern applies ONLY to privacy-flipped playlists, not deleted ones.
 - Follower deletes account → their own follow rows cascade; other users are unaffected.
-- Dish deleted → a specific item cascades out. Positions in that playlist now have a gap (e.g., `1, 2, 4`). A trigger on `user_playlist_items DELETE` immediately compacts positions for the affected playlist via `ROW_NUMBER()`, so `MAX(position)` and `item_count` stay in lock-step for the next `add_dish_to_playlist` call.
+- Dish deleted → a specific item cascades out. Positions would have a gap (e.g., `1, 2, 4`) except that `tr_user_playlist_items_compact_positions` (see Triggers) immediately compacts them, keeping `MAX(position)` and `item_count` aligned for the next `add_dish_to_playlist` call.
 
 ## RPCs
 
-All RPCs are `SECURITY DEFINER`, `SET search_path = public`, with explicit owner/visibility guards inside each body. Because SECURITY DEFINER bypasses RLS, every function re-checks the privacy invariants that SELECT RLS would have enforced — there is no "RLS will catch it" fallback.
+**Write RPCs** (create/update/delete/add/remove/reorder/update-note/follow/unfollow) are `SECURITY DEFINER`, `SET search_path = public`, with explicit owner/visibility guards inside each body. Because SECURITY DEFINER bypasses RLS, these functions re-check the privacy invariants that SELECT RLS would have enforced — there is no "RLS will catch it" fallback.
+
+**Read RPCs** (`get_playlist_detail`, `get_user_playlists`, `get_followed_playlists`, `get_dish_playlist_membership`) are `SECURITY INVOKER` so RLS applies naturally to their queries — private/invisible rows simply don't appear in the result set. This means the read RPCs can be safely called by anon on public-route contexts.
 
 ### Visibility-oracle discipline
 
@@ -175,12 +178,12 @@ For any RPC that touches a specific playlist by ID, the error for **private-not-
 
 - `create_user_playlist(p_title TEXT, p_description TEXT, p_is_public BOOLEAN)` → new row.
   - Rate limit: 5 creates / hour per user (shaping, via existing `check_*_rate_limit` pattern; this is a throttle, not the cap enforcement)
-  - Hard cap (50 per user) is enforced by a `BEFORE INSERT` trigger that first `SELECT ... FOR UPDATE`s the caller's `profiles` row to serialize concurrent creates; this closes the TOCTOU race.
+  - Hard cap (50 per user) is enforced by a `BEFORE INSERT` trigger that first `SELECT ... FOR UPDATE`s the caller's `profiles` row to serialize concurrent creates; this closes the TOCTOU race. Prerequisite: every authenticated user has a `profiles` row (existing invariant, guaranteed by the current signup trigger). If that invariant ever changes, the lock target must change too.
   - Title + description moderation: `validateUserContent()` client-side AND a DB-side blocklist check inside the RPC
-- `update_user_playlist(p_id UUID, p_title TEXT, p_description TEXT, p_is_public BOOLEAN)` — owner-only. When `is_public` flips from true to false, cache invalidation for OG (see OG section).
+- `update_user_playlist(p_id UUID, p_title TEXT, p_description TEXT, p_is_public BOOLEAN)` — owner-only. Privacy flips rely on the short OG cache TTL for staleness (see OG Image section); no explicit cache purge in v1.
 - `delete_user_playlist(p_id UUID)` — owner-only. Cascades to items and follow rows; follow loss is silent (see Privacy section).
-- `add_dish_to_playlist(p_playlist_id UUID, p_dish_id UUID, p_note TEXT)` — owner-only. Locks the parent playlist row `FOR UPDATE`. Computes `position = COALESCE(MAX(position), 0) + 1` (never `item_count + 1` — cascade deletes can leave `item_count` out of sync with max-position). Respects 100-item cap (trigger-enforced under the same lock).
-- `remove_dish_from_playlist(p_playlist_id UUID, p_dish_id UUID)` — owner-only. Single-transaction: delete the item, then compact positions via a `ROW_NUMBER() OVER (ORDER BY position)` pass inside the deferred-unique envelope.
+- `add_dish_to_playlist(p_playlist_id UUID, p_dish_id UUID, p_note TEXT)` — owner-only. Locks the parent playlist row `FOR UPDATE`. Computes `position = COALESCE(MAX(position), 0) + 1`. (The compaction trigger keeps `MAX(position) = item_count` under normal operation, so `item_count + 1` would usually also work — `MAX(position)+1` is the defensive formulation that's correct even if a trigger ever fails to fire.) Respects 100-item cap (trigger-enforced under the same lock).
+- `remove_dish_from_playlist(p_playlist_id UUID, p_dish_id UUID)` — owner-only. Just a DELETE — the `tr_user_playlist_items_compact_positions` trigger handles position compaction uniformly for this path and all cascade paths.
 - `reorder_playlist_items(p_playlist_id UUID, p_ordered_dish_ids UUID[])` — owner-only.
   - **Exact-permutation validation**: the input array length MUST equal the current item count, and the set of dish IDs MUST exactly match. Partial reorders are rejected — no deferred-unique surprises, no dropped items, no ambiguity.
   - Single-transaction reorder using the deferred unique constraint: update all positions in one statement.
@@ -192,36 +195,48 @@ For any RPC that touches a specific playlist by ID, the error for **private-not-
 - `get_playlist_detail(p_playlist_id UUID)` — returns playlist + items + creator handle + `is_followed` boolean + `is_owner` boolean. Private-not-yours and nonexistent both return the identical `NOT FOUND` shape.
 - `get_user_playlists(p_user_id UUID)` — returns visible playlists for that user (public only unless caller is that user).
 - `get_followed_playlists()` — authenticated caller's saved playlists. Entries whose parent playlist has flipped private surface as `{ ...fields, visibility: 'unavailable' }` so the tombstone UI can render; privacy flip does NOT remove the follow row (see Privacy flip behavior).
+- `get_dish_playlist_membership(p_dish_id UUID)` — returns every playlist owned by the authenticated caller with a boolean `contains_dish`. Powers the checkmark state in the add-to-playlist sheet on the dish detail page. Owner-scoped by `auth.uid()`; anon gets an empty array.
 
 ### Grants (exact statements — single source of truth)
 
+The migration MUST include these statements verbatim, matching the `lock-menu-queue-rpcs.sql` pattern:
+
 ```sql
--- Execute grants
-DO $$ BEGIN
-  EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon', f) FROM unnest(ARRAY[
-    'create_user_playlist(TEXT, TEXT, BOOLEAN)',
-    'update_user_playlist(UUID, TEXT, TEXT, BOOLEAN)',
-    'delete_user_playlist(UUID)',
-    'add_dish_to_playlist(UUID, UUID, TEXT)',
-    'remove_dish_from_playlist(UUID, UUID)',
-    'reorder_playlist_items(UUID, UUID[])',
-    'update_playlist_item_note(UUID, UUID, TEXT)',
-    'follow_playlist(UUID)',
-    'unfollow_playlist(UUID)'
-  ]) AS f;
-  EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated, service_role', f) FROM unnest(ARRAY[
-    -- same list
-  ]) AS f;
-END $$;
+-- Write RPCs: authenticated users + service_role only. Anon is locked out.
+REVOKE EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
 
--- Read-only RPCs may be called by anon on public pages (e.g., /playlist/:id
--- loaded in an incognito browser)
-GRANT EXECUTE ON FUNCTION get_playlist_detail(UUID) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION get_user_playlists(UUID) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION get_followed_playlists() TO authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION delete_user_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION delete_user_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION follow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION follow_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION unfollow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION unfollow_playlist(UUID) TO authenticated, service_role;
+
+-- Read RPCs are SECURITY INVOKER, so RLS on the underlying tables filters
+-- private rows automatically. Safe for anon on public routes.
+GRANT EXECUTE ON FUNCTION get_playlist_detail(UUID)         TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_user_playlists(UUID)          TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_followed_playlists()          TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) TO authenticated, service_role;
 ```
-
-(The implementation plan will turn this sketch into actual statements — the exact list above is the contract.)
 
 ## URL Structure
 
@@ -281,7 +296,8 @@ OG images are privacy-sensitive. Long CDN caching creates a window where a playl
 - Primary action: "Follow" button (for non-owners). Owner sees "Edit" instead.
 - Dishes listed as compact rows: position · dish name · restaurant · rating.
 - Per-item note shown below row when present, italicized, 140-char max.
-- Overflow menu: Share, Report (for non-owners); Edit, Delete, Toggle Privacy (for owner).
+- **Empty state** (0 items): the cover grid is replaced with a single category-strip illustration + the title still renders + primary copy "No dishes yet" + CTA "Find a dish to add" that navigates to Browse. Owner sees this; non-owners viewing a public empty playlist see the same state (rare case — created but never populated). For the just-created-from-dish-sheet case the user lands here already having one item.
+- Overflow menu: Share (all); Edit, Delete, Toggle Privacy (owner only). Report is deferred to 1.1 — no reporting data model / RPC in v1.
 
 ### Dish detail page
 - Existing heart button stays exactly as-is (one-tap favorite).
@@ -295,6 +311,13 @@ OG images are privacy-sensitive. Long CDN caching creates a window where a playl
 ## Content Safety
 
 All three UGC text fields — `title`, `description`, `note` — go through `validateUserContent()` client-side AND get a DB-side blocklist check inside the RPC. This matches CLAUDE.md §1.9.
+
+**Client-side rate limiting** (also required by §1.9): extend `src/lib/rateLimiter.js` with three new checks that gate their corresponding API calls before they hit the network:
+- `checkPlaylistCreateRateLimit()` — called from `userPlaylistsApi.createPlaylist()`
+- `checkPlaylistItemAddRateLimit()` — called from `userPlaylistsApi.addDish()`
+- `checkPlaylistFollowRateLimit()` — called from `userPlaylistsApi.follow()`
+
+These are belt-and-suspenders alongside the server-side RPC throttles. Client-side stops the accidental bug (a loop that fires 100 requests); server-side stops the malicious bypass.
 
 ## Rate Limiting & Abuse
 
@@ -372,7 +395,6 @@ No data backfill needed (new tables, no existing rows to migrate).
 ## Open Questions (resolve during implementation, not blocking)
 
 1. **Cover emoji selection** — when a dish has no clear category emoji, what fallback? (Pull from `DEFAULT_CATEGORY_EMOJI` constant; design day one.)
-2. **Empty playlist state** — what does a freshly-created playlist with 0 dishes look like on the detail page? Illustration + CTA "Add your first dish"?
-3. **Analytics for privacy oracle attempts** — do we log failed follow attempts? (Probably yes, low priority.)
+2. **Analytics for privacy-oracle attempts** — do we log failed follow attempts to PostHog? (Probably yes, low priority — signal for abuse without creating new security surface.)
 
 These don't require new product decisions. Pin them during implementation.
