@@ -414,8 +414,7 @@ export const followsApi = {
     profile.following_count = followingResult.count || 0
 
     // Calculate stats from votes (no separate query needed).
-    // worth_it / avoid counts are zeroed — the binary vote is gone. UI surfaces
-    // that used them are being migrated to rating-only displays in Tasks 12–19.
+    // Rating-only display — the Worth-It/Avoid split retired with the binary vote.
     const voteList = votesResult.data || []
     const totalVotes = voteList.length
     const ratedVotes = voteList.filter(v => v.rating_10 != null)
@@ -439,8 +438,6 @@ export const followsApi = {
       ...profile,
       stats: {
         total_votes: totalVotes,
-        worth_it: 0,
-        avoid: 0,
         avg_rating: avgRating,
       },
       recent_votes: voteList.map(v => ({

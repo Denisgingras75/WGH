@@ -23,10 +23,6 @@ function transformDish(data) {
     price: data.price,
     photo_url: data.photo_url,
     total_votes: data.total_votes || 0,
-    yes_votes: data.yes_votes || 0,
-    percent_worth_it: data.total_votes > 0
-      ? Math.round((data.yes_votes / data.total_votes) * 100)
-      : 0,
     avg_rating: data.avg_rating,
     parent_dish_id: data.parent_dish_id,
     has_variants: data.has_variants,
@@ -125,7 +121,6 @@ export function useDishDetail(dishId, user) {
           price: transformedDish.price,
           avg_rating: transformedDish.avg_rating,
           total_votes: transformedDish.total_votes,
-          percent_worth_it: transformedDish.percent_worth_it,
         })
       } catch (err) {
         if (cancelled) return

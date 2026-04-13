@@ -27,7 +27,7 @@ export function Profile() {
   const [nameStatus, setNameStatus] = useState(null) // null | 'checking' | 'available' | 'taken' | 'same'
 
   const { profile, updateProfile } = useProfile(user?.id)
-  const { worthItDishes, avoidDishes, stats, loading: votesLoading, refetch: refetchVotes } = useUserVotes(user?.id)
+  const { ratedDishes, stats, loading: votesLoading, refetch: refetchVotes } = useUserVotes(user?.id)
   const { dishes: unratedDishes, count: unratedCount, refetch: refetchUnrated } = useUnratedDishes(user?.id)
 
   const [jitterProfile, setJitterProfile] = useState(null)
@@ -131,7 +131,6 @@ export function Profile() {
       price: dish.price,
       photo_url: dish.photo_url,
       total_votes: 0,
-      yes_votes: 0,
     })
   }
 
@@ -271,11 +270,9 @@ export function Profile() {
             </h2>
           </div>
 
-          {/* Journal Feed */}
+          {/* Journal Feed — single chronological shelf */}
           <JournalFeed
-            worthIt={worthItDishes}
-            avoid={avoidDishes}
-            activeShelf="all"
+            ratings={ratedDishes}
             loading={votesLoading}
           />
 
