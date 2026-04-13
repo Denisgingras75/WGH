@@ -151,8 +151,9 @@ function computeCategoryComparison(data, communityAvgs) {
  */
 function calculateStats(data) {
   const totalVotes = data.length
-  const worthItCount = data.filter(v => v.would_order_again).length
-  const avoidCount = data.filter(v => !v.would_order_again).length
+  // Phase 1 compat: derive from rating until Task 12 collapses these shelves.
+  const worthItCount = data.filter(v => v.rating_10 != null && v.rating_10 >= 7.0).length
+  const avoidCount = data.filter(v => v.rating_10 != null && v.rating_10 < 7.0).length
 
   // Average rating
   const ratingsWithValue = data.filter(v => v.rating_10 != null)
@@ -296,14 +297,14 @@ export function useUserVotes(userId) {
   const votes = primaryData?.votes || []
   const helpedCount = primaryData?.helpedCount || 0
 
-  // Derive sorted dish lists from raw votes
+  // Phase 1 compat: derive from rating until Task 12 collapses these shelves.
   const worthItDishes = useMemo(
-    () => votes.filter(v => v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
+    () => votes.filter(v => v.rating_10 != null && v.rating_10 >= 7.0).map(transformVote).filter(Boolean).sort(sortByRating),
     [votes]
   )
 
   const avoidDishes = useMemo(
-    () => votes.filter(v => !v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
+    () => votes.filter(v => v.rating_10 != null && v.rating_10 < 7.0).map(transformVote).filter(Boolean).sort(sortByRating),
     [votes]
   )
 
