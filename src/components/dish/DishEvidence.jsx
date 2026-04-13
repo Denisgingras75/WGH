@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { TrustBadge, TrustSummary, JitterExplainer } from '../jitter'
 import { VariantSelector } from '../VariantPicker'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
 import { getRatingColor, formatScore10 } from '../../utils/ranking'
 import { formatRelativeTime } from '../../utils/formatters'
 
@@ -255,19 +253,16 @@ export function DishEvidence({
                       </div>
                     </Link>
 
-                    <div className="flex items-center gap-2 mb-2.5">
-                      {review.rating_10 ? (
+                    {review.rating_10 ? (
+                      <div className="flex items-center gap-2 mb-2.5">
                         <span
                           className="rounded-full px-2.5 py-0.5 font-bold text-sm"
                           style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
                         >
                           {formatScore10(review.rating_10)}
                         </span>
-                      ) : null}
-                      <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {review.would_order_again ? <><ThumbsUpIcon size={18} /> Would order again</> : <><ThumbsDownIcon size={18} /> Would skip</>}
-                      </span>
-                    </div>
+                      </div>
+                    ) : null}
 
                     {review.review_text && (
                       <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>
