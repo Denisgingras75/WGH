@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
 import { WghLogo } from '../WghLogo'
 import { capture } from '../../lib/analytics'
+import { getUserMessage } from '../../utils/errorHandler'
 
 const STEPS = [
   {
@@ -40,6 +41,7 @@ export function WelcomeModal() {
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const [isOpen, setIsOpen] = useState(false)
   const [phase, setPhase] = useState('onboarding') // 'onboarding' | 'celebration' | 'fade-out'
 
@@ -59,12 +61,24 @@ export function WelcomeModal() {
   const displayName = name.trim() || profile?.display_name || ''
 
   const completeOnboarding = async (nameSet) => {
+    // Snapshot the name at submit time so a late-typed character can't desync
+    // what gets persisted from what the celebration screen shows.
+    const submittedName = name.trim()
     setSaving(true)
+    setSaveError(null)
     const updates = { has_onboarded: true }
-    if (name.trim()) updates.display_name = name.trim()
-    await updateProfile(updates)
-    capture('onboarding_completed', { name_set: nameSet })
+    if (submittedName) updates.display_name = submittedName
+    const { error } = await updateProfile(updates)
     setSaving(false)
+
+    if (error) {
+      // Surface the error so the user can correct it (most likely: duplicate display_name)
+      setSaveError(getUserMessage(error, 'saving your name'))
+      capture('onboarding_failed', { name_set: nameSet, error: error.message })
+      return
+    }
+
+    capture('onboarding_completed', { name_set: nameSet })
 
     // Show celebration screen
     setPhase('celebration')
@@ -305,17 +319,30 @@ export function WelcomeModal() {
                 aria-label="Your name"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (saveError) setSaveError(null)
+                }}
                 placeholder="Your name"
                 autoFocus
                 maxLength={50}
-                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors"
+                disabled={saving}
+                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors disabled:opacity-60"
                 style={{
                   background: 'var(--color-bg)',
-                  borderColor: 'var(--color-divider)',
+                  borderColor: saveError ? 'var(--color-danger)' : 'var(--color-divider)',
                   color: 'var(--color-text-primary)',
                 }}
               />
+              {saveError && (
+                <p
+                  role="alert"
+                  className="text-sm text-center"
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  {saveError}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={!name.trim() || saving}
@@ -336,6 +363,15 @@ export function WelcomeModal() {
             </form>
           ) : (
             <div className="space-y-3">
+              {saveError && (
+                <p
+                  role="alert"
+                  className="text-sm text-center"
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  {saveError}
+                </p>
+              )}
               <button
                 onClick={handleNext}
                 disabled={saving}
