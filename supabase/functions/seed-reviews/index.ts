@@ -54,7 +54,7 @@ interface ExtractedDishMention {
 /**
  * Build a short review snippet from descriptive phrases (max 200 chars)
  */
-function buildReviewSnippet(phrases: string[], wouldOrderAgain: boolean): string | null {
+function buildReviewSnippet(phrases: string[], rating: number | null): string | null {
   if (!phrases || phrases.length === 0) return null
 
   // Capitalize first phrase
@@ -75,7 +75,8 @@ function buildReviewSnippet(phrases: string[], wouldOrderAgain: boolean): string
   }
 
   // Add a closing sentiment if there's room
-  const closers = wouldOrderAgain
+  const positive = rating != null && rating >= 7.0
+  const closers = positive
     ? [' Would definitely order again.', ' A must-try.', ' Highly recommend.']
     : [' Probably wouldn\'t order again.', ' Not my favorite.']
   const closer = closers[Math.floor(Math.random() * closers.length)]
@@ -357,9 +358,10 @@ serve(async (req) => {
             totalMatched++
 
             const rating10 = mapToWghRating(review.rating, mention.sentiment)
-            // Phase 1 compat: mirror submit_vote_atomic's rating>=7.0 derivation. Phase 2 will pass NULL and drop snippet dependence.
+            // Phase 2: the votes.would_order_again column is nullable and no longer
+            // surfaced anywhere. Insert NULL; the snippet builder derives its own
+            // positive/negative closer from the rating.
             const wghRating = rating10
-            const wouldOrderAgain = wghRating != null ? wghRating >= 7.0 : null
 
             // Check if we already seeded this dish (avoid duplicates)
             const { data: existing } = await supabase
@@ -372,12 +374,12 @@ serve(async (req) => {
             // Max 3 AI votes per dish to avoid over-seeding
             if ((existing?.length || 0) >= 3) continue
 
-            const reviewSnippet = buildReviewSnippet(mention.descriptive_phrases, wouldOrderAgain ?? false)
+            const reviewSnippet = buildReviewSnippet(mention.descriptive_phrases, wghRating)
 
             const { error: insertErr } = await supabase.from('votes').insert({
               dish_id: matched.id,
               user_id: AI_SYSTEM_USER_ID,
-              would_order_again: wouldOrderAgain,
+              would_order_again: null,
               rating_10: rating10,
               review_text: reviewSnippet,
               source: 'ai_estimated',
