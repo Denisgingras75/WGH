@@ -3,6 +3,7 @@ import { authApi } from '../../api/authApi'
 import { getPendingVoteFromStorage } from '../../lib/storage'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { logger } from '../../utils/logger'
+import { FEATURES } from '../../constants/features'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
 
@@ -54,15 +55,33 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
 
   if (!isOpen) return null
 
+  const buildOAuthRedirect = () => {
+    const redirectUrl = new URL(window.location.href)
+    const pending = getPendingVoteFromStorage()
+    if (pending?.dishId) {
+      redirectUrl.searchParams.set('votingDish', pending.dishId)
+    }
+    return redirectUrl.toString()
+  }
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true)
-      const redirectUrl = new URL(window.location.href)
-      const pending = getPendingVoteFromStorage()
-      if (pending?.dishId) {
-        redirectUrl.searchParams.set('votingDish', pending.dishId)
-      }
-      await authApi.signInWithGoogle(redirectUrl.toString())
+      await authApi.signInWithGoogle(buildOAuthRedirect())
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message })
+      setLoading(false)
+    }
+  }
+
+  // Pre-wired for activation: gets referenced when the compliant Apple
+  // button JSX is dropped in. See the Sign in with Apple comment block in
+  // the options-mode section below for activation steps.
+  // eslint-disable-next-line no-unused-vars
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true)
+      await authApi.signInWithApple(buildOAuthRedirect())
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
       setLoading(false)
@@ -224,6 +243,26 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
           {/* Options Mode - Show all login options */}
           {mode === 'options' && (
             <div className="space-y-4">
+              {/* Sign in with Apple — handler is wired (handleAppleSignIn
+                  above) and the flag gates the render slot, but the button
+                  JSX itself is intentionally absent. Apple HIG requires the
+                  button to use Apple's official asset (specific logo
+                  proportions, padding, corner radius). Hand-authored SVG is
+                  a known App Store rejection risk — the iOS Capacitor build
+                  will render this same React code in WKWebView, so a
+                  non-compliant button would fail review.
+
+                  Activation steps (after Supabase Apple provider config):
+                    1. Drop in Apple's official SIWA button asset:
+                       https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple/overview/buttons/
+                       OR install `react-apple-signin-auth` (use only its
+                       button styling — auth flow stays on Supabase).
+                    2. Replace the `null` below with the compliant button,
+                       wired to handleAppleSignIn, placed ABOVE Google per
+                       equal-prominence.
+                    3. Set VITE_FEATURES_APPLE_SIGNIN=true in deploy env. */}
+              {FEATURES.APPLE_SIGNIN_ENABLED && null}
+
               {/* Google Sign In */}
               <button
                 onClick={handleGoogleSignIn}
