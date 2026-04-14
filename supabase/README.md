@@ -50,7 +50,7 @@ supabase/
 - `profiles` - User profiles (extends Supabase auth.users)
 - `restaurants` - Restaurant listings
 - `dishes` - Menu items
-- `votes` - User ratings (would_order_again + rating_10)
+- `votes` - User ratings (rating_10, 1-10 scale)
 - `dish_photos` - User-uploaded photos
 - `follows` - Social connections
 - `notifications` - User notifications

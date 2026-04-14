@@ -180,7 +180,7 @@ describe('votesApi', () => {
       })).rejects.toThrow('Unable to verify vote limit. Please try again.')
     })
 
-    it('should dual-emit vote_submitted (compat) + rating_submitted for analytics', async () => {
+    it('emits rating_submitted with clean payload (no binary fields)', async () => {
       supabase.rpc
         .mockResolvedValueOnce({ data: { allowed: true }, error: null })
         .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
@@ -191,50 +191,29 @@ describe('votesApi', () => {
         reviewText: 'Great!',
       })
 
-      // Compat: old event name stays. would_order_again derived from rating >= 7.0.
-      expect(capture).toHaveBeenCalledWith('vote_submitted', {
-        dish_id: 'dish-1',
-        would_order_again: true,
-        rating: 8,
-        has_review: true,
-        binary_removed: true,
-      })
-      // New event name — no binary field.
       expect(capture).toHaveBeenCalledWith('rating_submitted', {
         dish_id: 'dish-1',
         rating: 8,
         has_review: true,
-        binary_removed: true,
       })
+      // Phase 2: vote_submitted is gone, binary_removed property is gone
+      const allCalls = capture.mock.calls.map(c => c[0])
+      expect(allCalls).not.toContain('vote_submitted')
     })
 
-    it('should derive compat would_order_again=false when rating < 7', async () => {
+    it('does not send p_would_order_again to submit_vote_atomic', async () => {
       supabase.rpc
         .mockResolvedValueOnce({ data: { allowed: true }, error: null })
         .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       await votesApi.submitVote({
         dishId: 'dish-1',
-        rating10: 5,
+        rating10: 8,
       })
 
-      expect(capture).toHaveBeenCalledWith('vote_submitted', expect.objectContaining({
-        would_order_again: false,
-      }))
-    })
-
-    it('should derive compat would_order_again=null when rating is null', async () => {
-      supabase.rpc
-        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
-        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
-
-      await votesApi.submitVote({
-        dishId: 'dish-1',
-      })
-
-      expect(capture).toHaveBeenCalledWith('vote_submitted', expect.objectContaining({
-        would_order_again: null,
-      }))
+      const submitCall = supabase.rpc.mock.calls.find(c => c[0] === 'submit_vote_atomic')
+      expect(submitCall).toBeTruthy()
+      expect(submitCall[1]).not.toHaveProperty('p_would_order_again')
     })
 
     it('should throw classified error on database failure', async () => {

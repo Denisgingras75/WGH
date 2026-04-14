@@ -103,24 +103,10 @@ async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityDa
     }
   }
 
-  // Analytics compat window: dual-emit during Phase 1 rollout.
-  //   - `vote_submitted` keeps existing PostHog funnels working. `would_order_again`
-  //     is derived from rating (>=7.0) so downstream dashboards don't break.
-  //   - `rating_submitted` is the new canonical event; Phase 2 drops `vote_submitted`.
-  //   - `binary_removed: true` tags both events so we can filter stale-client traffic.
-  var derivedWouldOrderAgain = rating10 != null ? rating10 >= 7.0 : null
-  capture('vote_submitted', {
-    dish_id: dishId,
-    would_order_again: derivedWouldOrderAgain,
-    rating: rating10,
-    has_review: !!reviewText,
-    binary_removed: true,
-  })
   capture('rating_submitted', {
     dish_id: dishId,
     rating: rating10,
     has_review: !!reviewText,
-    binary_removed: true,
   })
 
   return { success: true, vote }
@@ -131,7 +117,7 @@ export const votesApi = {
    * Submit or update a vote for a dish
    * @param {Object} params
    * @param {string} params.dishId - Dish ID
-   * @param {number} params.rating10 - 1-10 rating (sole vote signal; server derives legacy binary shadow)
+   * @param {number} params.rating10 - 1-10 rating (sole vote signal)
    * @param {string} params.reviewText - Optional review text (max 200 chars)
    * @returns {Promise<Object>} Success status
    */

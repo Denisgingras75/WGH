@@ -343,7 +343,6 @@ CREATE OR REPLACE VIEW public_votes AS
 SELECT
   id,
   dish_id,
-  would_order_again,
   rating_10,
   review_text,
   review_created_at,
@@ -753,8 +752,6 @@ RETURNS TABLE (
   price DECIMAL,
   photo_url TEXT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL,
   distance_miles DECIMAL,
   has_variants BOOLEAN,
@@ -814,13 +811,11 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
     WHERE d.parent_dish_id IS NOT NULL
@@ -873,24 +868,6 @@ BEGIN
     COALESCE(vs.total_child_votes,
       SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)
     )::BIGINT AS total_votes,
-    COALESCE(vs.total_child_yes,
-      SUM(CASE WHEN v.would_order_again AND v.source = 'user' THEN 1.0
-               WHEN v.would_order_again AND v.source = 'ai_estimated' THEN 0.5
-               ELSE 0 END)
-    )::BIGINT AS yes_votes,
-    CASE
-      WHEN COALESCE(vs.total_child_votes,
-        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)) > 0
-      THEN ROUND(100.0 *
-        COALESCE(vs.total_child_yes,
-          SUM(CASE WHEN v.would_order_again AND v.source = 'user' THEN 1.0
-                   WHEN v.would_order_again AND v.source = 'ai_estimated' THEN 0.5
-                   ELSE 0 END)) /
-        COALESCE(vs.total_child_votes,
-          SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))
-      )::INT
-      ELSE 0
-    END AS percent_worth_it,
     COALESCE(ROUND(
       (SUM(CASE WHEN v.source = 'user' THEN v.rating_10
                 WHEN v.source = 'ai_estimated' THEN v.rating_10 * 0.5
@@ -941,7 +918,7 @@ BEGIN
   GROUP BY d.id, d.name, fr.id, fr.name, fr.town, d.category, d.tags, fr.cuisine,
            d.price, d.photo_url, fr.distance, fr.lat, fr.lng,
            fr.address, fr.phone, fr.website_url, fr.toast_slug, fr.order_url,
-           vs.total_child_votes, vs.total_child_yes, vs.child_count,
+           vs.total_child_votes, vs.child_count,
            bv.best_name, bv.best_rating,
            d.value_score, d.value_percentile,
            rvc.recent_votes,
@@ -964,8 +941,6 @@ RETURNS TABLE (
   price DECIMAL,
   photo_url TEXT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL,
   has_variants BOOLEAN,
   variant_count INT,
@@ -981,7 +956,6 @@ BEGIN
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
       SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes,
       CASE
         WHEN SUM(COALESCE(ds.vote_count, 0)) > 0
         THEN ROUND((SUM(COALESCE(ds.rating_sum, 0)) / NULLIF(SUM(COALESCE(ds.vote_count, 0)), 0))::NUMERIC, 1)
@@ -991,7 +965,6 @@ BEGIN
     LEFT JOIN (
       SELECT v.dish_id,
         SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count,
         SUM(COALESCE(v.rating_10, 0) * (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::DECIMAL AS rating_sum
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
@@ -1011,7 +984,6 @@ BEGIN
   ),
   dish_vote_stats AS (
     SELECT d.id AS dish_id, COUNT(v.id)::BIGINT AS direct_votes,
-      SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END)::BIGINT AS direct_yes,
       ROUND(AVG(v.rating_10)::NUMERIC, 1) AS direct_avg
     FROM dishes d LEFT JOIN votes v ON v.dish_id = d.id
     WHERE d.parent_dish_id IS NULL
@@ -1021,12 +993,6 @@ BEGIN
     d.id AS dish_id, d.name AS dish_name, r.id AS restaurant_id, r.name AS restaurant_name,
     d.category, d.menu_section, d.price, d.photo_url,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0)::BIGINT AS total_votes,
-    COALESCE(vs.total_child_yes, dvs.direct_yes, 0)::BIGINT AS yes_votes,
-    CASE
-      WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) > 0
-      THEN ROUND(100.0 * COALESCE(vs.total_child_yes, dvs.direct_yes, 0) / COALESCE(vs.total_child_votes, dvs.direct_votes, 1))::INT
-      ELSE 0
-    END AS percent_worth_it,
     COALESCE(vs.combined_avg_rating, dvs.direct_avg) AS avg_rating,
     (vs.child_count IS NOT NULL AND vs.child_count > 0) AS has_variants,
     COALESCE(vs.child_count, 0)::INT AS variant_count,
@@ -1041,16 +1007,12 @@ BEGIN
     AND r.is_open = true
     AND d.parent_dish_id IS NULL
   GROUP BY d.id, d.name, r.id, r.name, d.category, d.menu_section, d.price, d.photo_url, d.tags,
-           vs.total_child_votes, vs.total_child_yes, vs.combined_avg_rating, vs.child_count,
-           dvs.direct_votes, dvs.direct_yes, dvs.direct_avg,
+           vs.total_child_votes, vs.combined_avg_rating, vs.child_count,
+           dvs.direct_votes, dvs.direct_avg,
            bv.best_id, bv.best_name, bv.best_rating
   ORDER BY
     CASE WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) >= 5 THEN 0 ELSE 1 END,
-    CASE
-      WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) > 0
-      THEN ROUND(100.0 * COALESCE(vs.total_child_yes, dvs.direct_yes, 0) / COALESCE(vs.total_child_votes, dvs.direct_votes, 1))
-      ELSE 0
-    END DESC,
+    COALESCE(vs.combined_avg_rating, dvs.direct_avg) DESC NULLS LAST,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0) DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
@@ -1066,8 +1028,6 @@ RETURNS TABLE (
   photo_url TEXT,
   display_order INT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL
 ) AS $$
 BEGIN
@@ -1075,12 +1035,6 @@ BEGIN
   SELECT
     d.id AS dish_id, d.name AS dish_name, d.price, d.photo_url, d.display_order,
     COUNT(v.id)::BIGINT AS total_votes,
-    SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END)::BIGINT AS yes_votes,
-    CASE
-      WHEN COUNT(v.id) > 0
-      THEN ROUND(100.0 * SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END) / COUNT(v.id))::INT
-      ELSE 0
-    END AS percent_worth_it,
     ROUND(AVG(v.rating_10)::NUMERIC, 1) AS avg_rating
   FROM dishes d
   LEFT JOIN votes v ON d.id = v.dish_id
@@ -1146,13 +1100,12 @@ RETURNS TABLE (
   user_id UUID,
   display_name TEXT,
   rating_10 DECIMAL(3, 1),
-  would_order_again BOOLEAN,
   voted_at TIMESTAMPTZ,
   category_expertise TEXT
 )
 LANGUAGE SQL STABLE SET search_path = public AS $$
   SELECT
-    p.id AS user_id, p.display_name, v.rating_10, v.would_order_again,
+    p.id AS user_id, p.display_name, v.rating_10,
     v.created_at AS voted_at,
     CASE
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
@@ -1178,14 +1131,13 @@ RETURNS TABLE (
   dish_id UUID,
   dish_name TEXT,
   rating_10 DECIMAL(3, 1),
-  would_order_again BOOLEAN,
   voted_at TIMESTAMPTZ,
   category_expertise TEXT
 )
 LANGUAGE SQL STABLE SET search_path = public AS $$
   SELECT
     p.id AS user_id, p.display_name, d.id AS dish_id, d.name AS dish_name,
-    v.rating_10, v.would_order_again, v.created_at AS voted_at,
+    v.rating_10, v.created_at AS voted_at,
     CASE
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'specialist_' || REPLACE(d.category, ' ', '_')) THEN 'specialist'
@@ -1712,10 +1664,15 @@ $$;
 
 -- Atomic user vote upsert. Targets the partial unique index:
 -- votes_user_unique ON votes (dish_id, user_id) WHERE source = 'user'.
+-- DROP guarantees replay against an existing DB with the pre-Phase-2 signature
+-- cleanly swaps in the new 7-arg form.
+DROP FUNCTION IF EXISTS submit_vote_atomic(
+  UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT
+);
+
 CREATE OR REPLACE FUNCTION submit_vote_atomic(
   p_dish_id UUID,
   p_user_id UUID,
-  p_would_order_again BOOLEAN DEFAULT NULL,
   p_rating_10 DECIMAL DEFAULT NULL,
   p_review_text TEXT DEFAULT NULL,
   p_purity_score DECIMAL DEFAULT NULL,
@@ -1725,30 +1682,18 @@ CREATE OR REPLACE FUNCTION submit_vote_atomic(
 RETURNS votes AS $$
 DECLARE
   submitted_vote votes;
-  v_effective_would_order BOOLEAN;
 BEGIN
   IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
     RAISE EXCEPTION 'Access denied';
   END IF;
 
-  -- Shadow-write compatibility (Phase 1): if caller omits the binary (new
-  -- clients), derive it from the rating. Stale PWA bundles that still pass
-  -- a boolean are honored as-is. Threshold 7.0 is duplicated in
-  -- supabase/functions/seed-reviews/index.ts; both sites must stay aligned
-  -- through Phase 1 and are deleted together in Phase 2.
-  IF p_would_order_again IS NULL THEN
-    IF p_rating_10 IS NULL THEN
-      RAISE EXCEPTION 'rating_10 is required';
-    END IF;
-    v_effective_would_order := (p_rating_10 >= 7.0);
-  ELSE
-    v_effective_would_order := p_would_order_again;
+  IF p_rating_10 IS NULL THEN
+    RAISE EXCEPTION 'rating_10 is required';
   END IF;
 
   INSERT INTO votes (
     dish_id,
     user_id,
-    would_order_again,
     rating_10,
     review_text,
     review_created_at,
@@ -1760,7 +1705,6 @@ BEGIN
   VALUES (
     p_dish_id,
     p_user_id,
-    v_effective_would_order,
     p_rating_10,
     p_review_text,
     CASE WHEN p_review_text IS NOT NULL THEN NOW() ELSE NULL END,
@@ -1771,7 +1715,6 @@ BEGIN
   )
   ON CONFLICT (dish_id, user_id) WHERE source = 'user'
   DO UPDATE SET
-    would_order_again = EXCLUDED.would_order_again,
     rating_10 = EXCLUDED.rating_10,
     review_text = COALESCE(EXCLUDED.review_text, votes.review_text),
     review_created_at = COALESCE(EXCLUDED.review_created_at, votes.review_created_at),
@@ -2863,7 +2806,7 @@ GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION check_and_record_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_vote_rate_limit TO authenticated;
-GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION check_photo_upload_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_restaurant_create_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_dish_create_rate_limit TO authenticated;
