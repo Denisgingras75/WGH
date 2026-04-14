@@ -1716,8 +1716,12 @@ BEGIN
   ON CONFLICT (dish_id, user_id) WHERE source = 'user'
   DO UPDATE SET
     rating_10 = EXCLUDED.rating_10,
-    review_text = COALESCE(EXCLUDED.review_text, votes.review_text),
-    review_created_at = COALESCE(EXCLUDED.review_created_at, votes.review_created_at),
+    review_text = EXCLUDED.review_text,
+    review_created_at = CASE
+      WHEN EXCLUDED.review_text IS DISTINCT FROM votes.review_text
+        THEN (CASE WHEN EXCLUDED.review_text IS NOT NULL THEN NOW() ELSE NULL END)
+      ELSE votes.review_created_at
+    END,
     purity_score = COALESCE(EXCLUDED.purity_score, votes.purity_score),
     war_score = COALESCE(EXCLUDED.war_score, votes.war_score),
     badge_hash = COALESCE(EXCLUDED.badge_hash, votes.badge_hash)
