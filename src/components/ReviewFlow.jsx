@@ -199,9 +199,9 @@ export function ReviewFlow({
       return
     }
 
-    // Analytics: votesApi.submitVote already dual-emits vote_submitted +
-    // rating_submitted for every vote. Dashboards that need dish/restaurant
-    // context can join against dish_id in PostHog.
+    // Analytics: votesApi.submitVote emits rating_submitted for every vote.
+    // Dashboards that need dish/restaurant context can join against dish_id
+    // in PostHog.
 
     setPriorRating(sliderValue)
     if (reviewTextToSubmit) setPriorReviewText(reviewTextToSubmit)
