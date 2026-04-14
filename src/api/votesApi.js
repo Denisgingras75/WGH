@@ -117,7 +117,7 @@ export const votesApi = {
    * Submit or update a vote for a dish
    * @param {Object} params
    * @param {string} params.dishId - Dish ID
-   * @param {number} params.rating10 - 1-10 rating (sole vote signal; server derives legacy binary shadow)
+   * @param {number} params.rating10 - 1-10 rating (sole vote signal)
    * @param {string} params.reviewText - Optional review text (max 200 chars)
    * @returns {Promise<Object>} Success status
    */

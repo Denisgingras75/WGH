@@ -54,16 +54,24 @@ export function Dish() {
       return
     }
     let cancelled = false
-    Promise.all([
+    // allSettled so a photo-fetch failure doesn't also discard the vote fetch —
+    // otherwise the CTA label silently regresses to "Rate this dish" for re-raters.
+    Promise.allSettled([
       authApi.getUserVoteForDish(dishId, user.id),
       dishPhotosApi.getUserPhotoForDish(dishId),
-    ])
-      .then(([vote, photo]) => {
-        if (cancelled) return
-        setPriorVote(vote)
-        setExistingPhotoUrl(photo?.photo_url ?? null)
-      })
-      .catch((err) => { logger.error('Failed to fetch prior state:', err) })
+    ]).then(([voteResult, photoResult]) => {
+      if (cancelled) return
+      if (voteResult.status === 'fulfilled') {
+        setPriorVote(voteResult.value)
+      } else {
+        logger.error('Failed to fetch prior vote:', voteResult.reason)
+      }
+      if (photoResult.status === 'fulfilled') {
+        setExistingPhotoUrl(photoResult.value?.photo_url ?? null)
+      } else {
+        logger.error('Failed to fetch prior photo:', photoResult.reason)
+      }
+    })
     return () => { cancelled = true }
   }, [dishId, user])
 
@@ -108,16 +116,23 @@ export function Dish() {
   const handleVoteSubmitted = () => {
     setShowRateFlow(false)
     // Refresh prior-vote and prior-photo so CTA label and thumbnail stay current.
+    // allSettled so a photo-fetch failure doesn't discard the vote result.
     if (user && dishId) {
-      Promise.all([
+      Promise.allSettled([
         authApi.getUserVoteForDish(dishId, user.id),
         dishPhotosApi.getUserPhotoForDish(dishId),
-      ])
-        .then(([vote, photo]) => {
-          setPriorVote(vote)
-          setExistingPhotoUrl(photo?.photo_url ?? null)
-        })
-        .catch((err) => { logger.error('Failed to refresh prior state:', err) })
+      ]).then(([voteResult, photoResult]) => {
+        if (voteResult.status === 'fulfilled') {
+          setPriorVote(voteResult.value)
+        } else {
+          logger.error('Failed to refresh prior vote:', voteResult.reason)
+        }
+        if (photoResult.status === 'fulfilled') {
+          setExistingPhotoUrl(photoResult.value?.photo_url ?? null)
+        } else {
+          logger.error('Failed to refresh prior photo:', photoResult.reason)
+        }
+      })
     }
     handleVote?.()
   }
