@@ -38,7 +38,7 @@ export function Dish() {
   const [showRateFlow, setShowRateFlow] = useState(false)
   const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
   const [priorVote, setPriorVote] = useState(null)
-  const [existingPhotoUrl, setExistingPhotoUrl] = useState(null)
+  const [existingPhoto, setExistingPhoto] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 
   // Ear icon tooltip — show once per device
@@ -50,7 +50,7 @@ export function Dish() {
   useEffect(() => {
     if (!user || !dishId) {
       setPriorVote(null)
-      setExistingPhotoUrl(null)
+      setExistingPhoto(null)
       return
     }
     let cancelled = false
@@ -67,7 +67,7 @@ export function Dish() {
         logger.error('Failed to fetch prior vote:', voteResult.reason)
       }
       if (photoResult.status === 'fulfilled') {
-        setExistingPhotoUrl(photoResult.value?.photo_url ?? null)
+        setExistingPhoto(photoResult.value ? { id: photoResult.value.id, photo_url: photoResult.value.photo_url } : null)
       } else {
         logger.error('Failed to fetch prior photo:', photoResult.reason)
       }
@@ -128,7 +128,7 @@ export function Dish() {
           logger.error('Failed to refresh prior vote:', voteResult.reason)
         }
         if (photoResult.status === 'fulfilled') {
-          setExistingPhotoUrl(photoResult.value?.photo_url ?? null)
+          setExistingPhoto(photoResult.value ? { id: photoResult.value.id, photo_url: photoResult.value.photo_url } : null)
         } else {
           logger.error('Failed to refresh prior photo:', photoResult.reason)
         }
@@ -336,7 +336,7 @@ export function Dish() {
                   price={dish.price}
                   totalVotes={dish.total_votes}
                   isRanked={isRanked}
-                  existingPhotoUrl={existingPhotoUrl}
+                  existingPhoto={existingPhoto}
                   onVote={handleVoteSubmitted}
                   onLoginRequired={handleLoginRequired}
                   onPhotoUploaded={handlePhotoUploaded}

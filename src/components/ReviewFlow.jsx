@@ -6,6 +6,7 @@ import { usePurityTracker } from '../hooks/usePurityTracker'
 import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
+import { dishPhotosApi } from '../api/dishPhotosApi'
 import { FoodRatingSlider } from './FoodRatingSlider'
 import { MAX_REVIEW_LENGTH } from '../constants/app'
 import {
@@ -31,7 +32,7 @@ export function ReviewFlow({
   price,
   totalVotes = 0,
   isRanked = false,
-  existingPhotoUrl = null,
+  existingPhoto = null,
   onVote,
   onLoginRequired,
   onPhotoUploaded,
@@ -199,6 +200,20 @@ export function ReviewFlow({
       return
     }
 
+    // Photo lifecycle: if the user had a prior photo and chose Remove, or
+    // chose Replace and successfully uploaded a new one, delete the old row.
+    // Vote already saved; photo failure is logged but doesn't roll back the rating.
+    if (existingPhoto?.id && (
+      existingPhotoAction === 'remove' ||
+      (existingPhotoAction === 'replace' && photoAdded)
+    )) {
+      try {
+        await dishPhotosApi.deletePhoto(existingPhoto.id)
+      } catch (err) {
+        logger.error('Failed to delete old photo after vote update:', err)
+      }
+    }
+
     // Analytics: votesApi.submitVote emits rating_submitted for every vote.
     // Dashboards that need dish/restaurant context can join against dish_id
     // in PostHog.
@@ -301,13 +316,13 @@ export function ReviewFlow({
       )}
 
       {/* Photo — collapsed by default; if user had a prior photo, show thumbnail + keep/replace/remove. */}
-      {existingPhotoUrl && !photoAdded ? (
+      {existingPhoto && !photoAdded ? (
         <div
           className="p-3 rounded-xl space-y-2"
           style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}
         >
           <div className="flex items-center gap-3">
-            <img src={existingPhotoUrl} alt="Your existing photo" className="w-16 h-16 rounded-lg object-cover" />
+            <img src={existingPhoto.photo_url} alt="Your existing photo" className="w-16 h-16 rounded-lg object-cover" />
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Your photo</p>
               <div className="flex gap-2">
