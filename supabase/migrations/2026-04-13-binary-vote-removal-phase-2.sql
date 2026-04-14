@@ -81,7 +81,8 @@ GRANT EXECUTE ON FUNCTION submit_vote_atomic(
 -- 2. public_votes view: drop would_order_again column
 -- ============================================================
 
-CREATE OR REPLACE VIEW public_votes AS
+DROP VIEW IF EXISTS public_votes;
+CREATE VIEW public_votes AS
 SELECT
   id,
   dish_id,
@@ -98,6 +99,7 @@ FROM votes;
 
 -- get_ranked_dishes: drop yes_votes + percent_worth_it from RETURNS TABLE
 -- and the SUM(CASE WHEN v.would_order_again ...) aggregations.
+DROP FUNCTION IF EXISTS get_ranked_dishes(DECIMAL, DECIMAL, INT, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION get_ranked_dishes(
   user_lat DECIMAL,
   user_lng DECIMAL,
@@ -294,6 +296,7 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- get_restaurant_dishes: drop yes_votes + percent_worth_it from RETURNS TABLE
 -- and the SUM(CASE WHEN v.would_order_again ...) aggregations.
+DROP FUNCTION IF EXISTS get_restaurant_dishes(UUID);
 CREATE OR REPLACE FUNCTION get_restaurant_dishes(
   p_restaurant_id UUID
 )
@@ -385,6 +388,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- get_dish_variants: drop yes_votes + percent_worth_it from RETURNS TABLE
 -- and the SUM(CASE WHEN v.would_order_again ...) aggregations.
+DROP FUNCTION IF EXISTS get_dish_variants(UUID);
 CREATE OR REPLACE FUNCTION get_dish_variants(
   p_parent_dish_id UUID
 )
@@ -412,6 +416,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- get_friends_votes_for_dish: drop would_order_again from RETURNS TABLE and SELECT.
+DROP FUNCTION IF EXISTS get_friends_votes_for_dish(UUID, UUID);
 CREATE OR REPLACE FUNCTION get_friends_votes_for_dish(
   p_user_id UUID,
   p_dish_id UUID
@@ -441,6 +446,7 @@ LANGUAGE SQL STABLE SET search_path = public AS $$
 $$;
 
 -- get_friends_votes_for_restaurant: drop would_order_again from RETURNS TABLE and SELECT.
+DROP FUNCTION IF EXISTS get_friends_votes_for_restaurant(UUID, UUID);
 CREATE OR REPLACE FUNCTION get_friends_votes_for_restaurant(
   p_user_id UUID,
   p_restaurant_id UUID
