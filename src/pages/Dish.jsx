@@ -17,6 +17,7 @@ import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { sanitizeUrl } from '../utils/sanitize'
 import { authApi } from '../api/authApi'
+import { dishPhotosApi } from '../api/dishPhotosApi'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -37,22 +38,32 @@ export function Dish() {
   const [showRateFlow, setShowRateFlow] = useState(false)
   const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
   const [priorVote, setPriorVote] = useState(null)
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
   const tooltipChecked = useRef(false)
 
-  // Fetch prior vote to decide CTA label and preserve it after submit.
+  // Fetch prior vote + prior photo in parallel so the CTA label and the
+  // ReviewFlow photo thumbnail both reflect current state.
   useEffect(() => {
     if (!user || !dishId) {
       setPriorVote(null)
+      setExistingPhotoUrl(null)
       return
     }
     let cancelled = false
-    authApi.getUserVoteForDish(dishId, user.id)
-      .then((vote) => { if (!cancelled) setPriorVote(vote) })
-      .catch((err) => { logger.error('Failed to fetch prior vote:', err) })
+    Promise.all([
+      authApi.getUserVoteForDish(dishId, user.id),
+      dishPhotosApi.getUserPhotoForDish(dishId),
+    ])
+      .then(([vote, photo]) => {
+        if (cancelled) return
+        setPriorVote(vote)
+        setExistingPhotoUrl(photo?.photo_url ?? null)
+      })
+      .catch((err) => { logger.error('Failed to fetch prior state:', err) })
     return () => { cancelled = true }
   }, [dishId, user])
 
@@ -96,11 +107,17 @@ export function Dish() {
 
   const handleVoteSubmitted = () => {
     setShowRateFlow(false)
-    // Refresh prior-vote state so the CTA label updates to "Update your rating".
+    // Refresh prior-vote and prior-photo so CTA label and thumbnail stay current.
     if (user && dishId) {
-      authApi.getUserVoteForDish(dishId, user.id)
-        .then(setPriorVote)
-        .catch((err) => { logger.error('Failed to refresh prior vote:', err) })
+      Promise.all([
+        authApi.getUserVoteForDish(dishId, user.id),
+        dishPhotosApi.getUserPhotoForDish(dishId),
+      ])
+        .then(([vote, photo]) => {
+          setPriorVote(vote)
+          setExistingPhotoUrl(photo?.photo_url ?? null)
+        })
+        .catch((err) => { logger.error('Failed to refresh prior state:', err) })
     }
     handleVote?.()
   }
@@ -304,7 +321,7 @@ export function Dish() {
                   price={dish.price}
                   totalVotes={dish.total_votes}
                   isRanked={isRanked}
-                  existingPhotoUrl={null}
+                  existingPhotoUrl={existingPhotoUrl}
                   onVote={handleVoteSubmitted}
                   onLoginRequired={handleLoginRequired}
                   onPhotoUploaded={handlePhotoUploaded}

@@ -73,6 +73,8 @@ describe('Dish Photos API', () => {
       const mockPhoto = { id: 'photo-1', photo_url: 'https://example.com/1.jpg' }
       const mockSelect = vi.fn(() => ({
         eq: vi.fn(function() { return this }),
+        order: vi.fn(function() { return this }),
+        limit: vi.fn(function() { return this }),
         maybeSingle: vi.fn().mockResolvedValueOnce({ data: mockPhoto, error: null }),
       }))
       supabase.from.mockReturnValueOnce({ select: mockSelect })
@@ -89,6 +91,8 @@ describe('Dish Photos API', () => {
 
       const mockSelect = vi.fn(() => ({
         eq: vi.fn(function() { return this }),
+        order: vi.fn(function() { return this }),
+        limit: vi.fn(function() { return this }),
         maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: new Error('DB error') }),
       }))
       supabase.from.mockReturnValueOnce({ select: mockSelect })
