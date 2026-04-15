@@ -165,3 +165,317 @@ CREATE POLICY user_playlist_items_select ON user_playlist_items FOR SELECT
 CREATE POLICY user_playlist_follows_select ON user_playlist_follows FOR SELECT
   USING (user_id = auth.uid());
 
+-- ============================================================================
+-- Hard-cap triggers (BEFORE INSERT with parent-row FOR UPDATE locks)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_enforce_playlist_cap()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  cnt INT;
+BEGIN
+  -- Lock the owner's profile row to serialize concurrent creates.
+  -- `profiles.id` is the auth.users id (see schema.sql:103).
+  PERFORM 1 FROM profiles WHERE id = NEW.user_id FOR UPDATE;
+  SELECT COUNT(*) INTO cnt FROM user_playlists WHERE user_id = NEW.user_id;
+  IF cnt >= 50 THEN
+    RAISE EXCEPTION 'You can have up to 50 playlists' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_enforce_item_cap()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  cnt INT;
+BEGIN
+  PERFORM 1 FROM user_playlists WHERE id = NEW.playlist_id FOR UPDATE;
+  SELECT COUNT(*) INTO cnt FROM user_playlist_items WHERE playlist_id = NEW.playlist_id;
+  IF cnt >= 100 THEN
+    RAISE EXCEPTION 'A playlist can hold up to 100 dishes' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tr_enforce_playlist_cap
+  BEFORE INSERT ON user_playlists
+  FOR EACH ROW EXECUTE FUNCTION fn_enforce_playlist_cap();
+
+CREATE TRIGGER tr_enforce_item_cap
+  BEFORE INSERT ON user_playlist_items
+  FOR EACH ROW EXECUTE FUNCTION fn_enforce_item_cap();
+
+-- ============================================================================
+-- Content blocklist (DB-side floor; client-side blocklist is richer)
+-- Mirrors the most egregious categories from src/lib/reviewBlocklist.js.
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_check_content_blocklist(p_text TEXT, p_field TEXT)
+RETURNS VOID
+LANGUAGE plpgsql IMMUTABLE SET search_path = public AS $$
+DECLARE
+  v_normalized TEXT;
+BEGIN
+  IF p_text IS NULL OR p_text = '' THEN RETURN; END IF;
+  v_normalized := lower(regexp_replace(p_text, '\s+', ' ', 'g'));
+  IF v_normalized ~ '\y(nigger|nigga|n\*gger|faggot|f\*ggot|retard(ed)?|spic|chink|kike|wetback|beaner|dyke|tranny|nazi|hitler|kkk)\y' THEN
+    RAISE EXCEPTION '% contains blocked content', p_field USING ERRCODE = 'P0001';
+  END IF;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION fn_check_content_blocklist(TEXT, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION fn_check_content_blocklist(TEXT, TEXT) TO authenticated, service_role;
+
+-- ============================================================================
+-- Slug helper + create/update/delete RPCs
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_playlist_slug_from_title(p_title TEXT, p_user_id UUID)
+RETURNS TEXT LANGUAGE plpgsql AS $$
+DECLARE
+  base_slug TEXT;
+  candidate TEXT;
+  suffix INT := 2;
+BEGIN
+  base_slug := regexp_replace(lower(trim(p_title)), '[^a-z0-9]+', '-', 'g');
+  base_slug := regexp_replace(base_slug, '^-+|-+$', '', 'g');
+  IF base_slug = '' THEN base_slug := 'playlist'; END IF;
+  base_slug := LEFT(base_slug, 70);
+  candidate := base_slug;
+  WHILE EXISTS (SELECT 1 FROM user_playlists WHERE user_id = p_user_id AND slug = candidate) LOOP
+    candidate := base_slug || '-' || suffix;
+    suffix := suffix + 1;
+    IF suffix > 999 THEN EXIT; END IF;
+  END LOOP;
+  RETURN candidate;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION create_user_playlist(
+  p_title TEXT, p_description TEXT, p_is_public BOOLEAN
+) RETURNS user_playlists
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_row user_playlists;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  PERFORM fn_check_content_blocklist(p_title, 'Playlist title');
+  PERFORM fn_check_content_blocklist(p_description, 'Description');
+  INSERT INTO user_playlists (user_id, title, description, is_public, slug)
+  VALUES (v_user, p_title, NULLIF(p_description, ''), p_is_public,
+          fn_playlist_slug_from_title(p_title, v_user))
+  RETURNING * INTO v_row;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION update_user_playlist(
+  p_id UUID, p_title TEXT, p_description TEXT, p_is_public BOOLEAN
+) RETURNS user_playlists
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_row user_playlists;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  IF p_title IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_title, 'Playlist title'); END IF;
+  IF p_description IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_description, 'Description'); END IF;
+  UPDATE user_playlists
+     SET title = COALESCE(p_title, user_playlists.title),
+         description = NULLIF(p_description, ''),
+         is_public = COALESCE(p_is_public, user_playlists.is_public),
+         slug = CASE WHEN p_title IS NOT NULL AND p_title <> user_playlists.title
+                     THEN fn_playlist_slug_from_title(p_title, user_playlists.user_id)
+                     ELSE user_playlists.slug END
+   WHERE user_playlists.id = p_id AND user_playlists.user_id = v_user
+   RETURNING * INTO v_row;
+  IF v_row.id IS NULL THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION delete_user_playlist(p_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_deleted INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  DELETE FROM user_playlists WHERE id = p_id AND user_id = v_user;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted = 0 THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+END;
+$$;
+
+-- ============================================================================
+-- Item mutation RPCs: add, remove, reorder, update-note
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION add_dish_to_playlist(
+  p_playlist_id UUID, p_dish_id UUID, p_note TEXT
+) RETURNS user_playlist_items
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_next_pos INT;
+  v_row user_playlist_items;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_note IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_note, 'Note'); END IF;
+  SELECT COALESCE(MAX(position), 0) + 1 INTO v_next_pos
+    FROM user_playlist_items WHERE playlist_id = p_playlist_id;
+  INSERT INTO user_playlist_items (playlist_id, dish_id, position, note)
+  VALUES (p_playlist_id, p_dish_id, v_next_pos, NULLIF(p_note, ''))
+  RETURNING * INTO v_row;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION remove_dish_from_playlist(
+  p_playlist_id UUID, p_dish_id UUID
+) RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_deleted INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  DELETE FROM user_playlist_items
+    WHERE playlist_id = p_playlist_id AND dish_id = p_dish_id;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted = 0 THEN
+    RAISE EXCEPTION 'Dish not in playlist' USING ERRCODE = 'P0002';
+  END IF;
+  -- Compaction trigger fires automatically on DELETE.
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION reorder_playlist_items(
+  p_playlist_id UUID, p_ordered_dish_ids UUID[]
+) RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_current_count INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Exact-permutation validation
+  SELECT COUNT(*) INTO v_current_count
+    FROM user_playlist_items WHERE playlist_id = p_playlist_id;
+  IF v_current_count <> COALESCE(array_length(p_ordered_dish_ids, 1), 0) THEN
+    RAISE EXCEPTION 'Reorder must include every dish exactly once' USING ERRCODE = 'P0001';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM (
+      SELECT dish_id FROM user_playlist_items WHERE playlist_id = p_playlist_id
+      EXCEPT
+      SELECT unnest(p_ordered_dish_ids)
+    ) diff
+  ) OR EXISTS (
+    SELECT 1 FROM (
+      SELECT unnest(p_ordered_dish_ids) AS dish_id
+    ) d
+    GROUP BY dish_id HAVING COUNT(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Reorder must be an exact permutation' USING ERRCODE = 'P0001';
+  END IF;
+
+  -- Atomic rewrite under the deferred unique (playlist_id, position)
+  UPDATE user_playlist_items upi
+     SET position = o.pos
+    FROM (
+      SELECT dish_id, ordinality AS pos
+      FROM unnest(p_ordered_dish_ids) WITH ORDINALITY
+    ) o
+   WHERE upi.playlist_id = p_playlist_id AND upi.dish_id = o.dish_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION update_playlist_item_note(
+  p_playlist_id UUID, p_dish_id UUID, p_note TEXT
+) RETURNS user_playlist_items
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_row user_playlist_items;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_note IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_note, 'Note'); END IF;
+  UPDATE user_playlist_items
+     SET note = NULLIF(p_note, '')
+   WHERE playlist_id = p_playlist_id AND dish_id = p_dish_id
+   RETURNING * INTO v_row;
+  IF v_row.id IS NULL THEN
+    RAISE EXCEPTION 'Dish not in playlist' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN v_row;
+END;
+$$;
+
+-- ============================================================================
+-- Follow / unfollow RPCs
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION follow_playlist(p_playlist_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_user UUID := auth.uid();
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM user_playlists
+    WHERE id = p_playlist_id
+      AND (is_public OR user_id = v_user)
+      AND user_id <> v_user
+  ) THEN
+    -- Identical error for: nonexistent, private-not-yours, self-follow.
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  INSERT INTO user_playlist_follows (user_id, playlist_id)
+  VALUES (v_user, p_playlist_id)
+  ON CONFLICT DO NOTHING;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION unfollow_playlist(p_playlist_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_user UUID := auth.uid();
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  DELETE FROM user_playlist_follows
+    WHERE user_id = v_user AND playlist_id = p_playlist_id;
+  -- Idempotent: no row is not an error.
+END;
+$$;
+
