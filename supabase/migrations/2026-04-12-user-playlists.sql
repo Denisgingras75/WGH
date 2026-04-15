@@ -66,9 +66,13 @@ CREATE OR REPLACE FUNCTION fn_user_playlist_items_count()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    UPDATE user_playlists SET item_count = item_count + 1, updated_at = NOW() WHERE id = NEW.playlist_id;
+    UPDATE user_playlists
+       SET item_count = user_playlists.item_count + 1, updated_at = NOW()
+     WHERE user_playlists.id = NEW.playlist_id;
   ELSIF TG_OP = 'DELETE' THEN
-    UPDATE user_playlists SET item_count = GREATEST(item_count - 1, 0), updated_at = NOW() WHERE id = OLD.playlist_id;
+    UPDATE user_playlists
+       SET item_count = GREATEST(user_playlists.item_count - 1, 0), updated_at = NOW()
+     WHERE user_playlists.id = OLD.playlist_id;
   END IF;
   RETURN NULL;
 END;
@@ -78,9 +82,13 @@ CREATE OR REPLACE FUNCTION fn_user_playlist_follows_count()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    UPDATE user_playlists SET follower_count = follower_count + 1 WHERE id = NEW.playlist_id;
+    UPDATE user_playlists
+       SET follower_count = user_playlists.follower_count + 1
+     WHERE user_playlists.id = NEW.playlist_id;
   ELSIF TG_OP = 'DELETE' THEN
-    UPDATE user_playlists SET follower_count = GREATEST(follower_count - 1, 0) WHERE id = OLD.playlist_id;
+    UPDATE user_playlists
+       SET follower_count = GREATEST(user_playlists.follower_count - 1, 0)
+     WHERE user_playlists.id = OLD.playlist_id;
   END IF;
   RETURN NULL;
 END;
@@ -99,14 +107,17 @@ RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
   -- FOR EACH ROW so we can access OLD. Constraint is DEFERRABLE INITIALLY
   -- DEFERRED, so temporary duplicate positions during the rewrite are OK.
-  -- Cascade deletes fire this once per row — acceptable since n <= 100.
+  -- Advisory xact lock serializes compaction per playlist; prevents
+  -- deadlocks when concurrent deletes (or parent cascade) touch the same
+  -- playlist. Released at transaction end.
+  PERFORM pg_advisory_xact_lock(hashtextextended(OLD.playlist_id::TEXT, 0));
   UPDATE user_playlist_items x SET position = r.new_pos
-  FROM (
-    SELECT id, ROW_NUMBER() OVER (ORDER BY position) AS new_pos
-    FROM user_playlist_items
-    WHERE playlist_id = OLD.playlist_id
-  ) r
-  WHERE x.id = r.id AND x.position IS DISTINCT FROM r.new_pos;
+    FROM (
+      SELECT i.id, ROW_NUMBER() OVER (ORDER BY i.position) AS new_pos
+      FROM user_playlist_items i
+      WHERE i.playlist_id = OLD.playlist_id
+    ) r
+    WHERE x.id = r.id AND x.position IS DISTINCT FROM r.new_pos;
   RETURN NULL;
 END;
 $$;
