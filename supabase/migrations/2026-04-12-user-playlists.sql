@@ -496,3 +496,159 @@ BEGIN
 END;
 $$;
 
+-- ============================================================================
+-- Read RPCs (SECURITY INVOKER — RLS filters naturally)
+-- ============================================================================
+
+-- Helper: first-4 dish categories for cover rendering.
+CREATE OR REPLACE FUNCTION fn_first_four_categories(p_playlist_id UUID)
+RETURNS TEXT[]
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(d.category ORDER BY upi.position), ARRAY[]::TEXT[])
+  FROM (
+    SELECT dish_id, position FROM user_playlist_items
+    WHERE playlist_id = p_playlist_id
+    ORDER BY position LIMIT 4
+  ) upi
+  JOIN dishes d ON d.id = upi.dish_id;
+$$;
+
+CREATE OR REPLACE FUNCTION get_playlist_detail(p_playlist_id UUID)
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, description TEXT, is_public BOOLEAN,
+  slug TEXT, item_count INT, follower_count INT, created_at TIMESTAMPTZ,
+  owner_id UUID, owner_display_name TEXT,
+  is_owner BOOLEAN, is_followed BOOLEAN,
+  cover_categories TEXT[],
+  items JSONB
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p.id, p.title, p.description, p.is_public, p.slug,
+    p.item_count, p.follower_count, p.created_at,
+    p.user_id, pr.display_name,
+    (p.user_id = auth.uid()) AS is_owner,
+    EXISTS (SELECT 1 FROM user_playlist_follows f
+            WHERE f.playlist_id = p.id AND f.user_id = auth.uid()) AS is_followed,
+    fn_first_four_categories(p.id) AS cover_categories,
+    (
+      SELECT jsonb_agg(jsonb_build_object(
+        'dish_id', d.id, 'dish_name', d.name, 'position', upi.position,
+        'note', upi.note,
+        'restaurant_id', r.id, 'restaurant_name', r.name,
+        'category', d.category, 'avg_rating', d.avg_rating, 'total_votes', d.total_votes,
+        'photo_url', d.photo_url
+      ) ORDER BY upi.position)
+      FROM user_playlist_items upi
+      JOIN dishes d ON d.id = upi.dish_id
+      JOIN restaurants r ON r.id = d.restaurant_id
+      WHERE upi.playlist_id = p.id
+    ) AS items
+  FROM user_playlists p
+  LEFT JOIN profiles pr ON pr.id = p.user_id
+  WHERE p.id = p_playlist_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_user_playlists(p_user_id UUID)
+RETURNS TABLE (
+  id UUID, user_id UUID, title TEXT, description TEXT, is_public BOOLEAN,
+  slug TEXT, cover_mode TEXT, follower_count INT, item_count INT,
+  created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
+  cover_categories TEXT[]
+)
+LANGUAGE sql SECURITY INVOKER SET search_path = public AS $$
+  SELECT p.id, p.user_id, p.title, p.description, p.is_public, p.slug,
+         p.cover_mode, p.follower_count, p.item_count, p.created_at, p.updated_at,
+         fn_first_four_categories(p.id) AS cover_categories
+  FROM user_playlists p
+  WHERE p.user_id = p_user_id
+  ORDER BY p.created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION get_followed_playlists()
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, is_public BOOLEAN, slug TEXT,
+  item_count INT, follower_count INT, owner_display_name TEXT,
+  followed_at TIMESTAMPTZ, visibility TEXT, cover_categories TEXT[]
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    f.playlist_id, p.title, p.is_public, p.slug,
+    p.item_count, p.follower_count, pr.display_name,
+    f.followed_at,
+    CASE WHEN p.id IS NULL OR (NOT p.is_public AND p.user_id <> auth.uid())
+         THEN 'unavailable' ELSE 'visible' END AS visibility,
+    CASE WHEN p.id IS NULL THEN ARRAY[]::TEXT[]
+         ELSE fn_first_four_categories(p.id) END AS cover_categories
+  FROM user_playlist_follows f
+  LEFT JOIN user_playlists p ON p.id = f.playlist_id
+  LEFT JOIN profiles pr ON pr.id = p.user_id
+  WHERE f.user_id = auth.uid()
+  ORDER BY f.followed_at DESC;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_dish_playlist_membership(p_dish_id UUID)
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, slug TEXT,
+  item_count INT, cover_mode TEXT, contains_dish BOOLEAN,
+  cover_categories TEXT[]
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p.id, p.title, p.slug, p.item_count, p.cover_mode,
+    EXISTS (SELECT 1 FROM user_playlist_items upi
+            WHERE upi.playlist_id = p.id AND upi.dish_id = p_dish_id) AS contains_dish,
+    fn_first_four_categories(p.id) AS cover_categories
+  FROM user_playlists p
+  WHERE p.user_id = auth.uid()
+  ORDER BY p.created_at DESC;
+END;
+$$;
+
+-- ============================================================================
+-- Grants (per-function, matching lock-menu-queue-rpcs.sql pattern)
+-- ============================================================================
+
+-- Write RPCs: authenticated users + service_role only. Anon is locked out.
+REVOKE EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION delete_user_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION delete_user_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION follow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION follow_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION unfollow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION unfollow_playlist(UUID) TO authenticated, service_role;
+
+-- Read RPCs: SECURITY INVOKER, RLS filters private rows. Safe for anon.
+GRANT EXECUTE ON FUNCTION get_playlist_detail(UUID)          TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_user_playlists(UUID)           TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_followed_playlists()           TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) TO authenticated, service_role;
+
+COMMIT;
