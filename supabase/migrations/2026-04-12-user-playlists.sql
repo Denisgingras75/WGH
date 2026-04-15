@@ -296,9 +296,11 @@ BEGIN
   IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
   IF p_title IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_title, 'Playlist title'); END IF;
   IF p_description IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_description, 'Description'); END IF;
+  -- NULL params mean "unchanged"; pass empty string to explicitly clear description.
   UPDATE user_playlists
      SET title = COALESCE(p_title, user_playlists.title),
-         description = NULLIF(p_description, ''),
+         description = CASE WHEN p_description IS NULL THEN user_playlists.description
+                            ELSE NULLIF(p_description, '') END,
          is_public = COALESCE(p_is_public, user_playlists.is_public),
          slug = CASE WHEN p_title IS NOT NULL AND p_title <> user_playlists.title
                      THEN fn_playlist_slug_from_title(p_title, user_playlists.user_id, user_playlists.id)
@@ -533,7 +535,7 @@ BEGIN
     EXISTS (SELECT 1 FROM user_playlist_follows f
             WHERE f.playlist_id = p.id AND f.user_id = auth.uid()) AS is_followed,
     fn_first_four_categories(p.id) AS cover_categories,
-    (
+    COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
         'dish_id', d.id, 'dish_name', d.name, 'position', upi.position,
         'note', upi.note,
@@ -545,7 +547,7 @@ BEGIN
       JOIN dishes d ON d.id = upi.dish_id
       JOIN restaurants r ON r.id = d.restaurant_id
       WHERE upi.playlist_id = p.id
-    ) AS items
+    ), '[]'::jsonb) AS items
   FROM user_playlists p
   LEFT JOIN profiles pr ON pr.id = p.user_id
   WHERE p.id = p_playlist_id;
@@ -645,10 +647,19 @@ GRANT  EXECUTE ON FUNCTION follow_playlist(UUID) TO authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION unfollow_playlist(UUID) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION unfollow_playlist(UUID) TO authenticated, service_role;
 
--- Read RPCs: SECURITY INVOKER, RLS filters private rows. Safe for anon.
-GRANT EXECUTE ON FUNCTION get_playlist_detail(UUID)          TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION get_user_playlists(UUID)           TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION get_followed_playlists()           TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) TO authenticated, service_role;
+-- Read RPCs: SECURITY INVOKER, RLS filters private rows. Explicit
+-- REVOKE + GRANT makes the grants table the source of truth (instead of
+-- relying on Postgres default PUBLIC execute).
+REVOKE EXECUTE ON FUNCTION get_playlist_detail(UUID)          FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION get_playlist_detail(UUID)          TO anon, authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_user_playlists(UUID)           FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION get_user_playlists(UUID)           TO anon, authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_followed_playlists()           FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION get_followed_playlists()           TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) TO authenticated, service_role;
 
 COMMIT;
