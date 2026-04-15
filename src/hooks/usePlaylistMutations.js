@@ -22,7 +22,12 @@ export function usePlaylistMutations() {
     }),
     remove: useMutation({
       mutationFn: (id) => userPlaylistsApi.remove(id),
-      onSuccess: () => invalidate(),
+      onSuccess: (_data, id) => {
+        // Remove the deleted playlist's detail from cache so a stale back-nav
+        // doesn't briefly re-render it.
+        qc.removeQueries({ queryKey: ['playlist-detail', id] })
+        invalidate()
+      },
     }),
     addDish: useMutation({
       mutationFn: ({ playlistId, dishId, note }) =>

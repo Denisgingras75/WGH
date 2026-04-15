@@ -1,21 +1,22 @@
 import { supabase } from '../lib/supabase'
-import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+import { createClassifiedError } from '../utils/errorHandler'
+import { validateUserContent } from '../lib/reviewBlocklist'
 import {
   checkPlaylistCreateRateLimit,
   checkPlaylistItemAddRateLimit,
   checkPlaylistFollowRateLimit,
 } from '../lib/rateLimiter'
 
-function rethrow(context, error) {
-  logger.error(context, error)
-  throw error.type ? error : createClassifiedError(error)
-}
-
+// "Too many" is the magic phrase classifyError() uses to tag RATE_LIMIT.
 function rateLimitError(retryAfterMs) {
   const secs = Math.max(1, Math.ceil(retryAfterMs / 1000))
-  const e = new Error(`Slow down — try again in ${secs}s`)
-  e.type = 'rate_limit'
+  return new Error(`Too many requests — try again in ${secs}s`)
+}
+
+function contentError(msg) {
+  const e = new Error(msg)
+  e.type = 'VALIDATION'
   return e
 }
 
@@ -23,6 +24,12 @@ export const userPlaylistsApi = {
   async create({ title, description, isPublic }) {
     const rl = checkPlaylistCreateRateLimit()
     if (!rl.allowed) throw rateLimitError(rl.retryAfterMs)
+    const titleErr = validateUserContent(title, 'Playlist title')
+    if (titleErr) throw contentError(titleErr)
+    if (description) {
+      const descErr = validateUserContent(description, 'Description')
+      if (descErr) throw contentError(descErr)
+    }
     try {
       const { data, error } = await supabase.rpc('create_user_playlist', {
         p_title: title,
@@ -31,10 +38,21 @@ export const userPlaylistsApi = {
       })
       if (error) throw createClassifiedError(error)
       return data
-    } catch (e) { rethrow('userPlaylistsApi.create', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.create:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async update(id, { title, description, isPublic } = {}) {
+    if (title != null) {
+      const titleErr = validateUserContent(title, 'Playlist title')
+      if (titleErr) throw contentError(titleErr)
+    }
+    if (description) {
+      const descErr = validateUserContent(description, 'Description')
+      if (descErr) throw contentError(descErr)
+    }
     try {
       const { data, error } = await supabase.rpc('update_user_playlist', {
         p_id: id,
@@ -44,19 +62,29 @@ export const userPlaylistsApi = {
       })
       if (error) throw createClassifiedError(error)
       return data
-    } catch (e) { rethrow('userPlaylistsApi.update', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.update:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async remove(id) {
     try {
       const { error } = await supabase.rpc('delete_user_playlist', { p_id: id })
       if (error) throw createClassifiedError(error)
-    } catch (e) { rethrow('userPlaylistsApi.remove', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.remove:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async addDish(playlistId, dishId, note) {
     const rl = checkPlaylistItemAddRateLimit()
     if (!rl.allowed) throw rateLimitError(rl.retryAfterMs)
+    if (note) {
+      const noteErr = validateUserContent(note, 'Note')
+      if (noteErr) throw contentError(noteErr)
+    }
     try {
       const { data, error } = await supabase.rpc('add_dish_to_playlist', {
         p_playlist_id: playlistId,
@@ -65,7 +93,10 @@ export const userPlaylistsApi = {
       })
       if (error) throw createClassifiedError(error)
       return data
-    } catch (e) { rethrow('userPlaylistsApi.addDish', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.addDish:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async removeDish(playlistId, dishId) {
@@ -75,7 +106,10 @@ export const userPlaylistsApi = {
         p_dish_id: dishId,
       })
       if (error) throw createClassifiedError(error)
-    } catch (e) { rethrow('userPlaylistsApi.removeDish', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.removeDish:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async reorder(playlistId, orderedDishIds) {
@@ -85,10 +119,17 @@ export const userPlaylistsApi = {
         p_ordered_dish_ids: orderedDishIds,
       })
       if (error) throw createClassifiedError(error)
-    } catch (e) { rethrow('userPlaylistsApi.reorder', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.reorder:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async updateItemNote(playlistId, dishId, note) {
+    if (note) {
+      const noteErr = validateUserContent(note, 'Note')
+      if (noteErr) throw contentError(noteErr)
+    }
     try {
       const { data, error } = await supabase.rpc('update_playlist_item_note', {
         p_playlist_id: playlistId,
@@ -97,7 +138,10 @@ export const userPlaylistsApi = {
       })
       if (error) throw createClassifiedError(error)
       return data
-    } catch (e) { rethrow('userPlaylistsApi.updateItemNote', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.updateItemNote:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async follow(playlistId) {
@@ -106,14 +150,20 @@ export const userPlaylistsApi = {
     try {
       const { error } = await supabase.rpc('follow_playlist', { p_playlist_id: playlistId })
       if (error) throw createClassifiedError(error)
-    } catch (e) { rethrow('userPlaylistsApi.follow', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.follow:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async unfollow(playlistId) {
     try {
       const { error } = await supabase.rpc('unfollow_playlist', { p_playlist_id: playlistId })
       if (error) throw createClassifiedError(error)
-    } catch (e) { rethrow('userPlaylistsApi.unfollow', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.unfollow:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async getDetail(id) {
@@ -121,7 +171,10 @@ export const userPlaylistsApi = {
       const { data, error } = await supabase.rpc('get_playlist_detail', { p_playlist_id: id })
       if (error) throw createClassifiedError(error)
       return data?.[0] ?? null
-    } catch (e) { rethrow('userPlaylistsApi.getDetail', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.getDetail:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async getByUser(userId) {
@@ -129,7 +182,10 @@ export const userPlaylistsApi = {
       const { data, error } = await supabase.rpc('get_user_playlists', { p_user_id: userId })
       if (error) throw createClassifiedError(error)
       return data ?? []
-    } catch (e) { rethrow('userPlaylistsApi.getByUser', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.getByUser:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async getFollowed() {
@@ -137,7 +193,10 @@ export const userPlaylistsApi = {
       const { data, error } = await supabase.rpc('get_followed_playlists')
       if (error) throw createClassifiedError(error)
       return data ?? []
-    } catch (e) { rethrow('userPlaylistsApi.getFollowed', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.getFollowed:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 
   async getDishMembership(dishId) {
@@ -145,6 +204,9 @@ export const userPlaylistsApi = {
       const { data, error } = await supabase.rpc('get_dish_playlist_membership', { p_dish_id: dishId })
       if (error) throw createClassifiedError(error)
       return data ?? []
-    } catch (e) { rethrow('userPlaylistsApi.getDishMembership', e) }
+    } catch (error) {
+      logger.error('userPlaylistsApi.getDishMembership:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
   },
 }
