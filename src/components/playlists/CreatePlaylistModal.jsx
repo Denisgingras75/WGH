@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
 import { MIN_TITLE_LEN, MAX_TITLE_LEN } from '../../constants/playlists'
 import { capture } from '../../lib/analytics'
 import { logger } from '../../utils/logger'
+import { LoginModal } from '../Auth/LoginModal'
 
 /**
  * Quick-create playlist form. Title-only form; description + privacy can
@@ -12,6 +14,7 @@ import { logger } from '../../utils/logger'
  * playlist has that dish added immediately after creation.
  */
 export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) {
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [isPublic, setIsPublic] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -28,6 +31,13 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
   }, [isOpen])
 
   if (!isOpen) return null
+
+  // §1.6: auth gate. Shouldn't normally be reachable without auth (the
+  // profile route and AddToPlaylistSheet both require login), but defense
+  // in depth — and useful in future entry points.
+  if (!user) {
+    return <LoginModal isOpen={true} onClose={onClose} pendingAction="create a playlist" />
+  }
 
   const submit = async () => {
     setError(null)
@@ -49,9 +59,15 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
             from_sheet: 'dish_detail',
           })
         } catch (seedErr) {
-          // Playlist was created; seeding failed. Surface the error but don't
-          // unwind the create — user can retry adding from the playlist page.
+          // Playlist exists but seeding failed — the user's intent was
+          // specifically "create playlist + add this dish", so we surface
+          // the partial failure instead of silently dismissing.
           logger.warn('Seed dish failed; playlist created:', seedErr)
+          onCreated?.(playlist)
+          setError(
+            `Playlist created but we couldn't add the dish: ${seedErr?.message || 'unknown error'}. Try adding it from the playlist page.`
+          )
+          return
         }
       }
       onCreated?.(playlist)
