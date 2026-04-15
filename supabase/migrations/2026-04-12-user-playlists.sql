@@ -233,7 +233,9 @@ GRANT  EXECUTE ON FUNCTION fn_check_content_blocklist(TEXT, TEXT) TO authenticat
 -- Slug helper + create/update/delete RPCs
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION fn_playlist_slug_from_title(p_title TEXT, p_user_id UUID)
+CREATE OR REPLACE FUNCTION fn_playlist_slug_from_title(
+  p_title TEXT, p_user_id UUID, p_exclude_playlist_id UUID DEFAULT NULL
+)
 RETURNS TEXT LANGUAGE plpgsql AS $$
 DECLARE
   base_slug TEXT;
@@ -245,7 +247,13 @@ BEGIN
   IF base_slug = '' THEN base_slug := 'playlist'; END IF;
   base_slug := LEFT(base_slug, 70);
   candidate := base_slug;
-  WHILE EXISTS (SELECT 1 FROM user_playlists WHERE user_id = p_user_id AND slug = candidate) LOOP
+  -- p_exclude_playlist_id lets update_user_playlist skip its own row so a
+  -- title-case or punctuation-only rename doesn't falsely collide with self.
+  WHILE EXISTS (
+    SELECT 1 FROM user_playlists
+    WHERE user_id = p_user_id AND slug = candidate
+      AND (p_exclude_playlist_id IS NULL OR id <> p_exclude_playlist_id)
+  ) LOOP
     candidate := base_slug || '-' || suffix;
     suffix := suffix + 1;
     IF suffix > 999 THEN EXIT; END IF;
@@ -254,6 +262,10 @@ BEGIN
 END;
 $$;
 
+-- Note: no server-side rate limit in this RPC. Hard cap is enforced by
+-- fn_enforce_playlist_cap (50/user). Client-side throttling lives in
+-- src/lib/rateLimiter.js. Adding a server-side rate_limits insert here
+-- would be a defense-in-depth layer, deferred to 1.1 if abuse shows up.
 CREATE OR REPLACE FUNCTION create_user_playlist(
   p_title TEXT, p_description TEXT, p_is_public BOOLEAN
 ) RETURNS user_playlists
@@ -289,7 +301,7 @@ BEGIN
          description = NULLIF(p_description, ''),
          is_public = COALESCE(p_is_public, user_playlists.is_public),
          slug = CASE WHEN p_title IS NOT NULL AND p_title <> user_playlists.title
-                     THEN fn_playlist_slug_from_title(p_title, user_playlists.user_id)
+                     THEN fn_playlist_slug_from_title(p_title, user_playlists.user_id, user_playlists.id)
                      ELSE user_playlists.slug END
    WHERE user_playlists.id = p_id AND user_playlists.user_id = v_user
    RETURNING * INTO v_row;
@@ -449,15 +461,20 @@ $$;
 CREATE OR REPLACE FUNCTION follow_playlist(p_playlist_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_user UUID := auth.uid();
+DECLARE
+  v_user UUID := auth.uid();
+  v_is_public BOOLEAN;
+  v_owner UUID;
 BEGIN
   IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM user_playlists
-    WHERE id = p_playlist_id
-      AND (is_public OR user_id = v_user)
-      AND user_id <> v_user
-  ) THEN
+  -- FOR SHARE locks the playlist row so a concurrent public→private flip
+  -- (update_user_playlist takes FOR UPDATE implicitly via the UPDATE) can't
+  -- interleave between the visibility check and the INSERT below.
+  SELECT is_public, user_id INTO v_is_public, v_owner
+    FROM user_playlists WHERE id = p_playlist_id FOR SHARE;
+  IF v_owner IS NULL
+     OR v_owner = v_user
+     OR (NOT v_is_public AND v_owner <> v_user) THEN
     -- Identical error for: nonexistent, private-not-yours, self-follow.
     RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
   END IF;
