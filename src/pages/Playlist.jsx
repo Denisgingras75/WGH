@@ -70,6 +70,7 @@ export function Playlist() {
 
   var items = playlist.items || []
   var covers = (playlist.cover_categories || []).slice(0, 4)
+  var coverPhotos = items.slice(0, 4).map(function (item) { return item.photo_url || null })
 
   var toggleFollow = function () {
     if (!user) { navigate('/login'); return }
@@ -95,7 +96,7 @@ export function Playlist() {
       {/* Header with cover gradient */}
       <div style={{ padding: 20, background: 'linear-gradient(180deg, var(--color-primary) 0%, var(--color-bg) 100%)' }}>
         <div className="flex justify-center">
-          <PlaylistCover coverCategories={covers} size={240} />
+          <PlaylistCover coverCategories={covers} coverPhotos={coverPhotos} size={240} />
         </div>
         <h1
           style={{
