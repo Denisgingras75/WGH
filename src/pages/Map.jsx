@@ -114,7 +114,12 @@ export function Map() {
   }, [])
 
   // Search results (no town filter — shows whole island)
-  var searchData = useDishSearch(searchQuery, searchLimit, null)
+  var searchData = useDishSearch(searchQuery, searchLimit, {
+    lat: location ? location.lat : null,
+    lng: location ? location.lng : null,
+    radiusMiles: radius,
+    isUsingDefault: permissionState !== 'granted',
+  })
   var searchResults = searchData.results
   var searchLoading = searchData.loading
 

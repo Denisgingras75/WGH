@@ -47,7 +47,12 @@ export function Browse() {
   const { stats: userStats } = useUserVotes(user?.id)
 
   // Search results from API using React Query hook
-  const { results: searchResults, loading: searchLoading } = useDishSearch(debouncedSearchQuery, 50)
+  const { results: searchResults, loading: searchLoading } = useDishSearch(debouncedSearchQuery, 50, {
+    lat: location ? location.lat : null,
+    lng: location ? location.lng : null,
+    radiusMiles: radius,
+    isUsingDefault: isUsingDefault,
+  })
 
   // Google Places restaurant search — don't bias by default MV location or Browse radius
   const placesLat = isUsingDefault ? null : location?.lat
