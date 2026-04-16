@@ -7,11 +7,16 @@ import { followsApi } from '../api/followsApi'
 import { useProfile } from '../hooks/useProfile'
 import { useUserVotes } from '../hooks/useUserVotes'
 import { useUnratedDishes } from '../hooks/useUnratedDishes'
+import { useUserPlaylists } from '../hooks/useUserPlaylists'
+import { useFollowedPlaylists } from '../hooks/useFollowedPlaylists'
 import { DishModal } from '../components/DishModal'
 import { LoginModal } from '../components/Auth/LoginModal'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
 import { CameraIcon } from '../components/CameraIcon'
+import { PlaylistStripCard } from '../components/playlists/PlaylistStripCard'
+import { PlaylistGridCard } from '../components/playlists/PlaylistGridCard'
+import { CreatePlaylistModal } from '../components/playlists/CreatePlaylistModal'
 import {
   HeroIdentityCard,
   JournalFeed,
@@ -48,6 +53,10 @@ export function Profile() {
 
   const [selectedDish, setSelectedDish] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('journal')
+  const [createPlaylistOpen, setCreatePlaylistOpen] = useState(false)
+  const { playlists: myPlaylists } = useUserPlaylists(user?.id)
+  const { playlists: savedPlaylists } = useFollowedPlaylists(!!user)
   const { data: followCounts = { followers: 0, following: 0 } } = useQuery({
     queryKey: ['followCounts', user?.id],
     queryFn: () => followsApi.getFollowCounts(user.id),
@@ -256,29 +265,184 @@ export function Profile() {
             </div>
           )}
 
-          {/* Your Journal title */}
-          <div className="px-4 pt-5 pb-1">
-            <h2
-              style={{
-                fontFamily: "'Amatic SC', cursive",
-                color: 'var(--color-text-primary)',
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-              }}
-            >
-              Your Journal
-            </h2>
+          {/* Tabs: Journal / Playlists / Saved */}
+          <div
+            className="flex"
+            style={{
+              borderBottom: '1px solid var(--color-divider)',
+              background: 'var(--color-surface)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+            }}
+          >
+            {['journal', 'playlists', 'saved'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="flex-1 py-3 text-xs font-semibold text-center"
+                style={{
+                  color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                  borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottomWidth: 2,
+                  borderBottomStyle: 'solid',
+                  borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                }}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
 
-          {/* Journal Feed — single chronological shelf */}
-          <JournalFeed
-            ratings={ratedDishes}
-            loading={votesLoading}
-          />
+          {/* --- Journal tab --- */}
+          {activeTab === 'journal' && (
+            <>
+              {/* Horizontal playlist strip */}
+              {myPlaylists.length > 0 && (
+                <>
+                  <div
+                    className="flex items-center justify-between px-5 pt-4 pb-1"
+                  >
+                    <h2
+                      style={{
+                        fontFamily: "'Amatic SC', cursive",
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        color: 'var(--color-text-primary)',
+                      }}
+                    >
+                      Your Playlists
+                    </h2>
+                    <button
+                      onClick={() => setActiveTab('playlists')}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: 'var(--color-primary)',
+                        background: 'transparent',
+                        border: 'none',
+                      }}
+                    >
+                      See all &#9656;
+                    </button>
+                  </div>
+                  <div
+                    className="flex gap-2.5 overflow-x-auto px-5 pb-3"
+                    style={{ scrollbarWidth: 'none' }}
+                  >
+                    <button
+                      onClick={() => setCreatePlaylistOpen(true)}
+                      style={{
+                        flexShrink: 0,
+                        width: 110,
+                        height: 110,
+                        border: '1.5px dashed var(--color-accent-gold)',
+                        borderRadius: 8,
+                        background: 'var(--color-surface)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 28,
+                        color: 'var(--color-accent-gold)',
+                      }}
+                    >
+                      +
+                    </button>
+                    {myPlaylists.map((p) => (
+                      <PlaylistStripCard key={p.id} playlist={p} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Your Journal title */}
+              <div className="px-4 pt-5 pb-1">
+                <h2
+                  style={{
+                    fontFamily: "'Amatic SC', cursive",
+                    color: 'var(--color-text-primary)',
+                    fontSize: '32px',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  Your Journal
+                </h2>
+              </div>
+
+              {/* Journal Feed — single chronological shelf */}
+              <JournalFeed
+                ratings={ratedDishes}
+                loading={votesLoading}
+              />
+            </>
+          )}
+
+          {/* --- Playlists tab --- */}
+          {activeTab === 'playlists' && (
+            <div className="px-4 pt-4 pb-6">
+              <div
+                className="text-xs font-bold uppercase tracking-wider pb-3"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                {myPlaylists.length} {myPlaylists.length === 1 ? 'playlist' : 'playlists'}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setCreatePlaylistOpen(true)}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1',
+                    border: '1.5px dashed var(--color-accent-gold)',
+                    borderRadius: 8,
+                    background: 'var(--color-surface)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 32,
+                    color: 'var(--color-accent-gold)',
+                  }}
+                >
+                  +
+                </button>
+                {myPlaylists.map((p) => (
+                  <PlaylistGridCard key={p.id} playlist={p} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* --- Saved tab --- */}
+          {activeTab === 'saved' && (
+            <div className="px-4 pt-4 pb-6">
+              {savedPlaylists.length === 0 ? (
+                <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎵</div>
+                  Playlists you follow will appear here
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {savedPlaylists.map((p) => (
+                    <PlaylistGridCard
+                      key={p.playlist_id}
+                      playlist={p}
+                      tombstone={p.visibility === 'unavailable'}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Account deletion — Apple Guideline 5.1.1(v) requires this to be in-app */}
           <DeleteAccountSection />
+
+          <CreatePlaylistModal
+            isOpen={createPlaylistOpen}
+            onClose={() => setCreatePlaylistOpen(false)}
+          />
 
           {/* Dish Modal for rating unrated dishes */}
           {selectedDish && (
