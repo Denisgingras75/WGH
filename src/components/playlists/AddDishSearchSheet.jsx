@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useDishSearch } from '../../hooks/useDishSearch'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
+import { useLocationContext } from '../../context/LocationContext'
+import { calculateDistance } from '../../utils/distance'
 import { categoryEmojiFor } from '../../constants/categories'
 import { capture } from '../../lib/analytics'
 import { logger } from '../../utils/logger'
@@ -20,6 +22,24 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
   var inputRef = useRef(null)
   var { results, loading, error: searchError } = useDishSearch(query, 20)
   var { addDish } = usePlaylistMutations()
+  var { location, isUsingDefault } = useLocationContext()
+
+  // Sort results by distance to user — nearest first. Only when we have REAL
+  // GPS, not the MV default. When the app expands beyond MV, default-location
+  // sort would rank everything from MV center which is wrong for other regions.
+  var sortedResults = useMemo(function () {
+    if (!results || !results.length) return results
+    if (!location || !location.lat || !location.lng || isUsingDefault) return results
+    return results.slice().sort(function (a, b) {
+      var distA = (a.restaurant_lat != null && a.restaurant_lng != null)
+        ? calculateDistance(location.lat, location.lng, a.restaurant_lat, a.restaurant_lng)
+        : 9999
+      var distB = (b.restaurant_lat != null && b.restaurant_lng != null)
+        ? calculateDistance(location.lat, location.lng, b.restaurant_lat, b.restaurant_lng)
+        : 9999
+      return distA - distB
+    })
+  }, [results, location])
 
   // Track which dishes we've added in this session (optimistic UI).
   // Seeded from existingDishIds so already-in-playlist dishes show as added.
@@ -135,12 +155,12 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
             </div>
-          ) : results.length === 0 ? (
+          ) : sortedResults.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
               No dishes found for &ldquo;{query.trim()}&rdquo;
             </div>
           ) : (
-            results.map(function (dish) {
+            sortedResults.map(function (dish) {
               var isAdded = !!addedIds[dish.dish_id]
               return (
                 <button
@@ -181,6 +201,9 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                       {dish.restaurant_name}
+                      {dish.restaurant_town && (
+                        <span> &middot; {dish.restaurant_town}</span>
+                      )}
                     </div>
                   </div>
                   <div
