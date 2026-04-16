@@ -66,6 +66,7 @@ function scoreDish(dish, tokens, normalizedPhrase, expandedTags) {
   const dishName = (dish.name || '').toLowerCase()
   const dishCategory = (dish.category || '').toLowerCase()
   const dishCuisine = (dish.restaurant_cuisine || '').toLowerCase()
+  const dishRestaurant = (dish.restaurant_name || '').toLowerCase()
   const dishTags = dish.tags || []
 
   // Exact phrase in name: 100
@@ -77,6 +78,13 @@ function scoreDish(dish, tokens, normalizedPhrase, expandedTags) {
   const allInName = tokens.every(t => dishName.includes(t))
   if (allInName && tokens.length > 0) {
     return 80
+  }
+
+  // All tokens match restaurant name: 70 — searching "Right Fork" surfaces
+  // all dishes from The Right Fork. Lower than dish-name match so direct
+  // hits rank first, but high enough to beat category/tag matches.
+  if (dishRestaurant && tokens.every(t => dishRestaurant.includes(t)) && tokens.length > 0) {
+    return 70
   }
 
   // All tokens across name + category: 60
