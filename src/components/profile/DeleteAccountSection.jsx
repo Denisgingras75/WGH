@@ -64,7 +64,7 @@ export function DeleteAccountSection() {
   )
 }
 
-function DeleteAccountModal({ onClose }) {
+export function DeleteAccountModal({ onClose }) {
   const [confirmText, setConfirmText] = useState('')
   const [loading, setLoading] = useState(false)
   const { signOut } = useAuth()

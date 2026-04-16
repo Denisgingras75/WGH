@@ -131,7 +131,7 @@ export function Privacy() {
               Data Retention
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              You can delete your account anytime from your Profile page. Deletion is
+              You can delete your account anytime from Settings. Deletion is
               permanent and removes your votes, reviews, photos, favorites, and profile.
               Dish rankings that included your votes will be recalculated without them.
             </p>
@@ -143,7 +143,7 @@ export function Privacy() {
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               You can access, update, or delete your profile information at any time through
-              the app — including a full account deletion from your Profile page. For
+              the app — including a full account deletion from Settings. For
               questions about your data, contact us at the email below.
             </p>
           </section>
