@@ -20,7 +20,6 @@ import { CreatePlaylistModal } from '../components/playlists/CreatePlaylistModal
 import {
   HeroIdentityCard,
   JournalFeed,
-  DeleteAccountSection,
 } from '../components/profile'
 import { jitterApi } from '../api/jitterApi'
 
@@ -436,8 +435,6 @@ export function Profile() {
             </div>
           )}
 
-          {/* Account deletion — Apple Guideline 5.1.1(v) requires this to be in-app */}
-          <DeleteAccountSection />
 
           <CreatePlaylistModal
             isOpen={createPlaylistOpen}
