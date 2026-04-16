@@ -771,32 +771,6 @@ export function UserProfile() {
       {/* --- Journal tab --- */}
       {activeTab === 'journal' && (
         <>
-          {userPlaylists.length > 0 && (
-            <>
-              <div className="flex items-center justify-between px-5 pt-4 pb-1">
-                <h2
-                  style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    fontSize: '22px',
-                    fontWeight: 700,
-                    color: 'var(--color-text-primary)',
-                  }}
-                >
-                  Playlists
-                </h2>
-                <button
-                  onClick={function () { setActiveTab('playlists') }}
-                  style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primary)', background: 'transparent', border: 'none' }}
-                >
-                  See all &#9656;
-                </button>
-              </div>
-              <div className="flex gap-2.5 overflow-x-auto px-5 pb-3" style={{ scrollbarWidth: 'none' }}>
-                {userPlaylists.map(function (p) { return <PlaylistStripCard key={p.id} playlist={p} /> })}
-              </div>
-            </>
-          )}
-
           {/* My Ratings shelf title */}
           <div className="px-4 pt-5 pb-1">
             <h2

@@ -122,7 +122,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         </div>
 
         {/* Results */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 20px', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
           {searchError ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-danger)', fontSize: 14 }}>
               {searchError.message || 'Could not load dishes. Try again.'}
