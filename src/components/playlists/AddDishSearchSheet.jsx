@@ -5,7 +5,7 @@ import { useRestaurantSearch } from '../../hooks/useRestaurantSearch'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
 import { useLocationContext } from '../../context/LocationContext'
 import { calculateDistance } from '../../utils/distance'
-import { categoryEmojiFor } from '../../constants/categories'
+import { getCategoryNeonImage, categoryEmojiFor } from '../../constants/categories'
 import { dishesApi } from '../../api/dishesApi'
 import { capture } from '../../lib/analytics'
 import { logger } from '../../utils/logger'
@@ -174,9 +174,13 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           width: 36, height: 36, borderRadius: 6,
           background: 'var(--color-category-strip)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, flexShrink: 0,
+          fontSize: 18, flexShrink: 0, overflow: 'hidden',
         }}>
-          {categoryEmojiFor(dish.category)}
+          {getCategoryNeonImage(dish.category) ? (
+            <img src={getCategoryNeonImage(dish.category)} alt="" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+          ) : (
+            categoryEmojiFor(dish.category)
+          )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>{name}</div>
@@ -189,9 +193,10 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         </div>
         <div style={{
           width: 28, height: 28, borderRadius: '50%',
-          border: '2px solid ' + (isAdded ? 'var(--color-rating)' : 'var(--color-divider)'),
+          border: '2px solid ' + (isAdded ? 'var(--color-rating)' : 'var(--color-primary)'),
           background: isAdded ? 'var(--color-rating)' : 'transparent',
-          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: isAdded ? '#fff' : 'var(--color-primary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 14, fontWeight: 700, flexShrink: 0,
         }}>
           {isAdded ? '\u2713' : '+'}

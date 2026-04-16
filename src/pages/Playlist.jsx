@@ -5,7 +5,7 @@ import { usePlaylistMutations } from '../hooks/usePlaylistMutations'
 import { useAuth } from '../context/AuthContext'
 import { PlaylistCover } from '../components/playlists/PlaylistCover'
 import { PlaylistOwnerMenu } from '../components/playlists/PlaylistOwnerMenu'
-import { categoryEmojiFor } from '../constants/categories'
+import { getCategoryNeonImage, categoryEmojiFor } from '../constants/categories'
 import { AddDishSearchSheet } from '../components/playlists/AddDishSearchSheet'
 import { capture } from '../lib/analytics'
 import { shareOrCopy } from '../utils/share'
@@ -15,7 +15,7 @@ export function Playlist() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { playlist, loading, error } = usePlaylistDetail(id)
-  const { follow, unfollow } = usePlaylistMutations()
+  const { follow, unfollow, removeDish } = usePlaylistMutations()
   const [searchSheetOpen, setSearchSheetOpen] = useState(false)
 
   useEffect(() => {
@@ -207,8 +207,14 @@ export function Playlist() {
                 <div style={{ width: 24, color: 'var(--color-text-tertiary)', fontSize: 13, fontWeight: 700 }}>
                   {item.position}
                 </div>
-                <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--color-category-strip)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                  {categoryEmojiFor(item.category)}
+                <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--color-category-strip)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, overflow: 'hidden' }}>
+                  {item.photo_url ? (
+                    <img src={item.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : getCategoryNeonImage(item.category) ? (
+                    <img src={getCategoryNeonImage(item.category)} alt="" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+                  ) : (
+                    categoryEmojiFor(item.category)
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Link to={'/dish/' + item.dish_id} style={{ textDecoration: 'none' }}>
@@ -236,6 +242,24 @@ export function Playlist() {
                   <div style={{ fontSize: 14, color: 'var(--color-rating)', fontWeight: 700 }}>
                     {Number(item.avg_rating).toFixed(1)}
                   </div>
+                )}
+                {playlist.is_owner && (
+                  <button
+                    onClick={function (e) {
+                      e.stopPropagation()
+                      removeDish.mutate({ playlistId: id, dishId: item.dish_id })
+                    }}
+                    aria-label={'Remove ' + item.dish_name}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: 'transparent', border: '1.5px solid var(--color-divider)',
+                      color: 'var(--color-text-tertiary)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 14, flexShrink: 0, marginLeft: 4,
+                    }}
+                  >
+                    &times;
+                  </button>
                 )}
               </li>
             )
