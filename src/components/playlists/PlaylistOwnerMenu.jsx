@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
+import { MAX_TITLE_LEN, MAX_DESC_LEN } from '../../constants/playlists'
 import { capture } from '../../lib/analytics'
 import { logger } from '../../utils/logger'
 
@@ -60,14 +61,14 @@ export function PlaylistOwnerMenu({ playlist }) {
         <input
           value={title}
           onChange={function (e) { setTitle(e.target.value) }}
-          maxLength={60}
+          maxLength={MAX_TITLE_LEN}
           className="w-full px-3 py-2 rounded-lg text-sm mb-2"
           style={{ border: '1.5px solid var(--color-divider)', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}
         />
         <textarea
           value={description}
           onChange={function (e) { setDescription(e.target.value) }}
-          maxLength={200}
+          maxLength={MAX_DESC_LEN}
           rows={2}
           placeholder="Description (optional)"
           className="w-full px-3 py-2 rounded-lg text-sm mb-2"

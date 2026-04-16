@@ -18,10 +18,7 @@ var BG_COLORS = [
  * @param {string[]} coverPhotos - Photo URLs for first 4 dishes (optional)
  * @param {number} size - Grid size in px
  */
-export function PlaylistCover({ coverCategories, coverPhotos, size }) {
-  if (coverCategories === undefined) coverCategories = []
-  if (coverPhotos === undefined) coverPhotos = []
-  if (size === undefined) size = 120
+export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 120 }) {
 
   var tiles = [0, 1, 2, 3].map(function (i) {
     var photo = coverPhotos[i] || null

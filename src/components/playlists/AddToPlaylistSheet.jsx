@@ -22,13 +22,8 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
   var toggle = function (entry) {
     if (busyIds[entry.playlist_id]) return // already in-flight
     var wasChecked = isChecked(entry)
-    setBusyIds(function (prev) { var n = {}; for (var k in prev) n[k] = prev[k]; n[entry.playlist_id] = true; return n })
-    setOptimistic(function (prev) {
-      var next = {}
-      for (var k in prev) next[k] = prev[k]
-      next[entry.playlist_id] = !wasChecked
-      return next
-    })
+    setBusyIds(function (prev) { return { ...prev, [entry.playlist_id]: true } })
+    setOptimistic(function (prev) { return { ...prev, [entry.playlist_id]: !wasChecked } })
     var promise = wasChecked
       ? removeDish.mutateAsync({ playlistId: entry.playlist_id, dishId: dishId })
       : addDish.mutateAsync({ playlistId: entry.playlist_id, dishId: dishId, note: null })
@@ -42,28 +37,18 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
             from_sheet: 'dish_detail',
           })
         }
-        setOptimistic(function (prev) {
-          var next = {}
-          for (var k in prev) { if (k !== entry.playlist_id) next[k] = prev[k] }
-          return next
-        })
+        setOptimistic(function (prev) { var n = { ...prev }; delete n[entry.playlist_id]; return n })
       })
       .catch(function () {
-        setOptimistic(function (prev) {
-          var next = {}
-          for (var k in prev) next[k] = prev[k]
-          next[entry.playlist_id] = wasChecked
-          return next
-        })
+        setOptimistic(function (prev) { return { ...prev, [entry.playlist_id]: wasChecked } })
       })
-      .finally(function () { setBusyIds(function (prev) { var n = {}; for (var k in prev) { if (k !== entry.playlist_id) n[k] = prev[k] } return n }) })
+      .finally(function () { setBusyIds(function (prev) { var n = { ...prev }; delete n[entry.playlist_id]; return n }) })
   }
 
   if (!isOpen) return null
 
   return (
     <>
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         className="fixed inset-0 z-50 flex items-end"
         style={{ background: 'rgba(0,0,0,0.5)' }}

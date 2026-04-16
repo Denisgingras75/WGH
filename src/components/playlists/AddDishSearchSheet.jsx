@@ -113,18 +113,19 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
       }
       setAddedIds(existing)
       setPendingIds({})
-      setTimeout(function () { if (inputRef.current) inputRef.current.focus() }, 100)
+      var focusTimer = setTimeout(function () { if (inputRef.current) inputRef.current.focus() }, 100)
+      return function () { clearTimeout(focusTimer) }
     }
     prevOpen.current = isOpen
-  }, [isOpen])
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps -- only seed on open transition, not on existingDishIds rerender
 
   var handleAdd = useCallback(function (dishId, dishName) {
     if (addedIds[dishId] || pendingIds[dishId]) return
     setPendingIds(function (prev) {
-      var next = {}; for (var k in prev) next[k] = prev[k]; next[dishId] = true; return next
+      return { ...prev, [dishId]: true }
     })
     setAddedIds(function (prev) {
-      var next = {}; for (var k in prev) next[k] = prev[k]; next[dishId] = true; return next
+      return { ...prev, [dishId]: true }
     })
     addDish.mutateAsync({ playlistId: playlistId, dishId: dishId, note: null })
       .then(function () {
@@ -138,12 +139,12 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         logger.error('Add dish failed:', err)
         toast(err?.message || 'Failed to add ' + (dishName || 'dish'))
         setAddedIds(function (prev) {
-          var next = {}; for (var k in prev) { if (k !== dishId) next[k] = prev[k] }; return next
+          var next = { ...prev }; delete next[dishId]; return next
         })
       })
       .finally(function () {
         setPendingIds(function (prev) {
-          var next = {}; for (var k in prev) { if (k !== dishId) next[k] = prev[k] }; return next
+          var next = { ...prev }; delete next[dishId]; return next
         })
       })
   }, [addedIds, pendingIds, addDish, playlistId, mode])
