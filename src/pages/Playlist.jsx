@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { usePlaylistDetail } from '../hooks/usePlaylistDetail'
 import { usePlaylistMutations } from '../hooks/usePlaylistMutations'
@@ -71,6 +71,7 @@ export function Playlist() {
   var items = playlist.items || []
   var covers = (playlist.cover_categories || []).slice(0, 4)
   var coverPhotos = items.slice(0, 4).map(function (item) { return item.photo_url || null })
+  var existingDishIds = useMemo(function () { return items.map(function (i) { return i.dish_id }) }, [items])
 
   var toggleFollow = function () {
     if (!user) { navigate('/login'); return }
@@ -271,7 +272,7 @@ export function Playlist() {
         isOpen={searchSheetOpen}
         onClose={function () { setSearchSheetOpen(false) }}
         playlistId={id}
-        existingDishIds={items.map(function (i) { return i.dish_id })}
+        existingDishIds={existingDishIds}
       />
     </div>
   )
