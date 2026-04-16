@@ -298,64 +298,6 @@ export function Profile() {
           {/* --- Journal tab --- */}
           {activeTab === 'journal' && (
             <>
-              {/* Horizontal playlist strip */}
-              {myPlaylists.length > 0 && (
-                <>
-                  <div
-                    className="flex items-center justify-between px-5 pt-4 pb-1"
-                  >
-                    <h2
-                      style={{
-                        fontFamily: "'Amatic SC', cursive",
-                        fontSize: '22px',
-                        fontWeight: 700,
-                        color: 'var(--color-text-primary)',
-                      }}
-                    >
-                      Your Playlists
-                    </h2>
-                    <button
-                      onClick={() => setActiveTab('playlists')}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'var(--color-primary)',
-                        background: 'transparent',
-                        border: 'none',
-                      }}
-                    >
-                      See all &#9656;
-                    </button>
-                  </div>
-                  <div
-                    className="flex gap-2.5 overflow-x-auto px-5 pb-3"
-                    style={{ scrollbarWidth: 'none' }}
-                  >
-                    <button
-                      onClick={() => setCreatePlaylistOpen(true)}
-                      style={{
-                        flexShrink: 0,
-                        width: 110,
-                        height: 110,
-                        border: '1.5px dashed var(--color-accent-gold)',
-                        borderRadius: 8,
-                        background: 'var(--color-surface)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 28,
-                        color: 'var(--color-accent-gold)',
-                      }}
-                    >
-                      +
-                    </button>
-                    {myPlaylists.map((p) => (
-                      <PlaylistStripCard key={p.id} playlist={p} />
-                    ))}
-                  </div>
-                </>
-              )}
-
               {/* Your Journal title */}
               <div className="px-4 pt-5 pb-1">
                 <h2

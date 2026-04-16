@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { usePlaylistDetail } from '../hooks/usePlaylistDetail'
 import { usePlaylistMutations } from '../hooks/usePlaylistMutations'
@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { PlaylistCover } from '../components/playlists/PlaylistCover'
 import { PlaylistOwnerMenu } from '../components/playlists/PlaylistOwnerMenu'
 import { categoryEmojiFor } from '../constants/categories'
+import { AddDishSearchSheet } from '../components/playlists/AddDishSearchSheet'
 import { capture } from '../lib/analytics'
 import { shareOrCopy } from '../utils/share'
 
@@ -15,6 +16,7 @@ export function Playlist() {
   const { user } = useAuth()
   const { playlist, loading, error } = usePlaylistDetail(id)
   const { follow, unfollow } = usePlaylistMutations()
+  const [searchSheetOpen, setSearchSheetOpen] = useState(false)
 
   useEffect(() => {
     if (playlist) {
@@ -156,15 +158,35 @@ export function Playlist() {
         </div>
       </div>
 
+      {/* Owner: Add dishes button */}
+      {playlist.is_owner && (
+        <div style={{ padding: '12px 20px 0' }}>
+          <button
+            onClick={function () { setSearchSheetOpen(true) }}
+            className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+            style={{
+              background: 'var(--color-surface-elevated)',
+              color: 'var(--color-primary)',
+              border: '1.5px solid var(--color-primary)',
+            }}
+          >
+            <span style={{ fontSize: 18 }}>+</span> Add dishes
+          </button>
+        </div>
+      )}
+
       {/* Dish list */}
       {items.length === 0 ? (
         <div style={{ padding: 40, textAlign: 'center' }}>
           <div style={{ fontSize: 48 }}>🥄</div>
           <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>No dishes yet</p>
           {playlist.is_owner && (
-            <Link to="/browse" style={{ color: 'var(--color-accent-gold)', marginTop: 8, display: 'inline-block' }}>
-              Find a dish to add
-            </Link>
+            <button
+              onClick={function () { setSearchSheetOpen(true) }}
+              style={{ color: 'var(--color-accent-gold)', marginTop: 8, background: 'none', border: 'none', fontWeight: 700 }}
+            >
+              Search for dishes to add
+            </button>
           )}
         </div>
       ) : (
@@ -219,6 +241,13 @@ export function Playlist() {
           })}
         </ol>
       )}
+
+      <AddDishSearchSheet
+        isOpen={searchSheetOpen}
+        onClose={function () { setSearchSheetOpen(false) }}
+        playlistId={id}
+        existingDishIds={items.map(function (i) { return i.dish_id })}
+      />
     </div>
   )
 }

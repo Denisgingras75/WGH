@@ -80,6 +80,9 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
             padding: '8px 0 20px',
             maxHeight: '80vh',
             overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
           }}
         >
           {/* Grabber */}
