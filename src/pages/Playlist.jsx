@@ -34,6 +34,23 @@ export function Playlist() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
+        <div style={{ fontSize: 64 }}>⚠️</div>
+        <h1 style={{ fontFamily: "'Amatic SC', cursive", fontSize: 32, marginTop: 12, color: 'var(--color-text-primary)' }}>
+          Something went wrong
+        </h1>
+        <p style={{ color: 'var(--color-text-secondary)', marginTop: 8, textAlign: 'center' }}>
+          {error.message || 'Could not load this playlist. Please try again.'}
+        </p>
+        <button onClick={function () { window.location.reload() }} style={{ color: 'var(--color-accent-gold)', marginTop: 16, background: 'none', border: 'none', fontWeight: 700 }}>
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   if (!playlist) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
@@ -63,8 +80,11 @@ export function Playlist() {
   }
 
   var handleShare = function () {
-    var url = window.location.href
-    shareOrCopy(playlist.title, url)
+    shareOrCopy({
+      url: window.location.href,
+      title: playlist.title,
+      text: playlist.title + ' — a food playlist on What\'s Good Here',
+    })
     capture('playlist_shared', { playlist_id: id, share_target: 'native_or_clipboard' })
   }
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
 import { capture } from '../../lib/analytics'
+import { logger } from '../../utils/logger'
 
 export function PlaylistOwnerMenu({ playlist }) {
   var [open, setOpen] = useState(false)
@@ -14,23 +15,43 @@ export function PlaylistOwnerMenu({ playlist }) {
 
   var id = playlist.playlist_id || playlist.id
 
+  var [error, setError] = useState(null)
+
   var togglePrivacy = function () {
     var next = !playlist.is_public
     setOpen(false)
+    setError(null)
     update.mutateAsync({ id: id, isPublic: next })
-    capture('playlist_privacy_toggled', { playlist_id: id, to: next ? 'public' : 'private' })
+      .then(function () {
+        capture('playlist_privacy_toggled', { playlist_id: id, to: next ? 'public' : 'private' })
+      })
+      .catch(function (err) {
+        logger.error('togglePrivacy failed:', err)
+        setError('Failed to update privacy. Try again.')
+      })
   }
 
   var save = function () {
     setSaving(true)
+    setError(null)
     update.mutateAsync({ id: id, title: title.trim(), description: description.trim() || null })
       .then(function () { setEditing(false) })
+      .catch(function (err) {
+        logger.error('save playlist failed:', err)
+        setError(err?.message || 'Failed to save. Try again.')
+      })
       .finally(function () { setSaving(false) })
   }
 
   var onDelete = function () {
     if (!window.confirm('Delete "' + playlist.title + '"? This can\'t be undone.')) return
-    remove.mutateAsync(id).then(function () { navigate('/profile') })
+    setError(null)
+    remove.mutateAsync(id)
+      .then(function () { navigate('/profile') })
+      .catch(function (err) {
+        logger.error('delete playlist failed:', err)
+        setError('Failed to delete. Try again.')
+      })
   }
 
   if (editing) {
@@ -75,8 +96,13 @@ export function PlaylistOwnerMenu({ playlist }) {
 
   return (
     <div style={{ position: 'relative' }}>
+      {error && (
+        <div style={{ position: 'absolute', bottom: 42, right: 0, minWidth: 200, padding: 8, background: 'var(--color-primary-muted)', color: 'var(--color-primary)', borderRadius: 6, fontSize: 12, zIndex: 20 }}>
+          {error}
+        </div>
+      )}
       <button
-        onClick={function () { setOpen(!open) }}
+        onClick={function () { setOpen(!open); setError(null) }}
         aria-label="Playlist menu"
         style={{
           width: 36,

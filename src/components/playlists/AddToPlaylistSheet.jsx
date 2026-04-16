@@ -9,7 +9,8 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
   var { entries, loading } = useDishPlaylistMembership(dishId, isOpen)
   var { addDish, removeDish } = usePlaylistMutations()
   var [createOpen, setCreateOpen] = useState(false)
-  var [busyId, setBusyId] = useState(null)
+  // Set of playlist IDs currently mid-mutation — prevents double-tap races.
+  var [busyIds, setBusyIds] = useState({})
 
   // Optimistic local override per CLAUDE.md §1.5: snap the check state
   // immediately; revert on error.
@@ -19,8 +20,9 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
   }
 
   var toggle = function (entry) {
+    if (busyIds[entry.playlist_id]) return // already in-flight
     var wasChecked = isChecked(entry)
-    setBusyId(entry.playlist_id)
+    setBusyIds(function (prev) { var n = {}; for (var k in prev) n[k] = prev[k]; n[entry.playlist_id] = true; return n })
     setOptimistic(function (prev) {
       var next = {}
       for (var k in prev) next[k] = prev[k]
@@ -40,7 +42,6 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
             from_sheet: 'dish_detail',
           })
         }
-        // Clear optimistic override so the authoritative DB state takes over.
         setOptimistic(function (prev) {
           var next = {}
           for (var k in prev) { if (k !== entry.playlist_id) next[k] = prev[k] }
@@ -48,7 +49,6 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
         })
       })
       .catch(function () {
-        // Rollback to prior state.
         setOptimistic(function (prev) {
           var next = {}
           for (var k in prev) next[k] = prev[k]
@@ -56,19 +56,24 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
           return next
         })
       })
-      .finally(function () { setBusyId(null) })
+      .finally(function () { setBusyIds(function (prev) { var n = {}; for (var k in prev) { if (k !== entry.playlist_id) n[k] = prev[k] } return n }) })
   }
 
   if (!isOpen) return null
 
   return (
     <>
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         className="fixed inset-0 z-50 flex items-end"
         style={{ background: 'rgba(0,0,0,0.5)' }}
         onClick={function (e) { if (e.target === e.currentTarget) onClose() }}
+        onKeyDown={function (e) { if (e.key === 'Escape') onClose() }}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add to a playlist"
           className="w-full rounded-t-2xl"
           style={{
             background: 'var(--color-surface)',
@@ -133,7 +138,7 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
                 <button
                   key={e.playlist_id}
                   onClick={function () { toggle(e) }}
-                  disabled={busyId === e.playlist_id}
+                  disabled={!!busyIds[e.playlist_id]}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
