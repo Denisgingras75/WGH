@@ -393,3 +393,16 @@ export function getCategoryInfo(category) {
   return { emoji: '🍽️', label: fallbackLabel }
 }
 
+
+// Derived emoji lookup for playlist covers, map pins, etc. Pulls from
+// BROWSE_CATEGORIES and MAIN_CATEGORIES so any new category auto-flows.
+export const CATEGORY_EMOJI = Object.fromEntries([
+  ...BROWSE_CATEGORIES.map(c => [c.id, c.emoji]),
+  ...MAIN_CATEGORIES.map(c => [c.id, c.emoji]),
+])
+export const DEFAULT_CATEGORY_EMOJI = '🍽️'
+
+export function categoryEmojiFor(categoryId) {
+  if (!categoryId) return DEFAULT_CATEGORY_EMOJI
+  return CATEGORY_EMOJI[categoryId] || DEFAULT_CATEGORY_EMOJI
+}

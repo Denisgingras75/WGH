@@ -13,6 +13,7 @@ import { LoginModal } from '../components/Auth/LoginModal'
 import { HearingIcon } from '../components/HearingIcon'
 import { EarIconTooltip } from '../components/EarIconTooltip'
 import { DishHero, DishEvidence } from '../components/dish'
+import { AddToPlaylistSheet } from '../components/playlists/AddToPlaylistSheet'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { sanitizeUrl } from '../utils/sanitize'
@@ -35,6 +36,7 @@ export function Dish() {
   } = useDishDetail(dishId, user)
 
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [playlistSheetOpen, setPlaylistSheetOpen] = useState(false)
   const [showRateFlow, setShowRateFlow] = useState(false)
   const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
   const [priorVote, setPriorVote] = useState(null)
@@ -280,6 +282,18 @@ export function Dish() {
             </button>
             <EarIconTooltip visible={showEarTooltip} onDismiss={dismissEarTooltip} />
           </div>
+          {/* Add to playlist */}
+          <button
+            onClick={() => {
+              if (!user) { setLoginModalOpen(true); return }
+              setPlaylistSheetOpen(true)
+            }}
+            aria-label="Add to playlist"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-95"
+            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', fontSize: 18, color: 'var(--color-primary)', fontWeight: 700 }}
+          >
+            +
+          </button>
         </div>
       </header>
 
@@ -474,6 +488,13 @@ export function Dish() {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
+      />
+      <AddToPlaylistSheet
+        isOpen={playlistSheetOpen}
+        onClose={() => setPlaylistSheetOpen(false)}
+        dishId={dishId}
+        dishName={dish?.dish_name}
+        restaurantName={dish?.restaurant_name}
       />
     </div>
   )

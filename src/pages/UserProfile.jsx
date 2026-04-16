@@ -11,6 +11,9 @@ import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
 import { FoodMap, JournalFeed, LocalListCard } from '../components/profile'
+import { useUserPlaylists } from '../hooks/useUserPlaylists'
+import { PlaylistStripCard } from '../components/playlists/PlaylistStripCard'
+import { PlaylistGridCard } from '../components/playlists/PlaylistGridCard'
 import { useLocalListDetail } from '../hooks/useLocalListDetail'
 import { TrustBadge, ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
@@ -83,6 +86,8 @@ export function UserProfile() {
   const [standoutPicks, setStandoutPicks] = useState({})
   const [jitterBadgeType, setJitterBadgeType] = useState(null)
   const [jitterBadgeData, setJitterBadgeData] = useState(null)
+  const [activeTab, setActiveTab] = useState('journal')
+  const { playlists: userPlaylists } = useUserPlaylists(userId)
 
   var localList = useLocalListDetail(userId)
 
@@ -731,26 +736,104 @@ export function UserProfile() {
         </div>
       )}
 
-      {/* My Ratings shelf title */}
-      <div className="px-4 pt-5 pb-1">
-        <h2
-          style={{
-            fontFamily: "'Amatic SC', cursive",
-            color: 'var(--color-text-primary)',
-            fontSize: '32px',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-          }}
-        >
-          {profile.display_name}'s Ratings
-        </h2>
+      {/* Tabs: Journal / Playlists (no Saved — that's personal) */}
+      <div
+        className="flex"
+        style={{
+          borderBottom: '1px solid var(--color-divider)',
+          background: 'var(--color-surface)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        {['journal', 'playlists'].map(function (tab) {
+          return (
+            <button
+              key={tab}
+              onClick={function () { setActiveTab(tab) }}
+              className="flex-1 py-3 text-xs font-semibold text-center"
+              style={{
+                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                background: 'transparent',
+                border: 'none',
+                borderBottomWidth: 2,
+                borderBottomStyle: 'solid',
+                borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Journal Feed — single chronological shelf */}
-      <JournalFeed
-        ratings={journalRatings}
-        loading={reviewsLoading}
-      />
+      {/* --- Journal tab --- */}
+      {activeTab === 'journal' && (
+        <>
+          {userPlaylists.length > 0 && (
+            <>
+              <div className="flex items-center justify-between px-5 pt-4 pb-1">
+                <h2
+                  style={{
+                    fontFamily: "'Amatic SC', cursive",
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    color: 'var(--color-text-primary)',
+                  }}
+                >
+                  Playlists
+                </h2>
+                <button
+                  onClick={function () { setActiveTab('playlists') }}
+                  style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primary)', background: 'transparent', border: 'none' }}
+                >
+                  See all &#9656;
+                </button>
+              </div>
+              <div className="flex gap-2.5 overflow-x-auto px-5 pb-3" style={{ scrollbarWidth: 'none' }}>
+                {userPlaylists.map(function (p) { return <PlaylistStripCard key={p.id} playlist={p} /> })}
+              </div>
+            </>
+          )}
+
+          {/* My Ratings shelf title */}
+          <div className="px-4 pt-5 pb-1">
+            <h2
+              style={{
+                fontFamily: "'Amatic SC', cursive",
+                color: 'var(--color-text-primary)',
+                fontSize: '32px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {profile.display_name}'s Ratings
+            </h2>
+          </div>
+
+          {/* Journal Feed — single chronological shelf */}
+          <JournalFeed
+            ratings={journalRatings}
+            loading={reviewsLoading}
+          />
+        </>
+      )}
+
+      {/* --- Playlists tab --- */}
+      {activeTab === 'playlists' && (
+        <div className="px-4 pt-4 pb-6">
+          {userPlaylists.length === 0 ? (
+            <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              No playlists yet
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {userPlaylists.map(function (p) { return <PlaylistGridCard key={p.id} playlist={p} /> })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Signup CTA for visitors */}
       {!currentUser && (

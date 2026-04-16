@@ -70,6 +70,7 @@ const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'Ho
 const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'ForRestaurants')
 const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
 const RestaurantReviews = lazyWithRetry(() => import('./pages/RestaurantReviews'), 'RestaurantReviews')
+const PlaylistPage = lazyWithRetry(() => import('./pages/Playlist'), 'Playlist')
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
 // Prefetch functions for smoother navigation - call on hover/focus
@@ -148,6 +149,7 @@ function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/how-reviews-work" element={<Layout><HowReviewsWork /></Layout>} />
               <Route path="/for-restaurants" element={<ForRestaurants />} />
+              <Route path="/playlist/:id" element={<Layout><PlaylistPage /></Layout>} />
               <Route path="/jitter" element={<Layout><JitterLanding /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
