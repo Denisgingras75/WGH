@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { ReportModal } from '../components/ReportModal'
+import { PlaceAttributions } from '../components/PlaceAttributions'
 import { logger } from '../utils/logger'
 import { shareOrCopy } from '../utils/share'
 import { sanitizeUrl } from '../utils/sanitize'
@@ -110,13 +111,18 @@ export function RestaurantDetail() {
 
   // Fetch Google rating if restaurant has a google_place_id
   var [googleRating, setGoogleRating] = useState(null)
+  var [placeAttributions, setPlaceAttributions] = useState([])
   useEffect(function () {
     setGoogleRating(null)
+    setPlaceAttributions([])
     if (!restaurant || !restaurant.google_place_id) return
     placesApi.getDetails(restaurant.google_place_id)
       .then(function (details) {
         if (details && details.googleRating) {
           setGoogleRating({ rating: details.googleRating, count: details.googleReviewCount })
+        }
+        if (details && Array.isArray(details.attributions)) {
+          setPlaceAttributions(details.attributions)
         }
       })
       .catch(function (err) {
@@ -322,12 +328,18 @@ export function RestaurantDetail() {
                     }}>
                       {googleRating.rating}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-                      Google{googleRating.count ? ' · ' + googleRating.count : ''}
+                    <span
+                      style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}
+                      aria-label={`Google Maps rating${googleRating.count ? ` based on ${googleRating.count} reviews` : ''}`}
+                    >
+                      Google Maps{googleRating.count ? ' · ' + googleRating.count : ''}
                     </span>
                   </div>
                 )}
               </div>
+            )}
+            {placeAttributions.length > 0 && (
+              <PlaceAttributions attributions={placeAttributions} className="mt-1.5" />
             )}
           </div>
           <button

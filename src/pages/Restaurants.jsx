@@ -10,6 +10,8 @@ import { LocationBanner } from '../components/LocationBanner'
 import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
+import { PoweredByGoogle } from '../components/PoweredByGoogle'
+import { PlaceAttributions } from '../components/PlaceAttributions'
 import { logger } from '../utils/logger'
 import { getStorageItem, setStorageItem } from '../lib/storage'
 
@@ -467,6 +469,9 @@ export function Restaurants() {
                 )
               })}
             </div>
+            <div className="mt-3">
+              <PoweredByGoogle align="right" />
+            </div>
           </div>
         )}
         {user && !nearbyLoading && nearbyPlaces.length === 0 && (
@@ -590,6 +595,9 @@ function NearbyPlaceCard({ place }) {
             </a>
           )}
         </div>
+      )}
+      {Array.isArray(details?.attributions) && details.attributions.length > 0 && (
+        <PlaceAttributions attributions={details.attributions} className="mt-2" />
       )}
     </div>
   )
