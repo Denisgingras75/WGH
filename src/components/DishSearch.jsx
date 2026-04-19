@@ -9,11 +9,22 @@ import { PoweredByGoogle } from './PoweredByGoogle'
 import { getCategoryNeonImage, matchCategories } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
+
 const MIN_SEARCH_LENGTH = 2
 const MAX_DISH_RESULTS = 5
 const MAX_CATEGORY_RESULTS = 2
 
-export function DishSearch({ loading = false, placeholder = "Find What's Good near you", town = null, onSearchChange = null, rightSlot = null, initialQuery = '' }) {
+// Prototype search-glass icon (matches Icon.Browse in remix.html)
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4-4" />
+    </svg>
+  )
+}
+
+export function DishSearch({ loading = false, placeholder = "Search a dish, restaurant, or 'lobster roll'…", town = null, onSearchChange = null, rightSlot = null, initialQuery = '' }) {
   const navigate = useNavigate()
   const { location, isUsingDefault } = useLocationContext()
   const [query, setQuery] = useState(initialQuery)
@@ -22,6 +33,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   const [addModalQuery, setAddModalQuery] = useState('')
   const inputRef = useRef(null)
   const dropdownRef = useRef(null)
+  const wrapperRef = useRef(null)
 
   // Sync internal query when parent clears/changes initialQuery
   useEffect(() => {
@@ -88,7 +100,6 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
 
   // Handle dish selection
   const handleDishSelect = (dish) => {
-    // Track search -> dish selection
     capture('search_performed', {
       query: query,
       result_type: 'dish',
@@ -99,13 +110,11 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     })
     setQuery('')
     setIsFocused(false)
-    // Navigate to dedicated dish page
     navigate(`/dish/${dish.dish_id}`)
   }
 
   // Handle category selection
   const handleCategorySelect = (category) => {
-    // Track search -> category selection
     capture('search_performed', {
       query: query,
       result_type: 'category',
@@ -119,9 +128,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
 
   // Handle Enter key - go to full search results page (dropdown mode only)
   const handleKeyDown = (e) => {
-    if (onSearchChange) return // Inline mode handles results in parent
+    if (onSearchChange) return
     if (e.key === 'Enter' && query.trim().length >= MIN_SEARCH_LENGTH) {
-      // Track search submission
       capture('search_performed', {
         query: query.trim(),
         result_type: 'full_search',
@@ -135,71 +143,77 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   }
 
   return (
-    <div className="relative w-full">
-      {/* Search Input */}
-      <div
-        className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
-        style={{
-          background: 'var(--color-surface-elevated)',
-          border: isFocused ? '2px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
-          minHeight: '48px',
-        }}
-      >
-        <svg
-          className="w-5 h-5 flex-shrink-0"
-          style={{ color: 'var(--color-text-tertiary)' }}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+    <div className="relative w-full" ref={wrapperRef}>
+      {/* Search Row — matches prototype SearchRow */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {/* Input wrapper */}
+        <div
+          style={{
+            flex: 1,
+            position: 'relative',
+            border: '1px solid var(--rule)',
+            borderRadius: 10,
+            background: 'var(--card)',
+            padding: '10px 12px 10px 36px',
+          }}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-
-        <input
-          ref={inputRef}
-          id="dish-search"
-          name="dish-search"
-          type="text"
-          autoComplete="off"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          aria-label="Search dishes by name"
-          aria-autocomplete="list"
-          aria-expanded={showDropdown}
-          aria-controls="dish-search-dropdown"
-          className="flex-1 bg-transparent outline-none border-none text-sm"
-          style={{ color: 'var(--color-text-primary)', outline: 'none', border: 'none', boxShadow: 'none' }}
-        />
-
-        {query && (
-          <button
-            onClick={() => {
-              setQuery('')
-              inputRef.current?.focus()
+          <span style={{ position: 'absolute', left: 12, top: 11, color: 'var(--ink-3)' }}>
+            <SearchIcon />
+          </span>
+          <input
+            ref={inputRef}
+            id="dish-search"
+            name="dish-search"
+            type="text"
+            autoComplete="off"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            aria-label="Search dishes by name"
+            aria-autocomplete="list"
+            aria-expanded={showDropdown}
+            aria-controls="dish-search-dropdown"
+            style={{
+              border: 0,
+              background: 'transparent',
+              outline: 'none',
+              width: '100%',
+              font: '500 14px/1.2 Inter',
+              color: 'var(--ink)',
             }}
-            aria-label="Clear search"
-            className="p-1 rounded-full transition-colors"
-            style={{ ':hover': { background: 'var(--color-surface-elevated)' } }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            <svg
-              className="w-4 h-4"
-              style={{ color: 'var(--color-text-tertiary)' }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+          />
+          {query && (
+            <button
+              onClick={() => {
+                setQuery('')
+                inputRef.current?.focus()
+              }}
+              aria-label="Clear search"
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 0,
+                background: 'transparent',
+                padding: 4,
+                cursor: 'pointer',
+                color: 'var(--ink-3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
 
+        {/* Right slot — consumers can pass a filter/radius button */}
         {rightSlot}
       </div>
 
@@ -219,38 +233,48 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           id="dish-search-dropdown"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          className="absolute left-0 right-0 z-50"
           style={{
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            top: '100%',
+            marginTop: 8,
+            background: 'var(--card)',
+            border: '1px solid var(--rule)',
+            borderRadius: 10,
+            overflow: 'hidden',
           }}
         >
           {isLoading ? (
-            <div className="px-4 py-6 text-center">
-              <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
-              <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+            <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+              <div
+                className="animate-spin"
+                style={{
+                  width: 20,
+                  height: 20,
+                  border: '2px solid var(--rule)',
+                  borderTopColor: 'var(--tomato)',
+                  borderRadius: '50%',
+                  margin: '0 auto',
+                }}
+              />
+              <p style={{ font: '500 12px/1.2 Inter', marginTop: 8, color: 'var(--ink-3)' }}>
                 Searching...
               </p>
             </div>
           ) : !hasResults ? (
-            <div className="px-4 py-6 text-center">
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+              <p style={{ font: '500 14px/1.3 Inter', color: 'var(--ink-2)' }}>
                 No dishes found for "{query}"
               </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p style={{ font: '500 12px/1.3 Inter', marginTop: 4, color: 'var(--ink-3)' }}>
                 Try a different search term
               </p>
             </div>
           ) : (
-            <div className="max-h-80 overflow-y-auto">
+            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
               {/* Dish Results */}
               {results.dishes.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
-                      {town ? `Best in ${town}` : 'Best Matches'}
-                    </span>
-                  </div>
+                  <SectionLabel>{town ? `Best in ${town}` : 'Best Matches'}</SectionLabel>
                   {results.dishes.map((dish, index) => (
                     <DishResult
                       key={dish.dish_id}
@@ -265,17 +289,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Category Results */}
               {results.categories.length > 0 && (
                 <div>
-                  <div
-                    className="px-4 py-2 border-b"
-                    style={{
-                      borderColor: 'var(--color-divider)',
-                      background: results.dishes.length > 0 ? 'var(--color-surface)' : 'transparent',
-                    }}
-                  >
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
-                      Categories
-                    </span>
-                  </div>
+                  <SectionLabel>Categories</SectionLabel>
                   {results.categories.map((category) => (
                     <CategoryResult
                       key={category.id}
@@ -289,28 +303,45 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Restaurant fallback — local DB + Google Places */}
               {hasRestaurantResults && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
-                      Restaurants
-                    </span>
-                  </div>
+                  <SectionLabel>Restaurants</SectionLabel>
 
                   {restaurantLocal.map((r) => (
                     <button
                       key={r.id}
                       onClick={() => { setIsFocused(false); setQuery(''); navigate('/restaurants/' + r.id) }}
-                      className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      className="w-full text-left"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        border: 0,
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-2)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'white' }}>
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: 'var(--tomato)',
+                          color: 'var(--paper)',
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{r.name}</p>
-                        <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>{r.town || 'On WGH'}</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ font: '600 14px/1.2 Inter', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</p>
+                        <p style={{ font: '500 12px/1.3 Inter', color: 'var(--ink-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.town || 'On WGH'}</p>
                       </div>
                     </button>
                   ))}
@@ -319,23 +350,44 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                     <button
                       key={p.placeId}
                       onClick={() => { setIsFocused(false); setQuery(''); setAddModalQuery(p.name); setAddModalOpen(true) }}
-                      className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      className="w-full text-left"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        border: 0,
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-2)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-gold-muted)', color: 'var(--color-accent-gold)' }}>
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: 'var(--tomato-soft)',
+                          color: 'var(--tomato)',
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{p.name}</p>
-                        <p className="text-xs truncate" style={{ color: 'var(--color-accent-gold)' }}>Add to WGH</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ font: '600 14px/1.2 Inter', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
+                        <p style={{ font: '500 12px/1.3 Inter', color: 'var(--tomato)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Add to WGH</p>
                       </div>
                     </button>
                   ))}
                   {restaurantExternal.length > 0 && (
-                    <div className="px-4 py-2 border-t" style={{ borderColor: 'var(--color-divider)' }}>
+                    <div style={{ padding: '8px 16px', borderTop: '1px solid var(--rule)' }}>
                       <PoweredByGoogle align="right" />
                     </div>
                   )}
@@ -349,46 +401,72 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   )
 }
 
+// Section label — uppercase caption above each result group
+function SectionLabel({ children }) {
+  return (
+    <div
+      style={{
+        padding: '8px 16px',
+        borderBottom: '1px solid var(--rule)',
+        font: '600 10px/1.2 Inter',
+        letterSpacing: '.12em',
+        textTransform: 'uppercase',
+        color: 'var(--ink-3)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 // Individual dish result row — matches Top 10 compact style
 function DishResult({ dish, rank, onClick }) {
-  const {
-    dish_name,
-    restaurant_name,
-    avg_rating,
-    total_votes,
-  } = dish
-
+  const { dish_name, restaurant_name, avg_rating, total_votes } = dish
   const isRanked = (total_votes || 0) >= MIN_VOTES_FOR_RANKING
 
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+      className="w-full text-left"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '10px 16px',
+        background: 'transparent',
+        border: 0,
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-2)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
       <span
-        className="w-6 text-center text-sm font-bold flex-shrink-0"
-        style={{ color: 'var(--color-text-tertiary)' }}
+        style={{
+          width: 24,
+          textAlign: 'center',
+          font: '700 14px/1.2 Inter',
+          color: 'var(--ink-3)',
+          flexShrink: 0,
+        }}
       >
         {rank}
       </span>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
-          <span style={{ color: 'var(--color-text-secondary)' }}>{restaurant_name}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ font: '500 14px/1.3 Inter', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{ color: 'var(--ink-2)' }}>{restaurant_name}</span>
           {' · '}
           {dish_name}
         </p>
       </div>
 
-      <div className="flex-shrink-0 text-right">
+      <div style={{ flexShrink: 0, textAlign: 'right' }}>
         {isRanked ? (
-          <span className="text-sm font-bold" style={{ color: getRatingColor(avg_rating) }}>
+          <span style={{ font: '700 14px/1.2 Inter', color: getRatingColor(avg_rating) }}>
             {avg_rating || '—'}
           </span>
         ) : (
-          <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+          <span style={{ font: '500 12px/1.2 Inter', color: 'var(--ink-3)' }}>
             {total_votes ? `${total_votes} vote${total_votes === 1 ? '' : 's'}` : 'New'}
           </span>
         )}
@@ -402,45 +480,61 @@ function CategoryResult({ category, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+      className="w-full text-left"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 16px',
+        background: 'transparent',
+        border: 0,
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--paper-2)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
-      {/* Category icon */}
       <div
-        className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center"
-        style={{ background: 'var(--color-surface)' }}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 8,
+          overflow: 'hidden',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--paper-2)',
+        }}
       >
         {getCategoryNeonImage(category.id) ? (
           <img
             src={getCategoryNeonImage(category.id)}
             alt={category.label}
             loading="lazy"
-            className="w-8 h-8 object-contain"
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
           />
         ) : (
-          <span className="text-lg">{category.label.charAt(0)}</span>
+          <span style={{ font: '600 16px/1 Inter', color: 'var(--ink)' }}>{category.label.charAt(0)}</span>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h4 style={{ font: '600 14px/1.2 Inter', color: 'var(--ink)' }}>
           {category.label}
         </h4>
-        <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+        <p style={{ font: '500 12px/1.3 Inter', color: 'var(--ink-3)', marginTop: 2 }}>
           View all ranked dishes
         </p>
       </div>
 
-      {/* Arrow */}
       <svg
-        className="w-4 h-4 flex-shrink-0"
-        style={{ color: 'var(--color-text-tertiary)' }}
-        fill="none"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
+        fill="none"
         stroke="currentColor"
-        strokeWidth={2}
+        strokeWidth="2"
+        style={{ color: 'var(--ink-3)', flexShrink: 0 }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>

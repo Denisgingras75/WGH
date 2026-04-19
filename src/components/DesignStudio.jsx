@@ -78,8 +78,36 @@ export var DesignStudio = memo(function DesignStudio() {
           animation: 'slideUp 240ms ease both',
           maxHeight: '85vh',
           overflow: 'auto',
+          position: 'relative',
         }}
       >
+        {/* Escape button — always visible top-right */}
+        <button
+          type="button"
+          onClick={closeStudio}
+          aria-label="Close Design Studio"
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: '1px solid var(--rule)',
+            background: 'var(--card)',
+            color: 'var(--ink-2)',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 16,
+            lineHeight: 1,
+            padding: 0,
+            zIndex: 1,
+          }}
+        >
+          ✕
+        </button>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
           Design Studio
         </div>
@@ -103,7 +131,7 @@ export var DesignStudio = memo(function DesignStudio() {
                 key={t.id}
                 theme={t}
                 active={theme === t.id}
-                onClick={function () { setTheme(t.id) }}
+                onClick={function () { setTheme(t.id); closeStudio() }}
               />
             )
           })}

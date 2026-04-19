@@ -184,23 +184,23 @@ export function Dish() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--color-surface-elevated)' }}>
+      <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
         <div className="animate-pulse">
-          <div className="aspect-[4/3] w-full" style={{ background: 'var(--color-divider)' }} />
+          <div className="stripe-ph" style={{ aspectRatio: '16/10', margin: '12px', borderRadius: 14 }} />
           <div
-            className="mx-4 -mt-5 rounded-xl p-5 space-y-3"
-            style={{ background: 'var(--color-surface-elevated)', boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)' }}
+            className="mx-3 rounded-xl p-5 space-y-3"
+            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
           >
-            <div className="h-6 w-48 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="h-6 w-48 rounded" style={{ background: 'var(--rule)' }} />
+            <div className="h-4 w-32 rounded" style={{ background: 'var(--rule)' }} />
             <div className="flex items-end justify-between pt-2">
-              <div className="h-10 w-14 rounded" style={{ background: 'var(--color-divider)' }} />
-              <div className="h-4 w-24 rounded" style={{ background: 'var(--color-divider)' }} />
+              <div className="h-10 w-14 rounded" style={{ background: 'var(--rule)' }} />
+              <div className="h-4 w-24 rounded" style={{ background: 'var(--rule)' }} />
             </div>
           </div>
           <div className="p-4 mt-4 space-y-3">
-            <div className="h-4 w-48 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="h-4 w-48 rounded" style={{ background: 'var(--rule)' }} />
+            <div className="h-4 w-32 rounded" style={{ background: 'var(--rule)' }} />
           </div>
         </div>
       </div>
@@ -209,22 +209,24 @@ export function Dish() {
 
   if (error || !dish) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface-elevated)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center p-4">
           <img
             src="/empty-plate.webp"
             alt=""
             className="w-16 h-16 mx-auto mb-4 rounded-full object-cover"
           />
-          <p className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="serif mb-2" style={{ color: 'var(--ink)', fontWeight: 800, fontSize: 22, fontStyle: 'italic', letterSpacing: '-0.01em' }}>
             Dish not found
           </p>
           <button
             onClick={handleBack}
-            className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
+            className="press mt-4 px-5 py-2.5 text-sm rounded-lg"
             style={{
-              background: 'var(--color-primary)',
-              color: '#FFFFFF',
+              background: 'var(--tomato)',
+              color: 'var(--paper)',
+              border: '1.5px solid var(--tomato)',
+              font: '700 14px/1 Inter',
             }}
           >
             Go Back
@@ -237,33 +239,43 @@ export function Dish() {
   const isRanked = dish.total_votes >= MIN_VOTES_FOR_RANKING
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
-      {/* Header */}
+    <div className="min-h-screen pb-20" style={{ background: 'var(--paper)' }}>
+      {/* Header — sticky top bar: back + dish name (Fraunces) + actions */}
       <header
-        className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 top-bar"
+        className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 top-bar hairline-b"
         style={{
-          background: 'var(--color-bg)',
-          borderBottom: '1.5px solid var(--color-divider)',
+          background: 'var(--paper)',
         }}
       >
         <button
           onClick={handleBack}
           aria-label="Go back"
-          className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="press w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ color: 'var(--ink)' }}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div className="flex-1" />
+        <div
+          className="serif flex-1 min-w-0 truncate"
+          style={{
+            fontWeight: 800,
+            fontStyle: 'italic',
+            fontSize: 16,
+            letterSpacing: '-0.01em',
+            color: 'var(--ink)',
+          }}
+        >
+          {dish.dish_name}
+        </div>
 
         <div className="ml-auto flex items-center gap-1">
           <button
             onClick={handleShare}
             aria-label="Share dish"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="press w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ color: 'var(--ink)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -278,7 +290,7 @@ export function Dish() {
                 handleToggleSave(e)
               }}
               aria-label={isFavorite?.(dishId) ? 'Remove from heard list' : 'Mark as heard it was good'}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+              className="press w-9 h-9 rounded-full flex items-center justify-center"
             >
               <HearingIcon size={24} active={isFavorite?.(dishId)} />
             </button>
@@ -291,8 +303,14 @@ export function Dish() {
               setPlaylistSheetOpen(true)
             }}
             aria-label="Add to playlist"
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-95"
-            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', fontSize: 18, color: 'var(--color-primary)', fontWeight: 700 }}
+            className="press w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{
+              background: 'var(--card)',
+              border: '1px solid var(--rule)',
+              fontSize: 18,
+              color: 'var(--tomato)',
+              fontWeight: 700,
+            }}
           >
             +
           </button>
@@ -301,8 +319,8 @@ export function Dish() {
               type="button"
               onClick={() => setShowReportDish(true)}
               aria-label="Report this dish"
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="press w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ color: 'var(--ink-3)' }}
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="5" cy="12" r="2" />
@@ -342,8 +360,14 @@ export function Dish() {
               onClick={handleRateClick}
               aria-expanded={showRateFlow}
               aria-controls="rate-flow-panel"
-              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              className="press w-full py-4 px-6 rounded-xl focus-ring"
+              style={{
+                background: 'var(--tomato)',
+                color: 'var(--paper)',
+                border: '1.5px solid var(--tomato)',
+                font: '700 15px/1 Inter',
+                letterSpacing: '0.01em',
+              }}
             >
               {showRateFlow
                 ? 'Close'
@@ -354,8 +378,8 @@ export function Dish() {
                 id="rate-flow-panel"
                 className="p-4 rounded-xl"
                 style={{
-                  background: 'var(--color-surface-elevated)',
-                  border: '1px solid var(--color-divider)',
+                  background: 'var(--card)',
+                  border: '1px solid var(--rule)',
                 }}
               >
                 <ReviewFlow
@@ -406,10 +430,13 @@ export function Dish() {
                   restaurant_id: dish.restaurant_id,
                   restaurant_name: dish.restaurant_name,
                 })}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                className="press w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl"
                 style={{
-                  background: 'var(--color-primary)',
-                  color: 'var(--color-text-on-primary)',
+                  background: 'var(--ink)',
+                  color: 'var(--paper)',
+                  border: '1.5px solid var(--ink)',
+                  font: '700 13px/1 Inter',
+                  letterSpacing: '0.02em',
                 }}
               >
                 Order Online
@@ -433,8 +460,8 @@ export function Dish() {
         <div
           className="flex gap-2 p-2 rounded-2xl"
           style={{
-            background: 'var(--color-card)',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.15), 0 0 0 1px var(--color-divider)',
+            background: 'var(--card)',
+            boxShadow: '0 -4px 24px rgba(0,0,0,0.12), 0 0 0 1px var(--rule)',
             backdropFilter: 'blur(16px)',
           }}
         >
@@ -450,10 +477,13 @@ export function Dish() {
                 restaurant_name: dish.restaurant_name,
                 source: dish.toast_slug ? 'toast' : 'order_url',
               }) }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="press flex-1 flex items-center justify-center gap-2 py-3 rounded-xl"
               style={{
-                background: 'var(--color-accent-orange)',
-                color: 'white',
+                background: 'var(--tomato)',
+                color: 'var(--paper)',
+                border: '1.5px solid var(--tomato)',
+                font: '700 13px/1 Inter',
+                letterSpacing: '0.02em',
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -466,10 +496,13 @@ export function Dish() {
               href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="press flex-1 flex items-center justify-center gap-2 py-3 rounded-xl"
               style={{
-                background: 'var(--color-primary)',
-                color: 'white',
+                background: 'var(--tomato)',
+                color: 'var(--paper)',
+                border: '1.5px solid var(--tomato)',
+                font: '700 13px/1 Inter',
+                letterSpacing: '0.02em',
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -486,10 +519,13 @@ export function Dish() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+            className="press flex-1 flex items-center justify-center gap-2 py-3 rounded-xl"
             style={{
-              background: 'var(--color-accent-gold)',
-              color: 'var(--color-bg)',
+              background: 'var(--paper)',
+              color: 'var(--ink)',
+              border: '1.5px solid var(--ink)',
+              font: '700 13px/1 Inter',
+              letterSpacing: '0.02em',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
