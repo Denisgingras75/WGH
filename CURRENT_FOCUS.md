@@ -2,7 +2,7 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-04-19
 
 ---
 
@@ -12,11 +12,11 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** _(Dan's terminal | Dan's other Claude | Denis's Claude | scheduled agent name)_
-- **Branch:** _(e.g., audit/supabase-2026-04-16 — or `main` if directly committing)_
-- **Files / modules claimed:** _(e.g., `src/api/votesApi.js`, `supabase/schema.sql §votes`, `src/pages/Profile.jsx`)_
-- **Safe for others to continue:** _(what parts of the repo are NOT touched and open for parallel work)_
-- **Do not duplicate:** _(specific tasks already in-flight — PR numbers, migration filenames, feature names)_
+- **Owner / session:** Denis's Claude
+- **Branch:** `redesign/phase-01-reskin`
+- **Files / modules claimed:** `src/pages/Map.jsx` (list-mode only), `src/components/home/Masthead.jsx` (NEW), `src/index.css` (hairline utility add)
+- **Safe for others to continue:** everything outside list-mode branch of Map.jsx; all API/schema; map-mode code; Profile/Restaurants/Browse pages; Dish detail
+- **Do not duplicate:** Phase 01 masthead port from `prototype → Whats Good Here.html` (full plan: `REDESIGN-PLAN.md` if Dan drops it)
 
 ---
 
@@ -25,7 +25,7 @@
 <!-- One paragraph. What are we actually shipping this session?
      Skip the long context — CLAUDE.md + SPEC.md provide that. -->
 
-_(stub)_
+Porting the editorial "daily paper" masthead from the Claude Design prototype (`Whats Good Here.html`) onto list-mode of Map.jsx. This is Phase 01 surface #1 of the Prototype → Production Integration Plan: re-skin only, no schema changes, no feature changes, CSS vars only. Map mode untouched. Amatic SC + Outfit preserved; Fraunces swap is Phase 02. Committing on branch only — not pushing.
 
 ## Blockers / waiting on
 
