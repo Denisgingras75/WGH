@@ -47,6 +47,25 @@ export function ThemeProvider({ children }) {
     }
   }, [theme])
 
+  // URL hash triggers: #studio opens picker, #reset-theme clears + opens
+  useEffect(function () {
+    function checkHash() {
+      var h = window.location.hash
+      if (h === '#studio') {
+        setStudioOpen(true)
+        history.replaceState(null, '', window.location.pathname + window.location.search)
+      } else if (h === '#reset-theme') {
+        try { localStorage.removeItem(STORAGE_KEYS.THEME); localStorage.removeItem(STORAGE_KEYS.THEMED) } catch (_e) {}
+        setThemeState('paper')
+        setStudioOpen(true)
+        history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+    }
+    checkHash()
+    window.addEventListener('hashchange', checkHash)
+    return function () { window.removeEventListener('hashchange', checkHash) }
+  }, [])
+
   var value = {
     theme: theme,
     setTheme: setTheme,

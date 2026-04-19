@@ -2,10 +2,10 @@ import { memo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
-import { DishListItem } from '../DishListItem'
+import { DishListItemEditorial } from '../DishListItemEditorial'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
-import { LocalListsSection, Top10Carousel, Masthead } from './'
+import { LocalListsSection, Masthead, CategoryChipStrip } from './'
 import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
 
 export const HomeListMode = memo(function HomeListMode({
@@ -114,6 +114,11 @@ export const HomeListMode = memo(function HomeListMode({
           />
         </div>
 
+        {/* Category chip strip — prototype pattern */}
+        <CategoryChipStrip
+          active={expandedCategory}
+          onSelect={onExpandedCategoryChange}
+        />
       </div>
 
       {/* Scrollable content */}
@@ -129,28 +134,25 @@ export const HomeListMode = memo(function HomeListMode({
         {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
           <div className="px-4 pt-4"><ListSkeleton /></div>
         ) : searchQuery ? (
-          /* Search results — flat list */
-          <div className="px-4 pt-2 pb-4">
-            <h2 style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '28px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              letterSpacing: '0.02em',
-              marginBottom: '8px',
-            }}>
-              Results
-            </h2>
+          /* Search results — editorial list */
+          <div style={{ padding: '0 6px' }}>
+            <div style={{ padding: '14px 20px 8px' }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+                Search
+              </div>
+              <h2 className="serif" style={{ fontWeight: 900, fontStyle: 'italic', fontSize: 26, lineHeight: 1, margin: '2px 0 0', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+                Results for &ldquo;{searchQuery}&rdquo;
+              </h2>
+            </div>
             {activeDishes && activeDishes.length > 0 ? (
-              <div className="flex flex-col" style={{ gap: '2px' }}>
-                {activeDishes.map(function (dish, i) {
+              <div>
+                {activeDishes.map(function (dish, i, arr) {
                   return (
-                    <DishListItem
+                    <DishListItemEditorial
                       key={dish.dish_id}
                       dish={dish}
                       rank={i + 1}
-                      showDistance
-                      onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                      isLast={i === arr.length - 1}
                     />
                   )
                 })}
@@ -160,38 +162,31 @@ export const HomeListMode = memo(function HomeListMode({
             )}
           </div>
         ) : activeDishes && activeDishes.length > 0 ? (
-          /* Homepage v4 layout — category chips up top, vertical list */
           <>
-            {/* Editorial stories — A-frame chalkboard horizontal scroll */}
-            <ChalkboardSection
-              topRestaurant={topRestaurant}
-              mostVotedDish={mostVotedDish}
-              bestValueMeal={bestValueMeal}
-              bestIceCream={bestIceCream}
-              localsAggregate={localsAggregate}
-              onExpandCategory={function (cat) {
-                onExpandedCategoryChange(cat)
-                if (carouselRef.current) {
-                  carouselRef.current.scrollToCategory(cat)
-                }
-                setTimeout(function () {
-                  var el = document.getElementById('top10-carousel')
-                  if (el) {
-                    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                    var offset = el.getBoundingClientRect().top + window.scrollY - 8
-                    window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
-                  }
-                }, 100)
-              }}
-            />
-
-            {/* Local Lists — horizontal scroll above the food icon tabs */}
-            <LocalListsSection onListExpanded={onLocalListExpanded} />
-
-            {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
-            <div id="top10-carousel">
-              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} onCategoryChange={onCategoryChange} />
+            {/* Editorial ranked chart — prototype "This week's rank" */}
+            <div style={{ padding: '14px 20px 8px' }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+                This week&rsquo;s rank
+              </div>
+              <h2 className="serif" style={{ fontWeight: 900, fontStyle: 'italic', fontSize: 26, lineHeight: 1, margin: '2px 0 0', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+                What locals actually <span style={{ color: 'var(--tomato)' }}>order</span>.
+              </h2>
             </div>
+            <div>
+              {activeDishes.slice(0, 10).map(function (dish, i, arr) {
+                return (
+                  <DishListItemEditorial
+                    key={dish.dish_id}
+                    dish={dish}
+                    rank={i + 1}
+                    isLast={i === arr.length - 1}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Local Lists — keep as-is, reskin later */}
+            <LocalListsSection onListExpanded={onLocalListExpanded} />
           </>
         ) : (
           <div className="px-4 pt-4">

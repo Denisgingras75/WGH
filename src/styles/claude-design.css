@@ -645,3 +645,75 @@ input, textarea { font-family: inherit; }
 
 /* Header fade */
 .page-scroll { padding-bottom: 24px; }
+
+/* ============================================================
+ * BRIDGE — map prototype tokens → legacy --color-* tokens
+ * Unported surfaces keep working AND react to theme switches.
+ * Remove once every surface reads --paper/--ink/--tomato directly.
+ * ============================================================ */
+:root,
+[data-theme="paper"] {
+  --color-bg: var(--paper);
+  --color-surface: var(--paper-2);
+  --color-surface-elevated: var(--card);
+  --color-card: var(--card);
+  --color-card-hover: var(--paper-2);
+  --color-divider: var(--rule);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-text-tertiary: var(--ink-3);
+  --color-text-tagline: var(--ink-3);
+  --color-primary: var(--tomato);
+  --color-primary-muted: var(--tomato-soft);
+  --color-accent-gold: var(--ochre);
+  --color-accent-gold-muted: var(--ochre-soft);
+  --color-accent-orange: var(--tomato);
+  --color-link-secondary: var(--ochre);
+  --color-medal-gold: var(--ochre);
+  --color-rating: var(--moss);
+}
+[data-theme="dusk"] {
+  --color-bg: var(--paper);
+  --color-surface: var(--paper-2);
+  --color-surface-elevated: var(--card);
+  --color-card: var(--card);
+  --color-card-hover: var(--paper-2);
+  --color-divider: var(--rule);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-text-tertiary: var(--ink-3);
+  --color-text-tagline: var(--ink-3);
+  --color-primary: var(--tomato);
+  --color-primary-muted: var(--tomato-soft);
+  --color-accent-gold: var(--ochre);
+  --color-accent-gold-muted: var(--ochre-soft);
+  --color-accent-orange: var(--tomato);
+  --color-link-secondary: var(--ochre);
+  --color-medal-gold: var(--ochre);
+  --color-rating: var(--moss);
+}
+[data-theme="zine"],
+[data-theme="diner"],
+[data-theme="chalk"],
+[data-theme="neon"] {
+  --color-bg: var(--paper);
+  --color-surface: var(--paper-2);
+  --color-surface-elevated: var(--card);
+  --color-card: var(--card);
+  --color-card-hover: var(--paper-2);
+  --color-divider: var(--rule);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-text-tertiary: var(--ink-3);
+  --color-text-tagline: var(--ink-3);
+  --color-primary: var(--tomato);
+  --color-primary-muted: var(--tomato-soft);
+  --color-accent-gold: var(--ochre);
+  --color-accent-gold-muted: var(--ochre-soft);
+  --color-accent-orange: var(--tomato);
+  --color-link-secondary: var(--ochre);
+  --color-medal-gold: var(--ochre);
+  --color-rating: var(--moss);
+}
+
+/* Keyboard shortcut to open Studio: press 't' twice */
