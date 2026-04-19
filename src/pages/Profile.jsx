@@ -21,7 +21,9 @@ import {
   HeroIdentityCard,
   JournalFeed,
   SharePicksButton,
+  ProfileEditorialHeader,
 } from '../components/profile'
+import { useFavorites } from '../hooks/useFavorites'
 import { jitterApi } from '../api/jitterApi'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
@@ -63,6 +65,7 @@ export function Profile() {
     enabled: !!user,
   })
   const [followListModal, setFollowListModal] = useState(null) // 'followers' | 'following' | null
+  const { favorites } = useFavorites(user?.id)
 
 
   // Set initial name for editing
@@ -154,6 +157,17 @@ export function Profile() {
 
       {user && (
         <>
+          {/* Editorial header (Claude Design) — prototype identity + ledger */}
+          <ProfileEditorialHeader
+            profile={profile}
+            user={user}
+            stats={stats}
+            ratedCount={ratedDishes ? ratedDishes.length : 0}
+            favoritesCount={favorites ? favorites.length : 0}
+            playlistsCount={myPlaylists ? myPlaylists.length : 0}
+            followersCount={followCounts ? followCounts.followers : 0}
+          />
+
           {/* Hero Identity Card */}
           <HeroIdentityCard
             user={user}
