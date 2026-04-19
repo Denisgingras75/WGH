@@ -34,6 +34,17 @@ export const HomeListMode = memo(function HomeListMode({
   var localsAggregateData = useLocalsAggregate()
   var localsAggregate = localsAggregateData.aggregate
 
+  var mastheadStats = (function () {
+    if (!allRankedDishes || allRankedDishes.length === 0) return { votes: null, dishes: null }
+    var votes = 0
+    var dishIds = {}
+    allRankedDishes.forEach(function (d) {
+      votes += Number(d.total_votes) || 0
+      if (d.id || d.dish_id) dishIds[d.id || d.dish_id] = true
+    })
+    return { votes: votes, dishes: Object.keys(dishIds).length || allRankedDishes.length }
+  })()
+
   var handleCategorySelect = useCallback(function (cat) {
     onExpandedCategoryChange(cat)
     if (carouselRef.current) {
@@ -59,7 +70,7 @@ export const HomeListMode = memo(function HomeListMode({
     >
       {/* Fixed header: masthead + search + chips */}
       <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
-        <Masthead />
+        <Masthead voteCount={mastheadStats.votes} dishCount={mastheadStats.dishes} onTownClick={onRadiusSheetOpen} />
         {/* Search bar */}
         <div className="px-5 pt-2 pb-2">
           <div style={{
