@@ -20,6 +20,7 @@ import { CreatePlaylistModal } from '../components/playlists/CreatePlaylistModal
 import {
   HeroIdentityCard,
   JournalFeed,
+  SharePicksButton,
 } from '../components/profile'
 import { jitterApi } from '../api/jitterApi'
 
@@ -169,6 +170,16 @@ export function Profile() {
             setFollowListModal={setFollowListModal}
             jitterProfile={jitterProfile}
           />
+
+          {/* Share Picks — viral loop */}
+          {stats.totalVotes > 0 && (
+            <div className="flex justify-center py-3">
+              <SharePicksButton
+                userId={user.id}
+                userName={profile?.display_name}
+              />
+            </div>
+          )}
 
           {/* Food Story chalkboard — your food identity at a glance */}
           {stats.totalVotes > 0 && (

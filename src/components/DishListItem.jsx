@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MIN_VOTES_FOR_RANKING } from '../constants/app'
+import { MIN_VOTES_FOR_RANKING, VALUE_BADGE_THRESHOLD } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
 import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
 import { RestaurantAvatar } from './RestaurantAvatar'
@@ -59,6 +59,8 @@ export const DishListItem = memo(function DishListItem({
   const price = dish.price
   const photoUrl = dish.photo_url
   const valuePercentile = dish.value_percentile
+  const valueScore = dish.value_score
+  const valueRating = valueScore != null ? Math.min(10, Math.round(valueScore / 15 * 10) / 10) : null
   const category = dish.category
   const toastSlug = dish.toast_slug
   const orderUrl = dish.order_url
@@ -198,6 +200,23 @@ export const DishListItem = memo(function DishListItem({
             {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
           </p>
+          {valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                color: 'var(--color-medal-gold)',
+                background: 'rgba(232, 184, 32, 0.12)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                marginTop: '2px',
+                display: 'inline-block',
+              }}
+            >
+              GREAT VALUE
+            </span>
+          )}
         </div>
         {/* Action buttons — Order / Directions */}
         {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
@@ -238,21 +257,36 @@ export const DishListItem = memo(function DishListItem({
         )}
       </div>
 
-      {/* Rating + votes */}
+      {/* Rating + value + votes */}
       <div className="flex-shrink-0 text-right" style={{ marginLeft: '8px' }}>
         {isRanked ? (
           <>
-            <span
-              className="font-bold"
-              style={{
-                fontSize: isPodium ? '20px' : '16px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: getRatingColor(avgRating),
-              }}
-            >
-              {avgRating}
-            </span>
+            <div className="flex items-baseline gap-1.5" style={{ justifyContent: 'flex-end' }}>
+              <span
+                className="font-bold"
+                style={{
+                  fontSize: isPodium ? '20px' : '16px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  color: getRatingColor(avgRating),
+                }}
+              >
+                {avgRating}
+              </span>
+              {valueRating != null && (
+                <span
+                  style={{
+                    fontSize: isPodium ? '13px' : '11px',
+                    fontWeight: 700,
+                    color: 'var(--color-medal-gold)',
+                    opacity: 0.85,
+                  }}
+                  title="WGH Value Rating"
+                >
+                  {valueRating.toFixed(1)}v
+                </span>
+              )}
+            </div>
             {!hideVotes && (
               <div style={{
                 fontSize: '11px',
