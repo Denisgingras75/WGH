@@ -3,12 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { LocationProvider } from './context/LocationContext'
+import { ThemeProvider } from './context/ThemeContext'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Layout } from './components/Layout'
 import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
+import { DesignStudio } from './components/DesignStudio'
 import { RouteProgress } from './components/RouteProgress'
 import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
@@ -124,9 +126,11 @@ function App() {
       />
       <AuthProvider>
       <LocationProvider>
+      <ThemeProvider>
         <BrowserRouter>
           <RouteProgress />
           <WelcomeModal />
+          <DesignStudio />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<><MapPage /><BottomNav /></>} />
@@ -157,6 +161,7 @@ function App() {
             </Routes>
           </Suspense>
         </BrowserRouter>
+      </ThemeProvider>
       </LocationProvider>
       </AuthProvider>
     </ErrorBoundary>

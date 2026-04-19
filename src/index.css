@@ -29,36 +29,10 @@
 }
 
 /* ===========================
-   Redesign tokens (Claude Design prototype — "paper" theme)
-   Additive. Does not replace --color-* tokens below.
+   Claude Design prototype port — full theme + utilities
+   Loaded as a separate stylesheet so it's reviewable/removable in one file.
    =========================== */
-:root {
-  --paper: #F4EFE8;
-  --paper-2: #EBE5DB;
-  --ink: #1A1714;
-  --ink-2: #5A5248;
-  --ink-3: #8B8275;
-  --rule: #D8CFBE;
-  --rule-2: #BFB39B;
-  --tomato: #C5412A;
-  --tomato-soft: #E8D2CB;
-  --ochre: #B8893A;
-  --ochre-soft: #EBD9B4;
-  --moss: #5C6B3A;
-  --card-paper: #FBF8F2;
-  --shadow-ink: 0 1px 0 rgba(26,23,20,.06), 0 8px 24px -12px rgba(26,23,20,.18);
-}
-
-.serif { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
-.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-.hairline-b { border-bottom: 1px solid var(--rule); }
-.avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--ochre); color: var(--paper);
-  display: inline-flex; align-items: center; justify-content: center;
-  font: 700 11px/1 'Inter', system-ui, sans-serif;
-  flex-shrink: 0;
-}
+@import './styles/claude-design.css';
 
 /* ===========================
    What's Good Here — Warm Editorial (Default)

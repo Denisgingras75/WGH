@@ -124,6 +124,8 @@ export const STORAGE_KEYS = {
   RADIUS: 'wgh_radius',
   LOCATION_PERMISSION: 'whats-good-here-location-permission',
   EMAIL_CACHE: 'whats-good-here-email',
+  THEME: 'wgh_theme',
+  THEMED: 'wgh_themed',
 }
 
 // Pending vote storage helpers (survives OAuth redirect)
