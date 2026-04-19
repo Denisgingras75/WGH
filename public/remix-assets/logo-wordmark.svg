@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 50" width="300" height="50">
+  
+  <text x="0" y="35" class="wm-text">What&#39;s </text>
+  <text x="108" y="35" class="wm-text" fill="#F5F1E8">Good</text>
+  <rect x="108" y="40" width="68" height="3" rx="1.5" fill="#D9A765" opacity="0.8"></rect>
+  <text x="182" y="35" class="wm-text"> Here</text>
+</svg>
