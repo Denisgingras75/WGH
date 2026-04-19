@@ -73,16 +73,17 @@ describe('votesApi', () => {
 
       const result = await votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
         rating10: 8,
       })
 
       expect(supabase.rpc).toHaveBeenCalledWith('submit_vote_atomic', expect.objectContaining({
         p_dish_id: 'dish-1',
         p_user_id: 'user-1',
-        p_would_order_again: true,
         p_rating_10: 8,
       }))
+      // Binary field must NOT be in the payload any more — server derives from rating.
+      const submitCall = supabase.rpc.mock.calls.find(call => call[0] === 'submit_vote_atomic')
+      expect(submitCall[1]).not.toHaveProperty('p_would_order_again')
       expect(result).toEqual({ success: true, vote: { id: 'vote-1' } })
     })
 
@@ -93,7 +94,6 @@ describe('votesApi', () => {
 
       await votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
         rating10: 9,
         reviewText: 'Amazing lobster roll!',
       })
@@ -110,7 +110,7 @@ describe('votesApi', () => {
 
       await votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
         reviewText: '   ',
       })
 
@@ -126,7 +126,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
       })).rejects.toThrow('Too many votes, slow down!')
     })
 
@@ -135,7 +135,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
         reviewText: longReview,
       })).rejects.toThrow(/characters over limit/)
     })
@@ -145,7 +145,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
         reviewText: 'inappropriate content here',
       })).rejects.toThrow('Review contains inappropriate content')
     })
@@ -155,7 +155,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
       })).rejects.toThrow('You must be logged in to vote')
     })
 
@@ -167,7 +167,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
       })).rejects.toThrow('Server rate limit exceeded')
     })
 
@@ -176,28 +176,44 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
       })).rejects.toThrow('Unable to verify vote limit. Please try again.')
     })
 
-    it('should track vote submission in PostHog', async () => {
+    it('emits rating_submitted with clean payload (no binary fields)', async () => {
       supabase.rpc
         .mockResolvedValueOnce({ data: { allowed: true }, error: null })
         .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
 
       await votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
         rating10: 8,
         reviewText: 'Great!',
       })
 
-      expect(capture).toHaveBeenCalledWith('vote_submitted', {
+      expect(capture).toHaveBeenCalledWith('rating_submitted', {
         dish_id: 'dish-1',
-        would_order_again: true,
         rating: 8,
         has_review: true,
       })
+      // Phase 2: vote_submitted is gone, binary_removed property is gone
+      const allCalls = capture.mock.calls.map(c => c[0])
+      expect(allCalls).not.toContain('vote_submitted')
+    })
+
+    it('does not send p_would_order_again to submit_vote_atomic', async () => {
+      supabase.rpc
+        .mockResolvedValueOnce({ data: { allowed: true }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'vote-1' }, error: null })
+
+      await votesApi.submitVote({
+        dishId: 'dish-1',
+        rating10: 8,
+      })
+
+      const submitCall = supabase.rpc.mock.calls.find(c => c[0] === 'submit_vote_atomic')
+      expect(submitCall).toBeTruthy()
+      expect(submitCall[1]).not.toHaveProperty('p_would_order_again')
     })
 
     it('should throw classified error on database failure', async () => {
@@ -207,7 +223,7 @@ describe('votesApi', () => {
 
       await expect(votesApi.submitVote({
         dishId: 'dish-1',
-        wouldOrderAgain: true,
+        rating10: 8,
       })).rejects.toThrow('DB error')
     })
   })
@@ -225,8 +241,8 @@ describe('votesApi', () => {
       supabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
 
       const mockVotes = [
-        { dish_id: 'dish-1', would_order_again: true, rating_10: 9 },
-        { dish_id: 'dish-2', would_order_again: false, rating_10: 5 },
+        { dish_id: 'dish-1', rating_10: 9 },
+        { dish_id: 'dish-2', rating_10: 5 },
       ]
 
       supabase.from.mockReturnValue({
@@ -238,8 +254,8 @@ describe('votesApi', () => {
       const result = await votesApi.getUserVotes()
 
       expect(result).toEqual({
-        'dish-1': { wouldOrderAgain: true, rating10: 9 },
-        'dish-2': { wouldOrderAgain: false, rating10: 5 },
+        'dish-1': { rating10: 9 },
+        'dish-2': { rating10: 5 },
       })
     })
 
@@ -278,7 +294,6 @@ describe('votesApi', () => {
       const mockVotes = [
         {
           id: 'vote-1',
-          would_order_again: true,
           rating_10: 9,
           created_at: '2024-01-01',
           dishes: {
@@ -405,7 +420,6 @@ describe('votesApi', () => {
           id: 'review-1',
           review_text: 'Great!',
           rating_10: 9,
-          would_order_again: true,
           review_created_at: '2024-01-01',
           user_id: 'user-1',
           source: null,
@@ -566,7 +580,6 @@ describe('votesApi', () => {
           id: 'review-1',
           review_text: 'Delicious!',
           rating_10: 9,
-          would_order_again: true,
           review_created_at: '2024-01-01',
           dish_id: 'dish-1',
           dishes: {

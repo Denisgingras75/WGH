@@ -17,7 +17,6 @@ function transformVote(vote) {
     restaurant_name: vote.dishes.restaurants?.name,
     rating_10: vote.rating_10,
     review_text: vote.review_text || null,
-    would_order_again: vote.would_order_again,
     community_avg: vote.dishes.avg_rating,
     total_votes: vote.dishes.total_votes,
     voted_at: vote.created_at,
@@ -151,8 +150,6 @@ function computeCategoryComparison(data, communityAvgs) {
  */
 function calculateStats(data) {
   const totalVotes = data.length
-  const worthItCount = data.filter(v => v.would_order_again).length
-  const avoidCount = data.filter(v => !v.would_order_again).length
 
   // Average rating
   const ratingsWithValue = data.filter(v => v.rating_10 != null)
@@ -226,8 +223,6 @@ function calculateStats(data) {
 
   return {
     totalVotes,
-    worthItCount,
-    avoidCount,
     avgRating,
     ratingVariance,
     categoryConcentration,
@@ -244,8 +239,6 @@ function calculateStats(data) {
 
 const DEFAULT_STATS = {
   totalVotes: 0,
-  worthItCount: 0,
-  avoidCount: 0,
   avgRating: null,
   ratingVariance: 0,
   categoryConcentration: 0,
@@ -262,11 +255,10 @@ const DEFAULT_STATS = {
   standoutPicks: {},
 }
 
-const sortByRating = (a, b) => {
-  if (a.rating_10 == null && b.rating_10 == null) return 0
-  if (a.rating_10 == null) return 1
-  if (b.rating_10 == null) return -1
-  return b.rating_10 - a.rating_10
+const sortByRecency = (a, b) => {
+  const aTime = new Date(a.voted_at || 0).getTime()
+  const bTime = new Date(b.voted_at || 0).getTime()
+  return bTime - aTime
 }
 
 export function useUserVotes(userId) {
@@ -296,14 +288,9 @@ export function useUserVotes(userId) {
   const votes = primaryData?.votes || []
   const helpedCount = primaryData?.helpedCount || 0
 
-  // Derive sorted dish lists from raw votes
-  const worthItDishes = useMemo(
-    () => votes.filter(v => v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
-    [votes]
-  )
-
-  const avoidDishes = useMemo(
-    () => votes.filter(v => !v.would_order_again).map(transformVote).filter(Boolean).sort(sortByRating),
+  // Single "My Ratings" feed, sorted most-recent-first.
+  const ratedDishes = useMemo(
+    () => votes.map(transformVote).filter(Boolean).sort(sortByRecency),
     [votes]
   )
 
@@ -352,8 +339,7 @@ export function useUserVotes(userId) {
 
   return {
     votes,
-    worthItDishes,
-    avoidDishes,
+    ratedDishes,
     stats,
     loading: userId ? primaryLoading : false,
     refetch,

@@ -385,7 +385,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               </div>
             )}
 
-            {/* Review Flow - this is where thumbs up/down appears */}
+            {/* Review Flow — single-screen rating, no thumbs */}
             <ReviewFlow
               dishId={dish.dish_id}
               dishName={dish.dish_name}
@@ -394,7 +394,6 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               category={dish.category}
               price={dish.price}
               totalVotes={dish.total_votes || 0}
-              yesVotes={dish.yes_votes || 0}
               onVote={onVote}
               onLoginRequired={onLoginRequired}
             />

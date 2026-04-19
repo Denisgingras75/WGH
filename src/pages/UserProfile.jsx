@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
@@ -10,11 +10,17 @@ import { followsApi } from '../api/followsApi'
 import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
-import { FoodMap, ShelfFilter, JournalFeed, LocalListCard } from '../components/profile'
+import { FoodMap, JournalFeed, LocalListCard } from '../components/profile'
+import { useUserPlaylists } from '../hooks/useUserPlaylists'
+import { PlaylistStripCard } from '../components/playlists/PlaylistStripCard'
+import { PlaylistGridCard } from '../components/playlists/PlaylistGridCard'
 import { useLocalListDetail } from '../hooks/useLocalListDetail'
 import { TrustBadge, ProfileJitterCard } from '../components/jitter'
 import { jitterApi } from '../api/jitterApi'
 import { profileApi } from '../api/profileApi'
+import { ReportModal } from '../components/ReportModal'
+import { BlockUserModal } from '../components/BlockUserModal'
+import { useBlockedUsers } from '../hooks/useBlockedUsers'
 
 // Known location display names for URL slugs
 var LOCATION_NAMES = {
@@ -29,11 +35,9 @@ function formatLocationName(slug) {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase() })
 }
 
-const PUBLIC_SHELVES = [
-  { id: 'all', label: 'All' },
-  { id: 'good-here', label: 'Good Here' },
-  { id: 'not-good-here', label: "Wasn't Good Here" },
-]
+// Shelves collapsed to a single "My Ratings" feed — Worth-It/Avoid split retired
+// with the binary vote (Apr 2026). The shelf filter UI is no longer rendered;
+// kept only for search-history compatibility.
 
 /**
  * Compute rating style from average rating and variance
@@ -80,17 +84,43 @@ export function UserProfile() {
   const [userReviews, setUserReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   // selectedReview state removed — ReviewDetailModal doesn't exist yet
-  const [activeShelf, setActiveShelf] = useState('all')
   const [tasteCompat, setTasteCompat] = useState(null)
   const [ratingBias, setRatingBias] = useState(null)
   const [standoutPicks, setStandoutPicks] = useState({})
   const [jitterBadgeType, setJitterBadgeType] = useState(null)
   const [jitterBadgeData, setJitterBadgeData] = useState(null)
+  const [activeTab, setActiveTab] = useState('journal')
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [showBlockModal, setShowBlockModal] = useState(false)
+  const { playlists: userPlaylists } = useUserPlaylists(userId)
+  const { isBlocked, unblockUser } = useBlockedUsers()
 
   var localList = useLocalListDetail(userId)
+  const actionsMenuRef = useRef(null)
 
   // Check if viewing own profile
   const isOwnProfile = currentUser?.id === userId
+  const viewerHasBlocked = !!currentUser && !isOwnProfile && isBlocked(userId)
+
+  // Close actions menu on outside click or Escape
+  useEffect(() => {
+    if (!showActionsMenu) return
+    const handleClickOutside = (e) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target)) {
+        setShowActionsMenu(false)
+      }
+    }
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setShowActionsMenu(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showActionsMenu])
 
   // Redirect to /profile if viewing own profile
   useEffect(() => {
@@ -322,15 +352,13 @@ export function UserProfile() {
     }
   }
 
-  // Compute stats and split votes from recent votes
-  const { uniqueRestaurants, foodMapStats, worthItVotes, avoidVotes, ratingStyle } = useMemo(() => {
+  // Compute stats from recent votes — single "My Ratings" shelf, sorted by recency.
+  const { uniqueRestaurants, foodMapStats, ratingStyle } = useMemo(() => {
     if (!profile?.recent_votes?.length) {
-      return { uniqueRestaurants: 0, foodMapStats: { totalVotes: 0, uniqueRestaurants: 0, categoryCounts: {} }, worthItVotes: [], avoidVotes: [], ratingStyle: null }
+      return { uniqueRestaurants: 0, foodMapStats: { totalVotes: 0, uniqueRestaurants: 0, categoryCounts: {} }, ratingStyle: null }
     }
     const restaurantNames = new Set()
     const catCounts = {}
-    const worthIt = []
-    const avoid = []
     const ratings = []
     profile.recent_votes.forEach(vote => {
       if (vote.dish?.restaurant_name) {
@@ -338,11 +366,6 @@ export function UserProfile() {
       }
       if (vote.dish?.category) {
         catCounts[vote.dish.category] = (catCounts[vote.dish.category] || 0) + 1
-      }
-      if (vote.would_order_again) {
-        worthIt.push(vote)
-      } else {
-        avoid.push(vote)
       }
       if (vote.rating != null) {
         ratings.push(vote.rating)
@@ -367,54 +390,36 @@ export function UserProfile() {
         uniqueRestaurants: restaurantNames.size,
         categoryCounts: catCounts,
       },
-      worthItVotes: worthIt,
-      avoidVotes: avoid,
       ratingStyle: style,
     }
   }, [profile?.recent_votes])
 
-  // Transform votes into JournalFeed shape
-  var journalWorthIt = worthItVotes.map(function (vote) {
-    var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
-    return {
-      dish_id: vote.dish && vote.dish.id,
-      dish_name: vote.dish && vote.dish.name,
-      restaurant_name: vote.dish && vote.dish.restaurant_name,
-      restaurant_town: vote.dish && vote.dish.restaurant_town,
-      category: vote.dish && vote.dish.category,
-      photo_url: vote.dish && vote.dish.photo_url,
-      rating_10: vote.rating,
-      community_avg: vote.dish && vote.dish.avg_rating,
-      voted_at: vote.voted_at,
-      review_text: review && review.review_text,
-      would_order_again: true,
-    }
-  })
-  var journalAvoid = avoidVotes.map(function (vote) {
-    var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
-    return {
-      dish_id: vote.dish && vote.dish.id,
-      dish_name: vote.dish && vote.dish.name,
-      restaurant_name: vote.dish && vote.dish.restaurant_name,
-      restaurant_town: vote.dish && vote.dish.restaurant_town,
-      category: vote.dish && vote.dish.category,
-      photo_url: vote.dish && vote.dish.photo_url,
-      rating_10: vote.rating,
-      community_avg: vote.dish && vote.dish.avg_rating,
-      voted_at: vote.voted_at,
-      review_text: review && review.review_text,
-      would_order_again: false,
-    }
-  })
+  // Transform votes into JournalFeed shape — one shelf, sorted most-recent-first.
+  var journalRatings = (profile?.recent_votes || [])
+    .slice()
+    .sort(function (a, b) {
+      return new Date(b.voted_at || 0).getTime() - new Date(a.voted_at || 0).getTime()
+    })
+    .map(function (vote) {
+      var review = userReviews.find(function (r) { return r.dish_id === (vote.dish && vote.dish.id) })
+      return {
+        dish_id: vote.dish && vote.dish.id,
+        dish_name: vote.dish && vote.dish.name,
+        restaurant_name: vote.dish && vote.dish.restaurant_name,
+        restaurant_town: vote.dish && vote.dish.restaurant_town,
+        category: vote.dish && vote.dish.category,
+        photo_url: vote.dish && vote.dish.photo_url,
+        rating_10: vote.rating,
+        community_avg: vote.dish && vote.dish.avg_rating,
+        voted_at: vote.voted_at,
+        review_text: review && review.review_text,
+      }
+    })
 
   // Apply location filter if present in URL
   if (locationFilter) {
     var locLower = locationFilter.toLowerCase().replace(/-/g, ' ')
-    journalWorthIt = journalWorthIt.filter(function (d) {
-      var town = (d.restaurant_town || '').toLowerCase()
-      return town.indexOf(locLower) !== -1 || locLower.indexOf(town) !== -1
-    })
-    journalAvoid = journalAvoid.filter(function (d) {
+    journalRatings = journalRatings.filter(function (d) {
       var town = (d.restaurant_town || '').toLowerCase()
       return town.indexOf(locLower) !== -1 || locLower.indexOf(town) !== -1
     })
@@ -446,6 +451,52 @@ export function UserProfile() {
   }
 
   const totalVotes = foodMapStats.totalVotes
+
+  if (viewerHasBlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--color-surface)' }}>
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold mb-5"
+          style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-tertiary)' }}
+        >
+          {profile.display_name?.charAt(0).toUpperCase() || '?'}
+        </div>
+        <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          You blocked {profile.display_name}
+        </h2>
+        <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          You won't see their reviews, photos, or activity. Unblock to restore their profile.
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-5 py-2.5 rounded-xl font-semibold"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-divider)',
+              color: 'var(--color-text-primary)',
+              fontSize: '14px',
+            }}
+          >
+            Go back
+          </button>
+          <button
+            type="button"
+            onClick={() => unblockUser(userId)}
+            className="px-5 py-2.5 rounded-xl font-semibold"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+              fontSize: '14px',
+            }}
+          >
+            Unblock
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
@@ -655,6 +706,50 @@ export function UserProfile() {
           >
             Share
           </button>
+          {currentUser && !isOwnProfile && (
+            <div className="relative" ref={actionsMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowActionsMenu((v) => !v)}
+                aria-label="More actions"
+                aria-expanded={showActionsMenu}
+                aria-haspopup="menu"
+                className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+              {showActionsMenu && (
+                <div
+                  role="menu"
+                  aria-label={`Actions for ${profile.display_name}`}
+                  className="absolute right-0 mt-2 w-48 rounded-xl shadow-xl border overflow-hidden z-40"
+                  style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-divider)' }}
+                >
+                  <button
+                    role="menuitem"
+                    onClick={() => { setShowActionsMenu(false); setShowReportModal(true) }}
+                    className="w-full px-4 py-3 text-left text-sm font-medium transition-colors border-b"
+                    style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-divider)' }}
+                  >
+                    Report user
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { setShowActionsMenu(false); setShowBlockModal(true) }}
+                    className="w-full px-4 py-3 text-left text-sm font-medium transition-colors"
+                    style={{ color: 'var(--color-danger)' }}
+                  >
+                    Block user
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
       </div>
@@ -759,21 +854,78 @@ export function UserProfile() {
         </div>
       )}
 
-      {/* Shelf Filters */}
-      <ShelfFilter
-        shelves={PUBLIC_SHELVES}
-        active={activeShelf}
-        onSelect={setActiveShelf}
-      />
+      {/* Tabs: Journal / Playlists (no Saved — that's personal) */}
+      <div
+        className="flex"
+        style={{
+          borderBottom: '1px solid var(--color-divider)',
+          background: 'var(--color-surface)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        {['journal', 'playlists'].map(function (tab) {
+          return (
+            <button
+              key={tab}
+              onClick={function () { setActiveTab(tab) }}
+              className="flex-1 py-3 text-xs font-semibold text-center"
+              style={{
+                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                background: 'transparent',
+                border: 'none',
+                borderBottomWidth: 2,
+                borderBottomStyle: 'solid',
+                borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          )
+        })}
+      </div>
 
-      {/* Journal Feed */}
-      <JournalFeed
-        worthIt={journalWorthIt}
-        avoid={journalAvoid}
-        heard={[]}
-        activeShelf={activeShelf}
-        loading={reviewsLoading}
-      />
+      {/* --- Journal tab --- */}
+      {activeTab === 'journal' && (
+        <>
+          {/* My Ratings shelf title */}
+          <div className="px-4 pt-5 pb-1">
+            <h2
+              style={{
+                fontFamily: "'Amatic SC', cursive",
+                color: 'var(--color-text-primary)',
+                fontSize: '32px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {profile.display_name}'s Ratings
+            </h2>
+          </div>
+
+          {/* Journal Feed — single chronological shelf */}
+          <JournalFeed
+            ratings={journalRatings}
+            loading={reviewsLoading}
+          />
+        </>
+      )}
+
+      {/* --- Playlists tab --- */}
+      {activeTab === 'playlists' && (
+        <div className="px-4 pt-4 pb-6">
+          {userPlaylists.length === 0 ? (
+            <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              No playlists yet
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {userPlaylists.map(function (p) { return <PlaylistGridCard key={p.id} playlist={p} /> })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Signup CTA for visitors */}
       {!currentUser && (
@@ -827,7 +979,16 @@ export function UserProfile() {
         />
       )}
 
-      {/* Review Detail Modal — removed, component doesn't exist yet */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        target={{ type: 'user', id: userId, label: profile.display_name }}
+      />
+      <BlockUserModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        user={{ id: userId, displayName: profile.display_name }}
+      />
     </div>
   )
 }

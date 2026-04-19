@@ -4,8 +4,6 @@ import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
 import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
 import { RestaurantAvatar } from './RestaurantAvatar'
-import { ThumbsUpIcon } from './ThumbsUpIcon'
-import { ThumbsDownIcon } from './ThumbsDownIcon'
 import { HearingIcon } from './HearingIcon'
 import { sanitizeUrl } from '../utils/sanitize'
 /**
@@ -22,7 +20,6 @@ import { sanitizeUrl } from '../utils/sanitize'
  *   onUnsave    - callback for saved tab unsave action
  *   reviewText  - optional inline review text (voted variant)
  *   myRating    - current user's rating for comparison (voted other-profile)
- *   wouldOrderAgain - the user's would_order_again boolean (voted other-profile)
  *   theirRating - the profile owner's rating (voted other-profile)
  *   voteVariant - 'own-profile' | 'other-profile' (voted variant)
  *   highlighted - gold background flash for map pin interactions
@@ -40,7 +37,6 @@ export const DishListItem = memo(function DishListItem({
   onUnsave,
   reviewText,
   myRating,
-  wouldOrderAgain,
   theirRating,
   voteVariant = 'own-profile',
   highlighted = false,
@@ -184,13 +180,20 @@ export const DishListItem = memo(function DishListItem({
             }}
           >
             {restaurantId ? (
-              <button
-                type="button"
+              <span
+                role="link"
+                tabIndex={0}
                 onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
-                style={{ color: 'var(--color-accent-gold)', fontWeight: 600, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', fontSize: 'inherit' }}
+                onKeyDown={function (e) {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault(); e.stopPropagation();
+                    navigate('/restaurants/' + restaurantId)
+                  }
+                }}
+                style={{ color: 'var(--color-accent-gold)', fontWeight: 600, cursor: 'pointer' }}
               >
                 {restaurantName}
-              </button>
+              </span>
             ) : restaurantName}
             {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
             {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
@@ -360,8 +363,6 @@ export const DishListItem = memo(function DishListItem({
                     </span>
                   )}
                 </div>
-                {tab === 'worth-it' && <ThumbsUpIcon size={28} />}
-                {tab === 'avoid' && <ThumbsDownIcon size={28} />}
                 {tab === 'saved' && onUnsave && (
                   <button
                     onClick={function (e) { e.stopPropagation(); onUnsave() }}
@@ -397,9 +398,7 @@ export const DishListItem = memo(function DishListItem({
                     </span>
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>avg</span>
                   </div>
-                ) : (
-                  wouldOrderAgain ? <ThumbsUpIcon size={28} /> : <ThumbsDownIcon size={28} />
-                )}
+                ) : null}
               </div>
             )}
           </div>

@@ -1,24 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
-import { WghLogo } from '../WghLogo'
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
+import { SmileyPin } from '../SmileyPin'
 import { capture } from '../../lib/analytics'
+import { getUserMessage } from '../../utils/errorHandler'
 
 const STEPS = [
   {
     id: 'welcome',
     title: 'Find the best dishes near you',
     subtitle: 'Real ratings from locals & visitors like you',
-    description: 'No more guessing. See what\'s actually worth ordering.',
+    description: 'Find the best food faster.',
   },
   {
     id: 'how-it-works',
-    icon: 'thumbsUp',
-    title: 'Vote on dishes you\'ve tried',
-    subtitle: 'Good Here or Not Good — it\'s that simple',
-    description: 'Rate 1-10, and watch dishes climb the rankings as the community votes.',
+    icon: 'star',
+    title: "Rate dishes you've actually tried, 1–10.",
+    subtitle: 'Find the best food faster.',
+    description: 'Your ratings help locals and visitors discover what\'s actually good.',
   },
   {
     id: 'photos',
@@ -42,6 +41,7 @@ export function WelcomeModal() {
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const [isOpen, setIsOpen] = useState(false)
   const [phase, setPhase] = useState('onboarding') // 'onboarding' | 'celebration' | 'fade-out'
 
@@ -51,7 +51,13 @@ export function WelcomeModal() {
 
   useEffect(() => {
     if (user && !loading && profile) {
-      if (!profile.has_onboarded) {
+      // Open for net-new users, and also for anyone whose display_name is
+      // still missing — covers Apple users who declined name share on first
+      // sign-in, Google users whose provider didn't supply a name, and any
+      // past user who got into a weird data state. display_name is required
+      // to vote, so we can't let onboarded-but-nameless users slip through.
+      // Use trim() to match the hasName semantics elsewhere in the component.
+      if (!profile.has_onboarded || !profile.display_name?.trim()) {
         setIsOpen(true)
         capture('onboarding_started')
       }
@@ -61,12 +67,24 @@ export function WelcomeModal() {
   const displayName = name.trim() || profile?.display_name || ''
 
   const completeOnboarding = async (nameSet) => {
+    // Snapshot the name at submit time so a late-typed character can't desync
+    // what gets persisted from what the celebration screen shows.
+    const submittedName = name.trim()
     setSaving(true)
+    setSaveError(null)
     const updates = { has_onboarded: true }
-    if (name.trim()) updates.display_name = name.trim()
-    await updateProfile(updates)
-    capture('onboarding_completed', { name_set: nameSet })
+    if (submittedName) updates.display_name = submittedName
+    const { error } = await updateProfile(updates)
     setSaving(false)
+
+    if (error) {
+      // Surface the error so the user can correct it (most likely: duplicate display_name)
+      setSaveError(getUserMessage(error, 'saving your name'))
+      capture('onboarding_failed', { name_set: nameSet, error: error.message })
+      return
+    }
+
+    capture('onboarding_completed', { name_set: nameSet })
 
     // Show celebration screen
     setPhase('celebration')
@@ -120,7 +138,7 @@ export function WelcomeModal() {
         <div className="relative z-10 text-center px-8">
           {/* Logo — matches splash page layout */}
           <div className="flex justify-center" style={{ marginBottom: '-18px', position: 'relative', zIndex: 2 }}>
-            <WghLogo size={72} />
+            <SmileyPin size={72} />
           </div>
 
           {/* Brand name */}
@@ -220,14 +238,14 @@ export function WelcomeModal() {
           {/* Step icon */}
           {currentStep.id === 'welcome' ? (
             <div className="flex justify-center mb-6">
-              <WghLogo size={56} />
+              <SmileyPin size={56} />
             </div>
           ) : (
             <div
               className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all"
               style={{ background: 'var(--color-primary)' }}
             >
-              {currentStep.icon === 'thumbsUp' ? <ThumbsUpIcon size={52} />
+              {currentStep.icon === 'star' ? <span className="text-4xl">⭐</span>
                 : currentStep.icon === 'camera' ? (
                   <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -252,21 +270,32 @@ export function WelcomeModal() {
             )}
           </div>
 
-          {/* How it works visual */}
+          {/* How it works visual — rating-first rail */}
           {currentStep.id === 'how-it-works' && (
-            <div className="flex justify-center gap-4 mb-6">
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(107, 179, 132, 0.15)' }}>
-                <span className="text-2xl mb-1"><ThumbsUpIcon size={32} /></span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-rating)' }}>Good Here</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(232, 102, 60, 0.1)' }}>
-                <span className="text-2xl mb-1"><ThumbsDownIcon size={32} /></span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>Not Good</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
-                <span className="text-2xl mb-1">⭐</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-accent-gold)' }}>Rate 1-10</span>
-              </div>
+            <div className="flex justify-center items-center gap-2 mb-6">
+              {[3, 5, 7, 9, 10].map((n) => (
+                <div
+                  key={n}
+                  className="flex flex-col items-center justify-center rounded-xl"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    background: n >= 8
+                      ? 'rgba(22, 163, 74, 0.15)'
+                      : n >= 6
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : 'rgba(220, 38, 38, 0.08)',
+                    color: n >= 8
+                      ? 'var(--color-rating)'
+                      : n >= 6
+                        ? 'var(--color-accent-gold)'
+                        : 'var(--color-text-secondary)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {n}
+                </div>
+              ))}
             </div>
           )}
 
@@ -296,17 +325,30 @@ export function WelcomeModal() {
                 aria-label="Your name"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (saveError) setSaveError(null)
+                }}
                 placeholder="Your name"
                 autoFocus
                 maxLength={50}
-                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors"
+                disabled={saving}
+                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors disabled:opacity-60"
                 style={{
                   background: 'var(--color-bg)',
-                  borderColor: 'var(--color-divider)',
+                  borderColor: saveError ? 'var(--color-danger)' : 'var(--color-divider)',
                   color: 'var(--color-text-primary)',
                 }}
               />
+              {saveError && (
+                <p
+                  role="alert"
+                  className="text-sm text-center"
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  {saveError}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={!name.trim() || saving}
@@ -327,6 +369,15 @@ export function WelcomeModal() {
             </form>
           ) : (
             <div className="space-y-3">
+              {saveError && (
+                <p
+                  role="alert"
+                  className="text-sm text-center"
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  {saveError}
+                </p>
+              )}
               <button
                 onClick={handleNext}
                 disabled={saving}

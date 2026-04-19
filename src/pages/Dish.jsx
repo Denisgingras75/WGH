@@ -13,9 +13,13 @@ import { LoginModal } from '../components/Auth/LoginModal'
 import { HearingIcon } from '../components/HearingIcon'
 import { EarIconTooltip } from '../components/EarIconTooltip'
 import { DishHero, DishEvidence } from '../components/dish'
+import { AddToPlaylistSheet } from '../components/playlists/AddToPlaylistSheet'
+import { ReportModal } from '../components/ReportModal'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { sanitizeUrl } from '../utils/sanitize'
+import { authApi } from '../api/authApi'
+import { dishPhotosApi } from '../api/dishPhotosApi'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -33,11 +37,56 @@ export function Dish() {
   } = useDishDetail(dishId, user)
 
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [playlistSheetOpen, setPlaylistSheetOpen] = useState(false)
+  const [showReportDish, setShowReportDish] = useState(false)
+  const [showRateFlow, setShowRateFlow] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
+  const [priorVote, setPriorVote] = useState(null)
+  const [existingPhoto, setExistingPhoto] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
 
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
   const tooltipChecked = useRef(false)
+
+  // Fetch prior vote + prior photo in parallel so the CTA label and the
+  // ReviewFlow photo thumbnail both reflect current state.
+  useEffect(() => {
+    if (!user || !dishId) {
+      setPriorVote(null)
+      setExistingPhoto(null)
+      return
+    }
+    let cancelled = false
+    // allSettled so a photo-fetch failure doesn't also discard the vote fetch —
+    // otherwise the CTA label silently regresses to "Rate this dish" for re-raters.
+    Promise.allSettled([
+      authApi.getUserVoteForDish(dishId, user.id),
+      dishPhotosApi.getUserPhotoForDish(dishId),
+    ]).then(([voteResult, photoResult]) => {
+      if (cancelled) return
+      if (voteResult.status === 'fulfilled') {
+        setPriorVote(voteResult.value)
+      } else {
+        logger.error('Failed to fetch prior vote:', voteResult.reason)
+      }
+      if (photoResult.status === 'fulfilled') {
+        setExistingPhoto(photoResult.value ? { id: photoResult.value.id, photo_url: photoResult.value.photo_url } : null)
+      } else {
+        logger.error('Failed to fetch prior photo:', photoResult.reason)
+      }
+    })
+    return () => { cancelled = true }
+  }, [dishId, user])
+
+  // Auth-gate intent preservation: once the user finishes logging in,
+  // resume straight into the rate flow.
+  useEffect(() => {
+    if (user && pendingAction === 'rate') {
+      setPendingAction(null)
+      setShowRateFlow(true)
+    }
+  }, [user, pendingAction])
 
   useEffect(() => {
     if (dish && !tooltipChecked.current) {
@@ -54,6 +103,43 @@ export function Dish() {
   }
 
   const handleLoginRequired = () => setLoginModalOpen(true)
+
+  const handleRateClick = () => {
+    if (showRateFlow) {
+      setShowRateFlow(false)
+      return
+    }
+    if (!user) {
+      setPendingAction('rate')
+      setLoginModalOpen(true)
+      return
+    }
+    setShowRateFlow(true)
+  }
+
+  const handleVoteSubmitted = () => {
+    setShowRateFlow(false)
+    // Refresh prior-vote and prior-photo so CTA label and thumbnail stay current.
+    // allSettled so a photo-fetch failure doesn't discard the vote result.
+    if (user && dishId) {
+      Promise.allSettled([
+        authApi.getUserVoteForDish(dishId, user.id),
+        dishPhotosApi.getUserPhotoForDish(dishId),
+      ]).then(([voteResult, photoResult]) => {
+        if (voteResult.status === 'fulfilled') {
+          setPriorVote(voteResult.value)
+        } else {
+          logger.error('Failed to refresh prior vote:', voteResult.reason)
+        }
+        if (photoResult.status === 'fulfilled') {
+          setExistingPhoto(photoResult.value ? { id: photoResult.value.id, photo_url: photoResult.value.photo_url } : null)
+        } else {
+          logger.error('Failed to refresh prior photo:', photoResult.reason)
+        }
+      })
+    }
+    handleVote?.()
+  }
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -134,14 +220,14 @@ export function Dish() {
             Dish not found
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={handleBack}
             className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
             style={{
               background: 'var(--color-primary)',
               color: '#FFFFFF',
             }}
           >
-            Go Home
+            Go Back
           </button>
         </div>
       </div>
@@ -198,6 +284,33 @@ export function Dish() {
             </button>
             <EarIconTooltip visible={showEarTooltip} onDismiss={dismissEarTooltip} />
           </div>
+          {/* Add to playlist */}
+          <button
+            onClick={() => {
+              if (!user) { setLoginModalOpen(true); return }
+              setPlaylistSheetOpen(true)
+            }}
+            aria-label="Add to playlist"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-95"
+            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', fontSize: 18, color: 'var(--color-primary)', fontWeight: 700 }}
+          >
+            +
+          </button>
+          {user && dish && dish.created_by !== user.id && (
+            <button
+              type="button"
+              onClick={() => setShowReportDish(true)}
+              aria-label="Report this dish"
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 
@@ -222,7 +335,48 @@ export function Dish() {
             parentDish={parentDish}
           />
 
-          {/* LAYER 2: THE EVIDENCE */}
+          {/* LAYER 2: THE ACTION — Rate CTA + inline rate flow */}
+          <div className="p-4 space-y-3">
+            <button
+              type="button"
+              onClick={handleRateClick}
+              aria-expanded={showRateFlow}
+              aria-controls="rate-flow-panel"
+              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              {showRateFlow
+                ? 'Close'
+                : priorVote ? 'Update your rating' : 'Rate this dish'}
+            </button>
+            {showRateFlow && (
+              <div
+                id="rate-flow-panel"
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  border: '1px solid var(--color-divider)',
+                }}
+              >
+                <ReviewFlow
+                  dishId={dish.dish_id}
+                  dishName={dish.dish_name}
+                  restaurantId={dish.restaurant_id}
+                  restaurantName={dish.restaurant_name}
+                  category={dish.category}
+                  price={dish.price}
+                  totalVotes={dish.total_votes}
+                  isRanked={isRanked}
+                  existingPhoto={existingPhoto}
+                  onVote={handleVoteSubmitted}
+                  onLoginRequired={handleLoginRequired}
+                  onPhotoUploaded={handlePhotoUploaded}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* LAYER 3: THE EVIDENCE (reviews) */}
           <DishEvidence
             dish={dish}
             dishId={dishId}
@@ -239,64 +393,32 @@ export function Dish() {
             isVariant={isVariant}
           />
 
-          {/* LAYER 3: THE ACTION */}
-          <div className="px-3 pt-3">
-            <div className="flex gap-2">
-              {sanitizeUrl(dish.website_url) && (
-                <a
-                  href={sanitizeUrl(dish.website_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => capture('order_link_clicked', {
-                    dish_id: dish.dish_id,
-                    dish_name: dish.dish_name,
-                    restaurant_id: dish.restaurant_id,
-                    restaurant_name: dish.restaurant_name,
-                  })}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                  }}
-                >
-                  Order Online
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              )}
+          {/* LAYER 4: SECONDARY ACTION */}
+          {sanitizeUrl(dish.website_url) && (
+            <div className="px-3 pt-3">
+              <a
+                href={sanitizeUrl(dish.website_url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => capture('order_link_clicked', {
+                  dish_id: dish.dish_id,
+                  dish_name: dish.dish_name,
+                  restaurant_id: dish.restaurant_id,
+                  restaurant_name: dish.restaurant_name,
+                })}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                }}
+              >
+                Order Online
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-          </div>
-
-          {/* Vote Flow */}
-          <div className="p-4">
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              <ReviewFlow
-                dishId={dish.dish_id}
-                dishName={dish.dish_name}
-                restaurantId={dish.restaurant_id}
-                restaurantName={dish.restaurant_name}
-                category={dish.category}
-                price={dish.price}
-                totalVotes={dish.total_votes}
-                yesVotes={dish.yes_votes}
-                percentWorthIt={dish.percent_worth_it}
-                isRanked={isRanked}
-                hasPhotos={allPhotos.length > 0}
-                onVote={handleVote}
-                onLoginRequired={handleLoginRequired}
-                onPhotoUploaded={handlePhotoUploaded}
-                onToggleFavorite={handleToggleSave}
-                isFavorite={isFavorite?.(dishId)}
-              />
-            </div>
-          </div>
+          )}
         </>
       )}
 
@@ -383,6 +505,18 @@ export function Dish() {
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
+      />
+      <AddToPlaylistSheet
+        isOpen={playlistSheetOpen}
+        onClose={() => setPlaylistSheetOpen(false)}
+        dishId={dishId}
+        dishName={dish?.dish_name}
+        restaurantName={dish?.restaurant_name}
+      />
+      <ReportModal
+        isOpen={showReportDish}
+        onClose={() => setShowReportDish(false)}
+        target={{ type: 'dish', id: dishId, label: dish?.dish_name }}
       />
     </div>
   )

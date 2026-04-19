@@ -75,6 +75,51 @@ export const authApi = {
   },
 
   /**
+   * Sign in with Apple OAuth (web flow).
+   *
+   * Apple rule 4.8: any app with third-party social login must offer Sign in
+   * with Apple as an equivalent option. The button that calls this is gated
+   * on FEATURES.APPLE_SIGNIN_ENABLED and stays hidden in production until the
+   * Supabase Apple provider is configured.
+   *
+   * Web flow uses signInWithOAuth → full-page redirect to Apple → Supabase
+   * validates the ID token on the callback. Native (Capacitor) flow using
+   * signInWithIdToken is deferred — see the H2 plan.
+   *
+   * Note: Apple's identity token does NOT include the user's name (unlike
+   * Google), so display_name will be null on first sign-in via web. The
+   * WelcomeModal handles that case by opening when display_name is missing.
+   *
+   * @param {string|null} redirectUrl - Optional custom redirect URL (must be same-origin)
+   * @returns {Promise<Object>} Auth response
+   */
+  async signInWithApple(redirectUrl = null) {
+    try {
+      const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
+      if (!rateLimit.allowed) {
+        throw new Error(rateLimit.message)
+      }
+
+      capture('login_started', { method: 'apple' })
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: getSafeRedirectUrl(redirectUrl),
+        },
+      })
+      if (error) {
+        capture('login_failed', { method: 'apple', error: error.message })
+        throw createClassifiedError(error)
+      }
+      return { success: true }
+    } catch (error) {
+      logger.error('Error signing in with Apple:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
    * Sign in with magic link via email
    * @param {string} email - User email
    * @param {string|null} redirectUrl - Optional custom redirect URL (must be same-origin)
@@ -288,6 +333,46 @@ export const authApi = {
   },
 
   /**
+   * Permanently delete the current user's account and all their data.
+   * Calls the `delete-account` Edge Function (service-role), which:
+   *   - nulls created_by on restaurants/dishes/specials/events/admins/restaurant_managers
+   *   - deletes restaurant_invites + curator_invites rows created or consumed by the user
+   *   - deletes follow notifications this user generated
+   *   - purges dish-photos storage for this user
+   *   - calls auth.admin.deleteUser (cascades votes, profile, favorites, follows, etc.)
+   *
+   * On success the caller must signOut() and navigate the user off authenticated routes —
+   * their JWT is now pointing at a deleted user.
+   * @returns {Promise<{ success: true }>}
+   */
+  async deleteAccount() {
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        method: 'POST',
+      })
+
+      if (error) {
+        throw createClassifiedError(error)
+      }
+
+      // Edge Function may return 200 with an error body (functions.invoke doesn't always
+      // treat non-2xx as an error — match placesApi pattern). Also require explicit success
+      // flag: fall-through responses (e.g., empty 200) must not be treated as deletion.
+      if (data?.error) {
+        throw new Error(data.error)
+      }
+      if (!data || data.success !== true) {
+        throw new Error('Account deletion did not complete. Please try again.')
+      }
+
+      return data
+    } catch (error) {
+      logger.error('Error deleting account:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
    * Get current user's vote for a dish
    * @param {string} dishId - Dish ID
    * @param {string} userId - User ID
@@ -301,7 +386,7 @@ export const authApi = {
 
       const { data, error } = await supabase
         .from('votes')
-        .select('would_order_again, rating_10, review_text, review_created_at')
+        .select('rating_10, review_text, review_created_at')
         .eq('dish_id', dishId)
         .eq('user_id', userId)
         .maybeSingle()

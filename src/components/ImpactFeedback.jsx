@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { ThumbsUpIcon } from './ThumbsUpIcon'
 
 /**
  * Calculate impact message based on before/after vote data.
@@ -48,8 +47,8 @@ export function getImpactMessage(before, after, beforeRank, afterRank) {
   if (after.total_votes < 5) {
     const needed = 5 - after.total_votes
     return {
-      message: `${needed} more vote${needed > 1 ? 's' : ''} to qualify`,
-      emoji: <ThumbsUpIcon size={32} />,
+      message: `${needed} more rating${needed > 1 ? 's' : ''} to qualify`,
+      emoji: '⭐',
       type: "progress"
     }
   }
@@ -76,7 +75,7 @@ export function showImpactToast(impact) {
       <span className="text-2xl">{impact.emoji}</span>
       <div>
         <p className="font-semibold">{impact.message}</p>
-        <p className="text-sm opacity-80">Your vote made a difference!</p>
+        <p className="text-sm opacity-80">Your rating made a difference!</p>
       </div>
     </div>,
     {

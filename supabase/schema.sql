@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   cuisine TEXT,
   town TEXT,
   region TEXT NOT NULL DEFAULT 'mv',
-  created_by UUID REFERENCES auth.users(id),
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   google_place_id TEXT,
   website_url TEXT,
   facebook_url TEXT,
@@ -58,11 +58,11 @@ CREATE TABLE IF NOT EXISTS dishes (
   photo_url TEXT,
   parent_dish_id UUID REFERENCES dishes(id) ON DELETE SET NULL,
   display_order INT DEFAULT 0,
-  created_by UUID REFERENCES auth.users(id),
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   tags TEXT[] DEFAULT '{}',
   cuisine TEXT,
   avg_rating DECIMAL(3, 1),
-  total_votes INT DEFAULT 0,
+  total_votes BIGINT DEFAULT 0,
   weighted_vote_count NUMERIC DEFAULT 0,
   consensus_rating NUMERIC(3, 1),
   consensus_ready BOOLEAN DEFAULT FALSE,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS votes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   dish_id UUID REFERENCES dishes(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  would_order_again BOOLEAN NOT NULL,
+  would_order_again BOOLEAN,
   rating_10 DECIMAL(3, 1),
   review_text TEXT,
   review_created_at TIMESTAMP WITH TIME ZONE,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS admins (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
 -- 1g. dish_photos
@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS specials (
   is_promoted BOOLEAN DEFAULT false,
   source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'auto_scrape')),
   expires_at TIMESTAMPTZ,
-  created_by UUID REFERENCES auth.users(id)
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
 -- 1p. restaurant_managers
@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS restaurant_managers (
   role TEXT NOT NULL DEFAULT 'manager',
   invited_at TIMESTAMPTZ DEFAULT NOW(),
   accepted_at TIMESTAMPTZ,
-  created_by UUID REFERENCES auth.users(id),
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   UNIQUE(user_id, restaurant_id)
 );
 
@@ -257,10 +257,10 @@ CREATE TABLE IF NOT EXISTS restaurant_invites (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(24), 'hex'),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
-  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '7 days',
-  used_by UUID REFERENCES auth.users(id),
+  used_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   used_at TIMESTAMPTZ
 );
 
@@ -268,9 +268,9 @@ CREATE TABLE IF NOT EXISTS restaurant_invites (
 CREATE TABLE IF NOT EXISTS curator_invites (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   token TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
-  created_by UUID REFERENCES auth.users(id),
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
-  used_by UUID REFERENCES auth.users(id),
+  used_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   used_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -319,7 +319,7 @@ CREATE TABLE IF NOT EXISTS events (
   is_promoted BOOLEAN DEFAULT false,
   source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'auto_scrape')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
 -- 1v. category_median_prices (view)
@@ -343,7 +343,6 @@ CREATE OR REPLACE VIEW public_votes AS
 SELECT
   id,
   dish_id,
-  would_order_again,
   rating_10,
   review_text,
   review_created_at,
@@ -383,6 +382,12 @@ CREATE INDEX IF NOT EXISTS idx_votes_review_text ON votes(dish_id) WHERE review_
 CREATE INDEX IF NOT EXISTS idx_votes_unscored ON votes(dish_id) WHERE scored_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_votes_user_dish ON votes(user_id, dish_id);
 CREATE INDEX IF NOT EXISTS idx_votes_user_position ON votes(user_id, vote_position);
+-- Audit 2026-04-16: covers get_ranked_dishes weighted aggregations (dish + source + rating).
+CREATE INDEX IF NOT EXISTS idx_votes_dish_source_rating ON votes(dish_id, source, rating_10) WHERE rating_10 IS NOT NULL;
+-- Audit 2026-04-16: covers get_friends_votes_for_dish / _for_restaurant hot path.
+CREATE INDEX IF NOT EXISTS idx_votes_user_dish_created ON votes(user_id, dish_id, created_at DESC);
+-- Audit 2026-04-16: filters weighted votes by source with recency.
+CREATE INDEX IF NOT EXISTS idx_votes_source_created ON votes(source, created_at DESC);
 
 -- profiles
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_display_name_unique ON profiles(LOWER(display_name)) WHERE display_name IS NOT NULL;
@@ -391,6 +396,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS profiles_display_name_unique ON profiles(LOWER
 CREATE INDEX IF NOT EXISTS idx_dish_photos_dish ON dish_photos(dish_id);
 CREATE INDEX IF NOT EXISTS idx_dish_photos_user ON dish_photos(user_id);
 CREATE INDEX IF NOT EXISTS idx_dish_photos_status ON dish_photos(dish_id, status, quality_score DESC);
+-- Audit 2026-04-16: partial index for the hot path (best_photos CTE); excludes
+-- hidden/rejected so the index is roughly half the size of the one above.
+CREATE INDEX IF NOT EXISTS idx_dish_photos_featured_community
+  ON dish_photos(dish_id, quality_score DESC)
+  WHERE status IN ('featured', 'community');
 
 -- follows
 CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
@@ -440,6 +450,8 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_cleanup ON rate_limits(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_restaurant ON events(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_events_active_upcoming ON events(event_date, is_promoted DESC) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type) WHERE is_active = true;
+-- Audit 2026-04-16: FK index on events.created_by.
+CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 
 -- jitter_samples (keep only last 30 samples per user, rolling window)
 CREATE INDEX IF NOT EXISTS idx_jitter_samples_user ON jitter_samples (user_id, collected_at DESC);
@@ -469,7 +481,7 @@ ALTER TABLE restaurant_managers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE restaurant_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
--- restaurants: public read, admin write (+ manager policies below)
+-- restaurants: public read, admin + manager write (column-level protection via trigger)
 CREATE POLICY "Public read access" ON restaurants FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR INSERT WITH CHECK (
   (SELECT auth.uid()) IS NOT NULL
@@ -477,10 +489,12 @@ CREATE POLICY "Authenticated users can insert restaurants" ON restaurants FOR IN
   AND (is_admin()
     OR (SELECT count(*) FROM restaurants WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 5)
 );
-CREATE POLICY "Admins can update restaurants" ON restaurants FOR UPDATE USING (is_admin());
+CREATE POLICY "Admin or manager update restaurants" ON restaurants FOR UPDATE
+  USING (is_admin() OR is_restaurant_manager(id))
+  WITH CHECK (is_admin() OR is_restaurant_manager(id));
 CREATE POLICY "Admins can delete restaurants" ON restaurants FOR DELETE USING (is_admin());
 
--- dishes: public read, admin + manager write
+-- dishes: public read, admin + manager write (column-level protection via trigger)
 CREATE POLICY "Public read access" ON dishes FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH CHECK (
   (SELECT auth.uid()) IS NOT NULL
@@ -488,8 +502,17 @@ CREATE POLICY "Authenticated users can insert dishes" ON dishes FOR INSERT WITH 
   AND (is_admin() OR auth.role() = 'service_role'
     OR (SELECT count(*) FROM dishes WHERE created_by = (SELECT auth.uid()) AND created_at > now() - interval '1 hour') < 20)
 );
-CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
-CREATE POLICY "Admins can delete dishes" ON dishes FOR DELETE USING (is_admin());
+CREATE POLICY "Admin or manager update dishes" ON dishes FOR UPDATE
+  USING (is_admin() OR is_restaurant_manager(restaurant_id))
+  WITH CHECK (is_admin() OR is_restaurant_manager(restaurant_id));
+-- Managers can only delete dishes that have never been voted on (scraper
+-- errors, ghost items). Once a dish has any user votes, the rating record
+-- belongs to the crowd. Admins can always delete (legal takedowns, duplicates).
+CREATE POLICY "Admin or manager delete dishes" ON dishes FOR DELETE
+  USING (
+    is_admin()
+    OR (is_restaurant_manager(restaurant_id) AND total_votes = 0)
+  );
 
 -- votes: restricted read, users manage own (optimized auth.uid())
 CREATE POLICY "Own users, admins, and service role can read votes" ON votes FOR SELECT USING (
@@ -556,7 +579,9 @@ CREATE POLICY "System can insert badges" ON user_badges FOR INSERT WITH CHECK (a
 -- specials: conditional read, admin + manager write
 CREATE POLICY "Read specials" ON specials FOR SELECT USING (is_active = true OR is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admin or manager insert specials" ON specials FOR INSERT WITH CHECK (is_admin() OR is_restaurant_manager(restaurant_id));
-CREATE POLICY "Admin or manager update specials" ON specials FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
+CREATE POLICY "Admin or manager update specials" ON specials FOR UPDATE
+  USING (is_admin() OR is_restaurant_manager(restaurant_id))
+  WITH CHECK (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admin or manager delete specials" ON specials FOR DELETE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 
 -- restaurant_managers: admins + own rows
@@ -578,7 +603,9 @@ CREATE POLICY "Users can view own rate limits" ON rate_limits FOR SELECT USING (
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Read active events" ON events FOR SELECT USING (is_active = true OR is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admin or manager insert events" ON events FOR INSERT WITH CHECK (is_admin() OR is_restaurant_manager(restaurant_id));
-CREATE POLICY "Admin or manager update events" ON events FOR UPDATE USING (is_admin() OR is_restaurant_manager(restaurant_id));
+CREATE POLICY "Admin or manager update events" ON events FOR UPDATE
+  USING (is_admin() OR is_restaurant_manager(restaurant_id))
+  WITH CHECK (is_admin() OR is_restaurant_manager(restaurant_id));
 CREATE POLICY "Admin or manager delete events" ON events FOR DELETE USING (is_admin() OR is_restaurant_manager(restaurant_id));
 
 -- jitter_profiles + jitter_samples: users can read own profile, insert own samples, service role manages all
@@ -753,8 +780,6 @@ RETURNS TABLE (
   price DECIMAL,
   photo_url TEXT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL,
   distance_miles DECIMAL,
   has_variants BOOLEAN,
@@ -814,13 +839,11 @@ BEGIN
     SELECT
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
-      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes
+      SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes
     FROM dishes d
     LEFT JOIN (
       SELECT v.dish_id,
-        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count
+        SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
     WHERE d.parent_dish_id IS NOT NULL
@@ -845,6 +868,9 @@ BEGIN
     GROUP BY votes.dish_id
   ),
   best_photos AS (
+    -- H3: exclude photos authored by users the viewer has blocked.
+    -- Inline NOT EXISTS so Postgres hash-joins user_blocks once instead of
+    -- invoking is_blocked_pair() per dish_photo row.
     SELECT DISTINCT ON (dp.dish_id)
       dp.dish_id,
       dp.photo_url
@@ -853,6 +879,11 @@ BEGIN
     INNER JOIN filtered_restaurants fr2 ON d2.restaurant_id = fr2.id
     WHERE dp.status IN ('featured', 'community')
       AND d2.parent_dish_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM user_blocks ub
+        WHERE (ub.blocker_id = (select auth.uid()) AND ub.blocked_id = dp.user_id)
+           OR (ub.blocker_id = dp.user_id AND ub.blocked_id = (select auth.uid()))
+      )
     ORDER BY dp.dish_id,
       CASE dp.source_type WHEN 'restaurant' THEN 0 ELSE 1 END,
       CASE dp.status WHEN 'featured' THEN 0 ELSE 1 END,
@@ -873,24 +904,6 @@ BEGIN
     COALESCE(vs.total_child_votes,
       SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)
     )::BIGINT AS total_votes,
-    COALESCE(vs.total_child_yes,
-      SUM(CASE WHEN v.would_order_again AND v.source = 'user' THEN 1.0
-               WHEN v.would_order_again AND v.source = 'ai_estimated' THEN 0.5
-               ELSE 0 END)
-    )::BIGINT AS yes_votes,
-    CASE
-      WHEN COALESCE(vs.total_child_votes,
-        SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)) > 0
-      THEN ROUND(100.0 *
-        COALESCE(vs.total_child_yes,
-          SUM(CASE WHEN v.would_order_again AND v.source = 'user' THEN 1.0
-                   WHEN v.would_order_again AND v.source = 'ai_estimated' THEN 0.5
-                   ELSE 0 END)) /
-        COALESCE(vs.total_child_votes,
-          SUM(CASE WHEN v.source = 'user' THEN 1.0 WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))
-      )::INT
-      ELSE 0
-    END AS percent_worth_it,
     COALESCE(ROUND(
       (SUM(CASE WHEN v.source = 'user' THEN v.rating_10
                 WHEN v.source = 'ai_estimated' THEN v.rating_10 * 0.5
@@ -941,7 +954,7 @@ BEGIN
   GROUP BY d.id, d.name, fr.id, fr.name, fr.town, d.category, d.tags, fr.cuisine,
            d.price, d.photo_url, fr.distance, fr.lat, fr.lng,
            fr.address, fr.phone, fr.website_url, fr.toast_slug, fr.order_url,
-           vs.total_child_votes, vs.total_child_yes, vs.child_count,
+           vs.total_child_votes, vs.child_count,
            bv.best_name, bv.best_rating,
            d.value_score, d.value_percentile,
            rvc.recent_votes,
@@ -964,8 +977,6 @@ RETURNS TABLE (
   price DECIMAL,
   photo_url TEXT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL,
   has_variants BOOLEAN,
   variant_count INT,
@@ -981,7 +992,6 @@ BEGIN
       d.parent_dish_id,
       COUNT(DISTINCT d.id)::INT AS child_count,
       SUM(COALESCE(ds.vote_count, 0))::NUMERIC AS total_child_votes,
-      SUM(COALESCE(ds.yes_count, 0))::NUMERIC AS total_child_yes,
       CASE
         WHEN SUM(COALESCE(ds.vote_count, 0)) > 0
         THEN ROUND((SUM(COALESCE(ds.rating_sum, 0)) / NULLIF(SUM(COALESCE(ds.vote_count, 0)), 0))::NUMERIC, 1)
@@ -991,7 +1001,6 @@ BEGIN
     LEFT JOIN (
       SELECT v.dish_id,
         SUM(CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END)::NUMERIC AS vote_count,
-        SUM(CASE WHEN v.would_order_again THEN (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END) ELSE 0 END)::NUMERIC AS yes_count,
         SUM(COALESCE(v.rating_10, 0) * (CASE WHEN v.source = 'ai_estimated' THEN 0.5 ELSE 1.0 END))::DECIMAL AS rating_sum
       FROM votes v GROUP BY v.dish_id
     ) ds ON ds.dish_id = d.id
@@ -1011,7 +1020,6 @@ BEGIN
   ),
   dish_vote_stats AS (
     SELECT d.id AS dish_id, COUNT(v.id)::BIGINT AS direct_votes,
-      SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END)::BIGINT AS direct_yes,
       ROUND(AVG(v.rating_10)::NUMERIC, 1) AS direct_avg
     FROM dishes d LEFT JOIN votes v ON v.dish_id = d.id
     WHERE d.parent_dish_id IS NULL
@@ -1021,12 +1029,6 @@ BEGIN
     d.id AS dish_id, d.name AS dish_name, r.id AS restaurant_id, r.name AS restaurant_name,
     d.category, d.menu_section, d.price, d.photo_url,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0)::BIGINT AS total_votes,
-    COALESCE(vs.total_child_yes, dvs.direct_yes, 0)::BIGINT AS yes_votes,
-    CASE
-      WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) > 0
-      THEN ROUND(100.0 * COALESCE(vs.total_child_yes, dvs.direct_yes, 0) / COALESCE(vs.total_child_votes, dvs.direct_votes, 1))::INT
-      ELSE 0
-    END AS percent_worth_it,
     COALESCE(vs.combined_avg_rating, dvs.direct_avg) AS avg_rating,
     (vs.child_count IS NOT NULL AND vs.child_count > 0) AS has_variants,
     COALESCE(vs.child_count, 0)::INT AS variant_count,
@@ -1041,16 +1043,12 @@ BEGIN
     AND r.is_open = true
     AND d.parent_dish_id IS NULL
   GROUP BY d.id, d.name, r.id, r.name, d.category, d.menu_section, d.price, d.photo_url, d.tags,
-           vs.total_child_votes, vs.total_child_yes, vs.combined_avg_rating, vs.child_count,
-           dvs.direct_votes, dvs.direct_yes, dvs.direct_avg,
+           vs.total_child_votes, vs.combined_avg_rating, vs.child_count,
+           dvs.direct_votes, dvs.direct_avg,
            bv.best_id, bv.best_name, bv.best_rating
   ORDER BY
     CASE WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) >= 5 THEN 0 ELSE 1 END,
-    CASE
-      WHEN COALESCE(vs.total_child_votes, dvs.direct_votes, 0) > 0
-      THEN ROUND(100.0 * COALESCE(vs.total_child_yes, dvs.direct_yes, 0) / COALESCE(vs.total_child_votes, dvs.direct_votes, 1))
-      ELSE 0
-    END DESC,
+    COALESCE(vs.combined_avg_rating, dvs.direct_avg) DESC NULLS LAST,
     COALESCE(vs.total_child_votes, dvs.direct_votes, 0) DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
@@ -1066,8 +1064,6 @@ RETURNS TABLE (
   photo_url TEXT,
   display_order INT,
   total_votes BIGINT,
-  yes_votes BIGINT,
-  percent_worth_it INT,
   avg_rating DECIMAL
 ) AS $$
 BEGIN
@@ -1075,12 +1071,6 @@ BEGIN
   SELECT
     d.id AS dish_id, d.name AS dish_name, d.price, d.photo_url, d.display_order,
     COUNT(v.id)::BIGINT AS total_votes,
-    SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END)::BIGINT AS yes_votes,
-    CASE
-      WHEN COUNT(v.id) > 0
-      THEN ROUND(100.0 * SUM(CASE WHEN v.would_order_again THEN 1 ELSE 0 END) / COUNT(v.id))::INT
-      ELSE 0
-    END AS percent_worth_it,
     ROUND(AVG(v.rating_10)::NUMERIC, 1) AS avg_rating
   FROM dishes d
   LEFT JOIN votes v ON d.id = v.dish_id
@@ -1146,13 +1136,12 @@ RETURNS TABLE (
   user_id UUID,
   display_name TEXT,
   rating_10 DECIMAL(3, 1),
-  would_order_again BOOLEAN,
   voted_at TIMESTAMPTZ,
   category_expertise TEXT
 )
 LANGUAGE SQL STABLE SET search_path = public AS $$
   SELECT
-    p.id AS user_id, p.display_name, v.rating_10, v.would_order_again,
+    p.id AS user_id, p.display_name, v.rating_10,
     v.created_at AS voted_at,
     CASE
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
@@ -1178,14 +1167,13 @@ RETURNS TABLE (
   dish_id UUID,
   dish_name TEXT,
   rating_10 DECIMAL(3, 1),
-  would_order_again BOOLEAN,
   voted_at TIMESTAMPTZ,
   category_expertise TEXT
 )
 LANGUAGE SQL STABLE SET search_path = public AS $$
   SELECT
     p.id AS user_id, p.display_name, d.id AS dish_id, d.name AS dish_name,
-    v.rating_10, v.would_order_again, v.created_at AS voted_at,
+    v.rating_10, v.created_at AS voted_at,
     CASE
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
       WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id AND ub.badge_key = 'specialist_' || REPLACE(d.category, ' ', '_')) THEN 'specialist'
@@ -1712,10 +1700,15 @@ $$;
 
 -- Atomic user vote upsert. Targets the partial unique index:
 -- votes_user_unique ON votes (dish_id, user_id) WHERE source = 'user'.
+-- DROP guarantees replay against an existing DB with the pre-Phase-2 signature
+-- cleanly swaps in the new 7-arg form.
+DROP FUNCTION IF EXISTS submit_vote_atomic(
+  UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT
+);
+
 CREATE OR REPLACE FUNCTION submit_vote_atomic(
   p_dish_id UUID,
   p_user_id UUID,
-  p_would_order_again BOOLEAN,
   p_rating_10 DECIMAL DEFAULT NULL,
   p_review_text TEXT DEFAULT NULL,
   p_purity_score DECIMAL DEFAULT NULL,
@@ -1730,10 +1723,13 @@ BEGIN
     RAISE EXCEPTION 'Access denied';
   END IF;
 
+  IF p_rating_10 IS NULL THEN
+    RAISE EXCEPTION 'rating_10 is required';
+  END IF;
+
   INSERT INTO votes (
     dish_id,
     user_id,
-    would_order_again,
     rating_10,
     review_text,
     review_created_at,
@@ -1745,7 +1741,6 @@ BEGIN
   VALUES (
     p_dish_id,
     p_user_id,
-    p_would_order_again,
     p_rating_10,
     p_review_text,
     CASE WHEN p_review_text IS NOT NULL THEN NOW() ELSE NULL END,
@@ -1756,10 +1751,13 @@ BEGIN
   )
   ON CONFLICT (dish_id, user_id) WHERE source = 'user'
   DO UPDATE SET
-    would_order_again = EXCLUDED.would_order_again,
     rating_10 = EXCLUDED.rating_10,
-    review_text = COALESCE(EXCLUDED.review_text, votes.review_text),
-    review_created_at = COALESCE(EXCLUDED.review_created_at, votes.review_created_at),
+    review_text = EXCLUDED.review_text,
+    review_created_at = CASE
+      WHEN EXCLUDED.review_text IS DISTINCT FROM votes.review_text
+        THEN (CASE WHEN EXCLUDED.review_text IS NOT NULL THEN NOW() ELSE NULL END)
+      ELSE votes.review_created_at
+    END,
     purity_score = COALESCE(EXCLUDED.purity_score, votes.purity_score),
     war_score = COALESCE(EXCLUDED.war_score, votes.war_score),
     badge_hash = COALESCE(EXCLUDED.badge_hash, votes.badge_hash)
@@ -2085,6 +2083,156 @@ DROP TRIGGER IF EXISTS trigger_compute_value_score ON dishes;
 CREATE TRIGGER trigger_compute_value_score
   BEFORE INSERT OR UPDATE OF avg_rating, total_votes, price, category ON dishes
   FOR EACH ROW EXECUTE FUNCTION compute_value_score();
+
+-- 13g. Column-level field protection on tables managers can write to.
+-- Non-admin writes (managers + regular users) cannot modify computed/identity
+-- fields. System contexts (service_role, postgres, supabase_admin) and
+-- SECURITY DEFINER triggers bypass via current_user check. Trigger names
+-- sort before 'trigger_compute_value_score' so they fire first.
+
+CREATE OR REPLACE FUNCTION protect_dish_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN NEW;
+  END IF;
+  IF is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.id := uuid_generate_v4();
+    NEW.created_at := NOW();
+    NEW.avg_rating := NULL;
+    NEW.total_votes := 0;
+    NEW.weighted_vote_count := 0;
+    NEW.consensus_rating := NULL;
+    NEW.consensus_ready := FALSE;
+    NEW.consensus_votes := 0;
+    NEW.consensus_calculated_at := NULL;
+    NEW.value_score := NULL;
+    NEW.value_percentile := NULL;
+    NEW.category_median_price := NULL;
+  ELSIF TG_OP = 'UPDATE' THEN
+    NEW.id := OLD.id;
+    NEW.restaurant_id := OLD.restaurant_id;
+    NEW.created_by := OLD.created_by;
+    NEW.created_at := OLD.created_at;
+    NEW.avg_rating := OLD.avg_rating;
+    NEW.total_votes := OLD.total_votes;
+    NEW.weighted_vote_count := OLD.weighted_vote_count;
+    NEW.consensus_rating := OLD.consensus_rating;
+    NEW.consensus_ready := OLD.consensus_ready;
+    NEW.consensus_votes := OLD.consensus_votes;
+    NEW.consensus_calculated_at := OLD.consensus_calculated_at;
+    NEW.value_score := OLD.value_score;
+    NEW.value_percentile := OLD.value_percentile;
+    NEW.category_median_price := OLD.category_median_price;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS dishes_protect_fields ON dishes;
+CREATE TRIGGER dishes_protect_fields
+BEFORE INSERT OR UPDATE ON dishes
+FOR EACH ROW EXECUTE FUNCTION protect_dish_fields();
+
+CREATE OR REPLACE FUNCTION protect_special_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN NEW;
+  END IF;
+  IF is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.id := gen_random_uuid();
+    NEW.created_at := NOW();
+    NEW.created_by := (SELECT auth.uid());
+    NEW.is_promoted := FALSE;
+    NEW.source := 'manual';
+  ELSIF TG_OP = 'UPDATE' THEN
+    NEW.id := OLD.id;
+    NEW.restaurant_id := OLD.restaurant_id;
+    NEW.created_by := OLD.created_by;
+    NEW.created_at := OLD.created_at;
+    NEW.is_promoted := OLD.is_promoted;
+    NEW.source := OLD.source;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS specials_protect_fields ON specials;
+CREATE TRIGGER specials_protect_fields
+BEFORE INSERT OR UPDATE ON specials
+FOR EACH ROW EXECUTE FUNCTION protect_special_fields();
+
+CREATE OR REPLACE FUNCTION protect_event_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN NEW;
+  END IF;
+  IF is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.id := gen_random_uuid();
+    NEW.created_at := NOW();
+    NEW.created_by := (SELECT auth.uid());
+    NEW.is_promoted := FALSE;
+    NEW.source := 'manual';
+  ELSIF TG_OP = 'UPDATE' THEN
+    NEW.id := OLD.id;
+    NEW.restaurant_id := OLD.restaurant_id;
+    NEW.created_by := OLD.created_by;
+    NEW.created_at := OLD.created_at;
+    NEW.is_promoted := OLD.is_promoted;
+    NEW.source := OLD.source;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS events_protect_fields ON events;
+CREATE TRIGGER events_protect_fields
+BEFORE INSERT OR UPDATE ON events
+FOR EACH ROW EXECUTE FUNCTION protect_event_fields();
+
+CREATE OR REPLACE FUNCTION protect_restaurant_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN NEW;
+  END IF;
+  IF is_admin() THEN
+    RETURN NEW;
+  END IF;
+  -- Managers can only change contact/social/menu/order fields. Identity + geo frozen.
+  -- menu_last_checked + menu_content_hash are menu-refresh bookkeeping — frozen
+  -- so managers can't force or skip auto-scrapes.
+  NEW.id := OLD.id;
+  NEW.name := OLD.name;
+  NEW.address := OLD.address;
+  NEW.lat := OLD.lat;
+  NEW.lng := OLD.lng;
+  NEW.region := OLD.region;
+  NEW.town := OLD.town;
+  NEW.google_place_id := OLD.google_place_id;
+  NEW.created_by := OLD.created_by;
+  NEW.created_at := OLD.created_at;
+  NEW.menu_last_checked := OLD.menu_last_checked;
+  NEW.menu_content_hash := OLD.menu_content_hash;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS restaurants_protect_fields ON restaurants;
+CREATE TRIGGER restaurants_protect_fields
+BEFORE UPDATE ON restaurants
+FOR EACH ROW EXECUTE FUNCTION protect_restaurant_fields();
 
 -- 13h. Batch recalculate value percentiles (called by pg_cron every 2 hours)
 CREATE OR REPLACE FUNCTION recalculate_value_percentiles()
@@ -2609,7 +2757,7 @@ RETURNS TABLE (
   restaurant_name TEXT,
   restaurant_id UUID,
   avg_rating NUMERIC,
-  total_votes INT,
+  total_votes BIGINT,
   category TEXT,
   note TEXT,
   restaurant_lat FLOAT,
@@ -2752,7 +2900,7 @@ RETURNS TABLE (
   restaurant_name TEXT,
   restaurant_id UUID,
   avg_rating NUMERIC,
-  total_votes INT,
+  total_votes BIGINT,
   category TEXT,
   note TEXT
 )
@@ -2848,7 +2996,7 @@ GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION check_and_record_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_vote_rate_limit TO authenticated;
-GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, BOOLEAN, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION check_photo_upload_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_restaurant_create_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION check_dish_create_rate_limit TO authenticated;
@@ -3129,6 +3277,16 @@ BEGIN
 END;
 $$;
 
+-- RPC permissions: queue operations are not for public/anon clients.
+-- claim_menu_import_jobs: service_role only (menu-refresh Edge Function).
+REVOKE EXECUTE ON FUNCTION claim_menu_import_jobs(INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION claim_menu_import_jobs(INT) TO service_role;
+
+-- enqueue_menu_import: signed-in users + service_role. AddRestaurantModal
+-- already requires useAuth; this enforces it at the DB layer too.
+REVOKE EXECUTE ON FUNCTION enqueue_menu_import(UUID, TEXT, INT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION enqueue_menu_import(UUID, TEXT, INT) TO authenticated, service_role;
+
 -- Enable pg_net for HTTP calls from cron
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
@@ -3175,3 +3333,1420 @@ SELECT cron.schedule(
     )
   $$
 );
+
+-- =============================================
+-- Section 22: Account Deletion (Apple Guideline 5.1.1(v))
+-- =============================================
+-- Used by the delete-account Edge Function. See supabase/migrations/20260413_delete_auth_user.sql
+-- for the full rationale — this is a workaround for auth.admin.deleteUser returning 500
+-- on users with certain FK dependencies (notably rows in the `follows` table) while
+-- raw DELETE FROM auth.users cascades cleanly.
+
+CREATE OR REPLACE FUNCTION public.delete_auth_user(p_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM auth.users WHERE id = p_user_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_auth_user(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_auth_user(uuid) TO service_role;
+
+COMMENT ON FUNCTION public.delete_auth_user(uuid) IS
+'Account deletion helper: deletes the auth.users row. Only callable by service_role from the delete-account Edge Function, which authenticates the caller''s JWT first.';
+
+
+-- =============================================
+-- USER PLAYLISTS (Spotify-style user-generated food playlists)
+-- Synced from migration 2026-04-12-user-playlists.sql
+-- =============================================
+-- Migration: User playlists (Spotify-style user-generated food playlists)
+-- Date: 2026-04-12
+-- Spec: docs/superpowers/specs/2026-04-12-food-playlists-design.md
+--
+-- Tables are client-read-only. All writes through SECURITY DEFINER RPCs.
+-- Read RPCs are SECURITY INVOKER so RLS applies naturally.
+
+-- Safety: allow re-running by dropping existing objects in dev. For prod,
+-- remove the DROP block before applying.
+
+
+-- ============================================================================
+-- Tables + constraints
+-- ============================================================================
+
+CREATE TABLE user_playlists (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title           TEXT NOT NULL CHECK (char_length(title) BETWEEN 3 AND 60),
+  description     TEXT CHECK (description IS NULL OR char_length(description) <= 200),
+  is_public       BOOLEAN NOT NULL DEFAULT true,
+  slug            TEXT NOT NULL CHECK (char_length(slug) BETWEEN 1 AND 80),
+  cover_mode      TEXT NOT NULL DEFAULT 'auto' CHECK (cover_mode IN ('auto')),
+  follower_count  INT NOT NULL DEFAULT 0 CHECK (follower_count >= 0),
+  item_count      INT NOT NULL DEFAULT 0 CHECK (item_count >= 0),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, slug)
+);
+
+CREATE TABLE user_playlist_items (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  playlist_id  UUID NOT NULL REFERENCES user_playlists(id) ON DELETE CASCADE,
+  dish_id      UUID NOT NULL REFERENCES dishes(id) ON DELETE CASCADE,
+  position     INT NOT NULL CHECK (position BETWEEN 1 AND 100),
+  note         TEXT CHECK (note IS NULL OR char_length(note) <= 140),
+  added_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (playlist_id, dish_id),
+  CONSTRAINT user_playlist_items_unique_position UNIQUE (playlist_id, position) DEFERRABLE INITIALLY DEFERRED
+);
+
+CREATE TABLE user_playlist_follows (
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  playlist_id  UUID NOT NULL REFERENCES user_playlists(id) ON DELETE CASCADE,
+  followed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, playlist_id)
+);
+
+-- ============================================================================
+-- Indexes (hot paths)
+-- ============================================================================
+
+CREATE INDEX idx_user_playlists_user_id ON user_playlists (user_id, created_at DESC);
+CREATE INDEX idx_user_playlists_user_public ON user_playlists (user_id, created_at DESC) WHERE is_public;
+CREATE INDEX idx_user_playlist_items_playlist_position ON user_playlist_items (playlist_id, position);
+CREATE INDEX idx_user_playlist_items_dish_id ON user_playlist_items (dish_id);
+CREATE INDEX idx_user_playlist_follows_user_id ON user_playlist_follows (user_id, followed_at DESC);
+CREATE INDEX idx_user_playlist_follows_playlist_id ON user_playlist_follows (playlist_id);
+
+-- ============================================================================
+-- Triggers: counters, updated_at, position compaction
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_user_playlist_items_count()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE user_playlists
+       SET item_count = user_playlists.item_count + 1, updated_at = NOW()
+     WHERE user_playlists.id = NEW.playlist_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE user_playlists
+       SET item_count = GREATEST(user_playlists.item_count - 1, 0), updated_at = NOW()
+     WHERE user_playlists.id = OLD.playlist_id;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_user_playlist_follows_count()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE user_playlists
+       SET follower_count = user_playlists.follower_count + 1
+     WHERE user_playlists.id = NEW.playlist_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE user_playlists
+       SET follower_count = GREATEST(user_playlists.follower_count - 1, 0)
+     WHERE user_playlists.id = OLD.playlist_id;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_user_playlists_touch_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_user_playlist_items_compact_positions()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  -- FOR EACH ROW so we can access OLD. Constraint is DEFERRABLE INITIALLY
+  -- DEFERRED, so temporary duplicate positions during the rewrite are OK.
+  -- Advisory xact lock serializes compaction per playlist; prevents
+  -- deadlocks when concurrent deletes (or parent cascade) touch the same
+  -- playlist. Released at transaction end.
+  PERFORM pg_advisory_xact_lock(hashtextextended(OLD.playlist_id::TEXT, 0));
+  UPDATE user_playlist_items x SET position = r.new_pos
+    FROM (
+      SELECT i.id, ROW_NUMBER() OVER (ORDER BY i.position) AS new_pos
+      FROM user_playlist_items i
+      WHERE i.playlist_id = OLD.playlist_id
+    ) r
+    WHERE x.id = r.id AND x.position IS DISTINCT FROM r.new_pos;
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER tr_user_playlist_items_count
+  AFTER INSERT OR DELETE ON user_playlist_items
+  FOR EACH ROW EXECUTE FUNCTION fn_user_playlist_items_count();
+
+CREATE TRIGGER tr_user_playlist_follows_count
+  AFTER INSERT OR DELETE ON user_playlist_follows
+  FOR EACH ROW EXECUTE FUNCTION fn_user_playlist_follows_count();
+
+CREATE TRIGGER tr_user_playlists_updated_at
+  BEFORE UPDATE ON user_playlists
+  FOR EACH ROW EXECUTE FUNCTION fn_user_playlists_touch_updated_at();
+
+CREATE TRIGGER tr_user_playlist_items_compact_positions
+  AFTER DELETE ON user_playlist_items
+  FOR EACH ROW EXECUTE FUNCTION fn_user_playlist_items_compact_positions();
+
+-- ============================================================================
+-- RLS + direct-write revocations
+-- ============================================================================
+
+ALTER TABLE user_playlists        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_playlist_items   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_playlist_follows ENABLE ROW LEVEL SECURITY;
+
+-- Lock down direct writes; all mutations go through SECURITY DEFINER RPCs.
+REVOKE INSERT, UPDATE, DELETE ON user_playlists        FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON user_playlist_items   FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON user_playlist_follows FROM PUBLIC, anon, authenticated;
+
+-- SELECT policies
+CREATE POLICY user_playlists_select ON user_playlists FOR SELECT
+  USING (is_public OR user_id = auth.uid());
+
+CREATE POLICY user_playlist_items_select ON user_playlist_items FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM user_playlists p
+    WHERE p.id = user_playlist_items.playlist_id
+      AND (p.is_public OR p.user_id = auth.uid())
+  ));
+
+CREATE POLICY user_playlist_follows_select ON user_playlist_follows FOR SELECT
+  USING (user_id = auth.uid());
+
+-- ============================================================================
+-- Hard-cap triggers (BEFORE INSERT with parent-row FOR UPDATE locks)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_enforce_playlist_cap()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  cnt INT;
+BEGIN
+  -- Lock the owner's profile row to serialize concurrent creates.
+  -- `profiles.id` is the auth.users id (see schema.sql:103).
+  PERFORM 1 FROM profiles WHERE id = NEW.user_id FOR UPDATE;
+  SELECT COUNT(*) INTO cnt FROM user_playlists WHERE user_id = NEW.user_id;
+  IF cnt >= 50 THEN
+    RAISE EXCEPTION 'You can have up to 50 playlists' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_enforce_item_cap()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  cnt INT;
+BEGIN
+  PERFORM 1 FROM user_playlists WHERE id = NEW.playlist_id FOR UPDATE;
+  SELECT COUNT(*) INTO cnt FROM user_playlist_items WHERE playlist_id = NEW.playlist_id;
+  IF cnt >= 100 THEN
+    RAISE EXCEPTION 'A playlist can hold up to 100 dishes' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tr_enforce_playlist_cap
+  BEFORE INSERT ON user_playlists
+  FOR EACH ROW EXECUTE FUNCTION fn_enforce_playlist_cap();
+
+CREATE TRIGGER tr_enforce_item_cap
+  BEFORE INSERT ON user_playlist_items
+  FOR EACH ROW EXECUTE FUNCTION fn_enforce_item_cap();
+
+-- ============================================================================
+-- Content blocklist (DB-side floor; client-side blocklist is richer)
+-- Mirrors the most egregious categories from src/lib/reviewBlocklist.js.
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_check_content_blocklist(p_text TEXT, p_field TEXT)
+RETURNS VOID
+LANGUAGE plpgsql IMMUTABLE SET search_path = public AS $$
+DECLARE
+  v_normalized TEXT;
+BEGIN
+  IF p_text IS NULL OR p_text = '' THEN RETURN; END IF;
+  v_normalized := lower(regexp_replace(p_text, '\s+', ' ', 'g'));
+  IF v_normalized ~ '\y(nigger|nigga|n\*gger|faggot|f\*ggot|retard(ed)?|spic|chink|kike|wetback|beaner|dyke|tranny|nazi|hitler|kkk)\y' THEN
+    RAISE EXCEPTION '% contains blocked content', p_field USING ERRCODE = 'P0001';
+  END IF;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION fn_check_content_blocklist(TEXT, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION fn_check_content_blocklist(TEXT, TEXT) TO authenticated, service_role;
+
+-- ============================================================================
+-- Slug helper + create/update/delete RPCs
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_playlist_slug_from_title(
+  p_title TEXT, p_user_id UUID, p_exclude_playlist_id UUID DEFAULT NULL
+)
+RETURNS TEXT LANGUAGE plpgsql AS $$
+DECLARE
+  base_slug TEXT;
+  candidate TEXT;
+  suffix INT := 2;
+BEGIN
+  base_slug := regexp_replace(lower(trim(p_title)), '[^a-z0-9]+', '-', 'g');
+  base_slug := regexp_replace(base_slug, '^-+|-+$', '', 'g');
+  IF base_slug = '' THEN base_slug := 'playlist'; END IF;
+  base_slug := LEFT(base_slug, 70);
+  candidate := base_slug;
+  -- p_exclude_playlist_id lets update_user_playlist skip its own row so a
+  -- title-case or punctuation-only rename doesn't falsely collide with self.
+  WHILE EXISTS (
+    SELECT 1 FROM user_playlists
+    WHERE user_id = p_user_id AND slug = candidate
+      AND (p_exclude_playlist_id IS NULL OR id <> p_exclude_playlist_id)
+  ) LOOP
+    candidate := base_slug || '-' || suffix;
+    suffix := suffix + 1;
+    IF suffix > 999 THEN EXIT; END IF;
+  END LOOP;
+  RETURN candidate;
+END;
+$$;
+
+-- Note: no server-side rate limit in this RPC. Hard cap is enforced by
+-- fn_enforce_playlist_cap (50/user). Client-side throttling lives in
+-- src/lib/rateLimiter.js. Adding a server-side rate_limits insert here
+-- would be a defense-in-depth layer, deferred to 1.1 if abuse shows up.
+CREATE OR REPLACE FUNCTION create_user_playlist(
+  p_title TEXT, p_description TEXT, p_is_public BOOLEAN
+) RETURNS user_playlists
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_row user_playlists;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  PERFORM fn_check_content_blocklist(p_title, 'Playlist title');
+  PERFORM fn_check_content_blocklist(p_description, 'Description');
+  INSERT INTO user_playlists (user_id, title, description, is_public, slug)
+  VALUES (v_user, p_title, NULLIF(p_description, ''), p_is_public,
+          fn_playlist_slug_from_title(p_title, v_user))
+  RETURNING * INTO v_row;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION update_user_playlist(
+  p_id UUID, p_title TEXT, p_description TEXT, p_is_public BOOLEAN
+) RETURNS user_playlists
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_row user_playlists;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  IF p_title IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_title, 'Playlist title'); END IF;
+  IF p_description IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_description, 'Description'); END IF;
+  -- NULL params mean "unchanged"; pass empty string to explicitly clear description.
+  UPDATE user_playlists
+     SET title = COALESCE(p_title, user_playlists.title),
+         description = CASE WHEN p_description IS NULL THEN user_playlists.description
+                            ELSE NULLIF(p_description, '') END,
+         is_public = COALESCE(p_is_public, user_playlists.is_public),
+         slug = CASE WHEN p_title IS NOT NULL AND p_title <> user_playlists.title
+                     THEN fn_playlist_slug_from_title(p_title, user_playlists.user_id, user_playlists.id)
+                     ELSE user_playlists.slug END
+   WHERE user_playlists.id = p_id AND user_playlists.user_id = v_user
+   RETURNING * INTO v_row;
+  IF v_row.id IS NULL THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION delete_user_playlist(p_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_deleted INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  DELETE FROM user_playlists WHERE id = p_id AND user_id = v_user;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted = 0 THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+END;
+$$;
+
+-- ============================================================================
+-- Item mutation RPCs: add, remove, reorder, update-note
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION add_dish_to_playlist(
+  p_playlist_id UUID, p_dish_id UUID, p_note TEXT
+) RETURNS user_playlist_items
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_next_pos INT;
+  v_row user_playlist_items;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_note IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_note, 'Note'); END IF;
+  SELECT COALESCE(MAX(position), 0) + 1 INTO v_next_pos
+    FROM user_playlist_items WHERE playlist_id = p_playlist_id;
+  INSERT INTO user_playlist_items (playlist_id, dish_id, position, note)
+  VALUES (p_playlist_id, p_dish_id, v_next_pos, NULLIF(p_note, ''))
+  RETURNING * INTO v_row;
+  RETURN v_row;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION remove_dish_from_playlist(
+  p_playlist_id UUID, p_dish_id UUID
+) RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_deleted INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  DELETE FROM user_playlist_items
+    WHERE playlist_id = p_playlist_id AND dish_id = p_dish_id;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  IF v_deleted = 0 THEN
+    RAISE EXCEPTION 'Dish not in playlist' USING ERRCODE = 'P0002';
+  END IF;
+  -- Compaction trigger fires automatically on DELETE.
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION reorder_playlist_items(
+  p_playlist_id UUID, p_ordered_dish_ids UUID[]
+) RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_current_count INT;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id FOR UPDATE;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Exact-permutation validation
+  SELECT COUNT(*) INTO v_current_count
+    FROM user_playlist_items WHERE playlist_id = p_playlist_id;
+  IF v_current_count <> COALESCE(array_length(p_ordered_dish_ids, 1), 0) THEN
+    RAISE EXCEPTION 'Reorder must include every dish exactly once' USING ERRCODE = 'P0001';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM (
+      SELECT dish_id FROM user_playlist_items WHERE playlist_id = p_playlist_id
+      EXCEPT
+      SELECT unnest(p_ordered_dish_ids)
+    ) diff
+  ) OR EXISTS (
+    SELECT 1 FROM (
+      SELECT unnest(p_ordered_dish_ids) AS dish_id
+    ) d
+    GROUP BY dish_id HAVING COUNT(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Reorder must be an exact permutation' USING ERRCODE = 'P0001';
+  END IF;
+
+  -- Atomic rewrite under the deferred unique (playlist_id, position)
+  UPDATE user_playlist_items upi
+     SET position = o.pos
+    FROM (
+      SELECT dish_id, ordinality AS pos
+      FROM unnest(p_ordered_dish_ids) WITH ORDINALITY
+    ) o
+   WHERE upi.playlist_id = p_playlist_id AND upi.dish_id = o.dish_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION update_playlist_item_note(
+  p_playlist_id UUID, p_dish_id UUID, p_note TEXT
+) RETURNS user_playlist_items
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_owner UUID;
+  v_row user_playlist_items;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  SELECT user_id INTO v_owner FROM user_playlists WHERE id = p_playlist_id;
+  IF v_owner IS NULL OR v_owner <> v_user THEN
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_note IS NOT NULL THEN PERFORM fn_check_content_blocklist(p_note, 'Note'); END IF;
+  UPDATE user_playlist_items
+     SET note = NULLIF(p_note, '')
+   WHERE playlist_id = p_playlist_id AND dish_id = p_dish_id
+   RETURNING * INTO v_row;
+  IF v_row.id IS NULL THEN
+    RAISE EXCEPTION 'Dish not in playlist' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN v_row;
+END;
+$$;
+
+-- ============================================================================
+-- Follow / unfollow RPCs
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION follow_playlist(p_playlist_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_user UUID := auth.uid();
+  v_is_public BOOLEAN;
+  v_owner UUID;
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  -- FOR SHARE locks the playlist row so a concurrent public→private flip
+  -- (update_user_playlist takes FOR UPDATE implicitly via the UPDATE) can't
+  -- interleave between the visibility check and the INSERT below.
+  SELECT is_public, user_id INTO v_is_public, v_owner
+    FROM user_playlists WHERE id = p_playlist_id FOR SHARE;
+  IF v_owner IS NULL
+     OR v_owner = v_user
+     OR (NOT v_is_public AND v_owner <> v_user) THEN
+    -- Identical error for: nonexistent, private-not-yours, self-follow.
+    RAISE EXCEPTION 'Playlist not found' USING ERRCODE = 'P0002';
+  END IF;
+  INSERT INTO user_playlist_follows (user_id, playlist_id)
+  VALUES (v_user, p_playlist_id)
+  ON CONFLICT DO NOTHING;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION unfollow_playlist(p_playlist_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_user UUID := auth.uid();
+BEGIN
+  IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
+  DELETE FROM user_playlist_follows
+    WHERE user_id = v_user AND playlist_id = p_playlist_id;
+  -- Idempotent: no row is not an error.
+END;
+$$;
+
+-- ============================================================================
+-- Read RPCs (SECURITY INVOKER — RLS filters naturally)
+-- ============================================================================
+
+-- Helper: first-4 dish categories for cover rendering.
+CREATE OR REPLACE FUNCTION fn_first_four_categories(p_playlist_id UUID)
+RETURNS TEXT[]
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(d.category ORDER BY upi.position), ARRAY[]::TEXT[])
+  FROM (
+    SELECT dish_id, position FROM user_playlist_items
+    WHERE playlist_id = p_playlist_id
+    ORDER BY position LIMIT 4
+  ) upi
+  JOIN dishes d ON d.id = upi.dish_id;
+$$;
+
+CREATE OR REPLACE FUNCTION get_playlist_detail(p_playlist_id UUID)
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, description TEXT, is_public BOOLEAN,
+  slug TEXT, item_count INT, follower_count INT, created_at TIMESTAMPTZ,
+  owner_id UUID, owner_display_name TEXT,
+  is_owner BOOLEAN, is_followed BOOLEAN,
+  cover_categories TEXT[],
+  items JSONB
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p.id, p.title, p.description, p.is_public, p.slug,
+    p.item_count, p.follower_count, p.created_at,
+    p.user_id, pr.display_name,
+    (p.user_id = auth.uid()) AS is_owner,
+    EXISTS (SELECT 1 FROM user_playlist_follows f
+            WHERE f.playlist_id = p.id AND f.user_id = auth.uid()) AS is_followed,
+    fn_first_four_categories(p.id) AS cover_categories,
+    COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'dish_id', d.id, 'dish_name', d.name, 'position', upi.position,
+        'note', upi.note,
+        'restaurant_id', r.id, 'restaurant_name', r.name,
+        'category', d.category, 'avg_rating', d.avg_rating, 'total_votes', d.total_votes,
+        'photo_url', d.photo_url
+      ) ORDER BY upi.position)
+      FROM user_playlist_items upi
+      JOIN dishes d ON d.id = upi.dish_id
+      JOIN restaurants r ON r.id = d.restaurant_id
+      WHERE upi.playlist_id = p.id
+    ), '[]'::jsonb) AS items
+  FROM user_playlists p
+  LEFT JOIN profiles pr ON pr.id = p.user_id
+  WHERE p.id = p_playlist_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_user_playlists(p_user_id UUID)
+RETURNS TABLE (
+  id UUID, user_id UUID, title TEXT, description TEXT, is_public BOOLEAN,
+  slug TEXT, cover_mode TEXT, follower_count INT, item_count INT,
+  created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ,
+  cover_categories TEXT[]
+)
+LANGUAGE sql SECURITY INVOKER SET search_path = public AS $$
+  SELECT p.id, p.user_id, p.title, p.description, p.is_public, p.slug,
+         p.cover_mode, p.follower_count, p.item_count, p.created_at, p.updated_at,
+         fn_first_four_categories(p.id) AS cover_categories
+  FROM user_playlists p
+  WHERE p.user_id = p_user_id
+  ORDER BY p.created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION get_followed_playlists()
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, is_public BOOLEAN, slug TEXT,
+  item_count INT, follower_count INT, owner_display_name TEXT,
+  followed_at TIMESTAMPTZ, visibility TEXT, cover_categories TEXT[]
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    f.playlist_id, p.title, p.is_public, p.slug,
+    p.item_count, p.follower_count, pr.display_name,
+    f.followed_at,
+    CASE WHEN p.id IS NULL OR (NOT p.is_public AND p.user_id <> auth.uid())
+         THEN 'unavailable' ELSE 'visible' END AS visibility,
+    CASE WHEN p.id IS NULL THEN ARRAY[]::TEXT[]
+         ELSE fn_first_four_categories(p.id) END AS cover_categories
+  FROM user_playlist_follows f
+  LEFT JOIN user_playlists p ON p.id = f.playlist_id
+  LEFT JOIN profiles pr ON pr.id = p.user_id
+  WHERE f.user_id = auth.uid()
+  ORDER BY f.followed_at DESC;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_dish_playlist_membership(p_dish_id UUID)
+RETURNS TABLE (
+  playlist_id UUID, title TEXT, slug TEXT,
+  item_count INT, cover_mode TEXT, contains_dish BOOLEAN,
+  cover_categories TEXT[]
+)
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p.id, p.title, p.slug, p.item_count, p.cover_mode,
+    EXISTS (SELECT 1 FROM user_playlist_items upi
+            WHERE upi.playlist_id = p.id AND upi.dish_id = p_dish_id) AS contains_dish,
+    fn_first_four_categories(p.id) AS cover_categories
+  FROM user_playlists p
+  WHERE p.user_id = auth.uid()
+  ORDER BY p.created_at DESC;
+END;
+$$;
+
+-- ============================================================================
+-- Grants (per-function, matching lock-menu-queue-rpcs.sql pattern)
+-- ============================================================================
+
+-- Write RPCs: authenticated users + service_role only. Anon is locked out.
+REVOKE EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION create_user_playlist(TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_user_playlist(UUID, TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION delete_user_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION delete_user_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION add_dish_to_playlist(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION remove_dish_from_playlist(UUID, UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION reorder_playlist_items(UUID, UUID[]) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION update_playlist_item_note(UUID, UUID, TEXT) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION follow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION follow_playlist(UUID) TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION unfollow_playlist(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION unfollow_playlist(UUID) TO authenticated, service_role;
+
+-- Read RPCs: SECURITY INVOKER, RLS filters private rows. Explicit
+-- REVOKE + GRANT makes the grants table the source of truth (instead of
+-- relying on Postgres default PUBLIC execute).
+REVOKE EXECUTE ON FUNCTION get_playlist_detail(UUID)          FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION get_playlist_detail(UUID)          TO anon, authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_user_playlists(UUID)           FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION get_user_playlists(UUID)           TO anon, authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_followed_playlists()           FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION get_followed_playlists()           TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION get_dish_playlist_membership(UUID) TO authenticated, service_role;
+
+-- =============================================
+-- 14. H3 — UGC REPORTING + BLOCKING (Apple 1.2)
+-- =============================================
+-- Spec: docs/superpowers/specs/2026-04-15-h3-ugc-reporting-blocking.md (v3.2)
+-- Migration file: supabase/migrations/20260415_h3_ugc_reporting_blocking.sql
+-- Adds reports + user_blocks tables, is_blocked_pair helper, updates
+-- dish_photos/follows RLS + public_votes view + several ranking/discovery
+-- RPCs to filter content to/from blocked users.
+-- =============================================
+
+-- 14a. Tables
+CREATE TABLE IF NOT EXISTS reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reported_type TEXT NOT NULL
+    CHECK (reported_type IN ('dish', 'review', 'photo', 'user')),
+  reported_id UUID NOT NULL,
+  reported_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reason TEXT NOT NULL
+    CHECK (reason IN (
+      'spam', 'hate_speech', 'harassment', 'misinformation',
+      'inappropriate_content', 'impersonation', 'other'
+    )),
+  details TEXT CHECK (details IS NULL OR length(details) <= 500),
+  target_snapshot JSONB,
+  status TEXT NOT NULL DEFAULT 'open'
+    CHECK (status IN ('open', 'reviewed', 'dismissed', 'actioned')),
+  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  reviewer_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS reports_active_unique_idx
+  ON reports (reporter_id, reported_type, reported_id)
+  WHERE status IN ('open', 'reviewed', 'actioned');
+
+CREATE INDEX IF NOT EXISTS reports_queue_idx
+  ON reports (created_at DESC) WHERE status = 'open';
+
+CREATE INDEX IF NOT EXISTS reports_by_target_user_idx
+  ON reports (reported_user_id, created_at DESC)
+  WHERE reported_user_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS reports_by_reporter_idx
+  ON reports (reporter_id, created_at DESC);
+
+-- Audit 2026-04-16: covers admin filtering by (user, status) without scanning
+-- reports_by_target_user_idx and discarding non-matching statuses.
+CREATE INDEX IF NOT EXISTS reports_target_status_idx
+  ON reports (reported_user_id, status, created_at DESC)
+  WHERE reported_user_id IS NOT NULL;
+
+
+CREATE TABLE IF NOT EXISTS user_blocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (blocker_id, blocked_id),
+  CHECK (blocker_id != blocked_id)
+);
+
+CREATE INDEX IF NOT EXISTS user_blocks_blocker_idx ON user_blocks (blocker_id);
+CREATE INDEX IF NOT EXISTS user_blocks_blocked_idx ON user_blocks (blocked_id);
+
+
+-- 14b. Helper — is_blocked_pair (self-restricting: returns TRUE only when
+-- caller IS p_viewer or is service_role). Safe to GRANT to anon + authenticated.
+CREATE OR REPLACE FUNCTION is_blocked_pair(p_viewer UUID, p_subject UUID)
+RETURNS BOOLEAN
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT p_viewer IS NOT NULL
+    AND p_subject IS NOT NULL
+    AND (
+      p_viewer = (select auth.uid())
+      OR auth.role() = 'service_role'
+    )
+    AND EXISTS (
+      SELECT 1 FROM user_blocks
+      WHERE (blocker_id = p_viewer AND blocked_id = p_subject)
+         OR (blocker_id = p_subject AND blocked_id = p_viewer)
+    );
+$$;
+
+REVOKE EXECUTE ON FUNCTION is_blocked_pair(UUID, UUID) FROM public;
+GRANT EXECUTE ON FUNCTION is_blocked_pair(UUID, UUID) TO anon, authenticated;
+
+
+-- 14c. RLS on new tables
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_blocks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "reports_select_admin" ON reports;
+CREATE POLICY "reports_select_admin" ON reports
+  FOR SELECT USING (is_admin());
+
+DROP POLICY IF EXISTS "reports_update_admin" ON reports;
+CREATE POLICY "reports_update_admin" ON reports
+  FOR UPDATE USING (is_admin());
+
+DROP POLICY IF EXISTS "user_blocks_select_own" ON user_blocks;
+CREATE POLICY "user_blocks_select_own" ON user_blocks
+  FOR SELECT USING ((select auth.uid()) = blocker_id);
+
+
+-- 14d. Existing-table RLS tightening (replaces earlier definitions).
+-- Drop both the old name AND the new name to stay rerunnable after a
+-- partial deploy.
+DROP POLICY IF EXISTS "follows_select_public" ON follows;
+DROP POLICY IF EXISTS "follows_select_not_blocked" ON follows;
+CREATE POLICY "follows_select_not_blocked" ON follows
+  FOR SELECT USING (
+    (select auth.uid()) IS NULL
+    OR NOT EXISTS (
+      SELECT 1 FROM user_blocks ub
+      WHERE (ub.blocker_id = (select auth.uid())
+             AND (ub.blocked_id = follower_id OR ub.blocked_id = followed_id))
+         OR (ub.blocked_id = (select auth.uid())
+             AND (ub.blocker_id = follower_id OR ub.blocker_id = followed_id))
+    )
+  );
+
+DROP POLICY IF EXISTS "follows_insert_own" ON follows;
+DROP POLICY IF EXISTS "follows_insert_own_not_blocked" ON follows;
+CREATE POLICY "follows_insert_own_not_blocked" ON follows
+  FOR INSERT WITH CHECK (
+    (select auth.uid()) = follower_id
+    AND NOT is_blocked_pair((select auth.uid()), followed_id)
+  );
+
+DROP POLICY IF EXISTS "Public read access" ON dish_photos;
+DROP POLICY IF EXISTS "dish_photos_select_not_blocked" ON dish_photos;
+CREATE POLICY "dish_photos_select_not_blocked" ON dish_photos
+  FOR SELECT USING (
+    (select auth.uid()) IS NULL
+    OR NOT is_blocked_pair((select auth.uid()), user_id)
+  );
+
+
+-- 14e. public_votes view — embed block filter
+CREATE OR REPLACE VIEW public_votes AS
+SELECT
+  id, dish_id, rating_10, review_text, review_created_at, user_id, source
+FROM votes
+WHERE auth.uid() IS NULL
+   OR NOT is_blocked_pair(auth.uid(), user_id);
+
+
+-- 14f. Write RPCs — see migration file for full bodies; these are final
+-- authoritative definitions.
+
+CREATE OR REPLACE FUNCTION submit_report(
+  p_reported_type TEXT,
+  p_reported_id UUID,
+  p_reason TEXT,
+  p_details TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_reporter_id UUID;
+  v_reported_user_id UUID;
+  v_target_exists BOOLEAN;
+  v_snapshot JSONB;
+  v_rate_limit JSONB;
+  v_report_id UUID;
+BEGIN
+  v_reporter_id := (select auth.uid());
+  IF v_reporter_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  IF p_reported_type NOT IN ('dish', 'review', 'photo', 'user') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid reported_type');
+  END IF;
+
+  IF p_reason NOT IN ('spam','hate_speech','harassment','misinformation',
+                      'inappropriate_content','impersonation','other') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid reason');
+  END IF;
+
+  IF p_details IS NOT NULL AND length(p_details) > 500 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Details too long (max 500 chars)');
+  END IF;
+
+  CASE p_reported_type
+    WHEN 'dish' THEN
+      SELECT d.created_by,
+        jsonb_build_object('dish_name', d.name, 'restaurant_name', r.name, 'category', d.category),
+        TRUE
+      INTO v_reported_user_id, v_snapshot, v_target_exists
+      FROM dishes d LEFT JOIN restaurants r ON r.id = d.restaurant_id
+      WHERE d.id = p_reported_id;
+    WHEN 'review' THEN
+      SELECT v.user_id,
+        jsonb_build_object('review_text', v.review_text, 'rating_10', v.rating_10,
+          'dish_id', v.dish_id, 'dish_name', d.name, 'author_name', p.display_name),
+        TRUE
+      INTO v_reported_user_id, v_snapshot, v_target_exists
+      FROM votes v
+      LEFT JOIN dishes d ON d.id = v.dish_id
+      LEFT JOIN profiles p ON p.id = v.user_id
+      WHERE v.id = p_reported_id;
+    WHEN 'photo' THEN
+      SELECT dp.user_id,
+        jsonb_build_object('photo_url', dp.photo_url, 'dish_id', dp.dish_id,
+          'dish_name', d.name, 'author_name', p.display_name),
+        TRUE
+      INTO v_reported_user_id, v_snapshot, v_target_exists
+      FROM dish_photos dp
+      LEFT JOIN dishes d ON d.id = dp.dish_id
+      LEFT JOIN profiles p ON p.id = dp.user_id
+      WHERE dp.id = p_reported_id;
+    WHEN 'user' THEN
+      SELECT p.id,
+        jsonb_build_object('display_name', p.display_name, 'avatar_url', p.avatar_url),
+        TRUE
+      INTO v_reported_user_id, v_snapshot, v_target_exists
+      FROM profiles p WHERE p.id = p_reported_id;
+  END CASE;
+
+  IF v_target_exists IS DISTINCT FROM TRUE THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Reported content not found');
+  END IF;
+
+  IF v_reported_user_id IS NOT NULL AND v_reported_user_id = v_reporter_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Cannot report your own content');
+  END IF;
+
+  v_rate_limit := check_and_record_rate_limit('report', 10, 3600);
+  IF NOT (v_rate_limit->>'allowed')::BOOLEAN THEN
+    RETURN v_rate_limit;
+  END IF;
+
+  INSERT INTO reports (reporter_id, reported_type, reported_id, reported_user_id,
+    reason, details, target_snapshot)
+  VALUES (v_reporter_id, p_reported_type, p_reported_id, v_reported_user_id,
+    p_reason, NULLIF(TRIM(p_details), ''), v_snapshot)
+  RETURNING id INTO v_report_id;
+
+  RETURN jsonb_build_object('success', true, 'report_id', v_report_id);
+
+EXCEPTION WHEN unique_violation THEN
+  RETURN jsonb_build_object('success', false,
+    'error', 'You already reported this. Our team is reviewing it.');
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION submit_report(TEXT, UUID, TEXT, TEXT) FROM public, anon;
+GRANT EXECUTE ON FUNCTION submit_report(TEXT, UUID, TEXT, TEXT) TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION block_user(p_blocked_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_blocker_id UUID;
+  v_rate_limit JSONB;
+BEGIN
+  v_blocker_id := (select auth.uid());
+  IF v_blocker_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  IF v_blocker_id = p_blocked_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Cannot block yourself');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_blocked_id) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'User not found');
+  END IF;
+
+  v_rate_limit := check_and_record_rate_limit('block', 30, 3600);
+  IF NOT (v_rate_limit->>'allowed')::BOOLEAN THEN
+    RETURN v_rate_limit;
+  END IF;
+
+  INSERT INTO user_blocks (blocker_id, blocked_id)
+  VALUES (v_blocker_id, p_blocked_id)
+  ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
+
+  DELETE FROM follows
+  WHERE (follower_id = v_blocker_id AND followed_id = p_blocked_id)
+     OR (follower_id = p_blocked_id AND followed_id = v_blocker_id);
+
+  DELETE FROM notifications
+  WHERE (user_id = v_blocker_id AND (data->>'follower_id') = p_blocked_id::text)
+     OR (user_id = p_blocked_id AND (data->>'follower_id') = v_blocker_id::text);
+
+  RETURN jsonb_build_object('success', true);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION block_user(UUID) FROM public, anon;
+GRANT EXECUTE ON FUNCTION block_user(UUID) TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION unblock_user(p_blocked_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_blocker_id UUID;
+BEGIN
+  v_blocker_id := (select auth.uid());
+  IF v_blocker_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  DELETE FROM user_blocks
+  WHERE blocker_id = v_blocker_id AND blocked_id = p_blocked_id;
+
+  RETURN jsonb_build_object('success', true);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION unblock_user(UUID) FROM public, anon;
+GRANT EXECUTE ON FUNCTION unblock_user(UUID) TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION review_report(
+  p_report_id UUID,
+  p_action TEXT,
+  p_notes TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_admin UUID;
+BEGIN
+  v_admin := (select auth.uid());
+  IF NOT is_admin() THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin access required');
+  END IF;
+
+  IF p_action NOT IN ('reviewed', 'dismissed', 'actioned') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid action');
+  END IF;
+
+  UPDATE reports
+  SET status = p_action, reviewed_by = v_admin, reviewed_at = NOW(),
+      reviewer_notes = NULLIF(TRIM(p_notes), '')
+  WHERE id = p_report_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Report not found');
+  END IF;
+
+  RETURN jsonb_build_object('success', true);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION review_report(UUID, TEXT, TEXT) FROM public, anon;
+GRANT EXECUTE ON FUNCTION review_report(UUID, TEXT, TEXT) TO authenticated;
+
+
+-- 14g. Read RPCs
+CREATE OR REPLACE FUNCTION get_my_blocks()
+RETURNS TABLE (
+  blocked_id UUID,
+  display_name TEXT,
+  avatar_url TEXT,
+  blocked_at TIMESTAMPTZ
+)
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT ub.blocked_id, p.display_name, p.avatar_url, ub.created_at
+  FROM user_blocks ub
+  LEFT JOIN profiles p ON p.id = ub.blocked_id
+  WHERE ub.blocker_id = (select auth.uid())
+  ORDER BY ub.created_at DESC;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_my_blocks() FROM public, anon;
+GRANT EXECUTE ON FUNCTION get_my_blocks() TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION get_my_reports()
+RETURNS TABLE (
+  report_id UUID, reported_type TEXT, reported_id UUID, reason TEXT,
+  details TEXT, target_snapshot JSONB, status TEXT,
+  created_at TIMESTAMPTZ, reviewed_at TIMESTAMPTZ
+)
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT r.id, r.reported_type, r.reported_id, r.reason, r.details,
+         r.target_snapshot, r.status, r.created_at, r.reviewed_at
+  FROM reports r
+  WHERE r.reporter_id = (select auth.uid())
+  ORDER BY r.created_at DESC;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_my_reports() FROM public, anon;
+GRANT EXECUTE ON FUNCTION get_my_reports() TO authenticated;
+
+
+-- Audit 2026-04-16 phase 2: keyset pagination. Caller passes back the last row's
+-- (target_user_open_report_count, created_at, report_id) to get the next page.
+-- First page: omit all cursor args. No client callers existed when this ran.
+DROP FUNCTION IF EXISTS get_open_reports(INT, INT);
+CREATE OR REPLACE FUNCTION get_open_reports(
+  p_limit INT DEFAULT 50,
+  p_cursor_open_count BIGINT DEFAULT NULL,
+  p_cursor_created_at TIMESTAMPTZ DEFAULT NULL,
+  p_cursor_id UUID DEFAULT NULL
+)
+RETURNS TABLE (
+  report_id UUID, reporter_id UUID, reporter_name TEXT,
+  reported_type TEXT, reported_id UUID, reported_user_id UUID, reported_user_name TEXT,
+  reason TEXT, details TEXT, target_snapshot JSONB, created_at TIMESTAMPTZ,
+  target_user_open_report_count BIGINT
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT is_admin() THEN RAISE EXCEPTION 'Admin access required'; END IF;
+
+  p_limit := LEAST(GREATEST(p_limit, 1), 200);
+
+  -- Cursor guard: require all three parts OR none. Partial cursors would make
+  -- the tuple comparison return NULL and silently produce empty pages.
+  IF NOT (
+    (p_cursor_open_count IS NULL AND p_cursor_created_at IS NULL AND p_cursor_id IS NULL)
+    OR
+    (p_cursor_open_count IS NOT NULL AND p_cursor_created_at IS NOT NULL AND p_cursor_id IS NOT NULL)
+  ) THEN
+    RAISE EXCEPTION 'Partial cursor: pass all three of p_cursor_open_count, p_cursor_created_at, p_cursor_id (or none).';
+  END IF;
+
+  RETURN QUERY
+  WITH open_counts AS (
+    SELECT reported_user_id, COUNT(*)::BIGINT AS open_count
+    FROM reports
+    WHERE status = 'open' AND reported_user_id IS NOT NULL
+    GROUP BY reported_user_id
+  )
+  SELECT r.id, r.reporter_id, rp.display_name,
+    r.reported_type, r.reported_id, r.reported_user_id, up.display_name,
+    r.reason, r.details, r.target_snapshot, r.created_at,
+    COALESCE(oc.open_count, 0)
+  FROM reports r
+  LEFT JOIN profiles rp ON rp.id = r.reporter_id
+  LEFT JOIN profiles up ON up.id = r.reported_user_id
+  LEFT JOIN open_counts oc ON oc.reported_user_id = r.reported_user_id
+  WHERE r.status = 'open'
+    AND (
+      p_cursor_open_count IS NULL
+      OR (COALESCE(oc.open_count, 0), r.created_at, r.id)
+         < (p_cursor_open_count, p_cursor_created_at, p_cursor_id)
+    )
+  ORDER BY COALESCE(oc.open_count, 0) DESC, r.created_at DESC, r.id DESC
+  LIMIT p_limit;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_open_reports(INT, BIGINT, TIMESTAMPTZ, UUID) FROM public, anon;
+GRANT EXECUTE ON FUNCTION get_open_reports(INT, BIGINT, TIMESTAMPTZ, UUID) TO authenticated;
+
+
+-- 14h. Modified existing RPCs — full final definitions in the migration file.
+-- The CREATE OR REPLACE calls below override the earlier definitions in this
+-- file (get_ranked_dishes §5, get_smart_snippet §5, get_friends_votes_* §6,
+-- get_taste_compatibility §6, get_similar_taste_users §6, get_category_experts
+-- §8, get_local_lists_for_homepage §11, get_local_list_by_user §11).
+-- See migrations/20260415_h3_ugc_reporting_blocking.sql for the bodies.
+
+
+-- get_smart_snippet — exclude reviews by blocked users
+CREATE OR REPLACE FUNCTION get_smart_snippet(p_dish_id UUID)
+RETURNS TABLE (
+  review_text TEXT, rating_10 DECIMAL, display_name TEXT,
+  user_id UUID, review_created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+DECLARE v_viewer_id UUID := (select auth.uid());
+BEGIN
+  RETURN QUERY
+  SELECT v.review_text, v.rating_10, p.display_name, v.user_id, v.review_created_at
+  FROM votes v
+  INNER JOIN profiles p ON v.user_id = p.id
+  WHERE v.dish_id = p_dish_id
+    AND v.review_text IS NOT NULL AND v.review_text != ''
+    AND (v_viewer_id IS NULL OR NOT is_blocked_pair(v_viewer_id, v.user_id))
+  ORDER BY
+    CASE WHEN v.rating_10 >= 9 THEN 0 ELSE 1 END,
+    v.rating_10 DESC NULLS LAST,
+    v.review_created_at DESC NULLS LAST
+  LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+
+-- get_friends_votes_for_dish — caller guard + block filter
+CREATE OR REPLACE FUNCTION get_friends_votes_for_dish(
+  p_user_id UUID,
+  p_dish_id UUID
+)
+RETURNS TABLE (
+  user_id UUID, display_name TEXT, rating_10 DECIMAL(3, 1),
+  voted_at TIMESTAMPTZ, category_expertise TEXT
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+  SELECT p.id, p.display_name, v.rating_10, v.created_at,
+    CASE
+      WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id
+                   AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
+      WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id
+                   AND ub.badge_key = 'specialist_' || REPLACE(d.category, ' ', '_')) THEN 'specialist'
+      ELSE NULL
+    END
+  FROM follows f
+  JOIN profiles p ON p.id = f.followed_id
+  JOIN votes v ON v.user_id = f.followed_id AND v.dish_id = p_dish_id
+  JOIN dishes d ON d.id = p_dish_id
+  WHERE f.follower_id = p_user_id
+    AND NOT is_blocked_pair(p_user_id, f.followed_id)
+  ORDER BY v.created_at DESC;
+END;
+$$;
+
+
+-- get_friends_votes_for_restaurant — caller guard + block filter
+CREATE OR REPLACE FUNCTION get_friends_votes_for_restaurant(
+  p_user_id UUID,
+  p_restaurant_id UUID
+)
+RETURNS TABLE (
+  user_id UUID, display_name TEXT, dish_id UUID, dish_name TEXT,
+  rating_10 DECIMAL(3, 1), voted_at TIMESTAMPTZ, category_expertise TEXT
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+  SELECT p.id, p.display_name, d.id, d.name, v.rating_10, v.created_at,
+    CASE
+      WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id
+                   AND ub.badge_key = 'authority_' || REPLACE(d.category, ' ', '_')) THEN 'authority'
+      WHEN EXISTS (SELECT 1 FROM user_badges ub WHERE ub.user_id = p.id
+                   AND ub.badge_key = 'specialist_' || REPLACE(d.category, ' ', '_')) THEN 'specialist'
+      ELSE NULL
+    END
+  FROM follows f
+  JOIN profiles p ON p.id = f.followed_id
+  JOIN votes v ON v.user_id = f.followed_id
+  JOIN dishes d ON d.id = v.dish_id AND d.restaurant_id = p_restaurant_id
+  WHERE f.follower_id = p_user_id
+    AND NOT is_blocked_pair(p_user_id, f.followed_id)
+  ORDER BY d.name, v.created_at DESC;
+END;
+$$;
+
+
+-- get_taste_compatibility — caller guard + block short-circuit
+CREATE OR REPLACE FUNCTION get_taste_compatibility(
+  p_user_id UUID,
+  p_other_user_id UUID
+)
+RETURNS TABLE (
+  shared_dishes INT, avg_difference DECIMAL(3, 1), compatibility_pct INT
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  IF is_blocked_pair(p_user_id, p_other_user_id) THEN RETURN; END IF;
+
+  RETURN QUERY
+  WITH shared AS (
+    SELECT a.rating_10 AS rating_a, b.rating_10 AS rating_b
+    FROM votes a JOIN votes b ON a.dish_id = b.dish_id
+    WHERE a.user_id = p_user_id AND b.user_id = p_other_user_id
+      AND a.rating_10 IS NOT NULL AND b.rating_10 IS NOT NULL
+  )
+  SELECT COUNT(*)::INT,
+    ROUND(AVG(ABS(rating_a - rating_b))::NUMERIC, 1),
+    CASE WHEN COUNT(*) >= 3
+      THEN ROUND((100 - (AVG(ABS(rating_a - rating_b))::NUMERIC / 9.0 * 100)))::INT
+      ELSE NULL END
+  FROM shared;
+END;
+$$;
+
+
+-- get_similar_taste_users — caller guard + block filter (plpgsql rewrite)
+CREATE OR REPLACE FUNCTION get_similar_taste_users(
+  p_user_id UUID,
+  p_limit INT DEFAULT 5
+)
+RETURNS TABLE (
+  user_id UUID, display_name TEXT, shared_dishes INT, compatibility_pct INT
+)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF auth.role() <> 'service_role' AND (select auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+  WITH candidates AS (
+    SELECT b.user_id AS other_id,
+           COUNT(*)::INT AS shared,
+           ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT AS compat
+    FROM votes a
+    JOIN votes b ON a.dish_id = b.dish_id
+      AND b.user_id != p_user_id AND b.rating_10 IS NOT NULL
+    WHERE a.user_id = p_user_id AND a.rating_10 IS NOT NULL
+    GROUP BY b.user_id HAVING COUNT(*) >= 3
+  )
+  SELECT c.other_id, p.display_name, c.shared, c.compat
+  FROM candidates c
+  JOIN profiles p ON p.id = c.other_id
+  WHERE NOT EXISTS (SELECT 1 FROM follows f
+                    WHERE f.follower_id = p_user_id AND f.followed_id = c.other_id)
+    AND NOT is_blocked_pair(p_user_id, c.other_id)
+  ORDER BY c.compat DESC, c.shared DESC
+  LIMIT p_limit;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_similar_taste_users(UUID, INT) FROM public, anon;
+GRANT EXECUTE ON FUNCTION get_similar_taste_users(UUID, INT) TO authenticated;
+
+
+-- get_category_experts — block filter inline
+CREATE OR REPLACE FUNCTION get_category_experts(
+  p_category TEXT,
+  p_limit INT DEFAULT 5
+)
+RETURNS TABLE (
+  user_id UUID, display_name TEXT, badge_tier TEXT, follower_count BIGINT
+)
+LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT DISTINCT ON (ub.user_id)
+    ub.user_id, p.display_name,
+    CASE WHEN b.key LIKE 'authority_%' THEN 'authority' ELSE 'specialist' END,
+    COALESCE(fc.cnt, 0)
+  FROM user_badges ub
+  JOIN badges b ON ub.badge_key = b.key
+  JOIN profiles p ON ub.user_id = p.id
+  LEFT JOIN (SELECT followed_id, COUNT(*) AS cnt FROM follows GROUP BY followed_id) fc
+    ON fc.followed_id = ub.user_id
+  WHERE b.category = p_category AND b.family = 'category'
+    AND ((select auth.uid()) IS NULL
+         OR NOT is_blocked_pair((select auth.uid()), ub.user_id))
+  ORDER BY ub.user_id,
+    CASE WHEN b.key LIKE 'authority_%' THEN 0 ELSE 1 END,
+    COALESCE(fc.cnt, 0) DESC
+  LIMIT p_limit;
+$$;
+
+
+-- get_local_lists_for_homepage — filter uses auth.uid(), NOT p_viewer_id
+CREATE OR REPLACE FUNCTION get_local_lists_for_homepage(p_viewer_id UUID DEFAULT NULL)
+RETURNS TABLE (
+  list_id UUID, user_id UUID, title TEXT, description TEXT,
+  display_name TEXT, avatar_url TEXT, curator_tagline TEXT,
+  item_count INT, preview_dishes TEXT[], compatibility_pct INT
+)
+LANGUAGE SQL STABLE AS $$
+  SELECT ll.id, ll.user_id, ll.title, ll.description,
+    p.display_name, p.avatar_url, ll.curator_tagline,
+    (SELECT COUNT(*)::INT FROM local_list_items WHERE list_id = ll.id),
+    (SELECT ARRAY_AGG(d.name ORDER BY li."position")
+     FROM local_list_items li JOIN dishes d ON d.id = li.dish_id
+     WHERE li.list_id = ll.id AND li."position" <= 4),
+    CASE
+      WHEN p_viewer_id IS NOT NULL AND p_viewer_id != ll.user_id THEN (
+        SELECT CASE WHEN COUNT(*) >= 3
+          THEN ROUND((100 - (AVG(ABS(a.rating_10 - b.rating_10))::NUMERIC / 9.0 * 100)))::INT
+          ELSE NULL END
+        FROM votes a JOIN votes b ON a.dish_id = b.dish_id
+        WHERE a.user_id = p_viewer_id AND b.user_id = ll.user_id
+          AND a.rating_10 IS NOT NULL AND b.rating_10 IS NOT NULL
+      )
+      ELSE NULL
+    END
+  FROM local_lists ll
+  JOIN profiles p ON p.id = ll.user_id
+  WHERE ll.is_active = true
+    AND ((select auth.uid()) IS NULL
+         OR NOT is_blocked_pair((select auth.uid()), ll.user_id))
+  ORDER BY RANDOM()
+  LIMIT 8;
+$$;
+
+
+-- get_local_list_by_user — empty result when viewer blocked curator
+CREATE OR REPLACE FUNCTION get_local_list_by_user(target_user_id UUID)
+RETURNS TABLE (
+  list_id UUID, title TEXT, description TEXT, user_id UUID,
+  display_name TEXT, "position" INT, dish_id UUID, dish_name TEXT,
+  restaurant_name TEXT, restaurant_id UUID, avg_rating NUMERIC,
+  total_votes BIGINT, category TEXT, note TEXT,
+  restaurant_lat FLOAT, restaurant_lng FLOAT
+)
+LANGUAGE SQL STABLE AS $$
+  SELECT ll.id, ll.title, ll.description, ll.user_id, p.display_name,
+    li."position", d.id, d.name, r.name, r.id, d.avg_rating, d.total_votes,
+    d.category, li.note, r.lat, r.lng
+  FROM local_lists ll
+  JOIN profiles p ON p.id = ll.user_id
+  JOIN local_list_items li ON li.list_id = ll.id
+  JOIN dishes d ON d.id = li.dish_id
+  JOIN restaurants r ON r.id = d.restaurant_id
+  WHERE ll.user_id = target_user_id
+    AND ll.is_active = true
+    AND ((select auth.uid()) IS NULL
+         OR NOT is_blocked_pair((select auth.uid()), target_user_id))
+  ORDER BY li."position";
+$$;
+
+
+-- get_ranked_dishes — only best_photos CTE changes. Full final body lives in
+-- supabase/migrations/20260415_h3_ugc_reporting_blocking.sql since the
+-- function is too large to duplicate here. The migration runs the updated
+-- CREATE OR REPLACE that adds `AND NOT is_blocked_pair((select auth.uid()),
+-- dp.user_id)` to the best_photos CTE WHERE clause.

@@ -3,10 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { authApi } from '../api/authApi'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
-import { ThumbsUpIcon } from '../components/ThumbsUpIcon'
-import { ThumbsDownIcon } from '../components/ThumbsDownIcon'
 import { CameraIcon } from '../components/CameraIcon'
-import { WghLogo } from '../components/WghLogo'
+import { SmileyPin } from '../components/SmileyPin'
+import { FEATURES } from '../constants/features'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
 
@@ -70,10 +69,34 @@ export function Login() {
     return () => clearTimeout(timer)
   }, [username, mode])
 
+  const buildOAuthRedirect = () => {
+    const fromLocation = location.state?.from
+    return fromLocation
+      ? new URL(
+          fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || ''),
+          window.location.origin
+        ).toString()
+      : null
+  }
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true)
-      await authApi.signInWithGoogle()
+      await authApi.signInWithGoogle(buildOAuthRedirect())
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message })
+      setLoading(false)
+    }
+  }
+
+  // Pre-wired for activation: gets referenced when the compliant Apple
+  // button JSX is dropped in. See the Sign in with Apple comment block in
+  // the options-mode section below for activation steps.
+  // eslint-disable-next-line no-unused-vars
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true)
+      await authApi.signInWithApple(buildOAuthRedirect())
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
       setLoading(false)
@@ -195,7 +218,7 @@ export function Login() {
             {/* Logo + Brand */}
             <div className="flex flex-col items-center mb-8">
               <div style={{ marginBottom: '-14px', position: 'relative', zIndex: 2 }}>
-                <WghLogo size={56} />
+                <SmileyPin size={56} />
               </div>
               <h1
                 style={{
@@ -264,12 +287,8 @@ export function Login() {
               </h3>
               <div className="space-y-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg flex items-center gap-0.5"><ThumbsUpIcon size={26} /><ThumbsDownIcon size={26} /></span>
-                  <p><strong style={{ color: 'var(--color-text-primary)' }}>Would you order it again?</strong> Quick yes or no vote</p>
-                </div>
-                <div className="flex items-center gap-3">
                   <span className="text-lg">⭐</span>
-                  <p><strong style={{ color: 'var(--color-text-primary)' }}>Rate 1-10</strong> for more detail on how good it was</p>
+                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)' }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <CameraIcon size={20} />
@@ -313,7 +332,7 @@ export function Login() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
             {/* Logo */}
             <div className="flex justify-center mb-6">
-              <WghLogo size={48} />
+              <SmileyPin size={48} />
             </div>
 
             {/* Heading */}
@@ -347,6 +366,26 @@ export function Login() {
             {/* Options Mode */}
             {mode === 'options' && (
               <div className="w-full max-w-sm space-y-4">
+                {/* Sign in with Apple — handler is wired (handleAppleSignIn
+                    above) and the flag gates the render slot, but the button
+                    JSX itself is intentionally absent. Apple HIG requires the
+                    button to use Apple's official asset (specific logo
+                    proportions, padding, corner radius). Hand-authored SVG
+                    is a known App Store rejection risk — the iOS Capacitor
+                    build will render this same React code in WKWebView, so a
+                    non-compliant button would fail review.
+
+                    Activation steps (after Supabase Apple provider config):
+                      1. Drop in Apple's official SIWA button asset:
+                         https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple/overview/buttons/
+                         OR install `react-apple-signin-auth` (use only its
+                         button styling — auth flow stays on Supabase).
+                      2. Replace the `null` below with the compliant button,
+                         wired to handleAppleSignIn, placed ABOVE Google per
+                         equal-prominence.
+                      3. Set VITE_FEATURES_APPLE_SIGNIN=true in deploy env. */}
+                {FEATURES.APPLE_SIGNIN_ENABLED && null}
+
                 {/* Google Sign In */}
                 <button
                   onClick={handleGoogleSignIn}

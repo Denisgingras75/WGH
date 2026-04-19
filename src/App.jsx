@@ -59,6 +59,7 @@ const Admin = lazyWithRetry(() => import('./pages/Admin'), 'Admin')
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login')
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy')
 const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms')
+const Support = lazyWithRetry(() => import('./pages/Support'), 'Support')
 const UserProfile = lazyWithRetry(() => import('./pages/UserProfile'), 'UserProfile')
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'), 'ResetPassword')
 const AcceptInvite = lazyWithRetry(() => import('./pages/AcceptInvite'), 'AcceptInvite')
@@ -70,6 +71,7 @@ const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'Ho
 const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'ForRestaurants')
 const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
 const RestaurantReviews = lazyWithRetry(() => import('./pages/RestaurantReviews'), 'RestaurantReviews')
+const PlaylistPage = lazyWithRetry(() => import('./pages/Playlist'), 'Playlist')
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
 // Prefetch functions for smoother navigation - call on hover/focus
@@ -146,8 +148,10 @@ function App() {
               <Route path="/manage" element={<ProtectedRoute><ManageRestaurant /></ProtectedRoute>} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/support" element={<Support />} />
               <Route path="/how-reviews-work" element={<Layout><HowReviewsWork /></Layout>} />
               <Route path="/for-restaurants" element={<ForRestaurants />} />
+              <Route path="/playlist/:id" element={<Layout><PlaylistPage /></Layout>} />
               <Route path="/jitter" element={<Layout><JitterLanding /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

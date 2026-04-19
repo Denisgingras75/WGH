@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'dish') {
       const { data: dish } = await supabase
         .from('dishes')
-        .select('name, category, price, photo_url, restaurant_id')
+        .select('name, category, price, photo_url, restaurant_id, avg_rating, total_votes')
         .eq('id', id)
         .maybeSingle()
 
@@ -88,24 +88,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const town = restaurant?.town || ''
         title = `${dish.name} at ${restName}`
 
-        // Vote stats
+        // Vote stats (for fallback count; dishes.total_votes is preferred source of truth)
         const { count: totalVotes } = await supabase
           .from('votes')
           .select('*', { count: 'exact', head: true })
           .eq('dish_id', id)
 
-        const { count: yesVotes } = await supabase
-          .from('votes')
-          .select('*', { count: 'exact', head: true })
-          .eq('dish_id', id)
-          .eq('would_order_again', true)
+        const effectiveVotes = dish.total_votes ?? totalVotes ?? 0
+        const avgRating = dish.avg_rating != null ? Number(dish.avg_rating).toFixed(1) : null
 
-        if (totalVotes && totalVotes >= 5) {
-          const pct = Math.round(((yesVotes || 0) / totalVotes) * 100)
-          description = `${pct}% would order again · ${town}`
-          if (pct >= 90) description = `GREAT — ${description}`
+        if (effectiveVotes >= 5 && avgRating != null) {
+          description = `${avgRating}/10 · ${effectiveVotes} ratings · ${town}`
         } else {
-          description = `${restName} · ${town}`
+          description = `Rated on What's Good Here · ${town}`
         }
 
         if (dish.photo_url) {
@@ -123,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (restaurant) {
         title = restaurant.name
-        description = `See what's worth ordering at ${restaurant.name} in ${restaurant.town || ''}`
+        description = `See what's good at ${restaurant.name}${restaurant.town ? ' in ' + restaurant.town : ''}`
         imageUrl = `${BASE_URL}/api/og-image?type=restaurant&id=${id}`
       }
     }

@@ -54,6 +54,9 @@ export const RATE_LIMITS = {
   auth: { maxAttempts: 5, windowMs: 300000 },       // 5 auth attempts per 5 minutes
   dishCreate: { maxAttempts: 20, windowMs: 3600000 },       // 20 dishes per hour
   restaurantCreate: { maxAttempts: 5, windowMs: 3600000 },  // 5 restaurants per hour
+  playlistCreate: { maxAttempts: 5, windowMs: 3600000 },    // 5 playlists per hour
+  playlistItemAdd: { maxAttempts: 60, windowMs: 3600000 },  // 60 dish adds per hour
+  playlistFollow: { maxAttempts: 120, windowMs: 3600000 },  // 120 follows per hour
 }
 
 /**
@@ -82,6 +85,23 @@ export function checkDishCreateRateLimit() {
  */
 export function checkRestaurantCreateRateLimit() {
   return checkRateLimit('restaurant_create', RATE_LIMITS.restaurantCreate)
+}
+
+/**
+ * Convenience functions for playlist actions. Belt-and-suspenders layer
+ * alongside the DB hard-cap triggers — catches accidental client loops
+ * before they hit the network.
+ */
+export function checkPlaylistCreateRateLimit() {
+  return checkRateLimit('playlist_create', RATE_LIMITS.playlistCreate)
+}
+
+export function checkPlaylistItemAddRateLimit() {
+  return checkRateLimit('playlist_item_add', RATE_LIMITS.playlistItemAdd)
+}
+
+export function checkPlaylistFollowRateLimit() {
+  return checkRateLimit('playlist_follow', RATE_LIMITS.playlistFollow)
 }
 
 /**

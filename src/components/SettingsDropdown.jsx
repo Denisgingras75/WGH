@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { adminApi } from '../api/adminApi'
 import { useRestaurantManager } from '../hooks/useRestaurantManager'
+import { DeleteAccountModal } from './profile'
+import { BlockedUsersModal } from './BlockedUsersModal'
 import { isSoundMuted, toggleSoundMute } from '../lib/sounds'
 import { logger } from '../utils/logger'
 
@@ -14,9 +16,12 @@ export function SettingsDropdown() {
   const { user, signOut } = useAuth()
   const { isManager: isRestaurantManager } = useRestaurantManager()
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showBlockedModal, setShowBlockedModal] = useState(false)
   const [soundMuted, setSoundMuted] = useState(isSoundMuted())
   const [isAdmin, setIsAdmin] = useState(false)
   const dropdownRef = useRef(null)
+  const gearButtonRef = useRef(null)
 
   // Check admin status
   useEffect(() => {
@@ -65,6 +70,7 @@ export function SettingsDropdown() {
     <div className="relative" ref={dropdownRef}>
       {/* Gear Icon */}
       <button
+        ref={gearButtonRef}
         onClick={() => setShowDropdown(!showDropdown)}
         className="relative p-2 rounded-full transition-all duration-150 active:scale-95 active:opacity-80"
         style={{ color: 'var(--color-text-secondary)' }}
@@ -184,6 +190,43 @@ export function SettingsDropdown() {
             </svg>
           </a>
 
+          {/* Support / Help */}
+          <a
+            role="menuitem"
+            href="/support"
+            onClick={() => setShowDropdown(false)}
+            className="w-full px-4 py-3 flex items-center justify-between transition-colors border-b"
+            style={{ borderColor: 'var(--color-divider)' }}
+          >
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Help &amp; Support</span>
+            <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+
+          {/* Blocked Users */}
+          <button
+            role="menuitem"
+            onClick={() => { setShowDropdown(false); setShowBlockedModal(true) }}
+            className="w-full px-4 py-3 flex items-center justify-between transition-colors border-b"
+            style={{ borderColor: 'var(--color-divider)' }}
+          >
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Blocked users</span>
+            <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Delete Account */}
+          <button
+            role="menuitem"
+            onClick={() => { setShowDropdown(false); setShowDeleteModal(true) }}
+            className="w-full px-4 py-3 flex items-center justify-between transition-colors border-b"
+            style={{ borderColor: 'var(--color-divider)' }}
+          >
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Delete Account</span>
+          </button>
+
           {/* Sign Out */}
           <button
             role="menuitem"
@@ -194,6 +237,21 @@ export function SettingsDropdown() {
           </button>
         </div>
       )}
+
+      {showDeleteModal && (
+        <DeleteAccountModal onClose={() => {
+          setShowDeleteModal(false)
+          requestAnimationFrame(() => gearButtonRef.current?.focus())
+        }} />
+      )}
+
+      <BlockedUsersModal
+        isOpen={showBlockedModal}
+        onClose={() => {
+          setShowBlockedModal(false)
+          requestAnimationFrame(() => gearButtonRef.current?.focus())
+        }}
+      />
     </div>
   )
 }

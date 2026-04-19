@@ -1,5 +1,4 @@
-import { ThumbsUpIcon } from '../ThumbsUpIcon'
-import { ThumbsDownIcon } from '../ThumbsDownIcon'
+import { getRatingColor } from '../../utils/ranking'
 
 export function BatchSummary({
   restaurantName,
@@ -73,10 +72,10 @@ export function BatchSummary({
                     {dish.name}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    {rating.wouldOrderAgain ? <ThumbsUpIcon size={22} active /> : <ThumbsDownIcon size={22} active />}
-                    <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                    <span className="font-bold text-lg" style={{ color: getRatingColor(rating.rating10) }}>
                       {Number(rating.rating10).toFixed(1)}
                     </span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
                     {rating.reviewText ? (
                       <span
                         className="px-2 py-1 rounded-full text-xs font-semibold"

@@ -589,3 +589,20 @@
 - BottomNav center tab renamed from "Map" to "Home"
 
 **Files:** `src/pages/Map.jsx`, `src/components/ModeFAB.jsx`, `src/components/BottomNav.jsx`, `src/pages/Dish.jsx`
+
+---
+
+### Binary vote removal — Phase 2 (follow-up PR, ~1 release after Phase 1 deploys)
+
+- [ ] Drop server-side shadow-write in `submit_vote_atomic` (param becomes NULL-passthrough).
+- [ ] Drop `p_would_order_again` parameter from `submit_vote_atomic`.
+- [ ] Drop `yes_votes`, `percent_worth_it` from `get_ranked_dishes`, `get_restaurant_dishes`, `get_dish_variants` return signatures.
+- [ ] Drop `would_order_again` from `get_friends_votes_for_dish`, `get_friends_votes_for_restaurant`.
+- [ ] Drop `would_order_again` from the `public_votes` view.
+- [ ] Update `seed-reviews` Edge Function: insert `NULL` instead of deriving; update snippet-generation to not depend on it.
+- [ ] Drop legacy PostHog event name `vote_submitted` (keep `rating_submitted`).
+- [ ] Also drop the photo Keep/Replace/Remove UI dependency on `authApi.getUserVoteForDish` returning a `photo_url` — either add the projection back or wire a dishPhotosApi.getMyPhotoForDish helper and pass `existingPhotoUrl` into ReviewFlow from Dish.jsx.
+
+Do NOT start Phase 2 until Phase 1 has been live for ≥7 days and Sentry shows no regressions from stale bundles.
+
+Spec: `docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md`.

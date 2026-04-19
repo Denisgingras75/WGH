@@ -44,7 +44,7 @@ export const dishesApi = {
 
   /**
    * Get dishes for a specific restaurant with vote data
-   * Sorted by percent_worth_it DESC for "Most loved here" ranking (Confidence view)
+   * Sorted by avg_rating DESC for "Most loved here" ranking
    * @param {Object} params
    * @param {string} params.restaurantId - Restaurant ID
    * @returns {Promise<Array>} Array of dishes with vote stats
@@ -430,7 +430,6 @@ export const dishesApi = {
   /**
    * Get a single dish by ID with vote stats
    * Uses pre-computed avg_rating and total_votes from dishes table (maintained by trigger).
-   * Queries votes table for yes_votes count (computed on-the-fly, no column on dishes table).
    * @param {string} dishId - Dish ID
    * @returns {Promise<Object>} Dish object with vote stats
    * @throws {Error} With classified error type
@@ -469,25 +468,13 @@ export const dishesApi = {
         throw new Error('Dish not found')
       }
 
-      // Count yes_votes and check variants in parallel
-      // Note: avg_rating and total_votes come from pre-computed dish columns.
-      const [yesVotesResult, hasVariantsResult] = await Promise.all([
-        supabase
-          .from('votes')
-          .select('*', { count: 'exact', head: true })
-          .eq('dish_id', dishId)
-          .eq('would_order_again', true),
-        this.hasVariants(dishId),
-      ])
-
-      const yesVotes = yesVotesResult.error ? 0 : (yesVotesResult.count || 0)
-      if (yesVotesResult.error) {
-        logger.error('Error counting yes votes for dish:', yesVotesResult.error)
-      }
+      // Check variants. Binary yes_votes count was removed with the binary-vote
+      // signal — avg_rating + total_votes (pre-computed by trigger) are the
+      // canonical stats now.
+      const hasVariantsResult = await this.hasVariants(dishId)
 
       return {
         ...dish,
-        yes_votes: yesVotes,
         has_variants: hasVariantsResult,
       }
     } catch (error) {

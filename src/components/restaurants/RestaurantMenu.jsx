@@ -48,9 +48,6 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
         const aRating = a.avg_rating || 0
         const bRating = b.avg_rating || 0
         if (bRating !== aRating) return bRating - aRating
-        const aPct = a.percent_worth_it || 0
-        const bPct = b.percent_worth_it || 0
-        if (bPct !== aPct) return bPct - aPct
         return (b.total_votes || 0) - (a.total_votes || 0)
       })
     }
@@ -367,14 +364,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                         className="font-medium"
                         style={{ color: 'var(--color-text-tertiary)', fontSize: '10px' }}
                       >
-                        {votes} votes
-                      </span>
-                      <span style={{ color: 'var(--color-divider)' }}>|</span>
-                      <span
-                        className="font-semibold"
-                        style={{ color: 'var(--color-success)', fontSize: '10px' }}
-                      >
-                        {Math.round(dish.percent_worth_it)}% reorder
+                        {votes} rating{votes === 1 ? '' : 's'}
                       </span>
                     </>
                   ) : (

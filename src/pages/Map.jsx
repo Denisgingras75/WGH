@@ -114,7 +114,12 @@ export function Map() {
   }, [])
 
   // Search results (no town filter — shows whole island)
-  var searchData = useDishSearch(searchQuery, searchLimit, null)
+  var searchData = useDishSearch(searchQuery, searchLimit, {
+    lat: location ? location.lat : null,
+    lng: location ? location.lng : null,
+    radiusMiles: radius,
+    isUsingDefault: permissionState !== 'granted',
+  })
   var searchResults = searchData.results
   var searchLoading = searchData.loading
 
@@ -336,7 +341,21 @@ export function Map() {
           <div className="fixed inset-0" style={{ zIndex: 1 }}>
             <ErrorBoundary>
               <Suspense fallback={
-                <div className="w-full h-full" style={{ background: 'var(--color-bg)' }} />
+                <div
+                  role="status"
+                  aria-label="Loading map"
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: 'var(--color-bg)' }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full animate-spin"
+                    style={{
+                      border: '3px solid var(--color-divider)',
+                      borderTopColor: 'var(--color-accent-gold)',
+                    }}
+                  />
+                  <span className="sr-only">Loading map</span>
+                </div>
               }>
                 <RestaurantMap
                   mode="dish"
@@ -356,7 +375,9 @@ export function Map() {
             </ErrorBoundary>
           </div>
 
-          {/* Floating controls: search + zoom (hidden when pin selected) */}
+          {/* Floating controls: search + zoom.
+              Hide when a pin is selected AND we have location (the "How far?" button takes over).
+              If no location, keep controls visible so the user isn't stuck with only the FAB. */}
           <div
             className="fixed left-0 right-0"
             style={{
@@ -364,11 +385,11 @@ export function Map() {
               zIndex: 15,
               padding: '12px 12px 0',
               pointerEvents: 'none',
-              opacity: pinSelected ? 0 : 1,
+              opacity: (pinSelected && location) ? 0 : 1,
               transition: 'opacity 200ms ease',
             }}
           >
-            <div className="flex items-center gap-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
+            <div className="flex items-center gap-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
               <div className="flex-1" style={{
                 borderRadius: '14px',
                 boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
@@ -402,7 +423,7 @@ export function Map() {
             </div>
 
             {/* Floating category bar */}
-            <div className="mt-2" style={{ pointerEvents: pinSelected ? 'none' : 'auto' }}>
+            <div className="mt-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
               <MapCategoryBar activeCategory={mapCategory} onCategoryChange={setMapCategory} />
             </div>
           </div>

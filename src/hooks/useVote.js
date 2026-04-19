@@ -8,8 +8,9 @@ export function useVote() {
   // Track in-flight requests per dish to prevent double submissions
   const inFlightRef = useRef(new Set())
 
-  // Submit wouldOrderAgain, rating_10, and optional review text in one call
-  const submitVote = useCallback(async (dishId, wouldOrderAgain, rating10, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null) => {
+  // Submit rating_10 and optional review text in one call.
+  // Binary "would order again" vote was removed Apr 2026 — rating alone is the signal.
+  const submitVote = useCallback(async (dishId, rating10, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null) => {
     // Prevent duplicate submissions for the same dish
     if (inFlightRef.current.has(dishId)) {
       return { success: false, error: 'Vote already in progress' }
@@ -22,7 +23,6 @@ export function useVote() {
 
       await votesApi.submitVote({
         dishId,
-        wouldOrderAgain,
         rating10,
         reviewText,
         purityData,
