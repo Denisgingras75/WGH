@@ -2,6 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { initBackButtonInterceptor } from './utils/backButtonInterceptor'
+// Claude Design tokens + utilities must load BEFORE index.css so the legacy
+// alias block (--color-bg: var(--paper) etc.) can see the new tokens. Vite's
+// @import-in-CSS resolution was dropping this file in dev; explicit JS imports
+// are always bundled.
+import './styles/claude-design.css'
 import './index.css'
 import App from './App.jsx'
 

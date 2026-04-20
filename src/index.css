@@ -28,11 +28,8 @@
   transform: rotate(3deg) translate(0px, -4px);
 }
 
-/* ===========================
-   Claude Design prototype port — full theme + utilities
-   Loaded as a separate stylesheet so it's reviewable/removable in one file.
-   =========================== */
-@import './styles/claude-design.css';
+/* Claude Design prototype port — loaded via explicit JS import in main.jsx
+   (moved out of CSS @import because Vite dev occasionally drops it). */
 
 /* ===========================
    What's Good Here — Warm Editorial (Default)
