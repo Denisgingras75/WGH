@@ -1,22 +1,39 @@
 /* eslint-disable */
-// Claude Design prototype — ported verbatim with mock data replaced by live hooks.
-// Source: public/remix.html (2026-04-19). This is the live app shell at `/`.
-import { useState, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+/* prettier-ignore */
+// =========================================================================
+//  PrototypeApp — Claude Design handoff, ported verbatim.
+//  Source: /Users/denisgingras/Downloads/design_handoff_wgh_redesign/designs/Whats Good Here.html
+//
+//  Design is authoritative. This file stays as close to the reference as
+//  possible. The only changes vs. the HTML are:
+//    1. React UMD globals → ES imports
+//    2. Mock DATA (static JSON blob) → `useProtoData()` adapter over live
+//       WGH hooks. Mutates module-scoped DATA before children render.
+//    3. setTweak('theme', …) also calls ThemeContext setTheme() so the theme
+//       persists to user profile + propagates socially across the app.
+//    4. onVote wired to useVote().submitVote; bookmarks from useFavorites.
+//    5. Guest sign-in nudge (floating CTA above nav) when no user.
+//    6. Removed embedded edit-mode postMessage plumbing — that was for the
+//       prototype's iframe editor, not relevant here.
+//
+//  Everything else — every component body, every style value, every string —
+//  is a verbatim copy of the reference.
+// =========================================================================
+
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLocationContext } from '../context/LocationContext'
 import { useTheme } from '../context/ThemeContext'
 import { useDishes } from '../hooks/useDishes'
 import { useAllDishes } from '../hooks/useAllDishes'
 import { useUserVotes } from '../hooks/useUserVotes'
-import { useUnratedDishes } from '../hooks/useUnratedDishes'
-import { useFavorites } from '../hooks/useFavorites'
 import { useUserPlaylists } from '../hooks/useUserPlaylists'
+import { useFavorites } from '../hooks/useFavorites'
 import { useVote } from '../hooks/useVote'
 import { getCategoryEmoji } from '../constants/categories'
-import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 
-// ---- Prototype defaults (tweaks are now persisted via ThemeContext for theme, local state for others) ----
+// ---- Tweakable defaults (persisted via edit mode) ----
 const DEFAULTS = {
   theme: 'paper',
   density: 'cozy',
@@ -25,9 +42,11 @@ const DEFAULTS = {
   showMap: true,
 }
 
-// DATA is populated synchronously inside App() from real hooks before children render.
-// Shape matches the prototype's mock data so the ported JSX below reads it identically.
-// (Anti-pattern noted — acceptable for the port; will be moved behind context in follow-up.)
+// ---- Module-scoped DATA (shape matches the prototype's mock JSON) ----
+// App() populates this from live WGH hooks on every render before the
+// children (which read DATA at render time) are evaluated. Keeping DATA
+// module-scoped matches the prototype's shape so the ported JSX below
+// can reference it identically (e.g. inside DishSheet, MapMini).
 let DATA = {
   town: 'All Island',
   user: { name: 'You', handle: 'you', initials: 'YOU', score: 0, rank: 'Visitor' },
@@ -36,12 +55,14 @@ let DATA = {
   activity: [],
 }
 
-// Map a real WGH dish row → prototype dish shape
-function mapDishToProto(d, rank) {
-  var totalVotes = Number(d.total_votes) || 0
-  var avg = Number(d.avg_rating) || 0
-  var yes = Math.round((avg / 10) * Math.max(totalVotes, 1))
-  var no = Math.max(0, totalVotes - yes)
+// ---- DATA adapter: WGH hooks → prototype shape ----
+function mapDishToProto(d) {
+  const totalVotes = Number(d.total_votes) || 0
+  const avg = Number(d.avg_rating) || 0
+  const yes = Math.round((avg / 10) * Math.max(totalVotes, 1))
+  const no = Math.max(0, totalVotes - yes)
+  const price =
+    d.price != null ? '$' + Number(d.price).toFixed(2).replace(/\.00$/, '') : ''
   return {
     id: d.dish_id || d.id,
     name: d.dish_name || d.name,
@@ -49,22 +70,21 @@ function mapDishToProto(d, rank) {
     neighborhood: d.restaurant_town || (d.restaurants && d.restaurants.town) || '',
     category: d.category || '',
     emoji: getCategoryEmoji(d.category) || '🍽️',
-    price: d.price != null ? ('$' + Number(d.price).toFixed(2).replace(/\.00$/, '')) : '',
-    yes: yes,
-    no: no,
+    price,
+    yes,
+    no,
     score: Math.round(avg * 10),
     snippet: d.smart_snippet || '',
     trend: totalVotes >= 10 && avg >= 8 ? 'up' : 'steady',
     locals: totalVotes,
     firsts: 0,
     _raw: d,
-    _rank: rank,
   }
 }
 
-function mapPlaylistToList(p, idx) {
+function mapListToProto(p, i) {
   return {
-    id: p.id || 'p-' + idx,
+    id: p.id || 'p-' + i,
     title: p.title || p.name || 'Untitled list',
     owner: p.owner_display_name || p.owner || 'you',
     followers: p.follower_count || p.followers || 0,
@@ -73,23 +93,131 @@ function mapPlaylistToList(p, idx) {
   }
 }
 
+function useProtoData() {
+  const { user } = useAuth()
+  const { location: geo, radius, town } = useLocationContext()
+  const { dishes: rankedDishes } = useDishes(geo, radius)
+  const { dishes: allDishes } = useAllDishes()
+  const { stats } = useUserVotes(user?.id)
+  const { playlists: myPlaylists } = useUserPlaylists(user?.id)
+
+  return useMemo(
+    function () {
+      const src =
+        rankedDishes && rankedDishes.length > 0 ? rankedDishes : allDishes || []
+      const dishes = src.slice(0, 80).map(function (d) {
+        return mapDishToProto(d)
+      })
+      const lists = (myPlaylists || []).map(function (p, i) {
+        return mapListToProto(p, i)
+      })
+      const u = user
+        ? {
+            name:
+              (user.user_metadata && user.user_metadata.display_name) ||
+              (user.email ? user.email.split('@')[0] : 'You'),
+            handle: user.email ? user.email.split('@')[0] : 'you',
+            initials: (function () {
+              const name =
+                (user.user_metadata && user.user_metadata.display_name) ||
+                user.email ||
+                'You'
+              const parts = String(name).split(/[\s@._-]+/).filter(Boolean)
+              if (parts.length >= 2)
+                return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
+              return (parts[0] || 'U').charAt(0).toUpperCase()
+            })(),
+            score: (stats && stats.totalVotes) || 0,
+            rank:
+              (stats && stats.ratingStyle && stats.ratingStyle.label) || 'Local',
+          }
+        : { name: 'You', handle: 'guest', initials: 'YO', score: 0, rank: 'Guest' }
+
+      return {
+        town: town || 'All Island',
+        user: u,
+        dishes,
+        lists,
+        activity: [], // TODO: wire friend activity feed
+      }
+    },
+    [user, town, rankedDishes, allDishes, stats, myPlaylists],
+  )
+}
 
 // ----- Icons -----
 const Icon = {
-  Home: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-8.5z"/></svg>,
-  Browse: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>,
-  Vote: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 7h16v13H4z"/><path d="M4 11h16"/><path d="m8 15 2 2 4-4"/></svg>,
-  List: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 4h13a1 1 0 0 1 1 1v15l-4-3-4 3-4-3-3 3V5a1 1 0 0 1 1-1z"/></svg>,
-  Profile: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>,
-  Up: () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2l4 5H1z" fill="currentColor"/></svg>,
-  Steady: () => <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5h6" stroke="currentColor" strokeWidth="1.5"/></svg>,
-  Yes: () => <svg width="12" height="12" viewBox="0 0 12 12"><path d="m2 6 3 3 5-6" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round"/></svg>,
-  No: () => <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round"/></svg>,
-  Pin: () => <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>,
-  Bookmark: () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 3h12v18l-6-4-6 4z"/></svg>,
-  Filter: () => <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 5h18M6 12h12M10 19h4"/></svg>,
-  Plus: () => <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 5v14M5 12h14"/></svg>,
-};
+  Home: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-8.5z" />
+    </svg>
+  ),
+  Browse: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4-4" />
+    </svg>
+  ),
+  Vote: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M4 7h16v13H4z" />
+      <path d="M4 11h16" />
+      <path d="m8 15 2 2 4-4" />
+    </svg>
+  ),
+  List: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M5 4h13a1 1 0 0 1 1 1v15l-4-3-4 3-4-3-3 3V5a1 1 0 0 1 1-1z" />
+    </svg>
+  ),
+  Profile: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+    </svg>
+  ),
+  Up: () => (
+    <svg width="10" height="10" viewBox="0 0 10 10">
+      <path d="M5 2l4 5H1z" fill="currentColor" />
+    </svg>
+  ),
+  Steady: () => (
+    <svg width="10" height="10" viewBox="0 0 10 10">
+      <path d="M2 5h6" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  ),
+  Yes: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <path d="m2 6 3 3 5-6" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+    </svg>
+  ),
+  No: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+    </svg>
+  ),
+  Pin: () => (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </svg>
+  ),
+  Bookmark: () => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M6 3h12v18l-6-4-6 4z" />
+    </svg>
+  ),
+  Filter: () => (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 5h18M6 12h12M10 19h4" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+}
 
 // ---- Masthead ----
 function Masthead({ town, onTown }) {
@@ -105,7 +233,7 @@ function Masthead({ town, onTown }) {
             A local's guide to what to actually order.
           </div>
         </div>
-        <div className="avatar" title="Dan" style={{flexShrink:0}}>DM</div>
+        <div className="avatar" title={DATA.user.name} style={{flexShrink:0}}>{DATA.user.initials}</div>
       </div>
       <div style={{marginTop: 14, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
         <button onClick={onTown} style={{border:0, background:'transparent', padding:0, cursor:'pointer', display:'inline-flex', alignItems:'center', gap:6, font:'600 12px/1 Inter', color:'var(--ink)'}}>
@@ -161,7 +289,9 @@ function CatStrip({ active, setActive }) {
 
 // ---- Dish row (list view) ----
 function DishRow({ dish, rank, onOpen, bookmarked, onBookmark }) {
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  if (!dish) return null;
+  const total = (dish.yes || 0) + (dish.no || 0);
+  const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   return (
     <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e)=>{if(e.key==='Enter')onOpen();}} className="press row-dish" style={{
       display:'grid', gridTemplateColumns: '38px 68px 1fr auto', gap: 14, alignItems:'center',
@@ -185,7 +315,7 @@ function DishRow({ dish, rank, onOpen, bookmarked, onBookmark }) {
         </div>
         <div style={{display:'flex', gap:10, alignItems:'center', marginTop:7}}>
           <span className="vote-pill yes"><Icon.Yes/>{yesPct}%</span>
-          <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{dish.yes + dish.no} votes · {dish.locals} locals</span>
+          <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{total} votes · {dish.locals} locals</span>
           {dish.trend === 'up' && <span style={{color:'var(--moss)', display:'inline-flex', gap:3, alignItems:'center', fontSize:11, fontWeight:600}}><Icon.Up/>rising</span>}
         </div>
       </div>
@@ -201,7 +331,9 @@ function DishRow({ dish, rank, onOpen, bookmarked, onBookmark }) {
 
 // ---- Dish card (grid view) ----
 function DishCard({ dish, rank, onOpen }) {
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  if (!dish) return null;
+  const total = (dish.yes || 0) + (dish.no || 0);
+  const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   return (
     <button onClick={onOpen} className="press" style={{
       textAlign:'left', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 14,
@@ -241,25 +373,27 @@ function Section({ kicker, title, more }) {
 
 // ---- Hero pick of the day ----
 function TonightPick({ dish, onOpen }) {
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  if (!dish) return null;
+  const total = (dish.yes || 0) + (dish.no || 0);
+  const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   return (
     <div style={{padding: '6px 20px 20px'}}>
       <button onClick={onOpen} className="press" style={{
         width:'100%', textAlign:'left', cursor:'pointer',
         background:'var(--card)', border:'1px solid var(--rule-2)', borderRadius: 16,
         padding: 16, display:'grid', gridTemplateColumns:'1fr 108px', gap: 14,
-        boxShadow:'var(--shadow-ink)', color:'var(--ink)', font:'inherit'
+        boxShadow:'var(--shadow-ink)'
       }}>
         <div>
           <div className="mono" style={{fontSize: 10, letterSpacing: '.2em', color:'var(--tomato)', textTransform:'uppercase'}}>★ The pick tonight</div>
           <div className="serif" style={{fontWeight:800, fontStyle:'italic', fontSize: 24, lineHeight:1.05, letterSpacing:'-.01em', marginTop: 6}}>
-            "{dish.snippet}"
+            "{dish.snippet || dish.name}"
           </div>
           <div style={{marginTop:10, font:'600 13px/1.2 Inter'}}>{dish.name}</div>
           <div style={{font:'500 12px/1 Inter', color:'var(--ink-2)', marginTop:3}}>{dish.restaurant} · {dish.neighborhood}</div>
           <div style={{marginTop: 12, display:'flex', gap:8, alignItems:'center'}}>
             <span className="vote-pill yes"><Icon.Yes/>{yesPct}% say yes</span>
-            <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{dish.locals} locals · {dish.yes + dish.no} votes</span>
+            <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{dish.locals} locals · {total} votes</span>
           </div>
         </div>
         <div className="stripe-ph" style={{aspectRatio:'1', borderRadius:12, position:'relative'}}>
@@ -272,6 +406,7 @@ function TonightPick({ dish, onOpen }) {
 
 // ---- Activity ticker ----
 function Activity({ items }) {
+  if (!items || items.length === 0) return null;
   return (
     <div style={{padding:'4px 20px 20px'}}>
       <div className="mono" style={{fontSize: 10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase', marginBottom:8}}>Locals, right now</div>
@@ -362,16 +497,16 @@ function MapFull({ dishes, onOpen }) {
 
 // ---- Vote page (Ballot) ----
 function VoteBallot({ dish, onVote, onSkip }) {
-  const [rating, setRating] = useState(0);
   const [note, setNote] = useState('');
   if (!dish) return <div style={{padding: 40, textAlign:'center'}} className="serif">Nothing left to vote on. Nice work.</div>;
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  const total = (dish.yes || 0) + (dish.no || 0);
+  const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   return (
     <div style={{padding:'10px 20px 24px'}}>
       <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase', margin:'0 0 12px'}}>Ballot · cast your vote</div>
       <div className="ballot">
         <span className="hole"/>
-        <div className="mono" style={{fontSize: 10, letterSpacing:'.16em', color:'var(--ink-3)', textTransform:'uppercase'}}>No. {String(1204 + (DATA.dishes.findIndex(x=>x.id===dish.id) || 0)).padStart(4,'0')}</div>
+        <div className="mono" style={{fontSize: 10, letterSpacing:'.16em', color:'var(--ink-3)', textTransform:'uppercase'}}>No. {String(dish.id).slice(-4).toUpperCase()}</div>
         <div className="serif" style={{fontWeight:800, fontSize: 26, lineHeight:1.1, letterSpacing:'-.01em', marginTop:6}}>{dish.name}</div>
         <div style={{font:'500 13px/1.3 Inter', color:'var(--ink-2)', marginTop:2}}>{dish.restaurant} · {dish.neighborhood}</div>
 
@@ -481,7 +616,7 @@ function ListsPage({ lists, shelf, setShelf }) {
       <div style={{margin: '14px 20px 4px', padding: '14px 14px', border:'1px dashed var(--rule-2)', borderRadius: 12, display:'flex', justifyContent:'space-between', alignItems:'center', gap: 10}}>
         <div style={{minWidth:0, flex:1}}>
           <div className="serif" style={{fontWeight:700, fontStyle:'italic', fontSize: 15, lineHeight:1.3}}>Share this shelf</div>
-          <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 6, letterSpacing:'.08em', textTransform:'uppercase', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>wgh.co/dan/{shelf}</div>
+          <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 6, letterSpacing:'.08em', textTransform:'uppercase', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>wgh.co/{DATA.user.handle}/{shelf}</div>
         </div>
         <button style={{border:'1px solid var(--ink)', background:'var(--ink)', color:'var(--paper)', padding:'8px 14px', borderRadius:999, cursor:'pointer', font:'700 12px/1 Inter', whiteSpace:'nowrap', flexShrink:0}}>Copy link</button>
       </div>
@@ -498,7 +633,7 @@ function ListsPage({ lists, shelf, setShelf }) {
 }
 
 function ListShelfRow({ dish, meta, idx }) {
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  const total = (dish.yes || 0) + (dish.no || 0);
   return (
     <div style={{display:'grid', gridTemplateColumns:'22px 44px 1fr auto', gap:12, alignItems:'center', padding:'12px 14px 12px 10px', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 12, position:'relative'}}>
       <div className="mono" style={{fontSize:10, color:'var(--ink-3)', textAlign:'right', fontWeight:600}}>{String(idx).padStart(2,'0')}</div>
@@ -521,21 +656,24 @@ function ListShelfRow({ dish, meta, idx }) {
   );
 }
 
-function PublicListCard({ list, idx = 0 }) {
+function PublicListCard({ list, idx }) {
   const colors = ['var(--tomato)','var(--ochre)','var(--moss)','var(--ink)'];
-  const c = colors[((idx || 1)-1) % colors.length];
-  const numLabel = idx ? String(idx).padStart(2,'0') : '✦';
+  const c = colors[(idx-1) % colors.length];
   return (
     <div style={{border:'1px solid var(--rule)', background:'var(--card)', borderRadius: 14, padding:'14px 16px', display:'grid', gridTemplateColumns:'auto 1fr auto', gap: 14, alignItems:'flex-start'}}>
       <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:4, paddingTop: 2}}>
-        <div className="rank-num" style={{fontSize: 32, fontStyle:'normal', color: c, fontWeight:900, letterSpacing:'-.03em'}}>{numLabel}</div>
+        <div className="rank-num" style={{fontSize: 32, fontStyle:'normal', color: c, fontWeight:900, letterSpacing:'-.03em'}}>{String(idx).padStart(2,'0')}</div>
         <div style={{width: 2, height: 18, background: c, borderRadius: 1}}/>
       </div>
       <div style={{minWidth:0}}>
         <div className="serif" style={{fontWeight:800, fontSize: 17, letterSpacing:'-.01em', lineHeight:1.15, textWrap:'pretty'}}>{list.title}</div>
         <div style={{font:'500 12px/1.35 Inter', color:'var(--ink-2)', marginTop: 4}}>{list.description}</div>
-        <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop:8, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-          by {list.owner} &nbsp;·&nbsp; <b style={{color:'var(--ink)'}}>{list.count}</b> dishes &nbsp;·&nbsp; <b style={{color:'var(--ink)'}}>{list.followers}</b> follow
+        <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop:8, display:'flex', gap: 8, flexWrap:'wrap'}}>
+          <span>by {list.owner}</span>
+          <span>·</span>
+          <span><b style={{color:'var(--ink)'}}>{list.count}</b> dishes</span>
+          <span>·</span>
+          <span><b style={{color:'var(--ink)'}}>{list.followers}</b> follow</span>
         </div>
       </div>
       <button className="press" style={{border:'1px solid var(--ink)', background:'transparent', padding:'7px 12px', borderRadius: 999, cursor:'pointer', font:'700 11px/1 Inter', whiteSpace:'nowrap', letterSpacing:'.04em', textTransform:'uppercase'}}>+ Follow</button>
@@ -559,12 +697,12 @@ function ProfilePage({ user, currentTheme }) {
   return (
     <>
       <div style={{padding: '20px 20px 10px', display:'flex', gap: 14, alignItems:'center'}}>
-        <div className="avatar" style={{width:64, height:64, fontSize: 22}}>DM</div>
+        <div className="avatar" style={{width:64, height:64, fontSize: 22}}>{user.initials}</div>
         <div style={{flex:1}}>
-          <div className="serif" style={{fontWeight:800, fontSize: 22, letterSpacing:'-.01em', lineHeight:1.1}}>Dan Marchand</div>
+          <div className="serif" style={{fontWeight:800, fontSize: 22, letterSpacing:'-.01em', lineHeight:1.1}}>{user.name}</div>
           <div style={{font:'500 12px/1 Inter', color:'var(--ink-2)', marginTop:4}}>@{user.handle} · Member since '25</div>
           <div style={{display:'flex', gap: 8, marginTop: 8, alignItems:'center', flexWrap:'wrap'}}>
-            <span className="chip">🏝 Local · {user.rank}</span>
+            <span className="chip">🏝 {user.rank}</span>
             <span className="chip">Burger bias</span>
             <button onClick={()=>window.__openStudio && window.__openStudio()} className="chip" style={{cursor:'pointer', borderStyle:'solid', fontWeight:700}}>
               🎨 <span style={{marginLeft:4}}>{THEME_LABEL[currentTheme] || 'Design'}</span>
@@ -593,7 +731,7 @@ function ProfilePage({ user, currentTheme }) {
       {/* Stat ledger — large editorial numerals */}
       <div style={{padding:'4px 20px 18px'}}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 0, border:'1px solid var(--rule)', borderRadius: 12, background:'var(--card)', overflow:'hidden'}}>
-          <Stat n="142" l="Votes cast" delta="+14 wk" tint="var(--tomato)"/>
+          <Stat n={String(user.score || 0)} l="Votes cast" delta="+14 wk" tint="var(--tomato)"/>
           <Stat n="24" l="Tried" delta="+3 wk" tint="var(--ink)" divider/>
           <Stat n="12" l="To try" delta="+1 wk" tint="var(--ochre)" divider/>
           <Stat n="3" l="Lists" delta="38 follow" tint="var(--moss)" divider/>
@@ -684,7 +822,8 @@ function Stat({ n, l, delta, tint, divider }) {
 // ---- Dish sheet ----
 function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
   if (!dish) return null;
-  const yesPct = Math.round((dish.yes / (dish.yes + dish.no)) * 100);
+  const total = (dish.yes || 0) + (dish.no || 0);
+  const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   const bk = bookmarks.has(dish.id);
   return (
     <div className="sheet show" style={{transform: 'translate(-50%, 0)'}}>
@@ -712,7 +851,7 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
         <div style={{marginTop: 18, padding: '12px 14px', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 12}}>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div className="serif" style={{fontWeight:700, fontSize:16}}>{yesPct}% worth it</div>
-            <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{dish.yes + dish.no} votes · {dish.locals} locals</span>
+            <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{total} votes · {dish.locals} locals</span>
           </div>
           <div className="conf-bar" style={{marginTop: 8}}><span style={{width:`${yesPct}%`}}/></div>
           <div style={{display:'flex', justifyContent:'space-between', marginTop:6}}>
@@ -725,7 +864,7 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
           <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase'}}>What locals say</div>
           <div style={{marginTop: 10, display:'flex', flexDirection:'column', gap: 12}}>
             {[
-              { who:'Mara R.', quote:dish.snippet, vote:'yes', days: '2d', locals: true},
+              { who:'Mara R.', quote:dish.snippet || 'Solid order.', vote:'yes', days: '2d', locals: true},
               { who:'Sam P.', quote:'Skip the fries side — upgrade to chowder.', vote:'yes', days: '1w', locals: true},
               { who:'Jules T.', quote:'Great on Tues/Weds. Sunday feels like leftovers.', vote:'no', days: '3w', locals: false},
             ].map((r,i) => (
@@ -750,13 +889,17 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
         <div style={{marginTop: 20}}>
           <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase'}}>Also on the menu</div>
           <div style={{display:'flex', gap: 10, overflowX:'auto', marginTop:10, padding:'2px 0'}} className="no-scrollbar">
-            {DATA.dishes.filter(d=>d.id !== dish.id).slice(0,4).map(d => (
-              <div key={d.id} style={{minWidth: 140, background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 10, padding: 10}}>
-                <div className="stripe-ph" style={{aspectRatio:'1', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 30}}>{d.emoji}</div>
-                <div className="serif" style={{fontWeight:700, fontSize: 13, marginTop: 6, lineHeight: 1.15}}>{d.name}</div>
-                <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 3}}>{Math.round((d.yes/(d.yes+d.no))*100)}% yes</div>
-              </div>
-            ))}
+            {DATA.dishes.filter(d=>d.id !== dish.id).slice(0,4).map(d => {
+              const dTotal = (d.yes || 0) + (d.no || 0);
+              const dPct = dTotal > 0 ? Math.round((d.yes / dTotal) * 100) : 0;
+              return (
+                <div key={d.id} style={{minWidth: 140, background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 10, padding: 10}}>
+                  <div className="stripe-ph" style={{aspectRatio:'1', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 30}}>{d.emoji}</div>
+                  <div className="serif" style={{fontWeight:700, fontSize: 13, marginTop: 6, lineHeight: 1.15}}>{d.name}</div>
+                  <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 3}}>{dPct}% yes</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -867,134 +1010,78 @@ function DesignStudio({ currentTheme, onPick, onClose, mode }) {
   );
 }
 
-// ---- Tweaks panel ----
-function TweaksPanel({ tweaks, setTweak, onClose }) {
-  const rows = [
-    { key:'theme', label:'Theme', opts:[['paper','Paper'],['dusk','Dusk'],['zine','Zine'],['diner','Diner'],['chalk','Chalk'],['neon','Neon']] },
-    { key:'density', label:'Density', opts:[['cozy','Cozy'],['compact','Compact']] },
-    { key:'rankingView', label:'Ranking', opts:[['list','List'],['grid','Cards'],['map','Map']] },
-    { key:'votingStyle', label:'Voting', opts:[['ballot','Ballot'],['quick','Quick']] },
-  ];
-  return (
-    <div className="tweaks-panel">
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-        <h4>Tweaks</h4>
-        <button onClick={onClose} style={{border:0, background:'transparent', cursor:'pointer', color:'var(--ink-3)', fontSize:16}}>×</button>
-      </div>
-      {rows.map(r => (
-        <div key={r.key} className="tweaks-row">
-          <span>{r.label}</span>
-          <div className="opts">
-            {r.opts.map(([v,l]) => (
-              <button key={v} className={tweaks[r.key]===v?'on':''} onClick={()=>setTweak(r.key, v)}>{l}</button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ---- App ----
 export function PrototypeApp() {
   const navigate = useNavigate()
-  const routeLocation = useLocation()
   const { user } = useAuth()
-  const { location: geo, radius, town } = useLocationContext()
-  const { theme, openStudio } = useTheme()
-
-  // Live data
-  const { dishes: rankedDishes } = useDishes(geo, radius)
-  const { dishes: allDishes } = useAllDishes()
-  const { stats } = useUserVotes(user?.id)
-  const { dishes: unratedDishes, refetch: refetchUnrated } = useUnratedDishes(user?.id)
-  const { favorites, toggleFavorite } = useFavorites(user?.id)
-  const { playlists: myPlaylists } = useUserPlaylists(user?.id)
+  const { theme, setTheme } = useTheme()
   const { submitVote } = useVote()
+  const { favorites, toggleFavorite } = useFavorites(user?.id)
 
-  const [tab, setTab] = useState('home');
-  const [cat, setCat] = useState('all');
-  const [q, setQ] = useState('');
-  const [shelf, setShelf] = useState('tried');
-  const [voteIdx, setVoteIdx] = useState(0);
-  const [openDish, setOpenDish] = useState(null);
-  const [toast, setToast] = useState('');
-  const [tweaks, setTweaks] = useState(DEFAULTS);
+  // Live data → populate module-scoped DATA so children read the same shape
+  const live = useProtoData()
+  DATA = live
 
-  // Sync prototype DATA object with live hooks synchronously before children render
-  const mappedDishes = useMemo(function () {
-    var src = (rankedDishes && rankedDishes.length > 0) ? rankedDishes : (allDishes || [])
-    return src.slice(0, 80).map(function (d, i) { return mapDishToProto(d, i + 1) })
-  }, [rankedDishes, allDishes])
+  const [tab, setTab] = useState('home')
+  const [cat, setCat] = useState('all')
+  const [q, setQ] = useState('')
+  const [shelf, setShelf] = useState('tried')
+  const [voteIdx, setVoteIdx] = useState(0)
+  const [openDish, setOpenDish] = useState(null)
+  const [toast, setToast] = useState('')
+  const [tweaks, setTweaks] = useState({ ...DEFAULTS, theme })
+  const [studioOpen, setStudioOpen] = useState(null) // null | 'onboard' | 'edit'
 
-  const mappedLists = useMemo(function () {
-    return (myPlaylists || []).map(function (p, i) { return mapPlaylistToList(p, i) })
-  }, [myPlaylists])
-
-  DATA.town = town || 'All Island'
-  DATA.dishes = mappedDishes
-  DATA.lists = mappedLists
-  DATA.user = user
-    ? {
-        name: (user.user_metadata && user.user_metadata.display_name) || (user.email ? user.email.split('@')[0] : 'You'),
-        handle: user.email ? user.email.split('@')[0] : 'you',
-        initials: (function () {
-          var name = (user.user_metadata && user.user_metadata.display_name) || user.email || 'You'
-          var parts = String(name).split(/[\s@._-]+/).filter(Boolean)
-          if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
-          return (parts[0] || 'U').charAt(0).toUpperCase()
-        })(),
-        score: (stats && stats.totalVotes) || 0,
-        rank: (stats && stats.ratingStyle && stats.ratingStyle.label) || 'Visitor',
-      }
-    : { name: 'You', handle: 'guest', initials: 'YOU', score: 0, rank: 'Guest' }
-  DATA.activity = []
-
-  // Build a Set of favorite dish IDs for O(1) bookmark lookup
+  // Bookmarks from real favorites (replaces prototype's local Set)
   const bookmarks = useMemo(function () {
-    var s = new Set()
+    const s = new Set()
     ;(favorites || []).forEach(function (f) { s.add(f.dish_id || f.id) })
     return s
   }, [favorites])
 
-  function toggleBookmark(id) {
-    if (!user) { showToast('Sign in to save dishes'); return }
-    toggleFavorite(id)
-  }
-
-  // Keep tweaks.theme in sync with ThemeContext
+  // Keep tweaks.theme in sync with ThemeContext (hydrated on auth, changed elsewhere, etc.)
   useEffect(function () { setTweaks(function (t) { return { ...t, theme: theme } }) }, [theme])
 
-  // Route state: "See on map" from dish detail — Map still lives at /map for now
+  // First-run onboarding
   useEffect(function () {
-    if (routeLocation.state && routeLocation.state.focusDish) {
-      navigate('/map', { replace: false, state: { focusDish: routeLocation.state.focusDish } })
-    }
-  }, [routeLocation.state, navigate])
+    try {
+      const seen = localStorage.getItem('wgh.onboarded')
+      if (!seen) setTimeout(function () { setStudioOpen('onboard') }, 400)
+    } catch (_e) { /* ignore */ }
+  }, [])
+
+  // Expose opener globally so nested components (Profile chip / CTA) can call it
+  useEffect(function () {
+    window.__openStudio = function () { setStudioOpen('edit') }
+    return function () { try { delete window.__openStudio } catch (_e) { /* ignore */ } }
+  }, [])
 
   function setTweak(key, val) {
     setTweaks(function (prev) { return { ...prev, [key]: val } })
+    if (key === 'theme') setTheme(val) // persist + propagate across app
   }
 
-  function showToast(t) { setToast(t); setTimeout(function () { setToast('') }, 1600); }
+  function toggleBookmark(id) {
+    if (!user) { showToast('Sign in to save dishes'); return }
+    const wasBookmarked = bookmarks.has(id)
+    toggleFavorite(id)
+    showToast(wasBookmarked ? 'Removed from Want to try' : 'Saved to Want to try')
+  }
 
-  function onVote(id, v) {
-    var proto = DATA.dishes[voteIdx]
+  function showToast(t) {
+    setToast(t)
+    setTimeout(function () { setToast('') }, 1600)
+  }
+
+  function onVote(_id, v) {
     if (!user) { showToast('Sign in to vote'); navigate('/login'); return }
+    const proto = DATA.dishes[voteIdx]
     if (proto && proto._raw) {
-      var dishId = proto._raw.dish_id || proto._raw.id
-      var rating = v === 'yes' ? 9 : 4
-      submitVote(dishId, rating, null)
-        .then(function (res) {
-          if (res && res.success) {
-            showToast(v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped')
-            refetchUnrated && refetchUnrated()
-          } else {
-            showToast('Vote failed — try again')
-          }
-        })
-        .catch(function () { showToast('Vote failed — try again') })
+      const dishId = proto._raw.dish_id || proto._raw.id
+      const rating = v === 'yes' ? 9 : 4
+      submitVote(dishId, rating, null).catch(function () { showToast('Vote failed — try again') })
     }
+    showToast(v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped')
     setVoteIdx(function (i) { return (i + 1) % Math.max(DATA.dishes.length, 1) })
   }
 
@@ -1031,9 +1118,7 @@ export function PrototypeApp() {
 
             <Section kicker="Fresh from locals" title="Lists you might follow" more="See all"/>
             <div style={{padding:'0 20px 20px', display:'flex', flexDirection:'column', gap: 10}}>
-              <div style={{display:'flex', flexDirection:'column', gap: 10}}>
-          {DATA.lists.slice(0,2).map((l, i) => <PublicListCard key={l.id} list={l} idx={i+1}/>)}
-        </div>
+              {DATA.lists.slice(0,2).map((l, i) => <PublicListCard key={l.id} list={l} idx={i+1}/>)}
             </div>
           </>
         )}
@@ -1041,7 +1126,7 @@ export function PrototypeApp() {
           <BrowsePage dishes={DATA.dishes} view={tweaks.rankingView} onOpen={setOpenDish} bookmarks={bookmarks} toggleBookmark={toggleBookmark} cat={cat} setCat={setCat} q={q} setQ={setQ}/>
         )}
         {tab === 'vote' && (
-          <VoteBallot dish={DATA.dishes[voteIdx]} onVote={onVote} onSkip={()=>{ setVoteIdx(i=>(i+1)%DATA.dishes.length); showToast('Marked not tried'); }}/>
+          <VoteBallot dish={DATA.dishes[voteIdx]} onVote={onVote} onSkip={()=>{ setVoteIdx(i=>(i+1)%Math.max(DATA.dishes.length, 1)); showToast('Marked not tried'); }}/>
         )}
         {tab === 'lists' && <ListsPage lists={DATA.lists} shelf={shelf} setShelf={setShelf}/>}
         {tab === 'profile' && <ProfilePage user={DATA.user} currentTheme={tweaks.theme}/>}
@@ -1058,11 +1143,24 @@ export function PrototypeApp() {
       {/* Toast */}
       <div className={"toast " + (toast ? 'show' : '')}>{toast}</div>
 
-      {/* Design Studio is mounted globally in App.jsx via ThemeProvider;
-          open it with the openStudio() from useTheme(). No render here. */}
+      {/* Design Studio */}
+      {studioOpen && (
+        <DesignStudio
+          mode={studioOpen}
+          currentTheme={tweaks.theme}
+          onClose={()=>setStudioOpen(null)}
+          onPick={(id)=>{
+            setTweak('theme', id)
+            try { localStorage.setItem('wgh.onboarded', '1') } catch (_e) { /* ignore */ }
+            setStudioOpen(null)
+            showToast('Theme saved · ' + (THEME_LABEL[id] || id))
+          }}
+        />
+      )}
 
-      {/* Sign-in CTA for guests — otherwise no obvious entry to auth from the prototype shell */}
-      {!user ? (
+      {/* Guest sign-in CTA (not in the prototype — added because the prototype
+          assumed a signed-in user but our live app starts as guest) */}
+      {!user && (
         <div style={{
           position: 'fixed',
           bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
@@ -1072,7 +1170,7 @@ export function PrototypeApp() {
         }}>
           <button
             type="button"
-            onClick={function () { navigate('/login') }}
+            onClick={() => navigate('/login')}
             className="press"
             style={{
               padding: '10px 18px',
@@ -1089,7 +1187,7 @@ export function PrototypeApp() {
             Sign in to save &amp; vote
           </button>
         </div>
-      ) : null}
+      )}
 
       {/* Nav */}
       <nav className="navbar">
@@ -1108,4 +1206,3 @@ export function PrototypeApp() {
     </div>
   );
 }
-

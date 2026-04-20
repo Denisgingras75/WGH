@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { usePlaylistDetail } from '../hooks/usePlaylistDetail'
 import { usePlaylistMutations } from '../hooks/usePlaylistMutations'
 import { useAuth } from '../context/AuthContext'
+import { useOverrideTheme } from '../context/ThemeContext'
+import { profileApi } from '../api/profileApi'
 import { PlaylistCover } from '../components/playlists/PlaylistCover'
 import { PlaylistOwnerMenu } from '../components/playlists/PlaylistOwnerMenu'
 import { getCategoryNeonImage, categoryEmojiFor } from '../constants/categories'
@@ -17,6 +19,21 @@ export function Playlist() {
   const { playlist, loading, error } = usePlaylistDetail(id)
   const { follow, unfollow, removeDish } = usePlaylistMutations()
   const [searchSheetOpen, setSearchSheetOpen] = useState(false)
+
+  // Social theme propagation: re-skin the app in the list owner's theme while we're
+  // here. Owner theme isn't on the playlist payload (to keep that RPC slim), so we
+  // fetch it once on mount. Graceful if the column doesn't exist yet.
+  const [ownerTheme, setOwnerTheme] = useState(null)
+  useEffect(function () {
+    const ownerId = playlist && playlist.owner_id
+    if (!ownerId) return
+    let cancelled = false
+    profileApi.getProfile(ownerId)
+      .then(function (p) { if (!cancelled && p && p.theme) setOwnerTheme(p.theme) })
+      .catch(function () { /* graceful */ })
+    return function () { cancelled = true }
+  }, [playlist?.owner_id])
+  useOverrideTheme(ownerTheme)
 
   const items = playlist?.items || []
   const existingDishIds = useMemo(() => items.map((i) => i.dish_id), [items])

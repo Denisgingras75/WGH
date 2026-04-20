@@ -116,6 +116,33 @@
   --focus-ring: 0 0 0 3px rgba(228, 68, 10, 0.25);
 }
 
+/* ===========================
+   Legacy → Claude Design token aliases
+   These re-declarations REFERENCE the new theme tokens via var(). Because CSS
+   vars resolve at use-site, every legacy --color-* consumer automatically
+   re-skins when [data-theme="…"] changes the underlying --paper/--ink/etc.
+   This is why the whole app — not just PrototypeApp — reacts to theme choice.
+   =========================== */
+:root {
+  --color-bg:                var(--paper);
+  --color-surface:           var(--paper-2);
+  --color-surface-elevated:  var(--card);
+  --color-card:              var(--card);
+  --color-card-hover:        var(--paper-2);
+  --color-text-primary:      var(--ink);
+  --color-text-secondary:    var(--ink-2);
+  --color-text-tertiary:     var(--ink-3);
+  --color-text-tagline:      var(--ink-3);
+  --color-muted:             var(--ink-3);
+  --color-divider:           var(--rule);
+  --color-primary:           var(--tomato);
+  --color-accent-gold:       var(--ochre);
+  --color-link-secondary:    var(--ochre);
+  --color-accent-yellow:     var(--ochre);
+  --color-success:           var(--moss);
+  --color-rating:            var(--moss);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

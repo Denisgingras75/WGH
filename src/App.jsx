@@ -10,7 +10,8 @@ import { Layout } from './components/Layout'
 import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
-import { DesignStudio } from './components/DesignStudio'
+// DesignStudio is rendered inline inside PrototypeApp (matches the canonical
+// prototype's structure). No global mount — removed to prevent double studios.
 import { RouteProgress } from './components/RouteProgress'
 import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
@@ -131,7 +132,6 @@ function App() {
         <BrowserRouter>
           <RouteProgress />
           <WelcomeModal />
-          <DesignStudio />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<PrototypeApp />} />

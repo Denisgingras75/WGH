@@ -108,6 +108,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   following_count INTEGER DEFAULT 0,
   is_local_curator BOOLEAN DEFAULT false,
   avatar_url TEXT,
+  -- Claude Design redesign: one of six preset themes, shown on own profile +
+  -- propagates to viewers when they visit this user's profile or lists.
+  theme TEXT NOT NULL DEFAULT 'paper'
+    CHECK (theme IN ('paper', 'dusk', 'zine', 'diner', 'chalk', 'neon')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

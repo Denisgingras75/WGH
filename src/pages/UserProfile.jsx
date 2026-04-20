@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useOverrideTheme } from '../context/ThemeContext'
 import { logger } from '../utils/logger'
 import { getCompatColor } from '../utils/formatters'
 import { shareOrCopy } from '../utils/share'
@@ -75,6 +76,9 @@ export function UserProfile() {
   const locationFilter = searchParams.get('location')
 
   const [profile, setProfile] = useState(null)
+  // Social theme propagation: when viewing someone else's profile, re-skin the
+  // whole app in their theme for as long as we're on this page. Restored on unmount.
+  useOverrideTheme(profile?.theme)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isFollowing, setIsFollowing] = useState(false)
