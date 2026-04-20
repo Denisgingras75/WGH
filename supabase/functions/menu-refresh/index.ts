@@ -618,6 +618,25 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Shared-secret gate. The function runs with verify_jwt = false at the
+  // gateway (so pg_cron can invoke it after the legacy service_role JWT
+  // stopped being accepted ~2026-04-12), but the function itself is
+  // privileged: it mutates with service role and calls the paid Sonnet API.
+  // Require an explicit CRON_SECRET match so this isn't a public endpoint.
+  const cronSecret = Deno.env.get('CRON_SECRET')
+  if (!cronSecret) {
+    return new Response(JSON.stringify({ error: 'CRON_SECRET not configured' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  if (req.headers.get('Authorization') !== `Bearer ${cronSecret}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
@@ -727,6 +746,18 @@ serve(async (req) => {
             if (found) {
               menuUrl = found
               dbUpdates.menu_url = menuUrl
+            } else {
+              // Ephemeral fallback for THIS run only. Many restaurants link the
+              // menu as a PDF (e.g. /wp-content/uploads/*.pdf) only from the
+              // homepage — paths findMenuUrl's probe list misses. Letting the
+              // downstream pipeline see the homepage gives extractPdfMenuUrls a
+              // chance to find those links and Sonnet a shot at the homepage
+              // HTML. We do NOT persist this to dbUpdates.menu_url — that would
+              // lock the restaurant into the homepage forever and prevent
+              // future discovery of a real /menu URL.
+              let normalized = websiteUrl.replace(/\/+$/, '')
+              if (!normalized.startsWith('http')) normalized = 'https://' + normalized
+              menuUrl = normalized
             }
           }
 
