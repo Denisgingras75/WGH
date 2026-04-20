@@ -716,4 +716,31 @@ input, textarea { font-family: inherit; }
   --color-rating: var(--moss);
 }
 
+/* Sliding score — native range input restyled to match the editorial system.
+   Thumb picks up the current ink color so it reads against any theme's paper. */
+.wgh-score-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--paper);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2), 0 0 0 1px var(--ink);
+  cursor: grab;
+  transition: transform .1s ease;
+}
+.wgh-score-slider::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.08); }
+.wgh-score-slider::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--paper);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2), 0 0 0 1px var(--ink);
+  cursor: grab;
+}
+.wgh-score-slider:focus { outline: none; }
+.wgh-score-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 2px 6px rgba(0,0,0,.2), 0 0 0 3px var(--tomato);
+}
+
 /* Keyboard shortcut to open Studio: press 't' twice */

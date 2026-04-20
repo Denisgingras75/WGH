@@ -31,7 +31,7 @@ import { useUserVotes } from '../hooks/useUserVotes'
 import { useUserPlaylists } from '../hooks/useUserPlaylists'
 import { useFavorites } from '../hooks/useFavorites'
 import { useVote } from '../hooks/useVote'
-import { getCategoryEmoji } from '../constants/categories'
+import { getCategoryEmoji, BROWSE_CATEGORIES } from '../constants/categories'
 
 // ---- Tweakable defaults (persisted via edit mode) ----
 const DEFAULTS = {
@@ -64,10 +64,23 @@ function mapDishToProto(d) {
   const price =
     d.price != null ? '$' + Number(d.price).toFixed(2).replace(/\.00$/, '') : ''
   const imageUrl = d.featured_photo_url || d.photo_url || null
+  // Restaurant meta: powers the Order Now / Directions buttons on DishSheet
+  const restaurantId = d.restaurant_id || null
+  const lat = d.restaurant_lat != null ? Number(d.restaurant_lat) : null
+  const lng = d.restaurant_lng != null ? Number(d.restaurant_lng) : null
+  const address = d.restaurant_address || null
+  const website = d.restaurant_website_url || null
+  const directOrderUrl = d.order_url || null
+  const toastSlug = d.toast_slug || null
+  const orderUrl = directOrderUrl
+    || (toastSlug ? `https://www.toasttab.com/${toastSlug}/v3` : null)
+    || website
+    || null
   return {
     id: d.dish_id || d.id,
     name: d.dish_name || d.name,
     restaurant: d.restaurant_name || (d.restaurants && d.restaurants.name) || '',
+    restaurantId,
     neighborhood: d.restaurant_town || (d.restaurants && d.restaurants.town) || '',
     category: d.category || '',
     emoji: getCategoryEmoji(d.category) || '🍽️',
@@ -76,12 +89,31 @@ function mapDishToProto(d) {
     yes,
     no,
     score: Math.round(avg * 10),
+    avgRating: avg,
     snippet: d.smart_snippet || '',
     trend: totalVotes >= 10 && avg >= 8 ? 'up' : 'steady',
     locals: totalVotes,
     firsts: 0,
+    // Restaurant action targets — all optional, hidden when absent
+    lat, lng, address, website, orderUrl,
     _raw: d,
   }
+}
+
+// Build a maps URL for directions. Prefers lat/lng (exact pin), falls back to
+// the address string. Uses the universal Google Maps dir URL which works on
+// iOS (opens Apple/Google Maps via chooser), Android, and web.
+function buildDirectionsUrl(dish) {
+  if (dish && dish.lat != null && dish.lng != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${dish.lat},${dish.lng}`
+  }
+  if (dish && dish.address) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dish.address)}`
+  }
+  if (dish && dish.restaurant) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restaurant)}`
+  }
+  return null
 }
 
 // Render either a real dish photo or the emoji-on-stripes placeholder.
@@ -290,17 +322,9 @@ function SearchRow({ value, onChange }) {
   );
 }
 
-// ---- Category strip ----
-const CATS = [
-  { id: 'all', label: 'All', emoji: '•' },
-  { id: 'lobster roll', label: 'Lobster', emoji: '🦞' },
-  { id: 'burger', label: 'Burgers', emoji: '🍔' },
-  { id: 'pizza', label: 'Pizza', emoji: '🍕' },
-  { id: 'chowder', label: 'Chowder', emoji: '🥣' },
-  { id: 'tendys', label: 'Tenders', emoji: '🍗' },
-  { id: 'pokebowl', label: 'Poke', emoji: '🥗' },
-  { id: 'coffee', label: 'Coffee', emoji: '☕' },
-];
+// Category strip — uses WGH's real BROWSE_CATEGORIES so filtering works
+// against live dish data. "All" prepended to match the prototype's shape.
+const CATS = [{ id: 'all', label: 'All', emoji: '•' }, ...BROWSE_CATEGORIES];
 function CatStrip({ active, setActive }) {
   return (
     <div className="no-scrollbar" style={{display:'flex', gap:8, overflowX:'auto', padding:'4px 20px 14px'}}>
@@ -519,9 +543,13 @@ function MapFull({ dishes, onOpen }) {
 // ---- Vote page (Ballot) ----
 function VoteBallot({ dish, onVote, onSkip }) {
   const [note, setNote] = useState('');
+  const [score, setScore] = useState(7);
+  useEffect(() => { setScore(7); setNote('') }, [dish?.id]);
   if (!dish) return <div style={{padding: 40, textAlign:'center'}} className="serif">Nothing left to vote on. Nice work.</div>;
   const total = (dish.yes || 0) + (dish.no || 0);
   const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
+  const scoreLabel = score >= 9 ? 'World-class' : score >= 8 ? 'Worth it' : score >= 7 ? 'Solid' : score >= 5 ? 'Meh' : score >= 3 ? 'Skip' : 'Avoid';
+  const scoreColor = score >= 7 ? 'var(--moss)' : score >= 5 ? 'var(--ochre)' : 'var(--tomato)';
   return (
     <div style={{padding:'10px 20px 24px'}}>
       <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase', margin:'0 0 12px'}}>Ballot · cast your vote</div>
@@ -535,16 +563,40 @@ function VoteBallot({ dish, onVote, onSkip }) {
 
         <div className="serif" style={{fontWeight:700, fontStyle:'italic', fontSize: 20, lineHeight:1.2}}>Would you order this again?</div>
 
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop: 14}}>
-          <button onClick={()=>onVote(dish.id, 'no')} className="press" style={{padding:'14px 10px', borderRadius:12, border:'1.5px solid var(--rule-2)', background:'var(--paper)', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:4, whiteSpace:'nowrap'}}>
-            <span style={{fontSize: 28}}>✕</span>
-            <span className="serif" style={{fontWeight:700, fontSize:16, whiteSpace:'nowrap'}}>Skip</span>
-            <span className="mono" style={{fontSize:9, color:'var(--ink-3)', whiteSpace:'nowrap'}}>not again</span>
+        {/* Sliding score — 0 to 10. Tint + label shift as you drag. */}
+        <div style={{marginTop: 14, padding: '12px 0'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom: 10}}>
+            <span className="rank-num" style={{fontSize: 40, fontStyle:'italic', color: scoreColor, fontWeight: 900, lineHeight: .85}}>{score}</span>
+            <span style={{font:'700 14px/1 Inter', color: scoreColor, letterSpacing: '.04em', textTransform: 'uppercase'}}>{scoreLabel}</span>
+          </div>
+          <input
+            type="range" min={0} max={10} step={1}
+            value={score}
+            onChange={(e) => setScore(Number(e.target.value))}
+            className="wgh-score-slider"
+            style={{
+              width: '100%', appearance: 'none', height: 6, borderRadius: 3,
+              background: `linear-gradient(to right, ${scoreColor} 0%, ${scoreColor} ${score * 10}%, var(--rule) ${score * 10}%, var(--rule) 100%)`,
+              outline: 'none', cursor: 'pointer',
+            }}
+          />
+          <div style={{display:'flex', justifyContent:'space-between', marginTop: 6}}>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)', letterSpacing: '.12em'}}>AVOID</span>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)', letterSpacing: '.12em'}}>MEH</span>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)', letterSpacing: '.12em'}}>WORTH IT</span>
+          </div>
+        </div>
+
+        <div style={{display:'grid', gridTemplateColumns:'1fr 2fr', gap:10, marginTop: 8}}>
+          <button onClick={onSkip} className="press" style={{padding:'14px 10px', borderRadius:12, border:'1.5px solid var(--rule-2)', background:'var(--paper)', cursor:'pointer', font:'700 14px/1 Inter', whiteSpace:'nowrap'}}>
+            Not tried
           </button>
-          <button onClick={()=>onVote(dish.id, 'yes')} className="press" style={{padding:'14px 10px', borderRadius:12, border:'1.5px solid var(--tomato)', background:'var(--tomato)', color:'var(--paper)', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:4, whiteSpace:'nowrap'}}>
-            <span style={{fontSize: 28}}>✓</span>
-            <span className="serif" style={{fontWeight:700, fontSize:16, whiteSpace:'nowrap'}}>Worth it</span>
-            <span className="mono" style={{fontSize:9, opacity:.8, whiteSpace:'nowrap'}}>order again</span>
+          <button
+            onClick={() => onVote(dish.id, score >= 7 ? 'yes' : 'no', score, note)}
+            className="press"
+            style={{padding:'14px 10px', borderRadius:12, border:'1.5px solid var(--ink)', background:'var(--ink)', color:'var(--paper)', cursor:'pointer', font:'700 14px/1 Inter', whiteSpace:'nowrap', letterSpacing: '.02em'}}
+          >
+            Cast vote · {score}/10
           </button>
         </div>
 
@@ -556,7 +608,6 @@ function VoteBallot({ dish, onVote, onSkip }) {
 
         <div className="hairline" style={{marginTop: 14, paddingTop: 12, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
           <div className="mono" style={{fontSize: 10, color:'var(--ink-3)'}}>Locals currently say <b style={{color:'var(--tomato)'}}>{yesPct}%</b> yes · {dish.locals} votes</div>
-          <button onClick={onSkip} style={{border:0, background:'transparent', color:'var(--ink-3)', font:'600 12px/1 Inter', cursor:'pointer'}}>Not tried →</button>
         </div>
       </div>
     </div>
@@ -712,7 +763,12 @@ const THEMES = [
 const THEME_LABEL = Object.fromEntries(THEMES.map(t => [t.id, t.name]));
 
 // ---- Profile page ----
-function ProfilePage({ user, currentTheme }) {
+function ProfilePage({ user, currentTheme, stats }) {
+  const s = stats || {};
+  const votesCast = String(s.votesCast ?? user.score ?? 0);
+  const tried = String(s.tried ?? 0);
+  const toTry = String(s.toTry ?? 0);
+  const listsN = String(s.lists ?? 0);
   return (
     <>
       <div style={{padding: '20px 20px 10px', display:'flex', gap: 14, alignItems:'center'}}>
@@ -750,10 +806,10 @@ function ProfilePage({ user, currentTheme }) {
       {/* Stat ledger — large editorial numerals */}
       <div style={{padding:'4px 20px 18px'}}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 0, border:'1px solid var(--rule)', borderRadius: 12, background:'var(--card)', overflow:'hidden'}}>
-          <Stat n={String(user.score || 0)} l="Votes cast" delta="+14 wk" tint="var(--tomato)"/>
-          <Stat n="24" l="Tried" delta="+3 wk" tint="var(--ink)" divider/>
-          <Stat n="12" l="To try" delta="+1 wk" tint="var(--ochre)" divider/>
-          <Stat n="3" l="Lists" delta="38 follow" tint="var(--moss)" divider/>
+          <Stat n={votesCast} l="Votes cast" tint="var(--tomato)"/>
+          <Stat n={tried} l="Tried" tint="var(--ink)" divider/>
+          <Stat n={toTry} l="To try" tint="var(--ochre)" divider/>
+          <Stat n={listsN} l="Lists" tint="var(--moss)" divider/>
         </div>
       </div>
 
@@ -839,11 +895,17 @@ function Stat({ n, l, delta, tint, divider }) {
 }
 
 // ---- Dish sheet ----
-function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
+function DishSheet({ dish, onClose, bookmarks, toggleBookmark, onRate }) {
+  const [score, setScore] = useState(dish ? Math.round(dish.avgRating || 7) : 7);
+  useEffect(() => { if (dish) setScore(Math.round(dish.avgRating || 7)) }, [dish?.id]);
   if (!dish) return null;
   const total = (dish.yes || 0) + (dish.no || 0);
   const yesPct = total > 0 ? Math.round((dish.yes / total) * 100) : 0;
   const bk = bookmarks.has(dish.id);
+  const directionsUrl = buildDirectionsUrl(dish);
+  const hasOrder = !!dish.orderUrl;
+  const scoreLabel = score >= 9 ? 'World-class' : score >= 8 ? 'Worth it' : score >= 7 ? 'Solid' : score >= 5 ? 'Meh' : score >= 3 ? 'Skip' : 'Avoid';
+  const scoreColor = score >= 7 ? 'var(--moss)' : score >= 5 ? 'var(--ochre)' : 'var(--tomato)';
   return (
     <div className="sheet show" style={{transform: 'translate(-50%, 0)'}}>
       <div className="sheet-grab"/>
@@ -857,12 +919,56 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
         <h2 className="serif" style={{margin:'4px 0', fontWeight:800, fontSize: 28, lineHeight:1.05, letterSpacing:'-.015em', fontStyle:'italic'}}>{dish.name}</h2>
         <div style={{font:'500 13px/1 Inter', color:'var(--ink-2)'}}>{dish.restaurant} · {dish.neighborhood} · {dish.price}</div>
 
-        <div style={{marginTop: 14, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 10}}>
-          <button className="press" style={{padding:'12px', borderRadius:12, border:'1.5px solid var(--tomato)', background:'var(--tomato)', color:'var(--paper)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 8, font:'700 14px/1 Inter'}}>
-            <Icon.Yes/> Worth it
+        {/* Action row — Order Now (primary) · Directions · Save */}
+        <div style={{marginTop: 14, display:'grid', gridTemplateColumns: hasOrder ? '1.2fr 1fr 1fr' : '1fr 1fr', gap: 8}}>
+          {hasOrder && (
+            <a href={dish.orderUrl} target="_blank" rel="noopener noreferrer" className="press" style={{padding:'12px 8px', borderRadius:12, border:'1.5px solid var(--tomato)', background:'var(--tomato)', color:'var(--paper)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 6, font:'700 13px/1 Inter', textDecoration: 'none', whiteSpace: 'nowrap'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Order now
+            </a>
+          )}
+          {directionsUrl && (
+            <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="press" style={{padding:'12px 8px', borderRadius:12, border:'1.5px solid var(--ink)', background:'var(--paper)', color:'var(--ink)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 6, font:'700 13px/1 Inter', textDecoration: 'none', whiteSpace: 'nowrap'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Directions
+            </a>
+          )}
+          <button onClick={()=>toggleBookmark(dish.id)} className="press" style={{padding:'12px 8px', borderRadius:12, border:`1.5px solid ${bk ? 'var(--tomato)' : 'var(--ink)'}`, background:'var(--paper)', color: bk ? 'var(--tomato)' : 'var(--ink)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 6, font:'700 13px/1 Inter', whiteSpace: 'nowrap'}}>
+            <Icon.Bookmark/> {bk ? 'Saved' : 'Save'}
           </button>
-          <button onClick={()=>toggleBookmark(dish.id)} className="press" style={{padding:'12px', borderRadius:12, border:'1.5px solid var(--ink)', background:'var(--paper)', color:'var(--ink)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap: 8, font:'700 14px/1 Inter'}}>
-            <Icon.Bookmark/> {bk ? 'Saved' : 'Save to try'}
+        </div>
+
+        {/* Rate this dish — sliding score 0–10 */}
+        <div style={{marginTop: 16, padding: '14px 14px 16px', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 12}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', gap: 8}}>
+            <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase'}}>Your rating</div>
+            <div style={{display:'flex', alignItems:'baseline', gap: 6}}>
+              <span className="rank-num" style={{fontSize: 24, fontStyle:'italic', color: scoreColor, fontWeight: 900}}>{score}</span>
+              <span style={{font:'600 11px/1 Inter', color: scoreColor, letterSpacing: '.04em', textTransform: 'uppercase'}}>{scoreLabel}</span>
+            </div>
+          </div>
+          <input
+            type="range" min={0} max={10} step={1}
+            value={score}
+            onChange={(e) => setScore(Number(e.target.value))}
+            className="wgh-score-slider"
+            style={{
+              width: '100%', marginTop: 12, appearance: 'none', height: 6, borderRadius: 3,
+              background: `linear-gradient(to right, ${scoreColor} 0%, ${scoreColor} ${score * 10}%, var(--rule) ${score * 10}%, var(--rule) 100%)`,
+              outline: 'none', cursor: 'pointer',
+            }}
+          />
+          <div style={{display:'flex', justifyContent:'space-between', marginTop: 6}}>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)'}}>AVOID</span>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)'}}>MEH</span>
+            <span className="mono" style={{fontSize: 9, color:'var(--ink-3)'}}>WORTH IT</span>
+          </div>
+          <button
+            onClick={() => { onRate && onRate(dish.id, score); }}
+            className="press"
+            style={{width: '100%', marginTop: 12, padding: '10px 14px', border: 0, borderRadius: 999, background: 'var(--ink)', color: 'var(--paper)', font: '700 13px/1 Inter', letterSpacing: '.02em', cursor: 'pointer'}}
+          >
+            Cast vote · {score}/10
           </button>
         </div>
 
@@ -1091,15 +1197,15 @@ export function PrototypeApp() {
     setTimeout(function () { setToast('') }, 1600)
   }
 
-  function onVote(_id, v) {
+  function onVote(_id, v, score, note) {
     if (!user) { showToast('Sign in to vote'); navigate('/login'); return }
     const proto = DATA.dishes[voteIdx]
     if (proto && proto._raw) {
       const dishId = proto._raw.dish_id || proto._raw.id
-      const rating = v === 'yes' ? 9 : 4
-      submitVote(dishId, rating, null).catch(function () { showToast('Vote failed — try again') })
+      const rating = typeof score === 'number' ? score : (v === 'yes' ? 9 : 4)
+      submitVote(dishId, rating, note || null).catch(function () { showToast('Vote failed — try again') })
     }
-    showToast(v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped')
+    showToast(typeof score === 'number' ? `Vote cast · ${score}/10` : (v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped'))
     setVoteIdx(function (i) { return (i + 1) % Math.max(DATA.dishes.length, 1) })
   }
 
@@ -1147,14 +1253,37 @@ export function PrototypeApp() {
           <VoteBallot dish={DATA.dishes[voteIdx]} onVote={onVote} onSkip={()=>{ setVoteIdx(i=>(i+1)%Math.max(DATA.dishes.length, 1)); showToast('Marked not tried'); }}/>
         )}
         {tab === 'lists' && <ListsPage lists={DATA.lists} shelf={shelf} setShelf={setShelf}/>}
-        {tab === 'profile' && <ProfilePage user={DATA.user} currentTheme={tweaks.theme}/>}
+        {tab === 'profile' && (
+          <ProfilePage
+            user={DATA.user}
+            currentTheme={tweaks.theme}
+            stats={{
+              votesCast: DATA.user.score || 0,
+              tried: DATA.user.score || 0,
+              toTry: bookmarks.size,
+              lists: DATA.lists.length,
+            }}
+          />
+        )}
       </div>
 
       {/* Dish sheet */}
       {openDish && (
         <>
           <div className={"sheet-back show"} onClick={()=>setOpenDish(null)}/>
-          <DishSheet dish={openDish} onClose={()=>setOpenDish(null)} bookmarks={bookmarks} toggleBookmark={toggleBookmark}/>
+          <DishSheet
+            dish={openDish}
+            onClose={()=>setOpenDish(null)}
+            bookmarks={bookmarks}
+            toggleBookmark={toggleBookmark}
+            onRate={(dishId, score) => {
+              if (!user) { showToast('Sign in to vote'); navigate('/login'); return }
+              submitVote(dishId, score, null)
+                .then(() => showToast(`Vote cast · ${score}/10`))
+                .catch(() => showToast('Vote failed — try again'))
+              setOpenDish(null)
+            }}
+          />
         </>
       )}
 
