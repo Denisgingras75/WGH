@@ -69,6 +69,7 @@ const AcceptCuratorInvite = lazyWithRetry(() => import('./pages/AcceptCuratorInv
 const MyList = lazyWithRetry(() => import('./pages/MyList'), 'MyList')
 const ManageRestaurant = lazyWithRetry(() => import('./pages/ManageRestaurant'), 'ManageRestaurant')
 const MapPage = lazyWithRetry(() => import('./pages/Map'), 'Map')
+const PrototypeApp = lazyWithRetry(() => import('./pages/PrototypeApp'), 'PrototypeApp')
 const HowReviewsWork = lazyWithRetry(() => import('./pages/HowReviewsWork'), 'HowReviewsWork')
 const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'ForRestaurants')
 const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
@@ -133,8 +134,9 @@ function App() {
           <DesignStudio />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<><MapPage /><BottomNav /></>} />
-              <Route path="/map" element={<Navigate to="/" replace />} />
+              <Route path="/" element={<PrototypeApp />} />
+              <Route path="/map" element={<><MapPage /><BottomNav /></>} />
+              <Route path="/old-home" element={<><MapPage /><BottomNav /></>} />
               <Route path="/browse" element={<Layout><Browse /></Layout>} />
               <Route path="/dish/:dishId" element={<Layout><Dish /></Layout>} />
               <Route path="/restaurants" element={<Layout><Restaurants /></Layout>} />
