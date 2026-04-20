@@ -20,7 +20,7 @@
 //  is a verbatim copy of the reference.
 // =========================================================================
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLocationContext } from '../context/LocationContext'
@@ -31,7 +31,14 @@ import { useUserVotes } from '../hooks/useUserVotes'
 import { useUserPlaylists } from '../hooks/useUserPlaylists'
 import { useFavorites } from '../hooks/useFavorites'
 import { useVote } from '../hooks/useVote'
+import { profileApi } from '../api/profileApi'
 import { getCategoryEmoji, BROWSE_CATEGORIES } from '../constants/categories'
+
+// Leaflet map lazy-loaded so the whole redesign bundle doesn't pay for it
+// when the user never visits the Map view.
+const LazyRestaurantMap = lazy(() =>
+  import('../components/restaurants/RestaurantMap').then((m) => ({ default: m.RestaurantMap })),
+)
 
 // ---- Tweakable defaults (persisted via edit mode) ----
 const DEFAULTS = {
@@ -199,6 +206,7 @@ function useProtoData() {
         dishes,
         lists,
         activity: [], // TODO: wire friend activity feed
+        recentMeals: (stats && stats.recentMeals) || [],
       }
     },
     [user, town, rankedDishes, allDishes, stats, myPlaylists],
@@ -470,30 +478,47 @@ function Activity({ items }) {
   );
 }
 
-// ---- Map mini ----
-function MapMini() {
-  const pins = [{t:32, l:40, n:1, c:'var(--tomato)'}, {t:48, l:68, n:2, c:'var(--tomato)'}, {t:58, l:28, n:3, c:'var(--ochre)'}, {t:22, l:72, n:4, c:'var(--ochre)'}, {t:72, l:55, n:5, c:'var(--moss)'}];
+// ---- Map mini (live Leaflet preview) ----
+// Small preview of the top dishes on a real map. Swappable mock fallback
+// rendered while the Leaflet bundle + tiles load.
+function MapMini({ dishes, userLocation, onDishClick }) {
+  const mapDishes = (dishes || []).slice(0, 8).filter(d => d._raw && d._raw.restaurant_lat != null)
   return (
     <div style={{padding:'0 20px 20px'}}>
-      <div className="map-bg press" style={{aspectRatio:'16/8', borderRadius: 14, border:'1px solid var(--rule)', position:'relative', overflow:'hidden', cursor:'pointer'}}>
-        {/* coastline sketch */}
-        <svg viewBox="0 0 400 200" style={{position:'absolute', inset:0, width:'100%', height:'100%'}} preserveAspectRatio="none">
-          <path d="M0,120 Q60,80 120,110 T260,100 Q320,90 400,115 L400,200 L0,200 Z" fill="var(--paper)" stroke="var(--rule-2)" strokeWidth="1"/>
-        </svg>
-        {pins.map((p,i) => (
-          <div key={i} style={{position:'absolute', top:`${p.t}%`, left:`${p.l}%`, transform:'translate(-50%,-100%)'}}>
-            <div style={{width:28, height:28, borderRadius:'50%', background: p.c, color:'var(--paper)', display:'flex', alignItems:'center', justifyContent:'center', font:'800 12px/1 Fraunces', boxShadow:'0 2px 8px rgba(0,0,0,.2)'}}>{p.n}</div>
-          </div>
-        ))}
-        <div className="mono" style={{position:'absolute', bottom:8, left:10, fontSize:10, color:'var(--ink-3)', background:'var(--paper)', padding:'3px 6px', borderRadius:4}}>top 5 · {DATA.town}</div>
-        <div className="mono" style={{position:'absolute', bottom:8, right:10, fontSize:10, color:'var(--ink)', background:'var(--paper)', padding:'3px 6px', borderRadius:4, border:'1px solid var(--rule)'}}>Open map →</div>
+      <div style={{aspectRatio:'16/8', borderRadius: 14, border:'1px solid var(--rule)', position:'relative', overflow:'hidden'}}>
+        <Suspense fallback={<MapFallback label={`top · ${DATA.town}`} />}>
+          <LazyRestaurantMap
+            mode="dish"
+            dishes={mapDishes.map(d => d._raw)}
+            userLocation={userLocation}
+            town={DATA.town}
+            isAuthenticated={false}
+            permissionGranted={false}
+            radiusMi={25}
+            compact
+            onSelectDish={(dish) => {
+              const proto = mapDishes.find(m => (m._raw.dish_id || m._raw.id) === (dish.dish_id || dish.id))
+              if (proto && onDishClick) onDishClick(proto)
+            }}
+          />
+        </Suspense>
+        <div className="mono" style={{position:'absolute', bottom:8, left:10, fontSize:10, color:'var(--ink-3)', background:'var(--paper)', padding:'3px 6px', borderRadius:4, zIndex: 400, pointerEvents: 'none'}}>top · {DATA.town}</div>
       </div>
     </div>
   );
 }
 
+// Simple striped fallback shown while the Leaflet chunk loads.
+function MapFallback({ label }) {
+  return (
+    <div className="map-bg" style={{position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <span className="mono" style={{fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--ink-3)'}}>{label || 'Loading map…'}</span>
+    </div>
+  )
+}
+
 // ---- Browse page ----
-function BrowsePage({ dishes, view, onOpen, bookmarks, toggleBookmark, cat, setCat, q, setQ }) {
+function BrowsePage({ dishes, view, onOpen, bookmarks, toggleBookmark, cat, setCat, q, setQ, userLocation }) {
   const filtered = dishes
     .filter(d => cat==='all' || d.category === cat)
     .filter(d => !q || (d.name+d.restaurant).toLowerCase().includes(q.toLowerCase()));
@@ -514,28 +539,30 @@ function BrowsePage({ dishes, view, onOpen, bookmarks, toggleBookmark, cat, setC
           {filtered.map((d, i) => <DishCard key={d.id} dish={d} rank={i+1} onOpen={()=>onOpen(d)}/>)}
         </div>
       )}
-      {view === 'map' && <div style={{padding:'0 20px 20px'}}><MapFull dishes={filtered} onOpen={onOpen}/></div>}
+      {view === 'map' && <div style={{padding:'0 20px 20px'}}><MapFull dishes={filtered} onOpen={onOpen} userLocation={userLocation}/></div>}
     </>
   );
 }
 
-function MapFull({ dishes, onOpen }) {
+function MapFull({ dishes, onOpen, userLocation }) {
+  const mapDishes = (dishes || []).filter(d => d._raw && d._raw.restaurant_lat != null)
   return (
-    <div className="map-bg" style={{aspectRatio:'4/5', borderRadius:14, border:'1px solid var(--rule)', position:'relative', overflow:'hidden'}}>
-      <svg viewBox="0 0 400 500" style={{position:'absolute', inset:0, width:'100%', height:'100%'}} preserveAspectRatio="none">
-        <path d="M20,180 Q100,140 180,170 T340,180 Q380,200 380,260 Q360,320 300,340 T180,380 Q80,400 40,340 Q10,280 20,180 Z" fill="var(--paper)" stroke="var(--rule-2)" strokeWidth="1.5"/>
-      </svg>
-      {dishes.slice(0,8).map((d,i) => {
-        const t = 20 + (i * 9) + (i % 2 === 0 ? 5 : -3);
-        const l = 22 + ((i*13) % 60);
-        return (
-          <button key={d.id} onClick={()=>onOpen(d)} style={{position:'absolute', top:`${t}%`, left:`${l}%`, transform:'translate(-50%,-100%)', border:0, background:'transparent', cursor:'pointer'}}>
-            <div style={{width:36, height:36, borderRadius:'50% 50% 50% 0', transform:'rotate(-45deg)', background: i<3 ? 'var(--tomato)' : 'var(--ochre)', color:'var(--paper)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 10px rgba(0,0,0,.25)'}}>
-              <span style={{transform:'rotate(45deg)', font:'900 13px/1 Fraunces'}}>{i+1}</span>
-            </div>
-          </button>
-        );
-      })}
+    <div style={{aspectRatio:'4/5', borderRadius:14, border:'1px solid var(--rule)', position:'relative', overflow:'hidden'}}>
+      <Suspense fallback={<MapFallback />}>
+        <LazyRestaurantMap
+          mode="dish"
+          dishes={mapDishes.map(d => d._raw)}
+          userLocation={userLocation}
+          town={DATA.town}
+          isAuthenticated={false}
+          permissionGranted={false}
+          radiusMi={25}
+          onSelectDish={(dish) => {
+            const proto = mapDishes.find(m => (m._raw.dish_id || m._raw.id) === (dish.dish_id || dish.id))
+            if (proto && onOpen) onOpen(proto)
+          }}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -615,9 +642,59 @@ function VoteBallot({ dish, onVote, onSkip }) {
 }
 
 // ---- Lists page ----
-function ListsPage({ lists, shelf, setShelf }) {
-  const shelfCounts = { tried: 24, wantto: 12, heard: 9, mine: 3 };
+function ListsPage({ lists, shelf, setShelf, shelfCounts: shelfCountsProp, triedRows, wanttoRows, userHandle }) {
+  const shelfCounts = shelfCountsProp || { tried: 0, wantto: 0, heard: 0, mine: 0 };
   const shelfLabels = { tried: 'Tried', wantto: 'Want to try', heard: 'Heard it\'s good', mine: 'My lists' };
+
+  // Per-shelf dish rows. Falls back to top dishes for shelves we can't source live.
+  const shelfRows = useMemo(function () {
+    if (shelf === 'tried') {
+      return (triedRows || []).slice(0, 5).map(function (r, i) {
+        return {
+          row: {
+            id: r.id || (r.dish_name + (r.voted_at || i)),
+            name: r.dish_name || r.name,
+            restaurant: r.restaurant_name || r.restaurant || '',
+            emoji: getCategoryEmoji(r.category) || '🍽️',
+            imageUrl: r.photo_url || null,
+            yes: Number(r.rating) >= 7 ? 1 : 0,
+            no: 0,
+          },
+          meta: {
+            verb: Number(r.rating) >= 7 ? 'Worth it' : Number(r.rating) >= 5 ? 'Meh' : 'Skip',
+            subtitle: r.voted_at ? new Date(r.voted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
+            color: Number(r.rating) >= 7 ? 'var(--tomato)' : Number(r.rating) >= 5 ? 'var(--ochre)' : 'var(--ink-3)',
+            rating: Math.max(0, Math.min(5, Math.round(Number(r.rating || 0) / 2))),
+          },
+        }
+      })
+    }
+    if (shelf === 'wantto') {
+      return (wanttoRows || []).slice(0, 5).map(function (r) {
+        return {
+          row: {
+            id: r.dish_id || r.id,
+            name: r.dish_name || r.name,
+            restaurant: r.restaurant_name || '',
+            emoji: getCategoryEmoji(r.category) || '🍽️',
+            imageUrl: r.photo_url || null,
+            yes: 0, no: 0,
+          },
+          meta: { verb: 'Saved', subtitle: 'in Want to try', color: 'var(--ochre)', rating: 0 },
+        }
+      })
+    }
+    // 'heard' + 'mine' — we don't have live data sources yet; show top dishes as placeholders
+    return DATA.dishes.slice(0, 5).map(function (d) {
+      return {
+        row: d,
+        meta: shelf === 'heard'
+          ? { verb: 'Heard it', subtitle: 'from locals', color: 'var(--moss)', rating: 0 }
+          : { verb: 'In pizza tour', subtitle: '6 dishes · 12 follow', color: 'var(--ink)', rating: 0 },
+      }
+    })
+  }, [shelf, triedRows, wanttoRows])
+
   return (
     <>
       <div style={{padding:'18px 20px 6px'}}>
@@ -633,10 +710,10 @@ function ListsPage({ lists, shelf, setShelf }) {
       {/* Shelf cards (Goodreads-esque, stacked "spines") */}
       <div style={{padding:'16px 20px 4px', display:'grid', gridTemplateColumns:'1fr 1fr', gap: 10}}>
         {[
-          { id:'tried', label:"Tried", n: 24, sub:'eaten', tint:'var(--tomato)', bg:'var(--tomato-soft)' },
-          { id:'wantto', label:'Want to try', n: 12, sub:'queued', tint:'var(--ochre)', bg:'var(--ochre-soft)' },
-          { id:'heard', label:"Heard it's good", n: 9, sub:'tips', tint:'var(--moss)', bg:'var(--paper-2)' },
-          { id:'mine', label:'My lists', n: 3, sub:'lists', tint:'var(--ink)', bg:'var(--paper-2)' },
+          { id:'tried', label:"Tried", n: shelfCounts.tried, sub:'eaten', tint:'var(--tomato)', bg:'var(--tomato-soft)' },
+          { id:'wantto', label:'Want to try', n: shelfCounts.wantto, sub:'queued', tint:'var(--ochre)', bg:'var(--ochre-soft)' },
+          { id:'heard', label:"Heard it's good", n: shelfCounts.heard, sub:'tips', tint:'var(--moss)', bg:'var(--paper-2)' },
+          { id:'mine', label:'My lists', n: shelfCounts.mine, sub:'lists', tint:'var(--ink)', bg:'var(--paper-2)' },
         ].map(s => (
           <button key={s.id} onClick={()=>setShelf(s.id)} className="press" style={{
             textAlign:'left', border: shelf===s.id ? '1.5px solid var(--ink)' : '1px solid var(--rule)',
@@ -672,21 +749,23 @@ function ListsPage({ lists, shelf, setShelf }) {
       </div>
 
       <div style={{padding:'10px 20px 4px', display:'flex', flexDirection:'column', gap: 8}}>
-        {DATA.dishes.slice(shelf==='wantto' ? 3 : 0, shelf==='wantto' ? 6 : 5).map((d, i) => (
-          <ListShelfRow key={d.id} dish={d} idx={i+1} meta={
-            shelf==='tried' ? { verb: 'Worth it', subtitle: `${[3,9,12,20,40][i%5]}d ago`, color:'var(--tomato)', rating: [5,4,5,3,4][i%5] }
-            : shelf==='wantto' ? { verb: 'Saved', subtitle: `from Mara R.`, color:'var(--ochre)', rating: 0 }
-            : shelf==='heard' ? { verb: 'Heard it', subtitle: `tip · Jules T.`, color:'var(--moss)', rating: 0 }
-            : { verb: 'In pizza tour', subtitle: `6 dishes · 12 follow`, color:'var(--ink)', rating: 0 }
-          }/>
-        ))}
+        {shelfRows.length === 0 ? (
+          <div className="serif" style={{fontStyle:'italic', fontSize: 14, color:'var(--ink-2)', padding:'16px 2px'}}>
+            {shelf === 'tried' ? "You haven't rated anything yet. Cast a vote to start this shelf."
+              : shelf === 'wantto' ? 'Bookmark a dish to queue it up here.'
+              : shelf === 'heard' ? 'Whispers from locals will show up here.'
+              : 'Create a list to see it here.'}
+          </div>
+        ) : shelfRows.map(function (r, i) {
+          return <ListShelfRow key={r.row.id} dish={r.row} idx={i+1} meta={r.meta} />
+        })}
       </div>
 
       {/* Share bar */}
       <div style={{margin: '14px 20px 4px', padding: '14px 14px', border:'1px dashed var(--rule-2)', borderRadius: 12, display:'flex', justifyContent:'space-between', alignItems:'center', gap: 10}}>
         <div style={{minWidth:0, flex:1}}>
           <div className="serif" style={{fontWeight:700, fontStyle:'italic', fontSize: 15, lineHeight:1.3}}>Share this shelf</div>
-          <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 6, letterSpacing:'.08em', textTransform:'uppercase', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>wgh.co/{DATA.user.handle}/{shelf}</div>
+          <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 6, letterSpacing:'.08em', textTransform:'uppercase', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>wgh.co/{userHandle || DATA.user.handle}/{shelf}</div>
         </div>
         <button style={{border:'1px solid var(--ink)', background:'var(--ink)', color:'var(--paper)', padding:'8px 14px', borderRadius:999, cursor:'pointer', font:'700 12px/1 Inter', whiteSpace:'nowrap', flexShrink:0}}>Copy link</button>
       </div>
@@ -763,12 +842,58 @@ const THEMES = [
 const THEME_LABEL = Object.fromEntries(THEMES.map(t => [t.id, t.name]));
 
 // ---- Profile page ----
-function ProfilePage({ user, currentTheme, stats }) {
+function ProfilePage({ user, currentTheme, stats, recentMeals, tasteStats }) {
   const s = stats || {};
   const votesCast = String(s.votesCast ?? user.score ?? 0);
   const tried = String(s.tried ?? 0);
   const toTry = String(s.toTry ?? 0);
   const listsN = String(s.lists ?? 0);
+
+  // Taste chart: map real tasteStats (from get_badge_evaluation_stats) into
+  // the bar rows the prototype designs. Falls back to reference rows when the
+  // user hasn't voted enough for stats to exist.
+  const tasteRows = useMemo(function () {
+    if (tasteStats && tasteStats.length > 0) {
+      return tasteStats
+        .filter(r => Number(r.total_ratings || 0) >= 1)
+        .slice(0, 5)
+        .map(r => {
+          const avg = Number(r.my_avg_rating != null ? r.my_avg_rating : r.avg_rating) * 10
+          const consensus = Number(r.consensus_avg != null ? r.consensus_avg : r.avg_rating) * 10
+          const bias = Math.round(avg - consensus)
+          return {
+            cat: (r.category || '').replace(/\b\w/g, c => c.toUpperCase()),
+            count: Number(r.total_ratings) || 0,
+            avg: Math.round(avg),
+            bias,
+            emoji: getCategoryEmoji(r.category) || '🍽️',
+          }
+        })
+    }
+    return [
+      { cat: 'Burgers', count: 18, avg: 68, bias: -8, emoji: '🍔' },
+      { cat: 'Lobster rolls', count: 12, avg: 82, bias: 2, emoji: '🦞' },
+      { cat: 'Chowder', count: 9, avg: 91, bias: 9, emoji: '🥣' },
+      { cat: 'Pizza', count: 14, avg: 74, bias: -1, emoji: '🍕' },
+      { cat: 'Coffee', count: 22, avg: 88, bias: 3, emoji: '☕' },
+    ]
+  }, [tasteStats])
+
+  // Food journal: real last-3 votes when available, fallback to top dishes
+  const journalRows = useMemo(function () {
+    if (recentMeals && recentMeals.length > 0) {
+      return recentMeals.map(m => ({
+        id: (m.dish_name || '') + (m.voted_at || ''),
+        name: m.dish_name,
+        restaurant: m.restaurant_name || '',
+        rating: Number(m.rating) || 0,
+        date: m.voted_at ? new Date(m.voted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+      }))
+    }
+    return DATA.dishes.slice(0, 3).map((d, i) => ({
+      id: d.id, name: d.name, restaurant: d.restaurant, rating: null, date: ['Apr 17','Apr 12','Apr 5'][i],
+    }))
+  }, [recentMeals])
   return (
     <>
       <div style={{padding: '20px 20px 10px', display:'flex', gap: 14, alignItems:'center'}}>
@@ -822,13 +947,7 @@ function ProfilePage({ user, currentTheme, stats }) {
           Harsh on burgers.<br/><span style={{color:'var(--tomato)'}}>Soft on chowder.</span>
         </h3>
         <div style={{display:'flex', flexDirection:'column', gap: 14}}>
-          {[
-            {cat:'Burgers', count: 18, avg: 68, bias:-8, emoji:'🍔'},
-            {cat:'Lobster rolls', count: 12, avg: 82, bias: 2, emoji:'🦞'},
-            {cat:'Chowder', count: 9, avg: 91, bias: 9, emoji:'🥣'},
-            {cat:'Pizza', count: 14, avg: 74, bias: -1, emoji:'🍕'},
-            {cat:'Coffee', count: 22, avg: 88, bias: 3, emoji:'☕'},
-          ].map(r => (
+          {tasteRows.map(r => (
             <div key={r.cat} style={{display:'grid', gridTemplateColumns:'1fr auto', gap: 4, alignItems:'baseline'}}>
               <div style={{display:'flex', alignItems:'baseline', gap:8}}>
                 <span style={{fontSize:14}}>{r.emoji}</span>
@@ -860,24 +979,31 @@ function ProfilePage({ user, currentTheme, stats }) {
         <div className="mono" style={{fontSize: 10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase'}}>Food journal</div>
         <h3 className="serif" style={{margin:'4px 0 12px', fontWeight:800, fontSize: 20, letterSpacing:'-.01em'}}>Last few bites</h3>
         <div style={{display:'flex', flexDirection:'column', gap: 12}}>
-          {DATA.dishes.slice(0,3).map((d, i) => (
-            <div key={d.id} className="quote-card" style={{background:'var(--card)', borderRadius: 10, padding:'12px 14px', border:'1px solid var(--rule)', borderLeft:'3px solid var(--tomato)'}}>
-              <div style={{display:'flex', justifyContent:'space-between', gap:10, alignItems:'flex-start'}}>
-                <div className="serif" style={{fontWeight:700, fontSize:15, lineHeight:1.2, flex:1, minWidth:0}}>{d.name}</div>
-                <div className="mono" style={{fontSize:10, color:'var(--ink-3)', whiteSpace:'nowrap', paddingTop:3}}>{['Apr 17','Apr 12','Apr 5'][i]}</div>
-              </div>
-              <div style={{font:'500 12px/1.2 Inter', color:'var(--ink-2)', margin:'4px 0 6px'}}>{d.restaurant}</div>
-              <div className="serif" style={{fontStyle:'italic', fontSize: 14, lineHeight:1.35, color:'var(--ink)'}}>
-                "{['Ordered again. This is the bar.', 'Good, not great. Bun soaked through.', 'Best one this season — genuinely.'][i]}"
-              </div>
-              <div style={{marginTop: 8, display:'flex', gap: 8, alignItems:'center'}}>
-                <span className={"vote-pill " + (i===1 ? 'no' : 'yes')}>
-                  {i===1 ? <><Icon.No/>Skip</> : <><Icon.Yes/>Worth it</>}
-                </span>
-                <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>2 friends agree</span>
-              </div>
+          {journalRows.length === 0 ? (
+            <div className="serif" style={{fontStyle:'italic', fontSize:14, color:'var(--ink-2)', padding:'8px 0'}}>
+              Cast your first vote and it'll show up here.
             </div>
-          ))}
+          ) : journalRows.map((row) => {
+            const isYes = row.rating == null || row.rating >= 7;
+            const ratingLabel = row.rating == null ? null : (row.rating >= 7 ? 'Worth it' : row.rating >= 5 ? 'Meh' : 'Skip');
+            return (
+              <div key={row.id} className="quote-card" style={{background:'var(--card)', borderRadius: 10, padding:'12px 14px', border:'1px solid var(--rule)', borderLeft:`3px solid ${isYes ? 'var(--tomato)' : 'var(--ink-3)'}`}}>
+                <div style={{display:'flex', justifyContent:'space-between', gap:10, alignItems:'flex-start'}}>
+                  <div className="serif" style={{fontWeight:700, fontSize:15, lineHeight:1.2, flex:1, minWidth:0}}>{row.name}</div>
+                  <div className="mono" style={{fontSize:10, color:'var(--ink-3)', whiteSpace:'nowrap', paddingTop:3}}>{row.date}</div>
+                </div>
+                <div style={{font:'500 12px/1.2 Inter', color:'var(--ink-2)', margin:'4px 0 6px'}}>{row.restaurant}</div>
+                {row.rating != null && (
+                  <div style={{marginTop: 4, display:'flex', gap: 8, alignItems:'center'}}>
+                    <span className={'vote-pill ' + (isYes ? 'yes' : 'no')}>
+                      {isYes ? <><Icon.Yes/>{ratingLabel}</> : <><Icon.No/>{ratingLabel}</>}
+                    </span>
+                    <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{row.rating}/10</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </>
@@ -1141,10 +1267,22 @@ export function PrototypeApp() {
   const { theme, setTheme } = useTheme()
   const { submitVote } = useVote()
   const { favorites, toggleFavorite } = useFavorites(user?.id)
+  const { location: geo } = useLocationContext()
 
   // Live data → populate module-scoped DATA so children read the same shape
   const live = useProtoData()
   DATA = live
+
+  // Taste stats (per-category bias) — powers the "Your taste, charted" chart
+  const [tasteStats, setTasteStats] = useState([])
+  useEffect(function () {
+    if (!user?.id) { setTasteStats([]); return }
+    let cancelled = false
+    profileApi.getTasteStats(user.id)
+      .then(function (rows) { if (!cancelled) setTasteStats(rows || []) })
+      .catch(function () { if (!cancelled) setTasteStats([]) })
+    return function () { cancelled = true }
+  }, [user?.id])
 
   const [tab, setTab] = useState('home')
   const [cat, setCat] = useState('all')
@@ -1238,7 +1376,7 @@ export function PrototypeApp() {
                 {DATA.dishes.slice(0,6).map((d,i) => <DishCard key={d.id} dish={d} rank={i+1} onOpen={()=>setOpenDish(d)}/>)}
               </div>
             )}
-            {tweaks.rankingView==='map' && <MapMini/>}
+            {tweaks.rankingView==='map' && <MapMini dishes={DATA.dishes} userLocation={geo} onDishClick={setOpenDish}/>}
 
             <Section kicker="Fresh from locals" title="Lists you might follow" more="See all"/>
             <div style={{padding:'0 20px 20px', display:'flex', flexDirection:'column', gap: 10}}>
@@ -1247,12 +1385,27 @@ export function PrototypeApp() {
           </>
         )}
         {tab === 'browse' && (
-          <BrowsePage dishes={DATA.dishes} view={tweaks.rankingView} onOpen={setOpenDish} bookmarks={bookmarks} toggleBookmark={toggleBookmark} cat={cat} setCat={setCat} q={q} setQ={setQ}/>
+          <BrowsePage dishes={DATA.dishes} view={tweaks.rankingView} onOpen={setOpenDish} bookmarks={bookmarks} toggleBookmark={toggleBookmark} cat={cat} setCat={setCat} q={q} setQ={setQ} userLocation={geo}/>
         )}
         {tab === 'vote' && (
           <VoteBallot dish={DATA.dishes[voteIdx]} onVote={onVote} onSkip={()=>{ setVoteIdx(i=>(i+1)%Math.max(DATA.dishes.length, 1)); showToast('Marked not tried'); }}/>
         )}
-        {tab === 'lists' && <ListsPage lists={DATA.lists} shelf={shelf} setShelf={setShelf}/>}
+        {tab === 'lists' && (
+          <ListsPage
+            lists={DATA.lists}
+            shelf={shelf}
+            setShelf={setShelf}
+            shelfCounts={{
+              tried: DATA.user.score || 0,
+              wantto: favorites?.length || 0,
+              heard: 0,
+              mine: DATA.lists.length,
+            }}
+            triedRows={DATA.recentMeals}
+            wanttoRows={favorites || []}
+            userHandle={DATA.user.handle}
+          />
+        )}
         {tab === 'profile' && (
           <ProfilePage
             user={DATA.user}
@@ -1263,6 +1416,8 @@ export function PrototypeApp() {
               toTry: bookmarks.size,
               lists: DATA.lists.length,
             }}
+            recentMeals={DATA.recentMeals}
+            tasteStats={tasteStats}
           />
         )}
       </div>
