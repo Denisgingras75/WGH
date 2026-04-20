@@ -905,7 +905,7 @@ export function PrototypeApp() {
 
   // Live data
   const { dishes: rankedDishes } = useDishes(geo, radius)
-  const { allDishes } = useAllDishes()
+  const { dishes: allDishes } = useAllDishes()
   const { stats } = useUserVotes(user?.id)
   const { dishes: unratedDishes, refetch: refetchUnrated } = useUnratedDishes(user?.id)
   const { favorites, toggleFavorite } = useFavorites(user?.id)
@@ -982,13 +982,17 @@ export function PrototypeApp() {
     var proto = DATA.dishes[voteIdx]
     if (!user) { showToast('Sign in to vote'); navigate('/login'); return }
     if (proto && proto._raw) {
-      submitVote({
-        dishId: proto._raw.dish_id || proto._raw.id,
-        rating: v === 'yes' ? 9 : 4,
-        reviewText: '',
-        wouldOrderAgain: v === 'yes',
-      })
-        .then(function () { showToast(v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped'); refetchUnrated && refetchUnrated() })
+      var dishId = proto._raw.dish_id || proto._raw.id
+      var rating = v === 'yes' ? 9 : 4
+      submitVote(dishId, rating, null)
+        .then(function (res) {
+          if (res && res.success) {
+            showToast(v === 'yes' ? 'Vote cast · Worth it 🔥' : 'Vote cast · Skipped')
+            refetchUnrated && refetchUnrated()
+          } else {
+            showToast('Vote failed — try again')
+          }
+        })
         .catch(function () { showToast('Vote failed — try again') })
     }
     setVoteIdx(function (i) { return (i + 1) % Math.max(DATA.dishes.length, 1) })
@@ -1056,6 +1060,36 @@ export function PrototypeApp() {
 
       {/* Design Studio is mounted globally in App.jsx via ThemeProvider;
           open it with the openStudio() from useTheme(). No render here. */}
+
+      {/* Sign-in CTA for guests — otherwise no obvious entry to auth from the prototype shell */}
+      {!user ? (
+        <div style={{
+          position: 'fixed',
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 60,
+        }}>
+          <button
+            type="button"
+            onClick={function () { navigate('/login') }}
+            className="press"
+            style={{
+              padding: '10px 18px',
+              borderRadius: 999,
+              border: '1px solid var(--ink)',
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              font: "600 13px/1 Inter, system-ui, sans-serif",
+              letterSpacing: '0.02em',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-ink)',
+            }}
+          >
+            Sign in to save &amp; vote
+          </button>
+        </div>
+      ) : null}
 
       {/* Nav */}
       <nav className="navbar">
