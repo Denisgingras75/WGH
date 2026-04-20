@@ -63,6 +63,7 @@ function mapDishToProto(d) {
   const no = Math.max(0, totalVotes - yes)
   const price =
     d.price != null ? '$' + Number(d.price).toFixed(2).replace(/\.00$/, '') : ''
+  const imageUrl = d.featured_photo_url || d.photo_url || null
   return {
     id: d.dish_id || d.id,
     name: d.dish_name || d.name,
@@ -70,6 +71,7 @@ function mapDishToProto(d) {
     neighborhood: d.restaurant_town || (d.restaurants && d.restaurants.town) || '',
     category: d.category || '',
     emoji: getCategoryEmoji(d.category) || '🍽️',
+    imageUrl,
     price,
     yes,
     no,
@@ -80,6 +82,32 @@ function mapDishToProto(d) {
     firsts: 0,
     _raw: d,
   }
+}
+
+// Render either a real dish photo or the emoji-on-stripes placeholder.
+// Used wherever the prototype had a .stripe-ph + emoji combo. Keeps every
+// overlay the prototype had (rank badge, price chip, close button, etc.) by
+// forwarding children. Children render ABOVE the image/emoji layer.
+function DishImage({ dish, style, emojiSize = 32, children }) {
+  const hasImage = !!(dish && dish.imageUrl)
+  const baseStyle = { position: 'relative', overflow: 'hidden', ...style }
+  return (
+    <div className={hasImage ? '' : 'stripe-ph'} style={baseStyle}>
+      {hasImage ? (
+        <img
+          src={dish.imageUrl}
+          alt=""
+          loading="lazy"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: emojiSize }}>
+          {dish && dish.emoji}
+        </div>
+      )}
+      {children}
+    </div>
+  )
 }
 
 function mapListToProto(p, i) {
@@ -301,11 +329,7 @@ function DishRow({ dish, rank, onOpen, bookmarked, onBookmark }) {
       <div className="rank-num" style={{fontSize: 44, textAlign:'center', color: rank <= 3 ? 'var(--tomato)' : 'var(--ink-2)'}}>
         {String(rank).padStart(2,'0')}
       </div>
-      <div style={{width:68, height:68, borderRadius: 10, overflow:'hidden', position:'relative'}} className="stripe-ph">
-        <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 32}}>
-          {dish.emoji}
-        </div>
-      </div>
+      <DishImage dish={dish} style={{ width: 68, height: 68, borderRadius: 10 }} emojiSize={32} />
       <div>
         <div className="serif" style={{fontWeight:700, fontSize: 17, lineHeight:1.15, letterSpacing:'-.01em'}}>
           {dish.name}
@@ -339,13 +363,12 @@ function DishCard({ dish, rank, onOpen }) {
       textAlign:'left', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 14,
       padding: 0, cursor:'pointer', overflow:'hidden', display:'flex', flexDirection:'column'
     }}>
-      <div className="stripe-ph" style={{aspectRatio:'5/4', position:'relative'}}>
-        <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 54}}>{dish.emoji}</div>
-        <div className="rank-num" style={{position:'absolute', top:8, left:10, fontSize:28, color:'var(--tomato)'}}>
+      <DishImage dish={dish} style={{ aspectRatio: '5/4' }} emojiSize={54}>
+        <div className="rank-num" style={{position:'absolute', top:8, left:10, fontSize:28, color:'var(--tomato)', textShadow: dish.imageUrl ? '0 1px 3px rgba(0,0,0,.5)' : 'none', zIndex: 1}}>
           {String(rank).padStart(2,'0')}
         </div>
-        <div className="mono" style={{position:'absolute', top:10, right:10, fontSize:10, background:'var(--paper)', padding:'3px 6px', borderRadius: 4, color:'var(--ink-2)'}}>{dish.price}</div>
-      </div>
+        <div className="mono" style={{position:'absolute', top:10, right:10, fontSize:10, background:'var(--paper)', padding:'3px 6px', borderRadius: 4, color:'var(--ink-2)', zIndex: 1}}>{dish.price}</div>
+      </DishImage>
       <div style={{padding:'10px 12px 14px'}}>
         <div className="serif" style={{fontWeight:700, fontSize: 15, lineHeight:1.15}}>{dish.name}</div>
         <div style={{font:'500 11px/1 Inter', color:'var(--ink-2)', marginTop:4}}>{dish.restaurant}</div>
@@ -396,9 +419,7 @@ function TonightPick({ dish, onOpen }) {
             <span className="mono" style={{fontSize:10, color:'var(--ink-3)'}}>{dish.locals} locals · {total} votes</span>
           </div>
         </div>
-        <div className="stripe-ph" style={{aspectRatio:'1', borderRadius:12, position:'relative'}}>
-          <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:52}}>{dish.emoji}</div>
-        </div>
+        <DishImage dish={dish} style={{ aspectRatio: '1', borderRadius: 12 }} emojiSize={52} />
       </button>
     </div>
   );
@@ -510,9 +531,7 @@ function VoteBallot({ dish, onVote, onSkip }) {
         <div className="serif" style={{fontWeight:800, fontSize: 26, lineHeight:1.1, letterSpacing:'-.01em', marginTop:6}}>{dish.name}</div>
         <div style={{font:'500 13px/1.3 Inter', color:'var(--ink-2)', marginTop:2}}>{dish.restaurant} · {dish.neighborhood}</div>
 
-        <div className="stripe-ph" style={{aspectRatio:'16/10', borderRadius:10, margin:'14px 0', position:'relative'}}>
-          <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 72}}>{dish.emoji}</div>
-        </div>
+        <DishImage dish={dish} style={{ aspectRatio: '16/10', borderRadius: 10, margin: '14px 0' }} emojiSize={72} />
 
         <div className="serif" style={{fontWeight:700, fontStyle:'italic', fontSize: 20, lineHeight:1.2}}>Would you order this again?</div>
 
@@ -637,7 +656,7 @@ function ListShelfRow({ dish, meta, idx }) {
   return (
     <div style={{display:'grid', gridTemplateColumns:'22px 44px 1fr auto', gap:12, alignItems:'center', padding:'12px 14px 12px 10px', background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 12, position:'relative'}}>
       <div className="mono" style={{fontSize:10, color:'var(--ink-3)', textAlign:'right', fontWeight:600}}>{String(idx).padStart(2,'0')}</div>
-      <div className="stripe-ph" style={{width:44, height:44, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22}}>{dish.emoji}</div>
+      <DishImage dish={dish} style={{ width: 44, height: 44, borderRadius: 8 }} emojiSize={22} />
       <div style={{minWidth:0}}>
         <div className="serif" style={{fontWeight:700, fontSize: 15, lineHeight:1.15, letterSpacing:'-.005em'}}>{dish.name}</div>
         <div style={{font:'500 12px/1.2 Inter', color:'var(--ink-2)', marginTop:2}}>{dish.restaurant}</div>
@@ -829,10 +848,9 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
     <div className="sheet show" style={{transform: 'translate(-50%, 0)'}}>
       <div className="sheet-grab"/>
       <div style={{padding:'4px 20px 100px'}}>
-        <div className="stripe-ph" style={{aspectRatio:'16/10', borderRadius: 14, position:'relative', overflow:'hidden'}}>
-          <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:100}}>{dish.emoji}</div>
-          <button onClick={onClose} style={{position:'absolute', top:10, right:10, width:32, height:32, borderRadius:999, border:0, background:'var(--paper)', cursor:'pointer', fontSize:16}}>×</button>
-        </div>
+        <DishImage dish={dish} style={{ aspectRatio: '16/10', borderRadius: 14 }} emojiSize={100}>
+          <button onClick={onClose} style={{position:'absolute', top:10, right:10, width:32, height:32, borderRadius:999, border:0, background:'var(--paper)', cursor:'pointer', fontSize:16, zIndex: 1}}>×</button>
+        </DishImage>
         <div className="mono" style={{fontSize:10, letterSpacing:'.2em', color:'var(--ink-3)', textTransform:'uppercase', marginTop: 14}}>
           Dish · {dish.category}
         </div>
@@ -894,7 +912,7 @@ function DishSheet({ dish, onClose, bookmarks, toggleBookmark }) {
               const dPct = dTotal > 0 ? Math.round((d.yes / dTotal) * 100) : 0;
               return (
                 <div key={d.id} style={{minWidth: 140, background:'var(--card)', border:'1px solid var(--rule)', borderRadius: 10, padding: 10}}>
-                  <div className="stripe-ph" style={{aspectRatio:'1', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize: 30}}>{d.emoji}</div>
+                  <DishImage dish={d} style={{ aspectRatio: '1', borderRadius: 6 }} emojiSize={30} />
                   <div className="serif" style={{fontWeight:700, fontSize: 13, marginTop: 6, lineHeight: 1.15}}>{d.name}</div>
                   <div className="mono" style={{fontSize:10, color:'var(--ink-3)', marginTop: 3}}>{dPct}% yes</div>
                 </div>
