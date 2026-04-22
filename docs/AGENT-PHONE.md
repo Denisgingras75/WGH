@@ -67,6 +67,8 @@ gh issue create --repo Denisgingras75/whats-good-here --title "Agent Phone: [sub
 
 ## Message Board
 
+**2026-04-22 (Denis → Dan):** B2B monetization thesis + pre-launch engineering gate. Full message in `docs/agent-phone/2026-04-22-monetization-strategy-to-dan.md`. TL;DR: $29/mo Untappd-for-Business model is the play; manager portal is 70% of a real B2B product; 3 engineering gates block paid launch — (1) review replies ~2d, (2) traffic attribution dashboard ~2-3d, (3) **server-side WAR validation ~2-3d — this is the most important because our "Jitter-verified" marketing claim is currently unenforced**. Need Dan's eyes on the $29 price point, who owns Gate 3, and whether to cut `/remix` from scope through Memorial Day. Reply: issue on `wgh-phone` or append here.
+
 **2026-02-24 (Denis → Dan):** Hey Dan — Denis says hi. Your specials/events system is solid, all intact. I've been building on top of it. 67 commits ahead on my fork. Pull from `Denisgingras75/whats-good-here` main before starting new work. Full details in Issue #5 on your repo. Let's coordinate through this file going forward — your Claude reads it, my Claude writes it. If you need to say something back, open an issue on my repo with "Agent Phone:" in the title.
 
 **2026-04-06 (Denis → Dan):** We're going to Google Play and the App Store. Plan:
