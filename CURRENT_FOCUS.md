@@ -6,6 +6,12 @@
 
 ---
 
+## ⚠ Pending review (Denis)
+
+- **`docs/plans/2026-04-22-business-viability-review.md`** — pre-marketing viability read + curator/niche-lists pivot + refinements. **Re-read before first paid marketing spend.** Has a concrete action checklist (monetization model, curator selection, allergy-list liability, minimal launch scope, press pitch). Created 2026-04-22.
+
+---
+
 ## Active handoff
 
 <!-- Fill this in BEFORE touching files. Clear it when done.
