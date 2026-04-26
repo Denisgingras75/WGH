@@ -129,6 +129,106 @@
   --shadow-ink: 0 1px 0 rgba(26, 23, 20, 0.06), 0 8px 24px -12px rgba(26, 23, 20, 0.18);
 }
 
+/* ===========================
+   Claude Design — zine theme (riso-printed punk)
+   Hot magenta + cyan + canary, Archivo Black display, hard offset shadows.
+   Activated by html[data-theme="zine"].
+   =========================== */
+[data-theme="zine"] {
+  --paper: #F2EDE0;
+  --paper-2: #FFE94A;
+  --ink: #0A0A0A;
+  --ink-2: #2B2B2B;
+  --ink-3: #6A6A6A;
+  --rule: #0A0A0A;
+  --rule-2: #0A0A0A;
+  --tomato: #FF2D87;
+  --tomato-soft: #FFD1E3;
+  --ochre: #FFE94A;
+  --ochre-soft: #FFF4A8;
+  --moss: #00B7C7;
+  --card-paper: #FFFDF5;
+  --shadow-ink: 3px 3px 0 #0A0A0A;
+}
+[data-theme="zine"] body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(0, 183, 199, 0.18) 1px, transparent 1.5px) 0 0 / 6px 6px,
+    var(--paper);
+}
+[data-theme="zine"] .serif {
+  font-family: 'Archivo Black', Impact, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+[data-theme="zine"] h1.serif,
+[data-theme="zine"] h2.serif {
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+[data-theme="zine"] .mono {
+  font-family: 'DM Mono', ui-monospace, monospace;
+}
+[data-theme="zine"] .stripe-ph {
+  background:
+    repeating-linear-gradient(45deg, #FF2D87 0 6px, #0A0A0A 6px 7px, #FFE94A 7px 13px, #0A0A0A 13px 14px);
+}
+[data-theme="zine"] .vote-pill {
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+[data-theme="zine"] .vote-pill.yes {
+  background: #FF2D87;
+  color: #FFFFFF;
+  border-color: var(--ink);
+}
+[data-theme="zine"] .vote-pill.no {
+  background: #00B7C7;
+  color: #FFFFFF;
+  border-color: var(--ink);
+}
+[data-theme="zine"] .chip {
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--card-paper);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+[data-theme="zine"] .chip.active {
+  background: #FF2D87;
+  color: #FFFFFF;
+  border-color: var(--ink);
+}
+[data-theme="zine"] .rank-num {
+  font-family: 'Archivo Black', Impact, sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  color: #FF2D87;
+  text-shadow: 3px 3px 0 #0A0A0A;
+  letter-spacing: -0.04em;
+}
+[data-theme="zine"] .avatar {
+  background: #00B7C7;
+  color: #FFFFFF;
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+[data-theme="zine"] .hairline,
+[data-theme="zine"] .hairline-b {
+  border-color: var(--ink);
+}
+[data-theme="zine"] .row-dish {
+  border-bottom: 2px solid var(--ink);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
