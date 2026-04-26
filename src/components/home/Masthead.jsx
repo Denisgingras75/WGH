@@ -31,40 +31,46 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
     <header
       className="hairline-b"
       style={{
-        padding: '18px 20px 14px',
+        padding: '20px 20px 16px',
         background: 'transparent',
       }}
     >
+      {/* Kicker line: hairlines flanking the issue date */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
+        <div
+          className="mono"
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.22em',
+            color: 'var(--ink-2)',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {issueLine}
+        </div>
+        <div style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            className="mono"
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.2em',
-              color: 'var(--ink-3)',
-              textTransform: 'uppercase',
-            }}
-          >
-            {issueLine}
-          </div>
           <h1
             className="serif"
             style={{
-              margin: '4px 0 10px',
+              margin: '0 0 8px',
               fontWeight: 900,
-              fontSize: 34,
-              lineHeight: 1,
-              letterSpacing: '-0.02em',
+              fontSize: 'clamp(40px, 11vw, 52px)',
+              lineHeight: 0.92,
+              letterSpacing: '-0.035em',
               fontStyle: 'italic',
-              whiteSpace: 'nowrap',
               color: 'var(--ink)',
             }}
           >
             What's Good <span style={{ color: 'var(--tomato)' }}>Here</span>
           </h1>
-          <div style={{ font: "500 12px/1.3 'Inter', system-ui, sans-serif", color: 'var(--ink-2)' }}>
-            A local's guide to what to actually order.
+          <div style={{ font: "500 12px/1.35 'Inter', system-ui, sans-serif", color: 'var(--ink-2)' }}>
+            A local&apos;s guide to what to actually order.
           </div>
         </div>
         {initials && (

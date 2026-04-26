@@ -85,14 +85,16 @@ export const DishListItem = memo(function DishListItem({
       className={'press row-dish' + (highlighted ? ' row-dish--highlighted' : '')}
       style={{
         display: 'grid',
-        gridTemplateColumns: rank != null ? '34px 64px 1fr auto' : '64px 1fr auto',
+        gridTemplateColumns: rank != null
+          ? (isPodium ? '52px 64px 1fr auto' : '34px 64px 1fr auto')
+          : '64px 1fr auto',
         gap: 12,
         alignItems: 'center',
         width: '100%',
         textAlign: 'left',
         background: highlighted ? 'var(--ochre-soft)' : 'transparent',
         cursor: 'pointer',
-        padding: '12px 16px',
+        padding: '14px 16px',
         borderBottom: isLast ? 'none' : '1px solid var(--rule)',
         transition: 'background 1s ease-out',
       }}
@@ -101,7 +103,7 @@ export const DishListItem = memo(function DishListItem({
         <div
           className="rank-num"
           style={{
-            fontSize: 40,
+            fontSize: isPodium ? 56 : 36,
             textAlign: 'center',
             color: isPodium ? 'var(--tomato)' : 'var(--ink-2)',
           }}
