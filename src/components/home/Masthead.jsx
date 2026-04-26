@@ -32,7 +32,7 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
       className="hairline-b"
       style={{
         padding: '18px 20px 14px',
-        background: 'var(--paper)',
+        background: 'transparent',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>

@@ -135,8 +135,8 @@
    Activated by html[data-theme="zine"].
    =========================== */
 [data-theme="zine"] {
-  --paper: #F2EDE0;
-  --paper-2: #FFE94A;
+  --paper: #FFE94A;
+  --paper-2: #FFF4A8;
   --ink: #0A0A0A;
   --ink-2: #2B2B2B;
   --ink-3: #6A6A6A;
@@ -152,8 +152,19 @@
 }
 [data-theme="zine"] body {
   font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: var(--paper);
+}
+/* Home shell + header bg overrides — riso double-dot pattern over canary */
+[data-theme="zine"] .home-shell {
   background:
-    radial-gradient(circle at 1px 1px, rgba(0, 183, 199, 0.18) 1px, transparent 1.5px) 0 0 / 6px 6px,
+    radial-gradient(circle at 1px 1px, rgba(255, 45, 135, 0.22) 1px, transparent 1.6px) 0 0 / 14px 14px,
+    radial-gradient(circle at 7px 7px, rgba(0, 183, 199, 0.22) 1px, transparent 1.6px) 0 0 / 14px 14px,
+    var(--paper);
+}
+[data-theme="zine"] .home-shell-header {
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 45, 135, 0.22) 1px, transparent 1.6px) 0 0 / 14px 14px,
+    radial-gradient(circle at 7px 7px, rgba(0, 183, 199, 0.22) 1px, transparent 1.6px) 0 0 / 14px 14px,
     var(--paper);
 }
 [data-theme="zine"] .serif {
@@ -362,6 +373,13 @@
   .row-dish {
     padding: 14px 0;
     border-bottom: 1px solid var(--rule);
+  }
+  /* Home shell + sticky header backgrounds — paper by default; themes override */
+  .home-shell {
+    background: var(--paper);
+  }
+  .home-shell-header {
+    background: var(--paper);
   }
 
   .scrollbar-hide {

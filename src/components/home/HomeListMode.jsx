@@ -52,14 +52,11 @@ export const HomeListMode = memo(function HomeListMode({
 
   return (
     <div
-      className="fixed inset-0 flex flex-col"
-      style={{
-        background: 'var(--paper)',
-        zIndex: 1,
-      }}
+      className="fixed inset-0 flex flex-col home-shell"
+      style={{ zIndex: 1 }}
     >
       {/* Fixed header: editorial masthead + search */}
-      <div style={{ flexShrink: 0, background: 'var(--paper)', zIndex: 10 }}>
+      <div className="home-shell-header" style={{ flexShrink: 0, zIndex: 10 }}>
         <Masthead onTownClick={onRadiusSheetOpen} />
         {/* Search bar */}
         <div className="px-5 pt-3 pb-2">
