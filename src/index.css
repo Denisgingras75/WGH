@@ -239,6 +239,16 @@
 [data-theme="zine"] .row-dish {
   border-bottom: 2px solid var(--ink);
 }
+[data-theme="zine"] .row-dish .stripe-ph {
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+[data-theme="zine"] .row-dish .row-dish__photo {
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
 
 @tailwind base;
 @tailwind components;

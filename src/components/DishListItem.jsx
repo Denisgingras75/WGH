@@ -5,7 +5,6 @@ import { getRatingColor } from '../utils/ranking'
 import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
 import { RestaurantAvatar } from './RestaurantAvatar'
 import { HearingIcon } from './HearingIcon'
-import { sanitizeUrl } from '../utils/sanitize'
 /**
  * DishListItem — the ONE component for showing a dish in any list.
  *
@@ -59,13 +58,7 @@ export const DishListItem = memo(function DishListItem({
   const price = dish.price
   const photoUrl = dish.photo_url
   const valuePercentile = dish.value_percentile
-  const valueScore = dish.value_score
-  const valueRating = valueScore != null ? Math.min(10, Math.round(valueScore / 15 * 10) / 10) : null
   const category = dish.category
-  const toastSlug = dish.toast_slug
-  const orderUrl = dish.order_url
-  const restaurantLat = dish.restaurant_lat || dish.lat
-  const restaurantLng = dish.restaurant_lng || dish.lng
 
   var handleClick = onClick || function () { navigate('/dish/' + dishId) }
 
@@ -75,8 +68,11 @@ export const DishListItem = memo(function DishListItem({
   }
 
   // --- RANKED VARIANT (home, browse, restaurant detail) ---
-  // Scoreboard layout: rank · dish name / restaurant · rating / votes
+  // Editorial row: rank-num | photo/emoji square | dish + restaurant + vote-pill | price
   var isPodium = rank != null && rank <= 3
+  var yesPct = avgRating != null ? Math.round(Number(avgRating) * 10) : null
+  var rankLabel = rank != null ? String(rank).padStart(2, '0') : null
+  var hasValueBadge = valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD
 
   return (
     <div
@@ -85,233 +81,178 @@ export const DishListItem = memo(function DishListItem({
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
-      className={'w-full text-left active:scale-[0.98]' + (isPodium ? ' rounded-xl' : '')}
+      className={'press row-dish' + (highlighted ? ' row-dish--highlighted' : '')}
       style={{
-        background: highlighted
-          ? 'var(--color-accent-gold-muted)'
-          : isPodium
-            ? 'var(--color-surface)'
-            : 'transparent',
-        padding: isPodium ? '10px 10px' : '8px 10px',
+        display: 'grid',
+        gridTemplateColumns: rank != null ? '38px 68px 1fr auto' : '68px 1fr auto',
+        gap: 14,
+        alignItems: 'center',
+        width: '100%',
+        textAlign: 'left',
+        background: highlighted ? 'var(--ochre-soft)' : 'transparent',
         cursor: 'pointer',
+        padding: '14px 16px',
+        borderBottom: isLast ? 'none' : '1px solid var(--rule)',
         transition: 'background 1s ease-out',
-        borderBottom: !isPodium && !isLast ? '1px solid var(--color-divider)' : 'none',
       }}
     >
-      <div className="flex items-center">
-      {/* Rank number */}
       {rank != null && (
-        <span
-          className="flex-shrink-0 font-bold"
+        <div
+          className="rank-num"
           style={{
-            width: isPodium ? '32px' : '28px',
+            fontSize: 44,
             textAlign: 'center',
-            fontSize: isPodium ? '22px' : '15px',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            color: rank === 1
-              ? 'var(--color-medal-gold)'
-              : rank === 2
-                ? 'var(--color-medal-silver)'
-                : rank === 3
-                  ? 'var(--color-medal-bronze)'
-                  : 'var(--color-text-tertiary)',
+            color: isPodium ? 'var(--tomato)' : 'var(--ink-2)',
           }}
         >
-          {rank}
-        </span>
-      )}
-
-      {/* Category icon (when no photo thumbnail) */}
-      {!showPhoto && (
-        <div
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: isPodium ? '72px' : '64px', height: isPodium ? '72px' : '64px', marginLeft: '4px' }}
-        >
-          {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
-            <img
-              src={getDishNameIcon(dishName) || getCategoryNeonImage(category)}
-              alt=""
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <span style={{ fontSize: isPodium ? '18px' : '14px' }}>{getCategoryEmoji(category)}</span>
-          )}
+          {rankLabel}
         </div>
       )}
 
-      {/* Photo thumbnail (restaurant detail only) */}
-      {showPhoto && photoUrl && (
-        <div
-          className="flex-shrink-0 rounded-lg overflow-hidden"
-          style={{ width: '48px', height: '48px', marginLeft: '6px', background: 'var(--color-surface)' }}
-        >
-          <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
-        </div>
-      )}
-      {showPhoto && !photoUrl && (
-        <div
-          className="flex-shrink-0 rounded-lg overflow-hidden relative"
-          style={{ width: '48px', height: '48px', marginLeft: '6px' }}
-        >
-          <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill />
-        </div>
-      )}
-
-      {/* Name + restaurant + distance */}
-      <div className="flex-1 min-w-0" style={{ marginLeft: showPhoto ? '6px' : (isPodium ? '8px' : '6px') }}>
-        <p
-          className="font-bold line-clamp-2"
-          style={{
-            fontSize: isPodium ? '15px' : '14px',
-            fontWeight: isPodium ? 800 : 700,
-            color: 'var(--color-text-primary)',
-            lineHeight: 1.3,
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {dishName}
-        </p>
-        <div className="flex items-center gap-1.5" style={{ marginTop: '2px' }}>
-          <p
-            className="truncate"
+      {/* Photo or emoji square */}
+      <div
+        className={photoUrl && showPhoto ? '' : 'stripe-ph'}
+        style={{
+          width: 68,
+          height: 68,
+          borderRadius: 10,
+          overflow: 'hidden',
+          position: 'relative',
+          background: photoUrl && showPhoto ? 'var(--paper-2)' : undefined,
+        }}
+      >
+        {photoUrl && showPhoto ? (
+          <img
+            src={photoUrl}
+            alt={dishName}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <div
             style={{
-              fontSize: isPodium ? '12px' : '11px',
-              color: 'var(--color-text-tertiary)',
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 32,
             }}
           >
-            {restaurantId ? (
-              <span
-                role="link"
-                tabIndex={0}
-                onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
-                onKeyDown={function (e) {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault(); e.stopPropagation();
-                    navigate('/restaurants/' + restaurantId)
-                  }
-                }}
-                style={{ color: 'var(--color-accent-gold)', fontWeight: 600, cursor: 'pointer' }}
-              >
-                {restaurantName}
-              </span>
-            ) : restaurantName}
-            {sortBy === 'best_value' && price != null && ' \u00b7 $' + Number(price).toFixed(0)}
-            {showDistance && distanceMiles != null && ' \u00b7 ' + Number(distanceMiles).toFixed(1) + ' mi'}
-          </p>
-          {valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD && (
-            <span
-              style={{
-                fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                color: 'var(--color-medal-gold)',
-                background: 'rgba(232, 184, 32, 0.12)',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                marginTop: '2px',
-                display: 'inline-block',
-              }}
-            >
-              GREAT VALUE
-            </span>
-          )}
-        </div>
-        {/* Action buttons — Order / Directions */}
-        {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
-          <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
-            {(toastSlug || sanitizeUrl(orderUrl)) && (
-              <a
-                href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : sanitizeUrl(orderUrl)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                style={{
-                  background: 'var(--color-primary)',
-                  color: 'white',
-                  fontSize: '10px',
-                }}
-              >
-                Order Now
-              </a>
-            )}
-            {restaurantLat && restaurantLng && (
-              <a
-                href={'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                style={{
-                  border: '1px solid var(--color-divider)',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '10px',
-                }}
-              >
-                Directions
-              </a>
-            )}
+            {getCategoryEmoji(category) || '🍽️'}
           </div>
         )}
       </div>
 
-      {/* Rating + value + votes */}
-      <div className="flex-shrink-0 text-right" style={{ marginLeft: '8px' }}>
-        {isRanked ? (
-          <>
-            <div className="flex items-baseline gap-1.5" style={{ justifyContent: 'flex-end' }}>
-              <span
-                className="font-bold"
-                style={{
-                  fontSize: isPodium ? '20px' : '16px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  color: getRatingColor(avgRating),
-                }}
-              >
-                {avgRating}
+      {/* Dish name + restaurant + vote pill */}
+      <div style={{ minWidth: 0 }}>
+        <div
+          className="serif"
+          style={{
+            fontWeight: 700,
+            fontSize: 17,
+            lineHeight: 1.15,
+            letterSpacing: '-0.01em',
+            color: 'var(--ink)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+          }}
+        >
+          {dishName}
+        </div>
+        <div
+          style={{
+            font: "500 12px/1.3 'Inter', system-ui, sans-serif",
+            color: 'var(--ink-2)',
+            marginTop: 3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {restaurantId ? (
+            <span
+              role="link"
+              tabIndex={0}
+              onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
+              onKeyDown={function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault(); e.stopPropagation();
+                  navigate('/restaurants/' + restaurantId)
+                }
+              }}
+              style={{
+                color: 'var(--ink)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                textUnderlineOffset: 2,
+                textDecorationColor: 'var(--rule-2)',
+              }}
+            >
+              {restaurantName}
+            </span>
+          ) : restaurantName}
+          {restaurantTown && (
+            <span style={{ color: 'var(--ink-3)' }}> {'·'} {restaurantTown}</span>
+          )}
+        </div>
+        {!hideVotes && (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 7, flexWrap: 'wrap' }}>
+            {isRanked && yesPct != null ? (
+              <span className="vote-pill yes">
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                  <path
+                    d="m2 6 3 3 5-6"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {yesPct}%
               </span>
-              {valueRating != null && (
-                <span
-                  style={{
-                    fontSize: isPodium ? '13px' : '11px',
-                    fontWeight: 700,
-                    color: 'var(--color-medal-gold)',
-                    opacity: 0.85,
-                  }}
-                  title="WGH Value Rating"
-                >
-                  {valueRating.toFixed(1)}v
-                </span>
-              )}
-            </div>
-            {!hideVotes && (
-              <div style={{
-                fontSize: '11px',
-                color: 'var(--color-text-tertiary)',
-                fontWeight: 500,
-                marginTop: '1px',
-              }}>
-                {totalVotes} vote{totalVotes === 1 ? '' : 's'}
-              </div>
+            ) : (
+              <span className="vote-pill no">{totalVotes ? 'EARLY' : 'NEW'}</span>
             )}
-          </>
-        ) : (
+            <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)' }}>
+              {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+              {showDistance && distanceMiles != null && ' · ' + Number(distanceMiles).toFixed(1) + ' mi'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Right column: price + value badge */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+        {price != null && (
+          <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>
+            ${Number(price).toFixed(0)}
+          </span>
+        )}
+        {hasValueBadge && (
           <span
+            className="mono"
             style={{
-              fontSize: '12px',
-              color: 'var(--color-text-tertiary)',
-              fontWeight: 500,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: 'var(--moss)',
+              border: '1px solid var(--rule)',
+              padding: '2px 5px',
+              borderRadius: 4,
+              textTransform: 'uppercase',
+              background: 'var(--card-paper)',
             }}
           >
-            {totalVotes ? totalVotes + ' vote' + (totalVotes === 1 ? '' : 's') : 'New'}
+            Value
           </span>
         )}
       </div>
-      </div>
-
     </div>
   )
 
@@ -388,7 +329,7 @@ export const DishListItem = memo(function DishListItem({
                   )}
                   {hasOwnComparison && (
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                      · avg {dish.community_avg.toFixed(1)}
+                      {'·'} avg {dish.community_avg.toFixed(1)}
                       {ownRatingDiff !== 0 && (
                         <span style={{ color: ownRatingDiff > 0 ? 'var(--color-emerald)' : 'var(--color-red)' }}>
                           {' '}({ownRatingDiff > 0 ? '+' : ''}{ownRatingDiff.toFixed(1)})
@@ -419,7 +360,7 @@ export const DishListItem = memo(function DishListItem({
                   )}
                   {hasMyRating && (
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                      · you: <span style={{ color: getRatingColor(myRatingNum) }}>
+                      {'·'} you: <span style={{ color: getRatingColor(myRatingNum) }}>
                         {myRatingNum % 1 === 0 ? myRatingNum : myRatingNum.toFixed(1)}
                       </span>
                     </span>
