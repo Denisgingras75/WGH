@@ -352,6 +352,37 @@ CREATE TABLE IF NOT EXISTS user_apple_tokens (
   revoked_at TIMESTAMPTZ
 );
 
+-- 1x. pending_apple_revocations
+-- Durable queue of Apple refresh tokens pending revocation after account
+-- deletion. Per App Store 5.1.1(v), we must eventually revoke Apple's
+-- consent on any deleted user's behalf.
+--
+-- No FK to auth.users — rows must survive user cascade delete.
+-- encrypted_refresh_token is self-contained ciphertext (not a Vault ref).
+-- locked_at / locked_by implement row leasing for concurrent workers.
+CREATE TABLE IF NOT EXISTS pending_apple_revocations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  apple_sub TEXT NOT NULL,
+  encrypted_refresh_token TEXT,
+  key_version TEXT,
+  -- client_id_type determines which Apple client_id to use for revocation.
+  -- Copied from user_apple_tokens at queue time. Required whenever a real
+  -- token is present (enforced by CHECK below).
+  client_id_type TEXT CHECK (client_id_type IN ('native', 'web')),
+  attempts INT NOT NULL DEFAULT 0,
+  last_attempt_at TIMESTAMPTZ,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  locked_at TIMESTAMPTZ,
+  locked_by TEXT,
+  unrevokable BOOLEAN NOT NULL DEFAULT FALSE,
+  dead_letter BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (
+    unrevokable
+    OR (encrypted_refresh_token IS NOT NULL AND key_version IS NOT NULL AND client_id_type IS NOT NULL)
+  )
+);
+
 -- 1v. category_median_prices (view)
 -- SECURITY INVOKER ensures this runs with the querying user's permissions, not the creator's
 CREATE OR REPLACE VIEW category_median_prices
@@ -485,6 +516,11 @@ CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
 
 -- user_apple_tokens
 CREATE INDEX IF NOT EXISTS user_apple_tokens_apple_sub_idx ON user_apple_tokens (apple_sub);
+
+-- pending_apple_revocations: retry-eligible rows (not unrevokable sentinels, not dead-lettered)
+CREATE INDEX IF NOT EXISTS pending_apple_revocations_next_attempt_idx
+  ON pending_apple_revocations (next_attempt_at)
+  WHERE NOT unrevokable AND NOT dead_letter;
 
 -- jitter_samples (keep only last 30 samples per user, rolling window)
 CREATE INDEX IF NOT EXISTS idx_jitter_samples_user ON jitter_samples (user_id, collected_at DESC);
@@ -648,6 +684,9 @@ CREATE POLICY "Admin or manager delete events" ON events FOR DELETE USING (is_ad
 
 -- user_apple_tokens: service-role only. No policies for authenticated role = deny all.
 ALTER TABLE user_apple_tokens ENABLE ROW LEVEL SECURITY;
+
+-- pending_apple_revocations: service-role only. No policies for authenticated role = deny all.
+ALTER TABLE pending_apple_revocations ENABLE ROW LEVEL SECURITY;
 
 -- jitter_profiles + jitter_samples: users can read own profile, insert own samples, service role manages all
 ALTER TABLE jitter_profiles ENABLE ROW LEVEL SECURITY;
@@ -3672,6 +3711,59 @@ GRANT EXECUTE ON FUNCTION public.delete_auth_user(uuid) TO service_role;
 
 COMMENT ON FUNCTION public.delete_auth_user(uuid) IS
 'Account deletion helper: deletes the auth.users row. Only callable by service_role from the delete-account Edge Function, which authenticates the caller''s JWT first.';
+
+-- Lease RPC for the apple-revocation-retry cron worker (B3.7).
+-- See supabase/migrations/20260421_apple_revocation_cron.sql for the full
+-- rationale. Uses FOR UPDATE SKIP LOCKED so multiple workers run concurrently
+-- without contention or double-revocation. Stale leases (>10 min) are reclaimed.
+--
+-- Column refs are fully qualified with table alias to avoid ambiguity between
+-- RETURNS TABLE output columns and source-table columns (CLAUDE.md §1.5).
+
+CREATE OR REPLACE FUNCTION public.lease_apple_revocations(
+  p_limit INT,
+  p_instance_id TEXT,
+  p_stale_lock_ms INT
+) RETURNS TABLE (
+  id UUID,
+  apple_sub TEXT,
+  encrypted_refresh_token TEXT,
+  key_version TEXT,
+  client_id_type TEXT,
+  attempts INT
+) LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE public.pending_apple_revocations p
+     SET locked_at = NOW(),
+         locked_by = p_instance_id
+    WHERE p.id IN (
+      SELECT sub.id
+        FROM public.pending_apple_revocations sub
+       WHERE sub.next_attempt_at <= NOW()
+         AND sub.attempts < 10
+         AND NOT sub.dead_letter
+         AND NOT sub.unrevokable
+         AND (sub.locked_at IS NULL OR sub.locked_at < NOW() - make_interval(secs => p_stale_lock_ms / 1000.0))
+       ORDER BY sub.next_attempt_at
+       FOR UPDATE SKIP LOCKED
+       LIMIT p_limit
+    )
+  RETURNING
+    p.id,
+    p.apple_sub,
+    p.encrypted_refresh_token,
+    p.key_version,
+    p.client_id_type,
+    p.attempts;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.lease_apple_revocations(INT, TEXT, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.lease_apple_revocations(INT, TEXT, INT) TO service_role;
+
+COMMENT ON FUNCTION public.lease_apple_revocations(INT, TEXT, INT) IS
+'Lease RPC for apple-revocation-retry cron worker. Atomically claims up to p_limit retry-eligible rows using FOR UPDATE SKIP LOCKED, reclaiming stale leases older than p_stale_lock_ms ms. Only callable by service_role.';
 
 
 -- =============================================
