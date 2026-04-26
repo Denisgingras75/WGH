@@ -199,6 +199,11 @@
   color: #FFFFFF;
   border-color: var(--ink);
 }
+[data-theme="zine"] .vote-pill.neutral {
+  background: #FFE94A;
+  color: #0A0A0A;
+  border-color: var(--ink);
+}
 [data-theme="zine"] .vote-pill.no {
   background: #00B7C7;
   color: #FFFFFF;
@@ -327,6 +332,11 @@
   .vote-pill.yes {
     background: var(--tomato-soft);
     color: var(--tomato);
+    border-color: transparent;
+  }
+  .vote-pill.neutral {
+    background: var(--ochre-soft);
+    color: var(--ochre);
     border-color: transparent;
   }
   .vote-pill.no {

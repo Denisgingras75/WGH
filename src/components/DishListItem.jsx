@@ -70,7 +70,8 @@ export const DishListItem = memo(function DishListItem({
   // --- RANKED VARIANT (home, browse, restaurant detail) ---
   // Editorial row: rank-num | photo/emoji square | dish + restaurant + vote-pill | price
   var isPodium = rank != null && rank <= 3
-  var yesPct = avgRating != null ? Math.round(Number(avgRating) * 10) : null
+  var ratingNum = avgRating != null ? Number(avgRating) : null
+  var ratingTone = ratingNum == null ? 'neutral' : ratingNum >= 7 ? 'yes' : ratingNum >= 5 ? 'neutral' : 'no'
   var rankLabel = rank != null ? String(rank).padStart(2, '0') : null
   var hasValueBadge = valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD
 
@@ -84,14 +85,14 @@ export const DishListItem = memo(function DishListItem({
       className={'press row-dish' + (highlighted ? ' row-dish--highlighted' : '')}
       style={{
         display: 'grid',
-        gridTemplateColumns: rank != null ? '38px 68px 1fr auto' : '68px 1fr auto',
-        gap: 14,
+        gridTemplateColumns: rank != null ? '34px 64px 1fr auto' : '64px 1fr auto',
+        gap: 12,
         alignItems: 'center',
         width: '100%',
         textAlign: 'left',
         background: highlighted ? 'var(--ochre-soft)' : 'transparent',
         cursor: 'pointer',
-        padding: '14px 16px',
+        padding: '12px 16px',
         borderBottom: isLast ? 'none' : '1px solid var(--rule)',
         transition: 'background 1s ease-out',
       }}
@@ -100,7 +101,7 @@ export const DishListItem = memo(function DishListItem({
         <div
           className="rank-num"
           style={{
-            fontSize: 44,
+            fontSize: 40,
             textAlign: 'center',
             color: isPodium ? 'var(--tomato)' : 'var(--ink-2)',
           }}
@@ -113,8 +114,8 @@ export const DishListItem = memo(function DishListItem({
       <div
         className={photoUrl && showPhoto ? '' : 'stripe-ph'}
         style={{
-          width: 68,
-          height: 68,
+          width: 64,
+          height: 64,
           borderRadius: 10,
           overflow: 'hidden',
           position: 'relative',
@@ -136,7 +137,7 @@ export const DishListItem = memo(function DishListItem({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 32,
+              fontSize: 30,
             }}
           >
             {getCategoryEmoji(category) || '🍽️'}
@@ -167,7 +168,7 @@ export const DishListItem = memo(function DishListItem({
           style={{
             font: "500 12px/1.3 'Inter', system-ui, sans-serif",
             color: 'var(--ink-2)',
-            marginTop: 3,
+            marginTop: 2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -201,20 +202,11 @@ export const DishListItem = memo(function DishListItem({
           )}
         </div>
         {!hideVotes && (
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 7, flexWrap: 'wrap' }}>
-            {isRanked && yesPct != null ? (
-              <span className="vote-pill yes">
-                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-                  <path
-                    d="m2 6 3 3 5-6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {yesPct}%
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+            {isRanked && ratingNum != null ? (
+              <span className={'vote-pill ' + ratingTone}>
+                {ratingNum.toFixed(1)}
+                <span style={{ opacity: 0.55, fontWeight: 500 }}>/10</span>
               </span>
             ) : (
               <span className="vote-pill no">{totalVotes ? 'EARLY' : 'NEW'}</span>

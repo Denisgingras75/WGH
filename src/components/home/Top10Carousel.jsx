@@ -170,22 +170,23 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
       </div>
 
       {/* Section header — updates with active tab */}
-      <div className="px-5 flex items-baseline justify-between mb-1">
-        <h2 style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '30px',
-          fontWeight: 700,
-          color: 'var(--color-text-primary)',
-          letterSpacing: '0.02em',
+      <div className="px-5 flex items-baseline justify-between mb-1 mt-1">
+        <h2 className="serif" style={{
+          fontSize: '24px',
+          fontWeight: 800,
+          fontStyle: 'italic',
+          color: 'var(--ink)',
+          letterSpacing: '-0.02em',
           lineHeight: 1,
+          margin: 0,
         }}>
           {activeTab.id === 'nearby' ? 'Top Rated Nearby' : 'Top ' + activeTab.label}
         </h2>
-        <span style={{
-          fontSize: '11px',
-          color: 'var(--color-text-tertiary)',
+        <span className="mono" style={{
+          fontSize: '10px',
+          color: 'var(--ink-3)',
           fontWeight: 600,
-          letterSpacing: '0.05em',
+          letterSpacing: '0.12em',
           textTransform: 'uppercase',
         }}>
           {visibleCount}{allActiveTabDishes.length > activeLimit ? '+' : ''} {visibleCount === 1 ? 'dish' : 'dishes'}
