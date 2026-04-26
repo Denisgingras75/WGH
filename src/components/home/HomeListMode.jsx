@@ -6,6 +6,7 @@ import { DishListItem } from '../DishListItem'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
 import { LocalListsSection, Top10Carousel } from './'
+import { Masthead } from './Masthead'
 import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
 
 export const HomeListMode = memo(function HomeListMode({
@@ -53,38 +54,15 @@ export const HomeListMode = memo(function HomeListMode({
     <div
       className="fixed inset-0 flex flex-col"
       style={{
-        background: 'var(--color-bg)',
+        background: 'var(--paper)',
         zIndex: 1,
       }}
     >
-      {/* Fixed header: brand + search + chips */}
-      <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
-        {/* Brand header */}
-        <div className="text-center pt-4 pb-1">
-          <h2 style={{
-            fontFamily: "'Amatic SC', cursive",
-            fontSize: '42px',
-            fontWeight: 700,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '0.04em',
-            lineHeight: 1,
-            margin: 0,
-          }}>
-            What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-          </h2>
-          <p style={{
-            fontSize: '10px',
-            fontWeight: 600,
-            color: '#999',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            margin: '5px 0 0',
-          }}>
-            Top-rated dishes near you
-          </p>
-        </div>
+      {/* Fixed header: editorial masthead + search */}
+      <div style={{ flexShrink: 0, background: 'var(--paper)', zIndex: 10 }}>
+        <Masthead onTownClick={onRadiusSheetOpen} />
         {/* Search bar */}
-        <div className="px-5 pt-2 pb-2">
+        <div className="px-5 pt-3 pb-2">
           <div style={{
             borderRadius: '14px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.08)',

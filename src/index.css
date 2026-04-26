@@ -108,6 +108,25 @@
 
   /* Focus ring */
   --focus-ring: 0 0 0 3px rgba(228, 68, 10, 0.25);
+
+  /* ===========================
+     Claude Design — paper theme
+     Editorial port. Tokens live alongside legacy --color-* until full migration.
+     =========================== */
+  --paper: #F4EFE8;
+  --paper-2: #EBE5DB;
+  --ink: #1A1714;
+  --ink-2: #5A5248;
+  --ink-3: #8B8275;
+  --rule: #D8CFBE;
+  --rule-2: #BFB39B;
+  --tomato: #C5412A;
+  --tomato-soft: #E8D2CB;
+  --ochre: #B8893A;
+  --ochre-soft: #EBD9B4;
+  --moss: #5C6B3A;
+  --card-paper: #FBF8F2;
+  --shadow-ink: 0 1px 0 rgba(26, 23, 20, 0.06), 0 8px 24px -12px rgba(26, 23, 20, 0.18);
 }
 
 @tailwind base;
@@ -144,6 +163,107 @@
 }
 
 @layer components {
+  /* ===========================
+     Claude Design — utility classes (paper theme)
+     =========================== */
+  .serif {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .hairline {
+    border-top: 1px solid var(--rule);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--rule);
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Striped placeholder (used as fallback for missing dish photos) */
+  .stripe-ph {
+    background:
+      repeating-linear-gradient(135deg, var(--paper-2) 0 8px, var(--rule) 8px 9px);
+  }
+  /* Vote pill — yes/no chip on dish rows */
+  .vote-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font: 600 12px/1 'Inter', system-ui, sans-serif;
+    border: 1px solid var(--rule);
+    background: var(--card-paper);
+    white-space: nowrap;
+  }
+  .vote-pill.yes {
+    background: var(--tomato-soft);
+    color: var(--tomato);
+    border-color: transparent;
+  }
+  .vote-pill.no {
+    background: var(--paper-2);
+    color: var(--ink-2);
+  }
+  /* Editorial rank numeral — Fraunces italic display weight */
+  .rank-num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 900;
+    font-style: italic;
+    font-feature-settings: 'ss01';
+    font-variation-settings: 'opsz' 144;
+    line-height: 0.85;
+    color: var(--ink);
+  }
+  /* Shelf chip / category chip */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font: 500 11px/1 'Inter', system-ui, sans-serif;
+    background: var(--paper-2);
+    color: var(--ink-2);
+    border: 1px solid var(--rule);
+  }
+  .chip.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  /* Press affordance — subtle tap scale on buttons / rows */
+  .press {
+    transition: transform 0.12s ease;
+  }
+  .press:active {
+    transform: scale(0.985);
+  }
+  /* Avatar — initials disc */
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ochre);
+    color: var(--paper);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 11px/1 'Inter', system-ui, sans-serif;
+  }
+  /* Editorial dish row — used by ranked DishListItem variants in the redesign */
+  .row-dish {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

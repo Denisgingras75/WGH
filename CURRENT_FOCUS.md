@@ -2,7 +2,7 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-04-26
 
 ---
 
@@ -12,11 +12,11 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** _(Dan's terminal | Dan's other Claude | Denis's Claude | scheduled agent name)_
-- **Branch:** _(e.g., audit/supabase-2026-04-16 — or `main` if directly committing)_
-- **Files / modules claimed:** _(e.g., `src/api/votesApi.js`, `supabase/schema.sql §votes`, `src/pages/Profile.jsx`)_
-- **Safe for others to continue:** _(what parts of the repo are NOT touched and open for parallel work)_
-- **Do not duplicate:** _(specific tasks already in-flight — PR numbers, migration filenames, feature names)_
+- **Owner / session:** Dan's Claude
+- **Branch:** `claude/integrate-claude-design-BE9tL`
+- **Files / modules claimed:** `index.html` (font link), `src/index.css` (paper tokens + utility classes), `src/components/home/Masthead.jsx` (new), `src/components/home/index.js` (export), `src/components/home/HomeListMode.jsx` (brand header → Masthead)
+- **Safe for others to continue:** all `src/api/`, `supabase/`, `src/pages/` (except Map's home wiring), all other components
+- **Do not duplicate:** Claude Design integration — porting `public/remix.html` (only present on `redesign/*` remote branches) one screen at a time. First screen: Home list mode masthead. Prior attempts on `redesign/claude-design`, `redesign/prototype-as-app`, `redesign/phase-01-reskin` are abandoned — do not pull from them.
 
 ---
 
