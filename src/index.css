@@ -259,6 +259,23 @@
   border: 1.5px solid var(--ink);
   box-shadow: 2px 2px 0 var(--ink);
 }
+[data-theme="zine"] .editorial-search-input {
+  border: 1.5px solid var(--ink) !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+[data-theme="zine"] .editorial-search-dropdown {
+  border: 1.5px solid var(--ink) !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+[data-theme="zine"] .search-result-row {
+  border-bottom: 1.5px solid var(--ink);
+}
+[data-theme="zine"] .search-result-row:hover,
+[data-theme="zine"] .search-result-row:focus-visible {
+  background: var(--paper-2);
+}
 [data-theme="zine"] .row-dish .stripe-ph {
   border: 1.5px solid var(--ink);
   border-radius: 4px;
@@ -416,6 +433,29 @@
   .home-shell-header {
     background: var(--paper);
   }
+  /* Editorial search result row — used in DishSearch dropdown */
+  .search-result-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .search-result-row:last-child {
+    border-bottom: 0;
+  }
+  .search-result-row:hover,
+  .search-result-row:focus-visible {
+    background: var(--paper-2);
+    outline: none;
+  }
+
   /* Editorial bottom nav — paper bg with subtle blur; .nav-btn pills inside */
   .navbar {
     position: fixed;
