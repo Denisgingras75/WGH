@@ -30,14 +30,16 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
 
   // Client-side search for dropdown mode (instant, no network calls)
   const { results: hookResults, loading: hookLoading } = useDishSearch(
-    onSearchChange ? '' : query,  // Only search in dropdown mode
+    query,
     MAX_DISH_RESULTS,
     town
   )
 
-  // Restaurant search fallback — shows when dish results are thin (dropdown mode only)
-  const isDropdownMode = !onSearchChange
-  const showRestaurantFallback = isDropdownMode && query.length >= MIN_SEARCH_LENGTH && !hookLoading
+  // Restaurant search fallback — local DB + Google Places. Always run when
+  // user types ≥ MIN_SEARCH_LENGTH, regardless of whether parent uses
+  // onSearchChange (inline mode) or not. Inline-mode consumers still get the
+  // dropdown for navigation + Add-new-restaurant flow.
+  const showRestaurantFallback = query.length >= MIN_SEARCH_LENGTH && !hookLoading
   const placesLat = isUsingDefault ? null : (location ? location.lat : null)
   const placesLng = isUsingDefault ? null : (location ? location.lng : null)
   const restaurantData = useRestaurantSearch(query, placesLat, placesLng, showRestaurantFallback)
@@ -78,13 +80,13 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   }, [query])
 
   const results = {
-    dishes: onSearchChange ? [] : hookResults,
+    dishes: hookResults,
     categories: matchingCategories,
   }
 
   const hasResults = results.dishes.length > 0 || results.categories.length > 0 || hasRestaurantResults
-  const showDropdown = !onSearchChange && isFocused && query.length >= MIN_SEARCH_LENGTH
-  const isLoading = loading || (hookLoading && !onSearchChange)
+  const showDropdown = isFocused && query.length >= MIN_SEARCH_LENGTH
+  const isLoading = loading || hookLoading
 
   // Handle dish selection
   const handleDishSelect = (dish) => {
@@ -117,9 +119,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     navigate(`/browse?category=${encodeURIComponent(category.id)}`)
   }
 
-  // Handle Enter key - go to full search results page (dropdown mode only)
+  // Handle Enter key - go to full search results page
   const handleKeyDown = (e) => {
-    if (onSearchChange) return // Inline mode handles results in parent
     if (e.key === 'Enter' && query.trim().length >= MIN_SEARCH_LENGTH) {
       // Track search submission
       capture('search_performed', {
@@ -128,9 +129,15 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         dish_results_count: results.dishes.length,
         category_results_count: results.categories.length,
       })
-      setQuery('')
-      setIsFocused(false)
-      navigate(`/browse?q=${encodeURIComponent(query.trim())}`)
+      // In inline mode, parent already has the query via onSearchChange — just
+      // close the dropdown and let parent render. In dropdown-only mode, navigate.
+      if (onSearchChange) {
+        setIsFocused(false)
+      } else {
+        setQuery('')
+        setIsFocused(false)
+        navigate(`/browse?q=${encodeURIComponent(query.trim())}`)
+      }
     }
   }
 
@@ -203,14 +210,12 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         {rightSlot}
       </div>
 
-      {/* Add Restaurant Modal (dropdown mode only) */}
-      {isDropdownMode && (
-        <AddRestaurantModal
-          isOpen={addModalOpen}
-          onClose={() => setAddModalOpen(false)}
-          initialQuery={addModalQuery}
-        />
-      )}
+      {/* Add Restaurant Modal — every search bar can add a new place */}
+      <AddRestaurantModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        initialQuery={addModalQuery}
+      />
 
       {/* Autocomplete Dropdown */}
       {showDropdown && (

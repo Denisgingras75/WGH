@@ -4,6 +4,7 @@ import { useLocalPicksConsensus } from '../hooks/useLocalPicksConsensus'
 import { useLocalPicksCurators } from '../hooks/useLocalPicksCurators'
 import { useLocalPicksSearch } from '../hooks/useLocalPicksSearch'
 import { LocalsPicksStamp } from '../components/home/LocalsPicksStamp'
+import { DishSearch } from '../components/DishSearch'
 
 var PAGE_OUTER = {
   background: 'linear-gradient(180deg, var(--color-paper-cream-light) 0%, var(--color-paper-cream-dark) 100%)',
@@ -237,14 +238,14 @@ function SearchTab() {
         <div style={TITLE}>Search the <span style={TITLE_ACCENT}>Picks</span></div>
         <div style={SUB}>vegan &middot; raw bar &middot; cheap eats &middot; chowder</div>
       </div>
-      <input
-        type="search"
-        value={query}
-        onChange={function (e) { setQuery(e.target.value) }}
-        placeholder="What are you looking for?"
-        style={SEARCH_INPUT}
-        aria-label="Search locals' picks"
-      />
+      <div style={{ padding: '0 16px 12px' }}>
+        <DishSearch
+          loading={false}
+          placeholder="Search dishes, restaurants, or add a new spot…"
+          initialQuery={query}
+          onSearchChange={setQuery}
+        />
+      </div>
 
       {error && <p style={EMPTY}>{error?.message || 'Search failed.'}</p>}
       {!error && loading && query.trim() && <p style={EMPTY}>Searching&hellip;</p>}

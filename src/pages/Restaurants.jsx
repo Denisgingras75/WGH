@@ -8,6 +8,7 @@ import { RadiusSheet } from '../components/LocationPicker'
 import { LocationBanner } from '../components/LocationBanner'
 import { getRatingColor } from '../utils/ranking'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
+import { DishSearch } from '../components/DishSearch'
 import { getStorageItem, setStorageItem } from '../lib/storage'
 
 // Bayesian shrinkage — restaurants with few votes get pulled toward the global mean
@@ -100,38 +101,13 @@ export function Restaurants() {
           borderBottom: '2px solid var(--color-divider)',
         }}
       >
-        {/* Search bar */}
-        <div className="relative">
-          <svg
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2"
-            style={{ color: 'var(--color-text-tertiary)' }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-          <input
-            id="restaurant-search"
-            name="restaurant-search"
-            type="text"
-            autoComplete="off"
-            placeholder="Search restaurants..."
-            aria-label="Search restaurants"
-            value={searchQuery}
-            onChange={function (e) { setSearchQuery(e.target.value) }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl"
-            style={{
-              background: 'var(--color-surface)',
-              border: '1.5px solid var(--color-divider)',
-              color: 'var(--color-text-primary)',
-              fontSize: '14px',
-            }}
-          />
-        </div>
+        {/* Search bar — dishes + local restaurants + Add new (Google Places) */}
+        <DishSearch
+          loading={false}
+          placeholder="Search dishes, restaurants, or add a new spot…"
+          initialQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
       </header>
 
       <div className="p-4 pt-5">
