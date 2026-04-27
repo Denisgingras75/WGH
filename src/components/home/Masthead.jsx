@@ -30,24 +30,12 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
   return (
     <header
       className="hairline-b"
-      style={{
-        padding: '20px 20px 16px',
-        background: 'transparent',
-      }}
+      style={{ padding: '20px 20px 16px', background: 'transparent' }}
     >
-      {/* Kicker line: hairlines flanking the issue date */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+      {/* Kicker — hairline rules flank the issue line */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <div style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
-        <div
-          className="mono"
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.22em',
-            color: 'var(--ink-2)',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <div className="t-mono-lg" style={{ whiteSpace: 'nowrap' }}>
           {issueLine}
         </div>
         <div style={{ flex: 1, height: 1, background: 'var(--rule)' }} />
@@ -55,21 +43,10 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1
-            className="serif"
-            style={{
-              margin: '0 0 8px',
-              fontWeight: 900,
-              fontSize: 'clamp(40px, 11vw, 52px)',
-              lineHeight: 0.92,
-              letterSpacing: '-0.035em',
-              fontStyle: 'italic',
-              color: 'var(--ink)',
-            }}
-          >
-            What's Good <span style={{ color: 'var(--tomato)' }}>Here</span>
+          <h1 className="t-display" style={{ margin: '0 0 8px' }}>
+            What&apos;s Good <span style={{ color: 'var(--tomato)' }}>Here</span>
           </h1>
-          <div style={{ font: "500 12px/1.35 'Inter', system-ui, sans-serif", color: 'var(--ink-2)' }}>
+          <div className="t-body-sm">
             A local&apos;s guide to what to actually order.
           </div>
         </div>
@@ -79,18 +56,13 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
           </div>
         )}
       </div>
-      <div
-        style={{
-          marginTop: 14,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
+
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button
           type="button"
           onClick={onTownClick}
           disabled={!onTownClick}
+          className="t-mono"
           style={{
             border: 0,
             background: 'transparent',
@@ -99,8 +71,8 @@ export function Masthead({ town = "Martha's Vineyard", onTownClick }) {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            font: "600 12px/1 'Inter', system-ui, sans-serif",
             color: 'var(--ink)',
+            letterSpacing: '0.16em',
           }}
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">

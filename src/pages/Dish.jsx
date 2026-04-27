@@ -216,25 +216,10 @@ export function Dish() {
             alt=""
             className="w-16 h-16 mx-auto mb-4 rounded-full object-cover"
           />
-          <p className="serif" style={{ fontSize: 22, fontWeight: 800, fontStyle: 'italic', color: 'var(--ink)', margin: '0 0 12px' }}>
+          <p className="t-h2" style={{ margin: '0 0 12px' }}>
             Dish not found
           </p>
-          <button
-            onClick={handleBack}
-            className="press"
-            style={{
-              marginTop: 12,
-              font: "800 12px/1 'Inter', system-ui, sans-serif",
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              background: 'var(--ink)',
-              color: 'var(--paper)',
-              border: '1px solid var(--ink)',
-              borderRadius: 4,
-              padding: '14px 22px',
-              cursor: 'pointer',
-            }}
-          >
+          <button onClick={handleBack} className="btn-primary t-cta">
             Go Back
           </button>
         </div>
@@ -349,19 +334,7 @@ export function Dish() {
               onClick={handleRateClick}
               aria-expanded={showRateFlow}
               aria-controls="rate-flow-panel"
-              className="w-full press focus-ring"
-              style={{
-                font: "800 13px/1 'Inter', system-ui, sans-serif",
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                background: 'var(--ink)',
-                color: 'var(--paper)',
-                border: '1px solid var(--ink)',
-                borderRadius: 4,
-                padding: '18px 20px',
-                boxShadow: 'var(--shadow-ink)',
-                cursor: 'pointer',
-              }}
+              className="btn-primary t-cta w-full focus-ring"
             >
               {showRateFlow
                 ? 'Close'
@@ -471,17 +444,7 @@ export function Dish() {
                 restaurant_name: dish.restaurant_name,
                 source: dish.toast_slug ? 'toast' : 'order_url',
               }) }}
-              className="flex-1 flex items-center justify-center gap-2 press"
-              style={{
-                font: "800 11px/1 'Inter', system-ui, sans-serif",
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                background: 'var(--tomato)',
-                color: 'var(--paper)',
-                border: '1px solid var(--ink)',
-                borderRadius: 4,
-                padding: '14px 12px',
-              }}
+              className="btn-tomato t-cta-sm flex-1"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
@@ -493,17 +456,7 @@ export function Dish() {
               href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 press"
-              style={{
-                font: "800 11px/1 'Inter', system-ui, sans-serif",
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                background: 'var(--tomato)',
-                color: 'var(--paper)',
-                border: '1px solid var(--ink)',
-                borderRadius: 4,
-                padding: '14px 12px',
-              }}
+              className="btn-tomato t-cta-sm flex-1"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
@@ -519,17 +472,7 @@ export function Dish() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 press"
-            style={{
-              font: "800 11px/1 'Inter', system-ui, sans-serif",
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              background: 'var(--card-paper)',
-              color: 'var(--ink)',
-              border: '1px solid var(--ink)',
-              borderRadius: 4,
-              padding: '14px 12px',
-            }}
+            className="btn-secondary t-cta-sm flex-1"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />

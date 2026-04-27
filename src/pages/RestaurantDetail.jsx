@@ -282,20 +282,8 @@ export function RestaurantDetail() {
             </svg>
           </button>
           <div className="min-w-0 flex-1">
-            <h2
-              className="serif truncate"
-              style={{
-                color: 'var(--ink)',
-                fontSize: 28,
-                fontWeight: 800,
-                fontStyle: 'italic',
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}
-            >
-              {restaurant.name}
-            </h2>
-            <p className="mono" style={{ color: 'var(--ink-3)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>
+            <h2 className="t-h1 truncate">{restaurant.name}</h2>
+            <p className="t-mono" style={{ marginTop: 2 }}>
               {dishesLoading ? '…' : `${dishes.length} ${dishes.length === 1 ? 'dish' : 'dishes'}`}
               {restaurant.distance_miles != null && (
                 <span> · {restaurant.distance_miles} mi away</span>
@@ -365,16 +353,7 @@ export function RestaurantDetail() {
       {/* What People Are Saying — horizontal swipeable row */}
       {reviewSnippets.length > 0 && (
         <div className="pt-2 pb-3">
-          <h3 className="serif mb-2 px-4" style={{
-            fontSize: 22,
-            fontWeight: 800,
-            fontStyle: 'italic',
-            letterSpacing: '-0.02em',
-            color: 'var(--ink)',
-            margin: '0 0 8px',
-          }}>
-            What People Are Saying
-          </h3>
+          <h3 className="t-h2 mb-2 px-4">What People Are Saying</h3>
           <div
             className="flex gap-2 overflow-x-auto px-4"
             style={{

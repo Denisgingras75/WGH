@@ -170,12 +170,15 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           aria-controls="dish-search-dropdown"
           className="flex-1 bg-transparent outline-none border-none"
           style={{
-            font: "500 14px/1.2 'Inter', system-ui, sans-serif",
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 500,
+            fontSize: 14,
+            lineHeight: 1.2,
+            letterSpacing: '-0.005em',
             color: 'var(--ink)',
             outline: 'none',
             border: 'none',
             boxShadow: 'none',
-            letterSpacing: '-0.005em',
           }}
         />
 
@@ -246,25 +249,16 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                   margin: '0 auto',
                 }}
               />
-              <p
-                className="mono"
-                style={{
-                  fontSize: 10,
-                  marginTop: 8,
-                  color: 'var(--ink-3)',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                }}
-              >
+              <p className="t-mono-lg" style={{ marginTop: 8 }}>
                 Searching
               </p>
             </div>
           ) : !hasResults ? (
             <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-              <p className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ink)', margin: 0 }}>
+              <p className="t-h3-italic">
                 Nothing for &ldquo;{query}&rdquo;
               </p>
-              <p className="mono" style={{ fontSize: 10, marginTop: 6, color: 'var(--ink-3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              <p className="t-mono" style={{ marginTop: 6 }}>
                 Try a different term
               </p>
             </div>
@@ -331,13 +325,9 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p
-                          className="serif"
+                          className="t-h3-italic"
                           style={{
                             fontSize: 15,
-                            fontWeight: 700,
-                            fontStyle: 'italic',
-                            color: 'var(--ink)',
-                            margin: 0,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -345,16 +335,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                         >
                           {r.name}
                         </p>
-                        <p
-                          className="mono"
-                          style={{
-                            fontSize: 10,
-                            color: 'var(--ink-3)',
-                            margin: '2px 0 0',
-                            letterSpacing: '0.14em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
+                        <p className="t-mono" style={{ margin: '2px 0 0' }}>
                           {r.town || 'On WGH'}
                         </p>
                       </div>
@@ -388,13 +369,9 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p
-                          className="serif"
+                          className="t-h3-italic"
                           style={{
                             fontSize: 15,
-                            fontWeight: 700,
-                            fontStyle: 'italic',
-                            color: 'var(--ink)',
-                            margin: 0,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -402,17 +379,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                         >
                           {p.name}
                         </p>
-                        <p
-                          className="mono"
-                          style={{
-                            fontSize: 10,
-                            color: 'var(--tomato)',
-                            margin: '2px 0 0',
-                            letterSpacing: '0.18em',
-                            textTransform: 'uppercase',
-                            fontWeight: 700,
-                          }}
-                        >
+                        <p className="t-cta-sm" style={{ color: 'var(--tomato)', margin: '2px 0 0' }}>
                           + Add to WGH
                         </p>
                       </div>
@@ -447,16 +414,7 @@ function SectionHeader({ label }) {
         background: 'var(--paper-2)',
       }}
     >
-      <span
-        className="mono"
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: 'var(--ink-2)',
-        }}
-      >
+      <span className="t-mono-lg" style={{ fontWeight: 700 }}>
         {label}
       </span>
     </div>
@@ -497,24 +455,20 @@ function DishResult({ dish, rank, onClick }) {
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p
-          className="serif"
+          className="t-h3"
           style={{
             fontSize: 15,
-            fontWeight: 700,
-            color: 'var(--ink)',
-            margin: 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            letterSpacing: '-0.005em',
           }}
         >
           {dish_name}
         </p>
         <p
+          className="t-body-sm"
           style={{
-            font: "500 11px/1.2 'Inter', system-ui, sans-serif",
-            color: 'var(--ink-2)',
+            fontSize: 11,
             margin: '2px 0 0',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -531,7 +485,7 @@ function DishResult({ dish, rank, onClick }) {
             <span style={{ opacity: 0.55, fontWeight: 500 }}>/10</span>
           </span>
         ) : (
-          <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <span className="t-mono-micro">
             {total_votes ? `${total_votes} ${total_votes === 1 ? 'vote' : 'votes'}` : 'New'}
           </span>
         )}
@@ -579,28 +533,10 @@ function CategoryResult({ category, onClick }) {
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p
-          className="serif"
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: 'var(--ink)',
-            margin: 0,
-            letterSpacing: '-0.005em',
-          }}
-        >
+        <p className="t-h3" style={{ fontSize: 15 }}>
           {category.label}
         </p>
-        <p
-          className="mono"
-          style={{
-            fontSize: 10,
-            color: 'var(--ink-3)',
-            margin: '2px 0 0',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}
-        >
+        <p className="t-mono" style={{ margin: '2px 0 0' }}>
           View ranked dishes
         </p>
       </div>

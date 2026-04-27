@@ -184,53 +184,38 @@ export function Profile() {
           {/* Food Story — editorial ledger */}
           {stats.totalVotes > 0 && (
             <div style={{ padding: '12px 16px 0' }}>
-              <div
-                style={{
-                  background: 'var(--card-paper)',
-                  border: '1px solid var(--ink)',
-                  borderRadius: 4,
-                  padding: '18px',
-                  boxShadow: 'var(--shadow-ink)',
-                }}
-              >
-                <h3 className="serif" style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  fontStyle: 'italic',
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '0 0 12px',
-                }}>
+              <div className="card-editorial">
+                <h3 className="t-h2" style={{ marginBottom: 12 }}>
                   Your Food Story
                 </h3>
                 {stats.ratingStyle && (
                   <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Rating style</span>
-                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--tomato)' }}>
+                    <span className="t-mono">Rating style</span>
+                    <span className="t-h3-italic" style={{ color: 'var(--tomato)', fontSize: 16 }}>
                       {stats.ratingStyle.label}
                     </span>
                   </div>
                 )}
                 {stats.favoriteRestaurant && (
                   <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Most loyal</span>
-                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ink)', textAlign: 'right' }}>
+                    <span className="t-mono">Most loyal</span>
+                    <span className="t-h3-italic" style={{ fontSize: 16, textAlign: 'right' }}>
                       {stats.favoriteRestaurant} &middot; {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'}
                     </span>
                   </div>
                 )}
                 {stats.standoutPicks && stats.standoutPicks.bestFind && (
                   <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Best find</span>
-                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ochre)', textAlign: 'right' }}>
+                    <span className="t-mono">Best find</span>
+                    <span className="t-h3-italic" style={{ color: 'var(--ochre)', fontSize: 16, textAlign: 'right' }}>
                       {stats.standoutPicks.bestFind.dish_name} &middot; {stats.standoutPicks.bestFind.userRating}
                     </span>
                   </div>
                 )}
                 {stats.standoutPicks && stats.standoutPicks.harshestTake && (
                   <div className="flex justify-between items-baseline" style={{ padding: '8px 0' }}>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Hot take</span>
-                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ink)', textAlign: 'right' }}>
+                    <span className="t-mono">Hot take</span>
+                    <span className="t-h3-italic" style={{ fontSize: 16, textAlign: 'right' }}>
                       {stats.standoutPicks.harshestTake.dish_name} &middot; You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
                     </span>
                   </div>
@@ -288,12 +273,8 @@ export function Profile() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-3 mono"
+                className="flex-1 py-3 t-mono-lg"
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
                   color: activeTab === tab ? 'var(--ink)' : 'var(--ink-3)',
                   background: 'transparent',
                   border: 'none',
@@ -324,16 +305,7 @@ export function Profile() {
             <>
               {/* Your Journal title */}
               <div className="px-4 pt-5 pb-1">
-                <h2 className="serif" style={{
-                  color: 'var(--ink)',
-                  fontSize: 28,
-                  fontWeight: 800,
-                  fontStyle: 'italic',
-                  letterSpacing: '-0.02em',
-                  margin: 0,
-                }}>
-                  Your Journal
-                </h2>
+                <h2 className="t-h1">Your Journal</h2>
               </div>
 
               {/* Journal Feed — single chronological shelf */}

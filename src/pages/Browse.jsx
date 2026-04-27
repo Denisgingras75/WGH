@@ -434,30 +434,20 @@ export function Browse() {
             </button>
             {selectedCategory && !debouncedSearchQuery.trim() && (
               <>
-                <span className="serif" style={{ fontSize: 18, fontWeight: 800, fontStyle: 'italic', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+                <span className="t-h2" style={{ fontSize: 22 }}>
                   {CATEGORIES.find(c => c.id === selectedCategory)?.label}
                 </span>
                 <button
                   onClick={handleBackToCategories}
-                  className="press mono"
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.16em',
-                    textTransform: 'uppercase',
-                    color: 'var(--ink)',
-                    background: 'var(--card-paper)',
-                    border: '1px solid var(--ink)',
-                    borderRadius: 4,
-                    padding: '4px 10px',
-                  }}
+                  className="btn-secondary t-cta-sm"
+                  style={{ padding: '6px 10px' }}
                 >
                   Clear
                 </button>
               </>
             )}
             {debouncedSearchQuery.trim() && (
-              <span className="serif" style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--ink-2)' }}>
+              <span className="t-quote">
                 Results for &ldquo;{debouncedSearchQuery.trim()}&rdquo;
               </span>
             )}

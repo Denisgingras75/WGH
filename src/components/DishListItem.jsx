@@ -45,7 +45,6 @@ export const DishListItem = memo(function DishListItem({
 }) {
   const navigate = useNavigate()
 
-  // Normalize data shapes between different sources
   const dishName = dish.dish_name || dish.name
   const restaurantName = dish.restaurant_name || (dish.restaurants && dish.restaurants.name)
   const restaurantId = dish.restaurant_id || (dish.restaurants && dish.restaurants.id)
@@ -62,13 +61,12 @@ export const DishListItem = memo(function DishListItem({
 
   var handleClick = onClick || function () { navigate('/dish/' + dishId) }
 
-  // --- VOTED VARIANT (profile pages) ---
   if (variant === 'voted') {
     return renderVotedCard()
   }
 
-  // --- RANKED VARIANT (home, browse, restaurant detail) ---
-  // Editorial row: rank-num | photo/emoji square | dish + restaurant + vote-pill | price
+  // --- RANKED VARIANT ---
+  // Editorial row: rank-num | photo/emoji | dish + restaurant + vote-pill | price/value
   var isPodium = rank != null && rank <= 3
   var ratingNum = avgRating != null ? Number(avgRating) : null
   var ratingTone = ratingNum == null ? 'neutral' : ratingNum >= 7 ? 'yes' : ratingNum >= 5 ? 'neutral' : 'no'
@@ -150,13 +148,8 @@ export const DishListItem = memo(function DishListItem({
       {/* Dish name + restaurant + vote pill */}
       <div style={{ minWidth: 0 }}>
         <div
-          className="serif"
+          className="t-h3"
           style={{
-            fontWeight: 700,
-            fontSize: 17,
-            lineHeight: 1.15,
-            letterSpacing: '-0.01em',
-            color: 'var(--ink)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',
@@ -167,9 +160,8 @@ export const DishListItem = memo(function DishListItem({
           {dishName}
         </div>
         <div
+          className="t-body-sm"
           style={{
-            font: "500 12px/1.3 'Inter', system-ui, sans-serif",
-            color: 'var(--ink-2)',
             marginTop: 2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -213,7 +205,7 @@ export const DishListItem = memo(function DishListItem({
             ) : (
               <span className="vote-pill no">{totalVotes ? 'EARLY' : 'NEW'}</span>
             )}
-            <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)' }}>
+            <span className="t-mono-micro">
               {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
               {showDistance && distanceMiles != null && ' · ' + Number(distanceMiles).toFixed(1) + ' mi'}
             </span>
@@ -224,23 +216,20 @@ export const DishListItem = memo(function DishListItem({
       {/* Right column: price + value badge */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
         {price != null && (
-          <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>
+          <span className="t-mono" style={{ fontSize: 11, color: 'var(--ink-2)', letterSpacing: '0.04em' }}>
             ${Number(price).toFixed(0)}
           </span>
         )}
         {hasValueBadge && (
           <span
-            className="mono"
+            className="t-mono-micro"
             style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
               color: 'var(--moss)',
               border: '1px solid var(--rule)',
               padding: '2px 5px',
               borderRadius: 4,
-              textTransform: 'uppercase',
               background: 'var(--card-paper)',
+              letterSpacing: '0.16em',
             }}
           >
             Value
@@ -250,7 +239,7 @@ export const DishListItem = memo(function DishListItem({
     </div>
   )
 
-  // --- VOTED CARD RENDERER ---
+  // --- VOTED CARD RENDERER (untouched — profile pages still use legacy tokens) ---
   function renderVotedCard() {
     var isOtherProfile = voteVariant === 'other-profile'
     var hasOwnComparison = !isOtherProfile && dish.rating_10 && dish.community_avg && totalVotes >= 2
@@ -267,13 +256,9 @@ export const DishListItem = memo(function DishListItem({
       <CardTag
         {...cardProps}
         className={'rounded-xl border overflow-hidden' + (isOtherProfile ? ' w-full text-left hover:shadow-md transition-all active:scale-[0.99]' : ' transition-all')}
-        style={{
-          background: 'var(--color-card)',
-          borderColor: 'var(--color-divider)',
-        }}
+        style={{ background: 'var(--color-card)', borderColor: 'var(--color-divider)' }}
       >
         <div className="flex">
-          {/* Image */}
           <div
             className="relative w-24 h-24 rounded-l-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
             style={{ background: 'var(--color-surface-elevated)' }}
@@ -293,7 +278,6 @@ export const DishListItem = memo(function DishListItem({
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
             <div>
               <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
@@ -312,7 +296,6 @@ export const DishListItem = memo(function DishListItem({
               </p>
             </div>
 
-            {/* Own Profile Rating */}
             {!isOtherProfile && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -343,7 +326,6 @@ export const DishListItem = memo(function DishListItem({
               </div>
             )}
 
-            {/* Other Profile Rating */}
             {isOtherProfile && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -373,7 +355,6 @@ export const DishListItem = memo(function DishListItem({
           </div>
         </div>
 
-        {/* Inline Review (own-profile only) */}
         {!isOtherProfile && reviewText && (
           <div className="px-3 pb-3 pt-0">
             <p

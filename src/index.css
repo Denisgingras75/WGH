@@ -324,6 +324,210 @@
   /* ===========================
      Claude Design — utility classes (paper theme)
      =========================== */
+
+  /* Type system — every text element should pick exactly one of these.
+     Inline font overrides are forbidden in ported surfaces. */
+  .t-display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 900;
+    font-size: clamp(40px, 11vw, 52px);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+  }
+  .t-h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .t-h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .t-h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .t-h3-italic {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .t-body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .t-body-sm {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ink-2);
+  }
+  .t-quote {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .t-cta {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .t-cta-sm {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .t-mono-lg {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .t-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .t-mono-micro {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+    font-size: 9px;
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* Button + card system */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 16px 18px;
+    cursor: pointer;
+    box-shadow: var(--shadow-ink);
+    transition: transform 0.12s ease;
+  }
+  .btn-primary:active {
+    transform: scale(0.985);
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--card-paper);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .btn-secondary:active {
+    transform: scale(0.985);
+  }
+  .btn-tomato {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--tomato);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .btn-tomato:active {
+    transform: scale(0.985);
+  }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-paper);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.12s ease;
+  }
+  .icon-btn:active {
+    transform: scale(0.92);
+  }
+  .icon-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .card-editorial {
+    background: var(--card-paper);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 18px;
+    box-shadow: var(--shadow-ink);
+  }
+
+  /* Legacy shorthands kept for non-ported surfaces — DO NOT USE in new code */
   .serif {
     font-family: 'Fraunces', Georgia, serif;
     font-optical-sizing: auto;

@@ -152,15 +152,11 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                 <CategoryIcon categoryId={tab.id} size={52} />
               )}
               <span
-                className="mono"
+                className="t-mono-micro"
                 style={{
-                  marginTop: '2px',
-                  fontSize: '9px',
-                  fontWeight: isActive ? 700 : 500,
+                  marginTop: 2,
                   color: isActive ? 'var(--ink)' : 'var(--ink-2)',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  lineHeight: 1.2,
+                  fontWeight: isActive ? 700 : 500,
                 }}
               >
                 {tab.label}
@@ -172,24 +168,10 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
 
       {/* Section header — updates with active tab */}
       <div className="px-5 flex items-baseline justify-between mb-1 mt-1">
-        <h2 className="serif" style={{
-          fontSize: '24px',
-          fontWeight: 800,
-          fontStyle: 'italic',
-          color: 'var(--ink)',
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-          margin: 0,
-        }}>
+        <h2 className="t-h2">
           {activeTab.id === 'nearby' ? 'Top Rated Nearby' : 'Top ' + activeTab.label}
         </h2>
-        <span className="mono" style={{
-          fontSize: '10px',
-          color: 'var(--ink-3)',
-          fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-        }}>
+        <span className="t-mono">
           {visibleCount}{allActiveTabDishes.length > activeLimit ? '+' : ''} {visibleCount === 1 ? 'dish' : 'dishes'}
         </span>
       </div>
@@ -247,33 +229,15 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                     <button
                       onClick={function () { handleShowMore(tab.id) }}
                       type="button"
-                      className="press w-full"
-                      style={{
-                        font: "700 11px/1 'Inter', system-ui, sans-serif",
-                        letterSpacing: '0.18em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink)',
-                        background: 'var(--card-paper)',
-                        border: '1px solid var(--ink)',
-                        borderRadius: 4,
-                        padding: '12px 16px',
-                        marginTop: '12px',
-                        cursor: 'pointer',
-                      }}
+                      className="btn-secondary t-cta-sm w-full"
+                      style={{ marginTop: 12 }}
                     >
                       + Show {remaining > LOAD_MORE_COUNT ? LOAD_MORE_COUNT : remaining} more
                     </button>
                   )}
                 </>
               ) : (
-                <p className="serif" style={{
-                  padding: '32px 0',
-                  textAlign: 'center',
-                  fontSize: 16,
-                  fontWeight: 700,
-                  fontStyle: 'italic',
-                  color: 'var(--ink-2)',
-                }}>
+                <p className="t-quote" style={{ padding: '32px 0', textAlign: 'center' }}>
                   No {tab.label.toLowerCase()} rated yet
                 </p>
               )}
