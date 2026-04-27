@@ -4,6 +4,8 @@
 
 **Last updated:** 2026-04-20 (end of night)
 
+> **2026-04-26 — Claude session ended.** Worked on `claude/integrate-claude-design-BE9tL`: search-bar unification, claude.ai/design handoff bundle drop, editorial atoms preview, tone-and-voice doc for Dan. Full handoff: see [`docs/handoff-2026-04-26.md`](docs/handoff-2026-04-26.md). No live-app surfaces touched; nothing blocking Dan's iOS launch path below.
+
 ---
 
 ## Active handoff
