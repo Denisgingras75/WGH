@@ -12,11 +12,11 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** Dan's Claude
-- **Branch:** `claude/integrate-claude-design-BE9tL`
-- **Files / modules claimed:** `index.html` (font link), `src/index.css` (paper tokens + utility classes), `src/components/home/Masthead.jsx` (new), `src/components/home/index.js` (export), `src/components/home/HomeListMode.jsx` (brand header → Masthead)
-- **Safe for others to continue:** all `src/api/`, `supabase/`, `src/pages/` (except Map's home wiring), all other components
-- **Do not duplicate:** Claude Design integration — porting `public/remix.html` (only present on `redesign/*` remote branches) one screen at a time. First screen: Home list mode masthead. Prior attempts on `redesign/claude-design`, `redesign/prototype-as-app`, `redesign/phase-01-reskin` are abandoned — do not pull from them.
+- **Owner / session:** _(none — Claude Design integration session ended 2026-04-26 ~00:18 UTC)_
+- **Branch:** _(stub)_
+- **Files / modules claimed:** _(stub)_
+- **Safe for others to continue:** _(stub)_
+- **Do not duplicate:** Claude Design integration first pass complete on `claude/integrate-claude-design-BE9tL`. Two themes (`paper` default, `zine` opt-in via `html[data-theme="zine"]`). Ported: Masthead, DishListItem ranked variant, BottomNav, DishSearch (input + dropdown), Top10Carousel chrome, Dish/Browse/Profile/RestaurantDetail page chrome. **Not yet ported:** DishHero, DishEvidence, JournalFeed, JournalCard, HeroIdentityCard, BrowseSearchBar/BrowseResults internals, RestaurantMenu, RestaurantDishes, all Auth modals, AcceptInvite/ManageRestaurant pages, Privacy/Terms/Support, Admin. Map mode (`/`) is editorial via Masthead but Leaflet markers + map-mode chrome (MapCategoryBar) untouched.
 
 ---
 
