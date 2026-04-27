@@ -416,38 +416,49 @@ export function Browse() {
   const showingDishes = selectedCategory || debouncedSearchQuery.trim()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <h1 className="sr-only">Browse Dishes</h1>
       {/* Header - only shows when viewing dishes */}
       {showingDishes && (
-        <header style={{ background: 'var(--color-bg)' }}>
+        <header className="hairline-b" style={{ background: 'var(--paper)' }}>
           <div className="px-4 py-3 flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="p-1 -ml-1 rounded-lg transition-opacity hover:opacity-70"
+              className="p-1 -ml-1 press"
               aria-label="Back to home"
+              style={{ background: 'transparent', border: 0 }}
             >
-              <svg className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5" style={{ color: 'var(--ink)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             {selectedCategory && !debouncedSearchQuery.trim() && (
               <>
-                <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                <span className="serif" style={{ fontSize: 18, fontWeight: 800, fontStyle: 'italic', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   {CATEGORIES.find(c => c.id === selectedCategory)?.label}
                 </span>
                 <button
                   onClick={handleBackToCategories}
-                  className="text-xs font-medium px-2 py-1 rounded-lg transition-colors"
-                  style={{ color: 'var(--color-primary)', background: 'var(--color-primary-muted)' }}
+                  className="press mono"
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    color: 'var(--ink)',
+                    background: 'var(--card-paper)',
+                    border: '1px solid var(--ink)',
+                    borderRadius: 4,
+                    padding: '4px 10px',
+                  }}
                 >
                   Clear
                 </button>
               </>
             )}
             {debouncedSearchQuery.trim() && (
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                Results for "{debouncedSearchQuery.trim()}"
+              <span className="serif" style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--ink-2)' }}>
+                Results for &ldquo;{debouncedSearchQuery.trim()}&rdquo;
               </span>
             )}
           </div>

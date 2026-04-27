@@ -149,7 +149,7 @@ export function Profile() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--paper)' }}>
       <h1 className="sr-only">Your Profile</h1>
 
       {user && (
@@ -181,58 +181,56 @@ export function Profile() {
             </div>
           )}
 
-          {/* Food Story chalkboard — your food identity at a glance */}
+          {/* Food Story — editorial ledger */}
           {stats.totalVotes > 0 && (
             <div style={{ padding: '12px 16px 0' }}>
               <div
                 style={{
-                  background: '#2C3033',
-                  borderRadius: '12px',
+                  background: 'var(--card-paper)',
+                  border: '1px solid var(--ink)',
+                  borderRadius: 4,
                   padding: '18px',
-                  backgroundImage: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 60%)',
+                  boxShadow: 'var(--shadow-ink)',
                 }}
               >
-                <h3 style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '10px',
+                <h3 className="serif" style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '0 0 12px',
                 }}>
                   Your Food Story
                 </h3>
-                {/* Rating style */}
                 {stats.ratingStyle && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Rating style</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                  <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Rating style</span>
+                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--tomato)' }}>
                       {stats.ratingStyle.label}
                     </span>
                   </div>
                 )}
-                {/* Most loyal */}
                 {stats.favoriteRestaurant && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Most loyal</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                  <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Most loyal</span>
+                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ink)', textAlign: 'right' }}>
                       {stats.favoriteRestaurant} &middot; {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'}
                     </span>
                   </div>
                 )}
-                {/* Best find */}
                 {stats.standoutPicks && stats.standoutPicks.bestFind && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Best find</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-accent-gold)' }}>
+                  <div className="flex justify-between items-baseline" style={{ padding: '8px 0', borderBottom: '1px solid var(--rule)' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Best find</span>
+                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ochre)', textAlign: 'right' }}>
                       {stats.standoutPicks.bestFind.dish_name} &middot; {stats.standoutPicks.bestFind.userRating}
                     </span>
                   </div>
                 )}
-                {/* Hot take */}
                 {stats.standoutPicks && stats.standoutPicks.harshestTake && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Hot take</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                  <div className="flex justify-between items-baseline" style={{ padding: '8px 0' }}>
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-3)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Hot take</span>
+                    <span className="serif" style={{ fontSize: 16, fontWeight: 700, fontStyle: 'italic', color: 'var(--ink)', textAlign: 'right' }}>
                       {stats.standoutPicks.harshestTake.dish_name} &middot; You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
                     </span>
                   </div>
@@ -277,31 +275,46 @@ export function Profile() {
 
           {/* Tabs: Journal / Playlists / Saved */}
           <div
-            className="flex"
+            className="flex hairline-b"
             style={{
-              borderBottom: '1px solid var(--color-divider)',
-              background: 'var(--color-surface)',
+              background: 'var(--paper)',
               position: 'sticky',
               top: 0,
               zIndex: 10,
+              marginTop: 12,
             }}
           >
             {['journal', 'playlists', 'saved'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-3 text-xs font-semibold text-center"
+                className="flex-1 py-3 mono"
                 style={{
-                  color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                  borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: activeTab === tab ? 'var(--ink)' : 'var(--ink-3)',
                   background: 'transparent',
                   border: 'none',
-                  borderBottomWidth: 2,
-                  borderBottomStyle: 'solid',
-                  borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                  position: 'relative',
+                  cursor: 'pointer',
                 }}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab}
+                {activeTab === tab && (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      left: '20%',
+                      right: '20%',
+                      bottom: -1,
+                      height: 2,
+                      background: 'var(--tomato)',
+                    }}
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -311,15 +324,14 @@ export function Profile() {
             <>
               {/* Your Journal title */}
               <div className="px-4 pt-5 pb-1">
-                <h2
-                  style={{
-                    fontFamily: "'Amatic SC', cursive",
-                    color: 'var(--color-text-primary)',
-                    fontSize: '32px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                  }}
-                >
+                <h2 className="serif" style={{
+                  color: 'var(--ink)',
+                  fontSize: 28,
+                  fontWeight: 800,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.02em',
+                  margin: 0,
+                }}>
                   Your Journal
                 </h2>
               </div>

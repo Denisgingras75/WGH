@@ -261,43 +261,42 @@ export function RestaurantDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-40" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-40" style={{ background: 'var(--paper)' }}>
       <h1 className="sr-only">{restaurant.name}</h1>
 
       {/* Sticky header with back button */}
       <div
-        className="sticky top-0 z-20 px-4 py-3"
+        className="sticky top-0 z-20 px-4 py-3 hairline-b"
         style={{
-          background: 'var(--color-bg)',
-          boxShadow: 'none',
-          borderBottom: '1px solid var(--color-divider)',
+          background: 'var(--paper)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/restaurants')}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="w-10 h-10 flex items-center justify-center press flex-shrink-0"
+            style={{ background: 'var(--card-paper)', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: 4 }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.6} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
           <div className="min-w-0 flex-1">
             <h2
-              className="font-bold truncate"
+              className="serif truncate"
               style={{
-                fontFamily: "'Amatic SC', cursive",
-                color: 'var(--color-text-primary)',
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                color: 'var(--ink)',
+                fontSize: 28,
+                fontWeight: 800,
+                fontStyle: 'italic',
+                letterSpacing: '-0.02em',
+                margin: 0,
               }}
             >
               {restaurant.name}
             </h2>
-            <p className="font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
-              {dishesLoading ? '…' : `${dishes.length} dish${dishes.length === 1 ? '' : 'es'}`}
+            <p className="mono" style={{ color: 'var(--ink-3)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>
+              {dishesLoading ? '…' : `${dishes.length} ${dishes.length === 1 ? 'dish' : 'dishes'}`}
               {restaurant.distance_miles != null && (
                 <span> · {restaurant.distance_miles} mi away</span>
               )}
@@ -352,8 +351,8 @@ export function RestaurantDetail() {
               })
               capture('restaurant_shared', { restaurant_id: restaurantId, method: result.method })
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }}
+            className="w-10 h-10 flex items-center justify-center press flex-shrink-0"
+            style={{ background: 'var(--card-paper)', color: 'var(--ink-2)', border: '1px solid var(--ink)', borderRadius: 4 }}
             aria-label="Share restaurant"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -366,16 +365,14 @@ export function RestaurantDetail() {
       {/* What People Are Saying — horizontal swipeable row */}
       {reviewSnippets.length > 0 && (
         <div className="pt-2 pb-3">
-          <h3
-            className="font-semibold mb-2 px-4"
-            style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '22px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
-              color: 'var(--color-text-primary)',
-            }}
-          >
+          <h3 className="serif mb-2 px-4" style={{
+            fontSize: 22,
+            fontWeight: 800,
+            fontStyle: 'italic',
+            letterSpacing: '-0.02em',
+            color: 'var(--ink)',
+            margin: '0 0 8px',
+          }}>
             What People Are Saying
           </h3>
           <div
