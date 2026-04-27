@@ -6,7 +6,7 @@ import { useLocationContext } from '../context/LocationContext'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
 import { AddRestaurantModal } from './AddRestaurantModal'
 import { PoweredByGoogle } from './PoweredByGoogle'
-import { getCategoryNeonImage, matchCategories } from '../constants/categories'
+import { getCategoryNeonImage, matchCategories, BROWSE_CATEGORIES } from '../constants/categories'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
 const MIN_SEARCH_LENGTH = 2
@@ -87,6 +87,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   // In inline mode, the parent renders dishes inline; the dropdown still appears so users can
   // see local + Google Places restaurants and tap "+ Add to WGH".
   const showDropdown = isFocused && query.length >= MIN_SEARCH_LENGTH && (isDropdownMode || hasRestaurantResults || restaurantData.loading)
+  const showEmptyState = isFocused && query.length < MIN_SEARCH_LENGTH && isDropdownMode
   const isLoading = loading || (hookLoading && !onSearchChange) || (!isDropdownMode && restaurantData.loading && !hasRestaurantResults)
 
   // Handle dish selection
@@ -114,6 +115,17 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
       result_type: 'category',
       selected_category: category.id,
       results_count: results.categories.length,
+    })
+    setQuery('')
+    setIsFocused(false)
+    navigate(`/browse?category=${encodeURIComponent(category.id)}`)
+  }
+
+  // Empty-state suggestion tap (focused, no query yet — dropdown mode only)
+  const handleSuggestionTap = (category) => {
+    capture('search_suggestion_tapped', {
+      suggestion: category.id,
+      source: 'empty_state',
     })
     setQuery('')
     setIsFocused(false)
@@ -212,6 +224,69 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         onClose={() => setAddModalOpen(false)}
         initialQuery={addModalQuery}
       />
+
+      {/* Empty-state suggestions — focused but hasn't typed enough yet */}
+      {showEmptyState && (
+        <div
+          ref={dropdownRef}
+          id="dish-search-suggestions"
+          role="listbox"
+          aria-label="Suggestions"
+          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          style={{
+            background: 'var(--color-surface)',
+            border: '1.5px solid var(--color-divider)',
+          }}
+        >
+          <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wider"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            >
+              Try a category
+            </span>
+          </div>
+          <div
+            className="flex flex-wrap gap-2 p-3"
+          >
+            {BROWSE_CATEGORIES.slice(0, 8).map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => handleSuggestionTap(category)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors active:scale-[0.97]"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  border: '1px solid var(--color-divider)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-primary-muted)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+              >
+                <span aria-hidden="true">{category.emoji}</span>
+                <span>{category.label}</span>
+              </button>
+            ))}
+          </div>
+          <div
+            className="px-4 py-2 border-t"
+            style={{
+              borderColor: 'var(--color-divider)',
+              background: 'var(--color-surface-elevated)',
+            }}
+          >
+            <span
+              className="text-[10px] uppercase tracking-wider"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            >
+              or type a dish, restaurant, or place
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Autocomplete Dropdown */}
       {showDropdown && (
