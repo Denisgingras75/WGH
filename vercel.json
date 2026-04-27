@@ -21,6 +21,9 @@
     { "source": "/logo-concepts.html", "destination": "/logo-concepts.html" },
     { "source": "/profile-redesign.html", "destination": "/profile-redesign.html" },
     { "source": "/profile-soul.html", "destination": "/profile-soul.html" },
+    { "source": "/wgh-redesign", "destination": "/wgh-redesign/index.html" },
+    { "source": "/wgh-redesign/", "destination": "/wgh-redesign/index.html" },
+    { "source": "/wgh-redesign/(.*)", "destination": "/wgh-redesign/$1" },
     { "source": "/((?!.*\\.(?:js|mjs|css|map|png|jpg|jpeg|webp|svg|ico|woff|woff2|ttf|json|txt|xml)$).*)", "destination": "/" }
   ],
   "headers": [
@@ -40,6 +43,17 @@
       "source": "/categories/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    },
+    {
+      "source": "/wgh-redesign/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"
+        }
       ]
     },
     {

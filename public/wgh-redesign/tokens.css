@@ -1,0 +1,174 @@
+/* WGH Redesign tokens — pulled directly from src/index.css :root vars */
+:root {
+  --color-primary: #E4440A;
+  --color-primary-muted: rgba(228, 68, 10, 0.10);
+  --color-primary-glow: rgba(228, 68, 10, 0.20);
+  --color-rating: #15803D;
+  --color-accent-gold: #C48A12;
+  --color-accent-gold-muted: rgba(196, 138, 18, 0.12);
+  --color-accent-orange: #E07856;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #555555;
+  --color-text-tertiary: #767676;
+  --color-bg: #F0ECE8;
+  --color-surface: #F7F4F1;
+  --color-surface-elevated: #FFFFFF;
+  --color-divider: #E5E0DB;
+  --color-card: #FFFFFF;
+  --color-medal-gold: #E8B820;
+  --color-medal-silver: #9EAAB2;
+  --color-medal-bronze: #B07340;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+  --color-text-on-primary: #FFFFFF;
+  --color-tier-featured: #F59E0B;
+
+  /* Redesign-specific additions, derived from existing palette */
+  --color-ink: #0F0E0D;            /* deeper near-black for editorial headlines */
+  --color-paper: #FAF6F1;          /* slightly warmer canvas */
+  --color-rule: #1A1A1A;           /* hairline editorial rules */
+  --color-stamp: #B14A1F;          /* coral muted for "stamp" vote chips */
+
+  --shadow-card: 0 1px 2px rgba(15,14,13,0.04), 0 4px 12px rgba(15,14,13,0.04);
+  --shadow-pop: 0 4px 16px rgba(15,14,13,0.10), 0 1px 3px rgba(15,14,13,0.06);
+}
+
+/* Body fonts: keep app's Outfit body. Add Fraunces for editorial display
+   (closer to Goodreads / restaurant menu energy than Libre Baskerville),
+   keep DM Mono for stat ticks, Amatic SC for the WGH wordmark. */
+.wgh-root {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display { font-family: 'Fraunces', 'Libre Baskerville', Georgia, serif; font-optical-sizing: auto; font-variation-settings: 'SOFT' 50, 'WONK' 0; }
+.font-mono    { font-family: 'JetBrains Mono', 'DM Mono', ui-monospace, Menlo, monospace; }
+.font-script  { font-family: 'Amatic SC', 'Caveat', cursive; }
+
+/* Editorial micro-rule */
+.rule { height: 1px; background: var(--color-rule); opacity: 0.85; }
+.rule-dotted { border-top: 1.5px dotted var(--color-rule); opacity: 0.6; }
+
+/* Number stat (consensus / rating display) */
+.stat-num { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-feature-settings: 'tnum'; letter-spacing: -0.02em; }
+
+/* Tap targets */
+.tap { -webkit-tap-highlight-color: transparent; }
+.tap:active { transform: scale(0.97); transition: transform 80ms; }
+
+/* Ranked list item dotted-leader (menu style) */
+.leader { flex: 1; border-bottom: 1.5px dotted var(--color-text-tertiary); margin: 0 8px 6px; opacity: 0.5; }
+
+/* Chip baseline */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Vote stamp — Worth It / Skip pill, evokes a hand stamp */
+.stamp {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  transform: rotate(-1.5deg);
+}
+
+/* Card */
+.card {
+  background: var(--color-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Section header */
+.section-eyebrow {
+  font-family: 'Geist', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-text-tertiary);
+}
+
+/* Hide scrollbars for horizontal scroll rows */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Phone-screen safe area faking — content lives inside iOS frame, so we
+   don't need real safe-area-inset; the frame handles status bar / home bar. */
+.screen {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg);
+  position: relative;
+}
+.screen::-webkit-scrollbar { width: 0; }
+
+/* Press feedback */
+.press { transition: transform 100ms ease, opacity 100ms ease; }
+.press:active { transform: scale(0.98); opacity: 0.92; }
+
+/* Subtle dish-thumb (emoji-on-tile fallback while real photos missing) */
+.dish-thumb {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #F7F0E6 0%, #ECE3D5 100%);
+  font-size: 28px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(26,26,26,0.06);
+}
+
+/* Strikethrough effect for "skip" votes in profile */
+.line-through-soft {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-tertiary);
+  text-decoration-thickness: 1.5px;
+}
+
+/* The "honest" rating delta tag — your rating vs. consensus */
+.delta-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.delta-pill.warm  { background: rgba(228, 68, 10, 0.12); color: var(--color-primary); }
+.delta-pill.cool  { background: rgba(59, 130, 246, 0.12); color: #3B82F6; }
+.delta-pill.match { background: rgba(22, 163, 74, 0.12); color: var(--color-success); }
+
+/* Bottom nav active dot */
+.nav-active-dot {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 999px;
+  background: var(--color-primary);
+}
+
+/* Fade-in stagger */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.35s ease-out both; }
+
+/* Dotted map background fallback */
+.map-fallback {
+  background-color: #E8E1D6;
+  background-image:
+    radial-gradient(circle at 30% 40%, #D4CCBE 0%, transparent 35%),
+    radial-gradient(circle at 70% 60%, #C9DEE0 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, #D8CFC0 0%, transparent 30%),
+    repeating-linear-gradient(45deg, transparent 0 20px, rgba(26,26,26,0.02) 20px 21px);
+}
