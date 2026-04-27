@@ -7,14 +7,14 @@ import JitterBox from '../utils/jitter-box'
 import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
 import { dishPhotosApi } from '../api/dishPhotosApi'
-import { FoodRatingSlider } from './FoodRatingSlider'
+import { LetterGradeInput } from './LetterGradeInput'
 import { MAX_REVIEW_LENGTH } from '../constants/app'
 import {
   getPendingVoteFromStorage,
   clearPendingVoteStorage,
 } from '../lib/storage'
 import { logger } from '../utils/logger'
-import { hapticLight, hapticSuccess } from '../utils/haptics'
+import { hapticSuccess } from '../utils/haptics'
 import { PhotoUploadButton } from './PhotoUploadButton'
 import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
 import { validateUserContent } from '../lib/reviewBlocklist'
@@ -242,18 +242,11 @@ export function ReviewFlow({
         {announcement}
       </div>
 
-      {/* Rating slider — the single required input. */}
-      <FoodRatingSlider
-        value={sliderValue ?? 0}
-        unrated={sliderValue === null}
-        onChange={(v) => {
-          setSliderValue(v)
-          hapticLight()
-        }}
-        min={0}
-        max={10}
-        step={0.1}
-        category={category}
+      {/* Grade this dish — five letter buttons, mapped to 0–10 numeric internally
+          so every downstream aggregation/RPC stays unchanged. */}
+      <LetterGradeInput
+        value={sliderValue}
+        onChange={(numericRating) => setSliderValue(numericRating)}
       />
 
       {!isRanked && sliderValue === null && (
