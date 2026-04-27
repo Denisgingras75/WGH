@@ -112,6 +112,14 @@
 
   /* Focus ring */
   --focus-ring: 0 0 0 3px rgba(228, 68, 10, 0.25);
+
+  /* === Editorial atoms (claude.ai/design handoff bundle) === */
+  --color-ink: #0F0E0D;
+  --color-paper: #FAF6F1;
+  --color-rule: #1A1A1A;
+  --color-stamp: #B14A1F;
+  --shadow-card: 0 1px 2px rgba(15, 14, 13, 0.04), 0 4px 12px rgba(15, 14, 13, 0.04);
+  --shadow-pop: 0 4px 16px rgba(15, 14, 13, 0.10), 0 1px 3px rgba(15, 14, 13, 0.06);
 }
 
 @tailwind base;
@@ -148,6 +156,110 @@
 }
 
 @layer components {
+  /* === Editorial atoms (claude.ai/design handoff) ===
+     Used by the editorial-atoms components and the /redesign-atoms preview
+     route. Class names match the prototype's tokens.css 1:1 so atoms can be
+     copied verbatim with minimal divergence. */
+  .font-display {
+    font-family: 'Fraunces', 'Libre Baskerville', Georgia, serif;
+    font-optical-sizing: auto;
+    font-variation-settings: 'SOFT' 50, 'WONK' 0;
+  }
+  .font-mono-ed {
+    font-family: 'JetBrains Mono', 'DM Mono', ui-monospace, Menlo, monospace;
+  }
+  .font-script {
+    font-family: 'Amatic SC', 'Caveat', cursive;
+  }
+  .rule {
+    height: 1px;
+    background: var(--color-rule);
+    opacity: 0.85;
+  }
+  .rule-dotted {
+    border-top: 1.5px dotted var(--color-rule);
+    opacity: 0.6;
+  }
+  .stat-num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-feature-settings: 'tnum';
+    letter-spacing: -0.02em;
+  }
+  .leader {
+    flex: 1;
+    border-bottom: 1.5px dotted var(--color-text-tertiary);
+    margin: 0 8px 6px;
+    opacity: 0.5;
+  }
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+  }
+  .section-eyebrow {
+    font-family: 'Geist', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-text-tertiary);
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .dish-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F7F0E6 0%, #ECE3D5 100%);
+    font-size: 28px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.06);
+  }
+  .delta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .delta-pill.warm {
+    background: rgba(228, 68, 10, 0.12);
+    color: var(--color-primary);
+  }
+  .delta-pill.cool {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3B82F6;
+  }
+  .delta-pill.match {
+    background: rgba(22, 163, 74, 0.12);
+    color: var(--color-success);
+  }
+  .line-through-soft {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-text-tertiary);
+    text-decoration-thickness: 1.5px;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -54,6 +54,7 @@ const ForRestaurants = lazyWithRetry(() => import('./pages/ForRestaurants'), 'Fo
 const JitterLanding = lazyWithRetry(() => import('./pages/JitterLanding'))
 const RestaurantReviews = lazyWithRetry(() => import('./pages/RestaurantReviews'), 'RestaurantReviews')
 const PlaylistPage = lazyWithRetry(() => import('./pages/Playlist'), 'Playlist')
+const RedesignAtoms = lazyWithRetry(() => import('./pages/RedesignAtoms'), 'RedesignAtoms')
 const Locals = lazyWithRetry(() => import('./pages/Locals'), 'Locals')
 const LocalsCurator = lazyWithRetry(() => import('./pages/LocalsCurator'), 'LocalsCurator')
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
@@ -139,6 +140,7 @@ function App() {
               <Route path="/jitter" element={<Layout><JitterLanding /></Layout>} />
               <Route path="/locals" element={<Layout><Locals /></Layout>} />
               <Route path="/locals/:userId" element={<Layout><LocalsCurator /></Layout>} />
+              <Route path="/redesign-atoms" element={<RedesignAtoms />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
