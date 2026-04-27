@@ -107,12 +107,8 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
 
   return (
     <div className="pt-1">
-      {/* Divider */}
-      <div className="mx-4 mb-2" style={{
-        height: '2px',
-        background: 'linear-gradient(90deg, var(--color-text-primary), var(--color-text-primary) 30%, transparent)',
-        opacity: 0.12,
-      }} />
+      {/* Editorial hairline replacing the gradient divider */}
+      <div className="hairline-b mx-4" style={{ marginBottom: 6 }} />
 
       {/* Category icons — food icons as carousel navigation */}
       <div
@@ -130,9 +126,9 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
             <button
               key={tab.id}
               onClick={function () { handleTabClick(i) }}
-              className="flex-shrink-0 flex flex-col items-center justify-center active:scale-[0.94] transition-transform"
+              className="flex-shrink-0 flex flex-col items-center justify-center press"
               style={{
-                padding: '0',
+                padding: '4px 2px',
                 minWidth: '64px',
                 background: 'transparent',
                 border: 'none',
@@ -143,8 +139,8 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
             >
               {tab.id === 'nearby' ? (
                 <div style={{
-                  width: '56px',
-                  height: '56px',
+                  width: '52px',
+                  height: '52px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -153,15 +149,20 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                   📍
                 </div>
               ) : (
-                <CategoryIcon categoryId={tab.id} size={56} />
+                <CategoryIcon categoryId={tab.id} size={52} />
               )}
-              <span style={{
-                marginTop: '1px',
-                fontSize: '9px',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                lineHeight: 1.2,
-              }}>
+              <span
+                className="mono"
+                style={{
+                  marginTop: '2px',
+                  fontSize: '9px',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? 'var(--ink)' : 'var(--ink-2)',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.2,
+                }}
+              >
                 {tab.label}
               </span>
             </button>
@@ -245,24 +246,33 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                   {hasMore && (
                     <button
                       onClick={function () { handleShowMore(tab.id) }}
-                      className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+                      type="button"
+                      className="press w-full"
                       style={{
-                        fontSize: '14px',
-                        color: 'var(--color-accent-gold)',
-                        background: 'var(--color-card)',
-                        border: '1.5px solid var(--color-divider)',
-                        marginTop: '8px',
+                        font: "700 11px/1 'Inter', system-ui, sans-serif",
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink)',
+                        background: 'var(--card-paper)',
+                        border: '1px solid var(--ink)',
+                        borderRadius: 4,
+                        padding: '12px 16px',
+                        marginTop: '12px',
                         cursor: 'pointer',
                       }}
                     >
-                      Show {remaining > LOAD_MORE_COUNT ? LOAD_MORE_COUNT : remaining} more
+                      + Show {remaining > LOAD_MORE_COUNT ? LOAD_MORE_COUNT : remaining} more
                     </button>
                   )}
                 </>
               ) : (
-                <p className="py-8 text-center" style={{
-                  fontSize: '14px',
-                  color: 'var(--color-text-tertiary)',
+                <p className="serif" style={{
+                  padding: '32px 0',
+                  textAlign: 'center',
+                  fontSize: 16,
+                  fontWeight: 700,
+                  fontStyle: 'italic',
+                  color: 'var(--ink-2)',
                 }}>
                   No {tab.label.toLowerCase()} rated yet
                 </p>

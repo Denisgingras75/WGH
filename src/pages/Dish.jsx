@@ -184,23 +184,23 @@ export function Dish() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--color-surface-elevated)' }}>
+      <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
         <div className="animate-pulse">
-          <div className="aspect-[4/3] w-full" style={{ background: 'var(--color-divider)' }} />
+          <div className="aspect-[4/3] w-full" style={{ background: 'var(--rule)' }} />
           <div
-            className="mx-4 -mt-5 rounded-xl p-5 space-y-3"
-            style={{ background: 'var(--color-surface-elevated)', boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)' }}
+            className="mx-4 -mt-5 p-5 space-y-3"
+            style={{ background: 'var(--card-paper)', border: '1px solid var(--ink)', borderRadius: 4, boxShadow: 'var(--shadow-ink)' }}
           >
-            <div className="h-6 w-48 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="h-6 w-48" style={{ background: 'var(--rule)', borderRadius: 4 }} />
+            <div className="h-4 w-32" style={{ background: 'var(--rule)', borderRadius: 4 }} />
             <div className="flex items-end justify-between pt-2">
-              <div className="h-10 w-14 rounded" style={{ background: 'var(--color-divider)' }} />
-              <div className="h-4 w-24 rounded" style={{ background: 'var(--color-divider)' }} />
+              <div className="h-10 w-14" style={{ background: 'var(--rule)', borderRadius: 4 }} />
+              <div className="h-4 w-24" style={{ background: 'var(--rule)', borderRadius: 4 }} />
             </div>
           </div>
           <div className="p-4 mt-4 space-y-3">
-            <div className="h-4 w-48 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
+            <div className="h-4 w-48" style={{ background: 'var(--rule)', borderRadius: 4 }} />
+            <div className="h-4 w-32" style={{ background: 'var(--rule)', borderRadius: 4 }} />
           </div>
         </div>
       </div>
@@ -209,22 +209,30 @@ export function Dish() {
 
   if (error || !dish) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface-elevated)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center p-4">
           <img
             src="/empty-plate.webp"
             alt=""
             className="w-16 h-16 mx-auto mb-4 rounded-full object-cover"
           />
-          <p className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="serif" style={{ fontSize: 22, fontWeight: 800, fontStyle: 'italic', color: 'var(--ink)', margin: '0 0 12px' }}>
             Dish not found
           </p>
           <button
             onClick={handleBack}
-            className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
+            className="press"
             style={{
-              background: 'var(--color-primary)',
-              color: '#FFFFFF',
+              marginTop: 12,
+              font: "800 12px/1 'Inter', system-ui, sans-serif",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              border: '1px solid var(--ink)',
+              borderRadius: 4,
+              padding: '14px 22px',
+              cursor: 'pointer',
             }}
           >
             Go Back
@@ -237,20 +245,19 @@ export function Dish() {
   const isRanked = dish.total_votes >= MIN_VOTES_FOR_RANKING
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--paper)' }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 top-bar"
+        className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 hairline-b"
         style={{
-          background: 'var(--color-bg)',
-          borderBottom: '1.5px solid var(--color-divider)',
+          background: 'var(--paper)',
         }}
       >
         <button
           onClick={handleBack}
           aria-label="Go back"
-          className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="w-9 h-9 rounded-full flex items-center justify-center press"
+          style={{ color: 'var(--ink)' }}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -262,8 +269,8 @@ export function Dish() {
           <button
             onClick={handleShare}
             aria-label="Share dish"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="w-9 h-9 rounded-full flex items-center justify-center press"
+            style={{ color: 'var(--ink)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -291,8 +298,8 @@ export function Dish() {
               setPlaylistSheetOpen(true)
             }}
             aria-label="Add to playlist"
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-95"
-            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', fontSize: 18, color: 'var(--color-primary)', fontWeight: 700 }}
+            className="w-9 h-9 flex items-center justify-center press"
+            style={{ background: 'var(--card-paper)', border: '1px solid var(--ink)', borderRadius: 4, fontSize: 18, color: 'var(--ink)', fontWeight: 700 }}
           >
             +
           </button>
@@ -301,8 +308,8 @@ export function Dish() {
               type="button"
               onClick={() => setShowReportDish(true)}
               aria-label="Report this dish"
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="w-9 h-9 rounded-full flex items-center justify-center press"
+              style={{ color: 'var(--ink-2)' }}
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="5" cy="12" r="2" />
@@ -342,20 +349,33 @@ export function Dish() {
               onClick={handleRateClick}
               aria-expanded={showRateFlow}
               aria-controls="rate-flow-panel"
-              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              className="w-full press focus-ring"
+              style={{
+                font: "800 13px/1 'Inter', system-ui, sans-serif",
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                background: 'var(--ink)',
+                color: 'var(--paper)',
+                border: '1px solid var(--ink)',
+                borderRadius: 4,
+                padding: '18px 20px',
+                boxShadow: 'var(--shadow-ink)',
+                cursor: 'pointer',
+              }}
             >
               {showRateFlow
                 ? 'Close'
-                : priorVote ? 'Update your rating' : 'Rate this dish'}
+                : priorVote ? '+ Update your rating' : '+ Rate this dish'}
             </button>
             {showRateFlow && (
               <div
                 id="rate-flow-panel"
-                className="p-4 rounded-xl"
+                className="p-4"
                 style={{
-                  background: 'var(--color-surface-elevated)',
-                  border: '1px solid var(--color-divider)',
+                  background: 'var(--card-paper)',
+                  border: '1px solid var(--ink)',
+                  borderRadius: 4,
+                  boxShadow: 'var(--shadow-ink)',
                 }}
               >
                 <ReviewFlow
@@ -431,11 +451,12 @@ export function Dish() {
         }}
       >
         <div
-          className="flex gap-2 p-2 rounded-2xl"
+          className="flex gap-2 p-2"
           style={{
-            background: 'var(--color-card)',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.15), 0 0 0 1px var(--color-divider)',
-            backdropFilter: 'blur(16px)',
+            background: 'var(--card-paper)',
+            boxShadow: 'var(--shadow-ink)',
+            border: '1px solid var(--ink)',
+            borderRadius: 6,
           }}
         >
           {(dish.toast_slug || sanitizeUrl(dish.order_url)) ? (
@@ -450,13 +471,19 @@ export function Dish() {
                 restaurant_name: dish.restaurant_name,
                 source: dish.toast_slug ? 'toast' : 'order_url',
               }) }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="flex-1 flex items-center justify-center gap-2 press"
               style={{
-                background: 'var(--color-accent-orange)',
-                color: 'white',
+                font: "800 11px/1 'Inter', system-ui, sans-serif",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                background: 'var(--tomato)',
+                color: 'var(--paper)',
+                border: '1px solid var(--ink)',
+                borderRadius: 4,
+                padding: '14px 12px',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
               </svg>
               Order Now
@@ -466,13 +493,19 @@ export function Dish() {
               href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="flex-1 flex items-center justify-center gap-2 press"
               style={{
-                background: 'var(--color-primary)',
-                color: 'white',
+                font: "800 11px/1 'Inter', system-ui, sans-serif",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                background: 'var(--tomato)',
+                color: 'var(--paper)',
+                border: '1px solid var(--ink)',
+                borderRadius: 4,
+                padding: '14px 12px',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
               </svg>
               See Menu
@@ -486,13 +519,19 @@ export function Dish() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+            className="flex-1 flex items-center justify-center gap-2 press"
             style={{
-              background: 'var(--color-accent-gold)',
-              color: 'var(--color-bg)',
+              font: "800 11px/1 'Inter', system-ui, sans-serif",
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              background: 'var(--card-paper)',
+              color: 'var(--ink)',
+              border: '1px solid var(--ink)',
+              borderRadius: 4,
+              padding: '14px 12px',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
             </svg>
