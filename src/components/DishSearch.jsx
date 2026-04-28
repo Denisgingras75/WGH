@@ -35,9 +35,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     town
   )
 
-  // Restaurant search fallback — shows when dish results are thin (dropdown mode only)
+  // Restaurant search runs in both inline (home/map) and dropdown (browse) modes so users
+  // can find local + Google Places restaurants from any DishSearch surface.
   const isDropdownMode = !onSearchChange
-  const showRestaurantFallback = isDropdownMode && query.length >= MIN_SEARCH_LENGTH && !hookLoading
+  const showRestaurantFallback = query.length >= MIN_SEARCH_LENGTH && !hookLoading
   const placesLat = isUsingDefault ? null : (location ? location.lat : null)
   const placesLng = isUsingDefault ? null : (location ? location.lng : null)
   const restaurantData = useRestaurantSearch(query, placesLat, placesLng, showRestaurantFallback)
@@ -83,8 +84,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
   }
 
   const hasResults = results.dishes.length > 0 || results.categories.length > 0 || hasRestaurantResults
-  const showDropdown = !onSearchChange && isFocused && query.length >= MIN_SEARCH_LENGTH
-  const isLoading = loading || (hookLoading && !onSearchChange)
+  // In inline mode, the parent renders dishes inline; the dropdown still appears so users can
+  // see local + Google Places restaurants and tap "+ Add to WGH".
+  const showDropdown = isFocused && query.length >= MIN_SEARCH_LENGTH && (isDropdownMode || hasRestaurantResults || restaurantData.loading)
+  const isLoading = loading || (hookLoading && !onSearchChange) || (!isDropdownMode && restaurantData.loading && !hasRestaurantResults)
 
   // Handle dish selection
   const handleDishSelect = (dish) => {
@@ -203,14 +206,12 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
         {rightSlot}
       </div>
 
-      {/* Add Restaurant Modal (dropdown mode only) */}
-      {isDropdownMode && (
-        <AddRestaurantModal
-          isOpen={addModalOpen}
-          onClose={() => setAddModalOpen(false)}
-          initialQuery={addModalQuery}
-        />
-      )}
+      {/* Add Restaurant Modal — available in both modes so home/map users can add via Places tap */}
+      <AddRestaurantModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        initialQuery={addModalQuery}
+      />
 
       {/* Autocomplete Dropdown */}
       {showDropdown && (
@@ -235,7 +236,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           ) : !hasResults ? (
             <div className="px-4 py-6 text-center">
               <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                No dishes found for "{query}"
+                {isDropdownMode ? `No dishes found for "${query}"` : `No restaurants found for "${query}"`}
               </p>
               <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
                 Try a different search term
