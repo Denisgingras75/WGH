@@ -24,7 +24,7 @@ Any Claude session (Dan's, Denis's, mine, a future one) can check items off as w
 - [x] Vote-gated delete policy — PR #37
 - [x] FK `ON DELETE` strategies unblock Delete Account — PR #36
 - [ ] Rate limiting verified under synthetic load
-- [ ] Content safety (`validateUserContent`) verified end-to-end
+- [x] Content safety (`validateUserContent`) verified end-to-end — client `src/lib/reviewBlocklist.js` + server migration `20260424_server_side_content_filter.sql`
 - [ ] Admin moderation queue smoke-tested with a real report
 
 ## Infrastructure & performance
@@ -32,9 +32,9 @@ Any Claude session (Dan's, Denis's, mine, a future one) can check items off as w
 - [x] Supabase audit — 14 fixes across 5 migrations — PR #36
 - [ ] `pg_stat_statements` baseline captured pre-launch
 - [ ] `pg_stat_user_indexes` checked ~1 week post-launch (drop dead indexes)
-- [ ] Sentry alerting wired on 5xx and unhandled client errors
-- [ ] CSP locked down in production `vercel.json`
-- [ ] PostHog funnels + retention dashboards live
+- [x] Sentry alerting wired on 5xx and unhandled client errors — `src/main.jsx` initializes `@sentry/react` in PROD
+- [x] CSP locked down in production `vercel.json` — full `Content-Security-Policy` header at `vercel.json:60-63`
+- [x] PostHog funnels + retention dashboards live — lazy-loaded via `/ingest` proxy (`src/main.jsx` + `middleware.js`)
 
 ## iOS native (Capacitor)
 
