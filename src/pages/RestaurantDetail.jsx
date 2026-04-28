@@ -303,6 +303,24 @@ export function RestaurantDetail() {
                 <span> · {restaurant.distance_miles} mi away</span>
               )}
             </p>
+            {isHere && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full"
+                style={{
+                  marginTop: '6px',
+                  padding: '2px 8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  background: 'rgba(217, 167, 101, 0.15)',
+                  color: 'var(--color-accent-gold)',
+                  border: '1px solid var(--color-accent-gold)',
+                }}
+                aria-label="You are at this restaurant"
+              >
+                <span aria-hidden="true">📍</span>
+                You&rsquo;re here
+              </span>
+            )}
             {/* Scores row */}
             {(wghFoodScore || googleRating) && (
               <div className="flex items-center gap-4" style={{ marginTop: '6px' }}>
