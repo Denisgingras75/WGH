@@ -153,10 +153,11 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     <div className="relative w-full">
       {/* Search Input */}
       <div
-        className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+        className="relative flex items-center gap-3 px-4 py-3 rounded-md transition-colors duration-200"
         style={{
           background: 'var(--color-surface-elevated)',
-          border: isFocused ? '2px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
+          border: '2px solid',
+          borderColor: isFocused ? 'var(--color-primary)' : 'var(--color-text-primary)',
           minHeight: '48px',
         }}
       >
@@ -232,16 +233,16 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           id="dish-search-suggestions"
           role="listbox"
           aria-label="Suggestions"
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          className="absolute top-full left-0 right-0 mt-2 rounded-md overflow-hidden z-50"
           style={{
             background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            border: '2px solid var(--color-text-primary)',
           }}
         >
-          <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
+          <div className="px-4 py-2.5 border-b-2" style={{ borderColor: 'var(--color-text-primary)' }}>
             <span
-              className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              className="text-[11px] font-bold uppercase"
+              style={{ color: 'var(--color-text-primary)', letterSpacing: '0.18em' }}
             >
               Try a category
             </span>
@@ -254,13 +255,13 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                 key={category.id}
                 type="button"
                 onClick={() => handleSuggestionTap(category)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors active:scale-[0.97]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors active:scale-[0.97]"
                 style={{
                   background: 'var(--color-surface-elevated)',
-                  border: '1px solid var(--color-divider)',
+                  border: '1.5px solid var(--color-text-primary)',
                   color: 'var(--color-text-primary)',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-primary-muted)' }}
@@ -272,15 +273,15 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
             ))}
           </div>
           <div
-            className="px-4 py-2 border-t"
+            className="px-4 py-2 border-t-2"
             style={{
-              borderColor: 'var(--color-divider)',
+              borderColor: 'var(--color-text-primary)',
               background: 'var(--color-surface-elevated)',
             }}
           >
             <span
-              className="text-[10px] uppercase tracking-wider"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              className="text-[10px] font-semibold uppercase"
+              style={{ color: 'var(--color-text-secondary)', letterSpacing: '0.16em' }}
             >
               or type a dish, restaurant, or place
             </span>
@@ -295,10 +296,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           id="dish-search-dropdown"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          className="absolute top-full left-0 right-0 mt-2 rounded-md overflow-hidden z-50"
           style={{
             background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            border: '2px solid var(--color-text-primary)',
           }}
         >
           {isLoading ? (
@@ -322,8 +323,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Dish Results */}
               {results.dishes.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <div className="px-4 py-2.5 border-b-2" style={{ borderColor: 'var(--color-text-primary)' }}>
+                    <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-primary)', letterSpacing: '0.18em' }}>
                       {town ? `Best in ${town}` : 'Best Matches'}
                     </span>
                   </div>
@@ -342,13 +343,13 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {results.categories.length > 0 && (
                 <div>
                   <div
-                    className="px-4 py-2 border-b"
+                    className="px-4 py-2.5 border-b-2 border-t-2"
                     style={{
-                      borderColor: 'var(--color-divider)',
+                      borderColor: 'var(--color-text-primary)',
                       background: results.dishes.length > 0 ? 'var(--color-surface)' : 'transparent',
                     }}
                   >
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-primary)', letterSpacing: '0.18em' }}>
                       Categories
                     </span>
                   </div>
@@ -365,8 +366,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Restaurant fallback — local DB + Google Places */}
               {hasRestaurantResults && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <div className="px-4 py-2.5 border-b-2 border-t-2" style={{ borderColor: 'var(--color-text-primary)' }}>
+                    <span className="text-[11px] font-bold uppercase" style={{ color: 'var(--color-text-primary)', letterSpacing: '0.18em' }}>
                       Restaurants
                     </span>
                   </div>
@@ -444,8 +445,8 @@ function DishResult({ dish, rank, onClick }) {
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       <span
-        className="w-6 text-center text-sm font-bold flex-shrink-0"
-        style={{ color: 'var(--color-text-tertiary)' }}
+        className="w-6 text-center text-sm font-extrabold flex-shrink-0 tabular-nums"
+        style={{ color: 'var(--color-text-primary)' }}
       >
         {rank}
       </span>
@@ -484,8 +485,8 @@ function CategoryResult({ category, onClick }) {
     >
       {/* Category icon */}
       <div
-        className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center"
-        style={{ background: 'var(--color-surface)' }}
+        className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 flex items-center justify-center"
+        style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-text-primary)' }}
       >
         {getCategoryNeonImage(category.id) ? (
           <img
