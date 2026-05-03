@@ -1533,7 +1533,7 @@ DECLARE
   calculated_category_biases JSONB;
 BEGIN
   -- Calculate MAD (mean absolute deviation) dynamically
-  SELECT ROUND(AVG(ABS(v.rating_10 - d.avg_rating)), 1), COUNT(*)::INT
+  SELECT ROUND(AVG(ABS(v.rating_10 - d.avg_rating))::NUMERIC, 1), COUNT(*)::INT
   INTO calculated_bias, calculated_votes_with_consensus
   FROM votes v JOIN dishes d ON v.dish_id = d.id
   WHERE v.user_id = target_user_id AND v.rating_10 IS NOT NULL
@@ -1556,7 +1556,7 @@ BEGIN
   INTO calculated_category_biases
   FROM (
     SELECT COALESCE(v.category_snapshot, d.category) AS category,
-      ROUND(AVG(v.rating_10 - d.avg_rating), 1) AS bias
+      ROUND(AVG(v.rating_10 - d.avg_rating)::NUMERIC, 1) AS bias
     FROM votes v JOIN dishes d ON v.dish_id = d.id
     WHERE v.user_id = target_user_id AND v.rating_10 IS NOT NULL
       AND d.avg_rating IS NOT NULL AND d.total_votes >= 5
@@ -1648,7 +1648,7 @@ BEGIN
   FROM (
     SELECT v.category_snapshot AS category, COUNT(*) AS total_ratings,
       COUNT(*) FILTER (WHERE d.consensus_ready = TRUE) AS consensus_ratings,
-      ROUND(AVG(v.rating_10 - d.avg_rating) FILTER (WHERE d.consensus_ready = TRUE AND v.rating_10 IS NOT NULL), 1) AS bias
+      ROUND((AVG(v.rating_10 - d.avg_rating) FILTER (WHERE d.consensus_ready = TRUE AND v.rating_10 IS NOT NULL))::NUMERIC, 1) AS bias
     FROM votes v JOIN dishes d ON v.dish_id = d.id
     WHERE v.user_id = p_user_id AND v.category_snapshot IS NOT NULL
     GROUP BY v.category_snapshot
@@ -2176,7 +2176,7 @@ DECLARE
 BEGIN
   IF NEW.rating_10 IS NULL THEN RETURN NEW; END IF;
 
-  SELECT COUNT(*), ROUND(AVG(rating_10), 1) INTO total_votes_count, consensus_avg
+  SELECT COUNT(*), ROUND(AVG(rating_10)::NUMERIC, 1) INTO total_votes_count, consensus_avg
   FROM votes WHERE dish_id = NEW.dish_id AND rating_10 IS NOT NULL;
 
   IF total_votes_count >= consensus_threshold THEN
@@ -2189,7 +2189,7 @@ BEGIN
 
       FOR v IN SELECT * FROM votes WHERE dish_id = NEW.dish_id AND scored_at IS NULL AND rating_10 IS NOT NULL
       LOOP
-        user_deviation := ROUND(v.rating_10 - consensus_avg, 1);
+        user_deviation := ROUND((v.rating_10 - consensus_avg)::NUMERIC, 1);
         is_early := v.vote_position <= 3;
 
         SELECT rating_bias INTO user_bias_before FROM user_rating_stats WHERE user_id = v.user_id;
@@ -2198,7 +2198,7 @@ BEGIN
         UPDATE votes SET scored_at = NOW() WHERE id = v.id;
 
         -- Use ABS for overall bias (MAD)
-        SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating)), 1) INTO user_bias_after
+        SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating))::NUMERIC, 1) INTO user_bias_after
         FROM votes JOIN dishes d ON votes.dish_id = d.id
         WHERE votes.user_id = v.user_id AND d.consensus_ready = TRUE
           AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL;
@@ -2221,7 +2221,7 @@ BEGIN
         -- Category biases stay SIGNED
         UPDATE user_rating_stats SET category_biases = jsonb_set(
           COALESCE(category_biases, '{}'::jsonb), ARRAY[v.category_snapshot],
-          (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating), 1))
+          (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating)::NUMERIC, 1))
            FROM votes JOIN dishes d ON votes.dish_id = d.id
            WHERE votes.user_id = v.user_id AND d.consensus_ready = TRUE
              AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL
@@ -2237,7 +2237,7 @@ BEGIN
         consensus_votes = total_votes_count, consensus_calculated_at = NOW()
       WHERE id = NEW.dish_id;
 
-      user_deviation := ROUND(NEW.rating_10 - consensus_avg, 1);
+      user_deviation := ROUND((NEW.rating_10 - consensus_avg)::NUMERIC, 1);
       is_early := FALSE;
 
       SELECT rating_bias INTO user_bias_before FROM user_rating_stats WHERE user_id = NEW.user_id;
@@ -2245,7 +2245,7 @@ BEGIN
 
       UPDATE votes SET scored_at = NOW() WHERE id = NEW.id;
 
-      SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating)), 1) INTO user_bias_after
+      SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating))::NUMERIC, 1) INTO user_bias_after
       FROM votes JOIN dishes d ON votes.dish_id = d.id
       WHERE votes.user_id = NEW.user_id AND d.consensus_ready = TRUE
         AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL;
@@ -2267,7 +2267,7 @@ BEGIN
       -- Category biases stay SIGNED
       UPDATE user_rating_stats SET category_biases = jsonb_set(
         COALESCE(category_biases, '{}'::jsonb), ARRAY[NEW.category_snapshot],
-        (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating), 1))
+        (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating)::NUMERIC, 1))
          FROM votes JOIN dishes d ON votes.dish_id = d.id
          WHERE votes.user_id = NEW.user_id AND d.consensus_ready = TRUE
            AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL
