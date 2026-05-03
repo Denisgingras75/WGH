@@ -71,7 +71,7 @@ serve(async (req) => {
     }
 
     const userId = user.id
-    console.log(`delete-account: starting deletion for user ${userId}`)
+    console.log(`delete-account: starting deletion for user ${await hashUserId(userId)}`)
 
     // Service-role client bypasses RLS for destructive operations
     const admin = createClient(supabaseUrl, supabaseServiceKey)
@@ -369,7 +369,7 @@ serve(async (req) => {
     // If pendingRowId === null: non-Apple user or unrevokable sentinel (Case B).
     // Case B sentinel is intentionally left in place for audit.
 
-    console.log(`delete-account: user ${userId} successfully deleted`)
+    console.log(`delete-account: user ${await hashUserId(userId)} successfully deleted`)
     return json({ success: true })
   } catch (error) {
     console.error('delete-account: unexpected error:', error)
