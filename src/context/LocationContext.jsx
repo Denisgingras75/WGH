@@ -90,8 +90,21 @@ export function LocationProvider({ children }) {
       },
       (err) => {
         logger.warn('Geolocation error:', err.message)
-        setPermissionState('denied')
-        setError('denied')
+        // GeolocationPositionError codes:
+        //   1 PERMISSION_DENIED — real denial, don't auto-reprompt.
+        //   2 POSITION_UNAVAILABLE — GPS/network failed, retryable.
+        //   3 TIMEOUT — too slow, retryable.
+        // Previously every code collapsed to permissionState='denied',
+        // which caused promptForLocation() to refuse to retry on the next
+        // call. Branch the codes so transient failures stay retryable.
+        if (err.code === 1) {
+          setPermissionState('denied')
+          setError('denied')
+        } else {
+          setError(err.code === 3 ? 'timeout' : 'unavailable')
+          // Leave permissionState as-is so a later promptForLocation()
+          // can issue a fresh request.
+        }
         setLocation(DEFAULT_LOCATION)
         setLoading(false)
       },
