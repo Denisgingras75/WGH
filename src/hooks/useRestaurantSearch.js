@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { placesApi } from '../api/placesApi'
 import { logger } from '../utils/logger'
@@ -18,21 +18,23 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
   const [localResults, setLocalResults] = useState([])
   const [externalResults, setExternalResults] = useState([])
   const [loading, setLoading] = useState(false)
-  const mountedRef = useRef(true)
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => { mountedRef.current = false }
-  }, [])
 
   useEffect(() => {
     if (!enabled || !query || query.trim().length < 2) {
       setLocalResults([])
       setExternalResults([])
+      // Clear loading: prevents stuck spinner if user clears the query while
+      // a previous fetch is still in flight (the in-flight fetch is cancelled
+      // below, so its `finally` won't run).
+      setLoading(false)
       return
     }
 
     const trimmed = query.trim()
+    // Effect-scoped cancellation flag. Each effect run owns its own flag, so
+    // a slow response from a previous query can't clobber state for a newer
+    // query even though both `fetchResults` closures are alive briefly.
+    let cancelled = false
     setLoading(true)
 
     // Only bias toward user location if we actually have one
@@ -56,7 +58,7 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
           }),
         ])
 
-        if (!mountedRef.current) return
+        if (cancelled) return
 
         // Collect google_place_ids from local results for dedup
         const localPlaceIds = new Set()
@@ -71,12 +73,12 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
         setExternalResults(dedupedExternal)
       } catch (err) {
         logger.error('Restaurant search error:', err)
-        if (mountedRef.current) {
+        if (!cancelled) {
           setLocalResults([])
           setExternalResults([])
         }
       } finally {
-        if (mountedRef.current) {
+        if (!cancelled) {
           setLoading(false)
         }
       }
@@ -84,7 +86,10 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
 
     // Debounce
     const timer = setTimeout(fetchResults, 400)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [query, lat, lng, enabled, radiusMiles])
 
   return { localResults, externalResults, loading }
