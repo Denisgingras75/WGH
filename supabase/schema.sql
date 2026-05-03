@@ -284,6 +284,20 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- IP-keyed companion to rate_limits, used by browser-facing Edge Functions
+-- (places-* proxies) to throttle anonymous traffic that auth.uid()-based
+-- limiting cannot reach. RLS-enabled with no public policies; the
+-- check_and_record_ip_rate_limit RPC is the only entry point.
+CREATE TABLE IF NOT EXISTS ip_rate_limits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ip_address INET NOT NULL,
+  action TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ip_rate_limits_lookup_idx
+  ON ip_rate_limits (ip_address, action, created_at DESC);
+
 
 -- 1s. jitter_profiles (Jitter Protocol: behavioral biometrics for human verification)
 CREATE TABLE IF NOT EXISTS jitter_profiles (
@@ -549,6 +563,7 @@ ALTER TABLE specials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE restaurant_managers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE restaurant_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ip_rate_limits ENABLE ROW LEVEL SECURITY;
 
 -- restaurants: public read, admin + manager write (column-level protection via trigger)
 CREATE POLICY "Public read access" ON restaurants FOR SELECT USING (true);
@@ -1533,7 +1548,7 @@ DECLARE
   calculated_category_biases JSONB;
 BEGIN
   -- Calculate MAD (mean absolute deviation) dynamically
-  SELECT ROUND(AVG(ABS(v.rating_10 - d.avg_rating)), 1), COUNT(*)::INT
+  SELECT ROUND(AVG(ABS(v.rating_10 - d.avg_rating))::NUMERIC, 1), COUNT(*)::INT
   INTO calculated_bias, calculated_votes_with_consensus
   FROM votes v JOIN dishes d ON v.dish_id = d.id
   WHERE v.user_id = target_user_id AND v.rating_10 IS NOT NULL
@@ -1556,7 +1571,7 @@ BEGIN
   INTO calculated_category_biases
   FROM (
     SELECT COALESCE(v.category_snapshot, d.category) AS category,
-      ROUND(AVG(v.rating_10 - d.avg_rating), 1) AS bias
+      ROUND(AVG(v.rating_10 - d.avg_rating)::NUMERIC, 1) AS bias
     FROM votes v JOIN dishes d ON v.dish_id = d.id
     WHERE v.user_id = target_user_id AND v.rating_10 IS NOT NULL
       AND d.avg_rating IS NOT NULL AND d.total_votes >= 5
@@ -1648,7 +1663,7 @@ BEGIN
   FROM (
     SELECT v.category_snapshot AS category, COUNT(*) AS total_ratings,
       COUNT(*) FILTER (WHERE d.consensus_ready = TRUE) AS consensus_ratings,
-      ROUND(AVG(v.rating_10 - d.avg_rating) FILTER (WHERE d.consensus_ready = TRUE AND v.rating_10 IS NOT NULL), 1) AS bias
+      ROUND((AVG(v.rating_10 - d.avg_rating) FILTER (WHERE d.consensus_ready = TRUE AND v.rating_10 IS NOT NULL))::NUMERIC, 1) AS bias
     FROM votes v JOIN dishes d ON v.dish_id = d.id
     WHERE v.user_id = p_user_id AND v.category_snapshot IS NOT NULL
     GROUP BY v.category_snapshot
@@ -1965,6 +1980,53 @@ RETURNS JSONB LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
   SELECT check_and_record_rate_limit('vote', 10, 60);
 $$;
 
+-- IP-keyed rate limiter for unauthenticated callers (used by Places proxy
+-- functions). The Edge Function passes the caller IP from
+-- cf-connecting-ip / x-forwarded-for. Fail-open on missing/invalid IP
+-- (defense-in-depth alongside the Google quota and Cloudflare WAF).
+CREATE OR REPLACE FUNCTION check_and_record_ip_rate_limit(
+  p_ip TEXT, p_action TEXT, p_max_attempts INT DEFAULT 30, p_window_seconds INT DEFAULT 60
+)
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_ip INET;
+  v_count INT;
+  v_oldest TIMESTAMPTZ;
+  v_cutoff TIMESTAMPTZ;
+  v_retry_after INT;
+BEGIN
+  IF p_ip IS NULL OR length(trim(p_ip)) = 0 THEN
+    RETURN jsonb_build_object('allowed', true);
+  END IF;
+
+  BEGIN
+    v_ip := p_ip::INET;
+  EXCEPTION WHEN others THEN
+    RETURN jsonb_build_object('allowed', true);
+  END;
+
+  v_cutoff := NOW() - (p_window_seconds || ' seconds')::INTERVAL;
+
+  SELECT COUNT(*), MIN(created_at) INTO v_count, v_oldest
+  FROM ip_rate_limits
+  WHERE ip_address = v_ip AND action = p_action AND created_at > v_cutoff;
+
+  IF v_count >= p_max_attempts THEN
+    v_retry_after := EXTRACT(EPOCH FROM (v_oldest + (p_window_seconds || ' seconds')::INTERVAL - NOW()))::INT;
+    IF v_retry_after < 0 THEN v_retry_after := 0; END IF;
+    RETURN jsonb_build_object(
+      'allowed', false,
+      'retry_after_seconds', v_retry_after,
+      'message', 'Too many requests. Please wait ' || v_retry_after || ' seconds.'
+    );
+  END IF;
+
+  INSERT INTO ip_rate_limits (ip_address, action) VALUES (v_ip, p_action);
+
+  RETURN jsonb_build_object('allowed', true);
+END;
+$$;
+
 -- Atomic user vote upsert. Targets the partial unique index:
 -- votes_user_unique ON votes (dish_id, user_id) WHERE source = 'user'.
 -- DROP guarantees replay against an existing DB with the pre-Phase-2 signature
@@ -2176,7 +2238,7 @@ DECLARE
 BEGIN
   IF NEW.rating_10 IS NULL THEN RETURN NEW; END IF;
 
-  SELECT COUNT(*), ROUND(AVG(rating_10), 1) INTO total_votes_count, consensus_avg
+  SELECT COUNT(*), ROUND(AVG(rating_10)::NUMERIC, 1) INTO total_votes_count, consensus_avg
   FROM votes WHERE dish_id = NEW.dish_id AND rating_10 IS NOT NULL;
 
   IF total_votes_count >= consensus_threshold THEN
@@ -2189,7 +2251,7 @@ BEGIN
 
       FOR v IN SELECT * FROM votes WHERE dish_id = NEW.dish_id AND scored_at IS NULL AND rating_10 IS NOT NULL
       LOOP
-        user_deviation := ROUND(v.rating_10 - consensus_avg, 1);
+        user_deviation := ROUND((v.rating_10 - consensus_avg)::NUMERIC, 1);
         is_early := v.vote_position <= 3;
 
         SELECT rating_bias INTO user_bias_before FROM user_rating_stats WHERE user_id = v.user_id;
@@ -2198,7 +2260,7 @@ BEGIN
         UPDATE votes SET scored_at = NOW() WHERE id = v.id;
 
         -- Use ABS for overall bias (MAD)
-        SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating)), 1) INTO user_bias_after
+        SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating))::NUMERIC, 1) INTO user_bias_after
         FROM votes JOIN dishes d ON votes.dish_id = d.id
         WHERE votes.user_id = v.user_id AND d.consensus_ready = TRUE
           AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL;
@@ -2221,7 +2283,7 @@ BEGIN
         -- Category biases stay SIGNED
         UPDATE user_rating_stats SET category_biases = jsonb_set(
           COALESCE(category_biases, '{}'::jsonb), ARRAY[v.category_snapshot],
-          (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating), 1))
+          (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating)::NUMERIC, 1))
            FROM votes JOIN dishes d ON votes.dish_id = d.id
            WHERE votes.user_id = v.user_id AND d.consensus_ready = TRUE
              AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL
@@ -2237,7 +2299,7 @@ BEGIN
         consensus_votes = total_votes_count, consensus_calculated_at = NOW()
       WHERE id = NEW.dish_id;
 
-      user_deviation := ROUND(NEW.rating_10 - consensus_avg, 1);
+      user_deviation := ROUND((NEW.rating_10 - consensus_avg)::NUMERIC, 1);
       is_early := FALSE;
 
       SELECT rating_bias INTO user_bias_before FROM user_rating_stats WHERE user_id = NEW.user_id;
@@ -2245,7 +2307,7 @@ BEGIN
 
       UPDATE votes SET scored_at = NOW() WHERE id = NEW.id;
 
-      SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating)), 1) INTO user_bias_after
+      SELECT ROUND(AVG(ABS(votes.rating_10 - d.consensus_rating))::NUMERIC, 1) INTO user_bias_after
       FROM votes JOIN dishes d ON votes.dish_id = d.id
       WHERE votes.user_id = NEW.user_id AND d.consensus_ready = TRUE
         AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL;
@@ -2267,7 +2329,7 @@ BEGIN
       -- Category biases stay SIGNED
       UPDATE user_rating_stats SET category_biases = jsonb_set(
         COALESCE(category_biases, '{}'::jsonb), ARRAY[NEW.category_snapshot],
-        (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating), 1))
+        (SELECT to_jsonb(ROUND(AVG(votes.rating_10 - d.consensus_rating)::NUMERIC, 1))
          FROM votes JOIN dishes d ON votes.dish_id = d.id
          WHERE votes.user_id = NEW.user_id AND d.consensus_ready = TRUE
            AND votes.rating_10 IS NOT NULL AND votes.scored_at IS NOT NULL
@@ -3401,6 +3463,7 @@ GRANT SELECT ON public_votes TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_smart_snippet(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION check_and_record_rate_limit TO authenticated;
+GRANT EXECUTE ON FUNCTION check_and_record_ip_rate_limit(TEXT, TEXT, INT, INT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION check_vote_rate_limit TO authenticated;
 GRANT EXECUTE ON FUNCTION submit_vote_atomic(UUID, UUID, DECIMAL, TEXT, DECIMAL, DECIMAL, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION check_photo_upload_rate_limit TO authenticated;

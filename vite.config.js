@@ -70,6 +70,11 @@ export default defineConfig({
     }),
   ],
   build: {
+    // Floor: Safari 15 / Chrome 109 / Firefox 109 / Edge 109. CLAUDE.md §1.1
+    // requires Safari <16 and Chrome <110 to run; Vite 7's default
+    // `baseline-widely-available` target is Safari 16+ and would lock those
+    // users out before React mounts.
+    target: ['safari15', 'chrome109', 'firefox109', 'edge109'],
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {

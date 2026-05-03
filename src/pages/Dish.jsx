@@ -21,6 +21,7 @@ import { sanitizeUrl } from '../utils/sanitize'
 import { openExternalLink } from '../utils/openExternalLink'
 import { authApi } from '../api/authApi'
 import { dishPhotosApi } from '../api/dishPhotosApi'
+import { ErrorTypes, getUserMessage } from '../utils/errorHandler'
 
 export function Dish() {
   const { dishId } = useParams()
@@ -35,6 +36,7 @@ export function Dish() {
     reviews, reviewsLoading,
     shouldLoadEvidence, evidenceSentinelRef,
     handlePhotoUploaded, handleVote, clearPhotoUploaded,
+    refetchDish,
   } = useDishDetail(dishId, user)
 
   const [loginModalOpen, setLoginModalOpen] = useState(false)
@@ -216,6 +218,9 @@ export function Dish() {
   }
 
   if (error || !dish) {
+    // Treat null-error-null-dish defensively as not-found; only render a
+    // retryable failure when we have a non-NOT_FOUND classified error.
+    const isLoadFailure = error && error.type && error.type !== ErrorTypes.NOT_FOUND
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface-elevated)' }}>
         <div className="text-center p-4">
@@ -225,17 +230,22 @@ export function Dish() {
             className="w-16 h-16 mx-auto mb-4 rounded-full object-cover"
           />
           <p className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-            Dish not found
+            {isLoadFailure ? 'Couldn’t load this dish' : 'Dish not found'}
           </p>
+          {isLoadFailure && (
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              {getUserMessage(error, 'loading dish')}
+            </p>
+          )}
           <button
-            onClick={handleBack}
+            onClick={isLoadFailure ? refetchDish : handleBack}
             className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
             style={{
               background: 'var(--color-primary)',
               color: '#FFFFFF',
             }}
           >
-            Go Back
+            {isLoadFailure ? 'Try Again' : 'Go Back'}
           </button>
         </div>
       </div>
