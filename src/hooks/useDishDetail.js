@@ -5,6 +5,7 @@ import { dishesApi } from '../api/dishesApi'
 import { followsApi } from '../api/followsApi'
 import { dishPhotosApi } from '../api/dishPhotosApi'
 import { votesApi } from '../api/votesApi'
+import { ErrorTypes, createClassifiedError } from '../utils/errorHandler'
 
 /**
  * Transform raw dish data from API to component format
@@ -41,7 +42,12 @@ function transformDish(data) {
 export function useDishDetail(dishId, user) {
   const [dish, setDish] = useState(null)
   const [loading, setLoading] = useState(true)
+  // error is null | classified Error (with .type from ErrorTypes). The page
+  // distinguishes NOT_FOUND from transient failures so users see "Try again"
+  // instead of a fake "Dish not found" when Supabase is just slow or down.
   const [error, setError] = useState(null)
+  const [refetchKey, setRefetchKey] = useState(0)
+  const refetchDish = useCallback(() => setRefetchKey(k => k + 1), [])
 
   // Variant state
   const [variants, setVariants] = useState([])
@@ -125,7 +131,15 @@ export function useDishDetail(dishId, user) {
       } catch (err) {
         if (cancelled) return
         logger.error('Error fetching dish:', err)
-        setError('Dish not found')
+        // dishesApi.getDishById throws `new Error('Dish not found')` only
+        // when the row genuinely doesn't exist. Everything else (network,
+        // RLS, server) goes through createClassifiedError. Preserve that
+        // distinction so the page can offer retry vs hard 404.
+        const classified = err.type ? err : createClassifiedError(err)
+        if (err.message === 'Dish not found') {
+          classified.type = ErrorTypes.NOT_FOUND
+        }
+        setError(classified)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -133,7 +147,7 @@ export function useDishDetail(dishId, user) {
 
     fetchDish()
     return () => { cancelled = true }
-  }, [dishId])
+  }, [dishId, refetchKey])
 
   // Fetch variant data
   useEffect(() => {
@@ -344,5 +358,6 @@ export function useDishDetail(dishId, user) {
     handlePhotoUploaded,
     handleVote,
     clearPhotoUploaded,
+    refetchDish,
   }
 }
