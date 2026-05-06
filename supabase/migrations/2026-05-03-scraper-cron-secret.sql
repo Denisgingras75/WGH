@@ -24,7 +24,21 @@
 --   4. Verify a cron run: `SELECT jobname, status, return_message FROM
 --      cron.job_run_details ORDER BY end_time DESC LIMIT 5;`
 
-SELECT cron.unschedule('daily-scraper-dispatch');
+-- Make sure pg_cron + pg_net are available. The earlier
+-- 20260216120000_enable_scraper_cron.sql migration was never run on
+-- some projects (Denis's wghapp project), so this file can't assume
+-- the daily-scraper-dispatch job already exists. Wrap unschedule in a
+-- safe block, then schedule fresh.
+CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+DO $$
+BEGIN
+  PERFORM cron.unschedule('daily-scraper-dispatch');
+EXCEPTION WHEN others THEN
+  -- Job didn't exist (fresh project, or never created). Nothing to do.
+  NULL;
+END $$;
 
 SELECT cron.schedule(
   'daily-scraper-dispatch',
