@@ -1,8 +1,14 @@
 // Parses universal-link / deep-link URLs returning from email confirmation,
 // password reset, or magic link. Returns null for anything not an auth return.
-// Used by AuthLifecycle (in a later PR) when @capacitor/app fires appUrlOpen.
+// Used by AuthLifecycle when @capacitor/app fires appUrlOpen.
+//
+// Recognized URL shapes:
+//   /auth/callback?code=...&type=...   → generic callback (OAuth, magic, signup)
+//   /reset-password?code=...           → Supabase resetPasswordForEmail redirect
+//                                        (type is implicit; we force 'recovery')
 
 const AUTH_PATH_PREFIX = '/auth/'
+const RESET_PATH = '/reset-password'
 
 export function parse(input) {
   if (!input || typeof input !== 'string') return null
@@ -12,10 +18,15 @@ export function parse(input) {
   } catch {
     return null
   }
-  if (!url.pathname.startsWith(AUTH_PATH_PREFIX)) return null
+  const path = url.pathname
+  const isAuthPath = path.startsWith(AUTH_PATH_PREFIX)
+  // Accept exact /reset-password or /reset-password/... (trailing segment / slash)
+  const isResetPath = path === RESET_PATH || path.startsWith(`${RESET_PATH}/`)
+  if (!isAuthPath && !isResetPath) return null
   const code = url.searchParams.get('code')
   if (!code) return null
-  const rawType = url.searchParams.get('type')
+  // Reset-password redirect URLs don't carry ?type=; the path itself implies recovery.
+  const rawType = isResetPath ? 'recovery' : url.searchParams.get('type')
   const type = normalizeType(rawType)
   return { code, type }
 }
