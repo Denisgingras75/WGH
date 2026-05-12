@@ -127,8 +127,21 @@ serve(async (req) => {
         .eq('provider', 'apple')
 
       if (appleIdErr) {
+        console.error(JSON.stringify({
+          event: 'delete_account_identity_lookup_failed',
+          user_hash: await hashUserId(userId),
+          pg_code: (appleIdErr as { code?: string })?.code ?? null,
+          message: appleIdErr.message ?? null,
+          details: (appleIdErr as { details?: string })?.details ?? null,
+          hint: (appleIdErr as { hint?: string })?.hint ?? null,
+        }))
         return json({ error: 'Identity lookup failed', code: 'IDENTITY_LOOKUP_FAILED' }, 500)
       }
+      console.log(JSON.stringify({
+        event: 'delete_account_identity_lookup_ok',
+        user_hash: await hashUserId(userId),
+        identity_count: appleIdentities?.length ?? 0,
+      }))
 
       if (appleIdentities && appleIdentities.length > 0) {
         if (appleIdentities.length > 1) {
@@ -211,6 +224,15 @@ serve(async (req) => {
             .single()
 
           if (insertErr || !pendingRow) {
+            console.error(JSON.stringify({
+              event: 'delete_account_queue_insert_failed',
+              branch: 'case_a',
+              user_hash: await hashUserId(userId),
+              pg_code: insertErr?.code ?? null,
+              message: insertErr?.message ?? (pendingRow ? null : 'pendingRow is null'),
+              details: (insertErr as { details?: string } | null)?.details ?? null,
+              hint: (insertErr as { hint?: string } | null)?.hint ?? null,
+            }))
             return json({ error: 'Delete queue insert failed', code: 'DELETE_QUEUE_FAILED' }, 500)
           }
           pendingRowId = pendingRow.id
@@ -263,6 +285,15 @@ serve(async (req) => {
             .single()
 
           if (sentinelErr || !sentinel) {
+            console.error(JSON.stringify({
+              event: 'delete_account_queue_insert_failed',
+              branch: 'case_b_sentinel',
+              user_hash: await hashUserId(userId),
+              pg_code: sentinelErr?.code ?? null,
+              message: sentinelErr?.message ?? (sentinel ? null : 'sentinel is null'),
+              details: (sentinelErr as { details?: string } | null)?.details ?? null,
+              hint: (sentinelErr as { hint?: string } | null)?.hint ?? null,
+            }))
             return json({ error: 'Sentinel insert failed', code: 'DELETE_QUEUE_FAILED' }, 500)
           }
           pendingRowId = sentinel.id
