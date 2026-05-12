@@ -117,30 +117,40 @@ serve(async (req) => {
     let inlineRevokeSucceeded = false
 
     {
-      // Look up Apple identities for this user. Fail closed — don't proceed
-      // with deletion if we can't determine Apple state.
-      const { data: appleIdentities, error: appleIdErr } = await admin
-        .schema('auth')
-        .from('identities')
-        .select('provider_id')
-        .eq('user_id', userId)
-        .eq('provider', 'apple')
+      // Look up Apple identities for this user via the Auth Admin API.
+      //
+      // Why not `admin.schema('auth').from('identities').select(...)`:
+      //   PostgREST rejects requests to schemas not in its `db.schemas`
+      //   exposed-schemas list (returns PGRST106 "Invalid schema").
+      //   Denis's project doesn't expose `auth` via PostgREST, so the
+      //   direct query 500'd silently. The Auth Admin API uses GoTrue's
+      //   own DB connection and bypasses PostgREST entirely — works
+      //   regardless of project-level PostgREST config.
+      const { data: userData, error: appleIdErr } = await admin.auth.admin.getUserById(userId)
 
       if (appleIdErr) {
         console.error(JSON.stringify({
           event: 'delete_account_identity_lookup_failed',
           user_hash: await hashUserId(userId),
-          pg_code: (appleIdErr as { code?: string })?.code ?? null,
           message: appleIdErr.message ?? null,
-          details: (appleIdErr as { details?: string })?.details ?? null,
-          hint: (appleIdErr as { hint?: string })?.hint ?? null,
+          status: (appleIdErr as { status?: number })?.status ?? null,
         }))
         return json({ error: 'Identity lookup failed', code: 'IDENTITY_LOOKUP_FAILED' }, 500)
       }
+
+      const allIdentities = userData?.user?.identities ?? []
+      const appleIdentities = allIdentities
+        .filter((i) => i.provider === 'apple')
+        .map((i) => {
+          const sub = i.identity_data?.sub
+          return { provider_id: typeof sub === 'string' ? sub : null }
+        })
+
       console.log(JSON.stringify({
         event: 'delete_account_identity_lookup_ok',
         user_hash: await hashUserId(userId),
-        identity_count: appleIdentities?.length ?? 0,
+        identity_count: appleIdentities.length,
+        total_identities: allIdentities.length,
       }))
 
       if (appleIdentities && appleIdentities.length > 0) {
