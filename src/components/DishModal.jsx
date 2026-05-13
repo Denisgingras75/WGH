@@ -15,6 +15,12 @@ import { getResponsiveImageProps } from '../utils/images'
 export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
   const navigate = useNavigate()
   const [photoUploaded, setPhotoUploaded] = useState(null)
+  // Tracks whether the user submitted a rating during THIS modal session.
+  // Used to suppress the "Would you like to rate now?" prompt in
+  // PhotoUploadConfirmation when the user has already rated mid-session
+  // (e.g. rated → then uploaded a photo). Profile.jsx only opens this modal
+  // for unrated dishes, so an initial-rated case doesn't apply here today.
+  const [voteSubmitted, setVoteSubmitted] = useState(false)
   const [featuredPhoto, setFeaturedPhoto] = useState(null)
   const [communityPhotos, setCommunityPhotos] = useState([])
   const [allPhotos, setAllPhotos] = useState([])
@@ -168,6 +174,13 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
     onClose()
   }
 
+  // Wraps the parent's onVote so we can mark the in-session rating state
+  // before bubbling the event. ReviewFlow calls onVote() with no args.
+  const handleVote = () => {
+    setVoteSubmitted(true)
+    onVote?.()
+  }
+
   // Photos to display in the grid (first 4 of community, or all if showing all)
   const displayPhotos = showAllPhotos ? allPhotos : communityPhotos.slice(0, 4)
   const hasMorePhotos = allPhotos.length > 4 && !showAllPhotos
@@ -273,6 +286,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
             dishName={dish.dish_name}
             photoUrl={photoUploaded.photo_url}
             status={photoUploaded.analysisResults?.status}
+            hasRated={voteSubmitted}
             onRateNow={handleRateNow}
             onLater={handleLater}
           />
@@ -394,7 +408,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               category={dish.category}
               price={dish.price}
               totalVotes={dish.total_votes || 0}
-              onVote={onVote}
+              onVote={handleVote}
               onLoginRequired={onLoginRequired}
             />
 

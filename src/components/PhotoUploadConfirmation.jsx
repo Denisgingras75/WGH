@@ -5,6 +5,7 @@ export function PhotoUploadConfirmation({
   dishName,
   photoUrl,
   status = 'community',
+  hasRated = false,
   onRateNow,
   onLater,
 }) {
@@ -55,26 +56,41 @@ export function PhotoUploadConfirmation({
         </div>
       )}
 
-      <p className="rate-prompt">Would you like to rate this dish now?</p>
-
-      <div className="confirmation-buttons">
-        <button
-          onClick={onRateNow}
-          className="btn-primary"
-        >
-          Rate Now
-        </button>
-        <button
-          onClick={onLater}
-          className="btn-secondary"
-        >
-          Later
-        </button>
-      </div>
-
-      <p className="hint">
-        You can rate this dish anytime from your Profile
-      </p>
+      {hasRated ? (
+        <>
+          {/* User already rated this session — don't re-prompt. */}
+          <p className="rate-prompt">Thanks — your rating and photo are in.</p>
+          <div className="confirmation-buttons">
+            <button
+              onClick={onLater}
+              className="btn-primary"
+            >
+              Done
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="rate-prompt">Would you like to rate this dish now?</p>
+          <div className="confirmation-buttons">
+            <button
+              onClick={onRateNow}
+              className="btn-primary"
+            >
+              Rate Now
+            </button>
+            <button
+              onClick={onLater}
+              className="btn-secondary"
+            >
+              Later
+            </button>
+          </div>
+          <p className="hint">
+            You can rate this dish anytime from your Profile
+          </p>
+        </>
+      )}
     </div>
   )
 }
