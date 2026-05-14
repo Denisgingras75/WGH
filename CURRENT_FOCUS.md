@@ -2,45 +2,47 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-05-08 (end-of-day)
+**Last updated:** 2026-05-14
 
 ---
 
 ## Active handoff
 
-**Phase B + root-fix Tracks A & B + Track C verification all DONE today.** Apple Dev cleared this morning. By end of day: web Apple Sign-In working in prod, all SIWA infrastructure live, .p8 leaked-then-rotated, cron worker verified end-to-end. **Next session is Phase C — Xcode + real device + TestFlight + ASC submission.**
+**Phase C is the bottleneck. 11 days to Memorial Day. Code is done — only Xcode + device mechanics remain.**
 
-**17 days to Memorial Day.** ~1 focused day of execution + Apple's review clock = submittable + approved well before launch window.
+Confirmed 2026-05-14 via clean cherry-pick attempt: **everything that needed to ship from `feat/ios-siwa-capability` is already on main.** `App.entitlements` has `com.apple.developer.applesignin`, `nativeAuth.js` reads `result.idToken` (the Capgo field-name fix), and `apple.ts` has `APPLE_FETCH_TIMEOUT_MS = 15_000`. The `feat/ios-siwa-capability` branch is stale and can be abandoned — its useful commits already landed via other PRs, and the brand/UI commits are superseded by #159–#161.
 
-**Known parallel session:** `fix/codex-hardening-wave-2` (Denis's branch). Don't touch that branch or its files.
+**What's left is purely mechanical:** real-device smoke → Xcode archive → TestFlight upload → TestFlight smoke → ASC paste → Submit. ~3–4 hours of human time, then the clock is Apple's.
+
+**Known parallel sessions:** `fix/codex-hardening-wave-2` (Denis's branch) — don't touch. CURRENT_FOCUS.md itself may be edited from another terminal — keep edits surgical.
 
 ---
 
 ## Where we are
 
-**SIWA infrastructure: production-live.** Web Apple Sign-In tested end-to-end today (sign-in, lands signed in, brand wordmark with name, journal feed loads). Cron worker (`apple-revocation-retry`) manually invoked → 200 OK. Synthetic pending-revocation row seeded → cron drained, attempts incremented, backoff scheduled, lease released, dead-letter correctly NOT set. Worker is wired correctly under failure.
+**SIWA infrastructure: production-live (as of 2026-05-08).** Web Apple Sign-In tested end-to-end (sign-in, lands signed in, brand wordmark with name, journal feed loads). Cron worker (`apple-revocation-retry`) verified under synthetic failure — drains, increments attempts, schedules backoff, releases lease, does not dead-letter prematurely.
+
+**Why nothing has shipped since 5/8:** Phase C requires Xcode + a physical iPhone, which is a different cognitive mode than the previous infra work. Whatever the friction is — break it today.
 
 **What's left to launch:**
 
-1. **Phase C — Xcode + Real Device + TestFlight (~7–9h focused)**
-   - Add Sign in with Apple capability in Xcode → Signing & Capabilities (1 click)
-   - Add `whatsgoodhere` custom URL scheme to `ios/App/App/Info.plist` (Codex flagged this — fallback when universal links fail)
-   - Verify `PrivacyInfo.xcprivacy` not reverted by Xcode capability add
-   - Real-device smoke matrix on physical iPhone — see `docs/superpowers/specs/2026-05-07-b3-activate-execution-prep.md` §C.4 (test all sign-in paths, account deletion, photo upload, universal links from email)
+1. **Phase C — Real Device + TestFlight (~2.5h focused, mechanical)**
+   - Real-device smoke matrix on physical iPhone — see `docs/superpowers/specs/2026-05-07-b3-activate-execution-prep.md` §C.4 (all sign-in paths, account deletion, photo upload, universal links from email). Verify `PrivacyInfo.xcprivacy` is in the App group in Xcode before archiving.
    - Archive in Xcode → upload to TestFlight (~10–30 min processing)
    - Install via TestFlight on iPhone, run smoke matrix again
 
-2. **App Store Connect submission (~30 min)** — open `docs/superpowers/specs/2026-05-06-app-store-submission-day.md`, walk top-to-bottom. All fields paste-ready. Two TODOs flagged in the doc:
-   - Real phone number in App Review Information (placeholder still in doc)
-   - Demo-account already softened in reviewer notes — no enrichment needed unless Dan wants
+2. **App Store Connect submission (~30 min)** — open `docs/superpowers/specs/2026-05-06-app-store-submission-day.md`, walk top-to-bottom. All fields paste-ready. One TODO still flagged:
+   - Real phone number in App Review Information (placeholder in doc)
 
 3. **Apple review (1–3 days, possibly + 1 rejection cycle)** — rejection playbook in submission-day doc §10.
 
-**Realistic submission window:** 2026-05-10 to 2026-05-13. Approval target: 2026-05-11 to 2026-05-16.
+**Submission target: TODAY (2026-05-14).** Already one day past the original 5/13 ideal. Every day past today eats further into the one-rejection-cycle buffer before Memorial Day (5/25).
+
+**Dropped from Phase C — do not reintroduce:** the `whatsgoodhere://` custom URL scheme branch was deleted 2026-05-12 (PR #154 closed). Codex review showed the implementation was dead weight (no producer, parser rejects the format, custom schemes have the same failure modes as universal links in third-party iOS email clients). The proper unified fix lives in [issue #156](https://github.com/PGD3311/What-s-Good-Here/issues/156) as a post-launch refactor (standardize email auth on `verifyOtp` + `token_hash` across web and native, retire the `exchangeCodeForSession` callback pipeline). **Do not block Phase C on this.**
 
 ---
 
-## Today's accomplishments (2026-05-08) — the 95%
+## Recent shipped work (through 2026-05-08) — the 95%
 
 ### Phase A — Credential acquisition ✅
 - App ID `com.whatsgoodhere.app` registered with Sign In with Apple + Associated Domains capabilities
@@ -108,11 +110,17 @@ Until App Store launch:
 
 ---
 
-## Not this session
+## Not this session — recommended Memorial Day cuts (2026-05-12)
 
-- Post-launch features: scoring history, Ask WGH, FriendsFeed, TastePersonalityCard
-- Specials/events/hub (Launch 2.0+ per memory)
-- Anything that touches `fix/codex-hardening-wave-2` (other terminal's scope)
+These were in scope earlier but at T-13 days the smart call is to ship without them. Land App Store first, ship these on the v1.1 follow-up.
+
+- **Ask WGH** — was P1 in memory, but a conversational AI feature 13 days out is risk theater. Prompt tuning needs real user data to calibrate against. Ship post-launch when there's volume. Beli doesn't have this either, so it's a moat *expansion*, not a launch wedge.
+- **Jitter WAR v2** — trust scoring without real review volume to calibrate against is theater. Wait for users.
+- **Browser E2E test realignment** — 6 of 13 browser-chromium specs need per-spec UI realignment (see LAUNCH-READINESS line 42). PR-sized, but not launch-critical. Fix in the first week post-launch unless a regression surfaces.
+- **`whatsgoodhere://` URL scheme rework** — parked in [issue #156](https://github.com/PGD3311/What-s-Good-Here/issues/156) as a post-launch unified `verifyOtp` refactor. Do not start before Memorial Day.
+- **Anything that touches `fix/codex-hardening-wave-2`** — Denis's branch, other terminal's scope.
+
+Pre-existing post-launch backlog (unchanged): scoring history, FriendsFeed, TastePersonalityCard, Specials/events/hub (Launch 2.0+).
 
 ---
 
