@@ -5,6 +5,10 @@ import { Seal } from '../Seal'
 import { capture } from '../../lib/analytics'
 import { getUserMessage } from '../../utils/errorHandler'
 
+// Onboarding is purely educational now. display_name is owned by the signup
+// flow + authApi.ensureDisplayName — the modal must NOT collect name/email
+// from anyone, period (App Store Guideline 4 for SIWA, and consistency for
+// every other provider).
 const STEPS = [
   {
     id: 'welcome',
@@ -26,65 +30,45 @@ const STEPS = [
     subtitle: 'Real photos from real people',
     description: 'No stock photos. When you order something, snap a quick pic — the community will thank you.',
   },
-  {
-    id: 'name',
-    emoji: '\uD83D\uDC4B',
-    title: 'Enter your name',
-    subtitle: 'Join the community',
-    description: 'Friends can find you by your name',
-  },
 ]
 
 export function WelcomeModal() {
   const { user } = useAuth()
   const { profile, updateProfile, loading } = useProfile(user?.id)
   const [step, setStep] = useState(0)
-  const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [isOpen, setIsOpen] = useState(false)
   const [phase, setPhase] = useState('onboarding') // 'onboarding' | 'celebration' | 'fade-out'
 
-  // Skip name step if user already set one during signup
-  const hasName = profile?.display_name && profile.display_name.trim().length > 0
-  const activeSteps = hasName ? STEPS.filter(s => s.id !== 'name') : STEPS
-
   useEffect(() => {
     if (user && !loading && profile) {
-      // Open for net-new users, and also for anyone whose display_name is
-      // still missing — covers Apple users who declined name share on first
-      // sign-in, Google users whose provider didn't supply a name, and any
-      // past user who got into a weird data state. display_name is required
-      // to vote, so we can't let onboarded-but-nameless users slip through.
-      // Use trim() to match the hasName semantics elsewhere in the component.
-      if (!profile.has_onboarded || !profile.display_name?.trim()) {
+      // Open once per user, for the first-time welcome flow. display_name
+      // is no longer a gating concern here — authApi.ensureDisplayName
+      // populates it at sign-in (Apple-shared name, user_metadata, or a
+      // deterministic placeholder).
+      if (!profile.has_onboarded) {
         setIsOpen(true)
         capture('onboarding_started')
       }
     }
   }, [user, profile, loading])
 
-  const displayName = name.trim() || profile?.display_name || ''
+  const displayName = profile?.display_name || ''
 
-  const completeOnboarding = async (nameSet) => {
-    // Snapshot the name at submit time so a late-typed character can't desync
-    // what gets persisted from what the celebration screen shows.
-    const submittedName = name.trim()
+  const completeOnboarding = async () => {
     setSaving(true)
     setSaveError(null)
-    const updates = { has_onboarded: true }
-    if (submittedName) updates.display_name = submittedName
-    const { error } = await updateProfile(updates)
+    const { error } = await updateProfile({ has_onboarded: true })
     setSaving(false)
 
     if (error) {
-      // Surface the error so the user can correct it (most likely: duplicate display_name)
-      setSaveError(getUserMessage(error, 'saving your name'))
-      capture('onboarding_failed', { name_set: nameSet, error: error.message })
+      setSaveError(getUserMessage(error, 'finishing onboarding'))
+      capture('onboarding_failed', { error: error.message })
       return
     }
 
-    capture('onboarding_completed', { name_set: nameSet })
+    capture('onboarding_completed')
 
     // Show celebration screen
     setPhase('celebration')
@@ -95,10 +79,10 @@ export function WelcomeModal() {
   }
 
   const handleNext = async () => {
-    if (step < activeSteps.length - 1) {
+    if (step < STEPS.length - 1) {
       setStep(step + 1)
     } else {
-      await completeOnboarding(hasName)
+      await completeOnboarding()
     }
   }
 
@@ -106,16 +90,6 @@ export function WelcomeModal() {
     if (step > 0) {
       setStep(step - 1)
     }
-  }
-
-  const handleNameSubmit = async (e) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    await completeOnboarding(true)
-  }
-
-  const handleSkipName = async () => {
-    await completeOnboarding(false)
   }
 
   if (!isOpen) return null
@@ -190,8 +164,7 @@ export function WelcomeModal() {
   }
 
   // ==================== ONBOARDING STEPS ====================
-  const currentStep = activeSteps[step]
-  const isNameStep = currentStep.id === 'name'
+  const currentStep = STEPS[step]
 
   return (
     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
@@ -212,7 +185,7 @@ export function WelcomeModal() {
         <div className="p-8">
           {/* Progress dots */}
           <div className="flex justify-center gap-2 mb-6">
-            {activeSteps.map((_, i) => (
+            {STEPS.map((_, i) => (
               <button
                 key={i}
                 onClick={() => i < step && setStep(i)}
@@ -251,7 +224,7 @@ export function WelcomeModal() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
-                ) : <span className="text-4xl">{currentStep.emoji}</span>}
+                ) : null}
             </div>
           )}
 
@@ -317,95 +290,42 @@ export function WelcomeModal() {
             </div>
           )}
 
-          {/* Name input step */}
-          {isNameStep ? (
-            <form onSubmit={handleNameSubmit} className="space-y-4">
-              <input
-                id="welcome-name"
-                aria-label="Your name"
-                type="text"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value)
-                  if (saveError) setSaveError(null)
-                }}
-                placeholder="Your name"
-                autoFocus
-                maxLength={50}
-                disabled={saving}
-                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors disabled:opacity-60"
-                style={{
-                  background: 'var(--color-bg)',
-                  borderColor: saveError ? 'var(--color-danger)' : 'var(--color-divider)',
-                  color: 'var(--color-text-primary)',
-                }}
-              />
-              {saveError && (
-                <p
-                  role="alert"
-                  className="text-sm text-center"
-                  style={{ color: 'var(--color-danger)' }}
-                >
-                  {saveError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={!name.trim() || saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          {/* Nav buttons */}
+          <div className="space-y-3">
+            {saveError && (
+              <p
+                role="alert"
+                className="text-sm text-center"
+                style={{ color: 'var(--color-danger)' }}
               >
-                {saving ? 'Saving...' : "Let's go!"}
-              </button>
+                {saveError}
+              </p>
+            )}
+            <button
+              onClick={handleNext}
+              disabled={saving}
+              className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              {saving ? 'Saving...' : step === STEPS.length - 1 ? "Let's go!" : 'Next'}
+            </button>
+            {step > 0 && (
               <button
-                type="button"
-                onClick={handleSkipName}
-                disabled={saving}
+                onClick={handleBack}
                 className="w-full py-2 text-sm transition-colors"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
-                Skip for now
+                Back
               </button>
-            </form>
-          ) : (
-            <div className="space-y-3">
-              {saveError && (
-                <p
-                  role="alert"
-                  className="text-sm text-center"
-                  style={{ color: 'var(--color-danger)' }}
-                >
-                  {saveError}
-                </p>
-              )}
-              <button
-                onClick={handleNext}
-                disabled={saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-              >
-                {saving ? 'Saving...' : step === activeSteps.length - 1 ? "Let's go!" : 'Next'}
-              </button>
-              {step > 0 && (
-                <button
-                  onClick={handleBack}
-                  className="w-full py-2 text-sm transition-colors"
-                  style={{ color: 'var(--color-text-tertiary)' }}
-                >
-                  Back
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Fun footer text */}
-          {!isNameStep && (
-            <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
-              {step === 0 && "Trusted by island food lovers"}
-              {step === 1 && "Dishes need 5+ votes to get ranked"}
-              {step === 2 && "Your photos help everyone eat better"}
-            </p>
-          )}
+          <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+            {step === 0 && "Trusted by island food lovers"}
+            {step === 1 && "Dishes need 5+ votes to get ranked"}
+            {step === 2 && "Your photos help everyone eat better"}
+          </p>
         </div>
       </div>
     </div>
