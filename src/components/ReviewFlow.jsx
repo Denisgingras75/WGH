@@ -185,7 +185,7 @@ export function ReviewFlow({
           flags: jitterScore.flags,
           meta: {
             keys: badge?.session?.keystrokes || 0,
-            paste_chars: badge?.session?.pasteChars || 0,
+            paste_chars: badge?.session?.alien_chars || 0,
             focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
           },
         })

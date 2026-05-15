@@ -357,7 +357,8 @@ export const votesApi = {
           rating_10,
           review_created_at,
           user_id,
-          source
+          source,
+          war_score
         `)
         .eq('dish_id', dishId)
         .not('review_text', 'is', null)

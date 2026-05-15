@@ -292,6 +292,7 @@ CREATE TABLE IF NOT EXISTS jitter_profiles (
   confidence_level TEXT NOT NULL DEFAULT 'low' CHECK (confidence_level IN ('low', 'medium', 'high')),
   consistency_score DECIMAL(4, 3) DEFAULT 0,
   flagged BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -300,8 +301,21 @@ CREATE TABLE IF NOT EXISTS jitter_samples (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   sample_data JSONB NOT NULL,
+  liveness_score DECIMAL(3, 2),
+  flags TEXT[],
   collected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 1t-b. jitter_waitlist (public landing-page email capture for the standalone Jitter widget)
+CREATE TABLE IF NOT EXISTS jitter_waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'general' CHECK (source IN ('general', 'developer')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS jitter_waitlist_email_source_unique
+  ON jitter_waitlist (lower(email), source);
 
 -- 1u. events
 CREATE TABLE IF NOT EXISTS events (
@@ -335,8 +349,9 @@ GROUP BY category;
 
 
 -- 1v-b. public_votes (view)
--- Exposes only the fields the app needs for display. Excludes anti-abuse internals:
--- purity_score, war_score, badge_hash, source_metadata.
+-- Exposes the fields the app needs for display, including war_score so the
+-- dish-review "?" explainer can show this reviewer's Trust Score. Excludes
+-- the remaining anti-abuse internals: purity_score, badge_hash, source_metadata.
 -- This view intentionally runs with owner privileges so public callers can read only
 -- this safe projection after votes table SELECT is restricted by RLS.
 CREATE OR REPLACE VIEW public_votes AS
@@ -347,7 +362,8 @@ SELECT
   review_text,
   review_created_at,
   user_id,
-  source
+  source,
+  war_score
 FROM votes;
 
 
@@ -637,15 +653,17 @@ $$;
 
 -- Public access to jitter badge data only (not profile_data biometrics)
 -- Use get_jitter_badges() RPC instead of direct table reads for other users' data
+-- Includes created_at so the TrustBadge popover can show "Member since".
 CREATE OR REPLACE FUNCTION get_jitter_badges(p_user_ids UUID[])
 RETURNS TABLE (
   user_id UUID,
   confidence_level TEXT,
   consistency_score DECIMAL,
   review_count INT,
-  flagged BOOLEAN
+  flagged BOOLEAN,
+  created_at TIMESTAMPTZ
 ) AS $$
-  SELECT jp.user_id, jp.confidence_level, jp.consistency_score, jp.review_count, jp.flagged
+  SELECT jp.user_id, jp.confidence_level, jp.consistency_score, jp.review_count, jp.flagged, jp.created_at
   FROM jitter_profiles jp
   WHERE jp.user_id = ANY(p_user_ids);
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
@@ -658,6 +676,15 @@ CREATE POLICY "Service role manages jitter" ON jitter_profiles
 
 CREATE POLICY "Service role manages jitter samples" ON jitter_samples
   FOR ALL USING (auth.role() = 'service_role');
+
+-- jitter_waitlist: anyone (including anon) can join the waitlist; only service role can read.
+ALTER TABLE jitter_waitlist ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can join jitter waitlist" ON jitter_waitlist
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Service role reads jitter waitlist" ON jitter_waitlist
+  FOR SELECT USING (auth.role() = 'service_role');
 
 
 -- =============================================
@@ -2286,113 +2313,103 @@ SELECT cron.schedule('cleanup-old-rate-limits', '15 * * * *', $$DELETE FROM rate
 
 -- =============================================
 -- 13x. Merge a new jitter sample into the user's running profile
--- Called by trigger after jitter_samples INSERT
+-- Called by trigger after jitter_samples INSERT.
+-- Deployed via 028-jitter-scoring.sql: generic weighted merge over every numeric
+-- key in the sample, smoothed consistency, and flags the profile on low liveness.
 CREATE OR REPLACE FUNCTION merge_jitter_sample()
 RETURNS TRIGGER AS $$
 DECLARE
   existing_profile JSONB;
-  new_sample JSONB;
-  sample_count INTEGER;
-  new_confidence TEXT;
-  new_consistency DECIMAL(4, 3);
+  existing_count INTEGER;
+  new_data JSONB;
+  merged JSONB;
+  weight DECIMAL;
+  old_weight DECIMAL;
+  sim DECIMAL;
+  key TEXT;
+  old_val DECIMAL;
+  new_val DECIMAL;
 BEGIN
-  new_sample := NEW.sample_data;
-
-  -- Get or initialize profile
-  SELECT profile_data, review_count INTO existing_profile, sample_count
+  SELECT profile_data, review_count INTO existing_profile, existing_count
   FROM jitter_profiles WHERE user_id = NEW.user_id;
 
-  IF NOT FOUND THEN
-    -- First sample: create profile directly from sample
-    INSERT INTO jitter_profiles (user_id, profile_data, review_count, confidence_level, consistency_score, last_updated)
+  new_data := NEW.sample_data;
+
+  IF existing_profile IS NULL THEN
+    INSERT INTO jitter_profiles (user_id, profile_data, review_count, confidence_level, consistency_score, created_at, last_updated)
     VALUES (
       NEW.user_id,
-      new_sample,
+      new_data,
       1,
       'low',
       0,
+      NOW(),
       NOW()
     );
   ELSE
-    sample_count := sample_count + 1;
+    -- Weighted merge: new sample gets less weight as profile matures.
+    weight := GREATEST(0.15, 1.0 / (existing_count + 1));
+    old_weight := 1.0 - weight;
 
-    -- Determine confidence level
-    IF sample_count >= 15 THEN
-      new_confidence := 'high';
-    ELSIF sample_count >= 5 THEN
-      new_confidence := 'medium';
-    ELSE
-      new_confidence := 'low';
-    END IF;
+    merged := '{}'::JSONB;
+    FOR key IN SELECT jsonb_object_keys(new_data) LOOP
+      IF jsonb_typeof(new_data -> key) = 'number' AND existing_profile ? key AND jsonb_typeof(existing_profile -> key) = 'number' THEN
+        old_val := (existing_profile ->> key)::DECIMAL;
+        new_val := (new_data ->> key)::DECIMAL;
+        merged := jsonb_set(merged, ARRAY[key], to_jsonb(ROUND((old_weight * old_val + weight * new_val)::NUMERIC, 2)));
+      ELSE
+        merged := jsonb_set(merged, ARRAY[key], new_data -> key);
+      END IF;
+    END LOOP;
 
-    -- Calculate consistency: compare new sample's mean_inter_key to running profile's
-    -- Consistency = 1 - normalized_deviation (higher = more consistent)
-    new_consistency := 0;
-    IF existing_profile ? 'mean_inter_key' AND new_sample ? 'mean_inter_key'
-       AND (existing_profile->>'mean_inter_key')::DECIMAL > 0 THEN
-      new_consistency := GREATEST(0, LEAST(1,
-        1.0 - ABS(
-          (new_sample->>'mean_inter_key')::DECIMAL - (existing_profile->>'mean_inter_key')::DECIMAL
-        ) / (existing_profile->>'mean_inter_key')::DECIMAL
-      ));
-      -- Weighted running average with existing consistency
-      IF (SELECT consistency_score FROM jitter_profiles WHERE user_id = NEW.user_id) > 0 THEN
-        new_consistency := (
-          (SELECT consistency_score FROM jitter_profiles WHERE user_id = NEW.user_id) *
-          (sample_count - 1) + new_consistency
-        ) / sample_count;
+    -- Preserve existing fields not in the new sample.
+    FOR key IN SELECT jsonb_object_keys(existing_profile) LOOP
+      IF NOT (merged ? key) THEN
+        merged := jsonb_set(merged, ARRAY[key], existing_profile -> key);
+      END IF;
+    END LOOP;
+
+    -- Smoothed consistency (similarity between old and new mean_inter_key).
+    sim := 0;
+    IF existing_profile ? 'mean_inter_key' AND new_data ? 'mean_inter_key' THEN
+      old_val := (existing_profile ->> 'mean_inter_key')::DECIMAL;
+      new_val := (new_data ->> 'mean_inter_key')::DECIMAL;
+      IF old_val > 0 THEN
+        sim := 1.0 - LEAST(ABS(old_val - new_val) / old_val, 1.0);
       END IF;
     END IF;
 
-    -- Merge: running weighted average of key metrics
+    IF (SELECT consistency_score FROM jitter_profiles WHERE user_id = NEW.user_id) > 0 THEN
+      sim :=
+        (SELECT consistency_score FROM jitter_profiles WHERE user_id = NEW.user_id) *
+        old_weight + sim * weight;
+    END IF;
+
     UPDATE jitter_profiles SET
-      profile_data = jsonb_build_object(
-        'mean_inter_key', ROUND((
-          COALESCE((existing_profile->>'mean_inter_key')::DECIMAL, 0) * (sample_count - 1) +
-          COALESCE((new_sample->>'mean_inter_key')::DECIMAL, 0)
-        ) / sample_count, 2),
-        'std_inter_key', ROUND((
-          COALESCE((existing_profile->>'std_inter_key')::DECIMAL, 0) * (sample_count - 1) +
-          COALESCE((new_sample->>'std_inter_key')::DECIMAL, 0)
-        ) / sample_count, 2),
-        'mean_dwell', CASE
-          WHEN new_sample ? 'mean_dwell' AND new_sample->>'mean_dwell' IS NOT NULL
-          THEN ROUND((
-            COALESCE((existing_profile->>'mean_dwell')::DECIMAL, (new_sample->>'mean_dwell')::DECIMAL) * (sample_count - 1) +
-            (new_sample->>'mean_dwell')::DECIMAL
-          ) / sample_count, 2)
-          ELSE existing_profile->'mean_dwell'
-        END,
-        'std_dwell', CASE
-          WHEN new_sample ? 'std_dwell' AND new_sample->>'std_dwell' IS NOT NULL
-          THEN ROUND((
-            COALESCE((existing_profile->>'std_dwell')::DECIMAL, (new_sample->>'std_dwell')::DECIMAL) * (sample_count - 1) +
-            (new_sample->>'std_dwell')::DECIMAL
-          ) / sample_count, 2)
-          ELSE existing_profile->'std_dwell'
-        END,
-        'bigram_signatures', COALESCE(existing_profile->'bigram_signatures', '{}'::JSONB) ||
-                             COALESCE(new_sample->'bigram_signatures', '{}'::JSONB),
-        'fatigue_drift', new_sample->'fatigue_drift',
-        'total_keystrokes', COALESCE((existing_profile->>'total_keystrokes')::INTEGER, 0) +
-          COALESCE((new_sample->>'total_keystrokes')::INTEGER, 0)
-      ),
-      review_count = sample_count,
-      confidence_level = new_confidence,
-      consistency_score = ROUND(new_consistency::NUMERIC, 3),
+      profile_data = merged,
+      review_count = existing_count + 1,
+      confidence_level = CASE
+        WHEN existing_count + 1 >= 10 THEN 'high'
+        WHEN existing_count + 1 >= 3 THEN 'medium'
+        ELSE 'low'
+      END,
+      consistency_score = ROUND(sim::NUMERIC, 3),
+      flagged = CASE
+        WHEN NEW.liveness_score IS NOT NULL AND NEW.liveness_score < 0.3 THEN true
+        ELSE flagged
+      END,
       last_updated = NOW()
     WHERE user_id = NEW.user_id;
   END IF;
 
-  -- Prune old samples (keep last 30)
+  -- Rolling window: keep last 30 samples per user.
   DELETE FROM jitter_samples
-  WHERE user_id = NEW.user_id
-    AND id NOT IN (
+  WHERE id IN (
       SELECT id FROM jitter_samples
       WHERE user_id = NEW.user_id
       ORDER BY collected_at DESC
-      LIMIT 30
-    );
+      OFFSET 30
+  );
 
   RETURN NEW;
 END;
