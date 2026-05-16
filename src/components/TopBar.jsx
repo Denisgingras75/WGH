@@ -14,9 +14,9 @@ export function TopBar() {
 
         <Seal
           size={36}
-          showRing={false}
-          plateColor="var(--color-surface)"
-          monoColor="var(--color-primary)"
+          variant="icon"
+          showBackground={false}
+          showRim={false}
           ariaLabel="What's Good Here"
         />
 
