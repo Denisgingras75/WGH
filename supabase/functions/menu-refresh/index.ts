@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { encode as encodeBase64 } from 'https://deno.land/std@0.177.0/encoding/base64.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { detectCms, cmsRequiresRender } from './cms-detect.ts'
 import { fetchRenderedHtml, BrowserlessError } from './browserless.ts'
@@ -274,10 +275,11 @@ async function hashContent(text: string): Promise<string> {
     .slice(0, 16) // 16 hex chars = 64 bits, plenty for change detection
 }
 
-type ErrorCode = 'no_menu_url' | 'fetch_timeout' | 'fetch_error' | 'claude_error' | 'parse_error' | 'no_dishes' | 'page_too_short'
+type ErrorCode = 'no_menu_url' | 'fetch_timeout' | 'fetch_error' | 'dns_error' | 'claude_error' | 'parse_error' | 'no_dishes' | 'page_too_short' | 'unknown_error'
 
 function classifyError(error: unknown, context?: string): { code: ErrorCode; message: string; context: Record<string, unknown> } {
   const message = error instanceof Error ? error.message : String(error)
+  const lower = message.toLowerCase()
 
   if (context === 'no_menu_url') {
     return { code: 'no_menu_url', message: 'No menu URL found', context: {} }
@@ -288,20 +290,30 @@ function classifyError(error: unknown, context?: string): { code: ErrorCode; mes
   if (context === 'page_too_short') {
     return { code: 'page_too_short', message: 'Page content too short (<50 chars)', context: {} }
   }
-  if (message.includes('abort') || message.includes('timeout')) {
+  // Match Claude prefixes BEFORE network branches — Claude error bodies can
+  // embed arbitrary upstream text (including phrases like "dns error") that
+  // would otherwise trigger network classifiers below.
+  if (lower.includes('claude api error') || lower.includes('claude image api error') || lower.includes('claude pdf api error')) {
+    return { code: 'claude_error', message, context: {} }
+  }
+  // DNS resolution failure — Deno surfaces this as "dns error: failed to lookup
+  // address information". Must precede the generic "fetch_error" branch because
+  // these errors don't carry an "HTTP <status>" prefix and otherwise fell through
+  // to the catch-all and got mislabelled as claude_error.
+  if (lower.includes('dns error') || lower.includes('failed to lookup address')) {
+    return { code: 'dns_error', message, context: {} }
+  }
+  if (lower.includes('abort') || lower.includes('timeout')) {
     return { code: 'fetch_timeout', message, context: {} }
   }
   if (message.includes('HTTP ')) {
     const statusMatch = message.match(/HTTP (\d+)/)
     return { code: 'fetch_error', message, context: { http_status: statusMatch?.[1] } }
   }
-  if (message.includes('Claude API error')) {
-    return { code: 'claude_error', message, context: {} }
-  }
-  if (message.includes('JSON') || message.includes('parse')) {
+  if (lower.includes('json') || lower.includes('parse')) {
     return { code: 'parse_error', message, context: {} }
   }
-  return { code: 'claude_error', message, context: {} }
+  return { code: 'unknown_error', message, context: {} }
 }
 
 function calculateBackoff(attemptCount: number): Date {
@@ -312,10 +324,26 @@ function calculateBackoff(attemptCount: number): Date {
 }
 
 /**
- * Fetch raw HTML from a URL with a browser-ish User-Agent and 20s timeout.
- * Returns the full HTML text. Caller is responsible for extracting content.
+ * Result of fetching a menu URL. Most restaurants serve HTML, but some
+ * (e.g. 19 Raw Oyster Bar) redirect their /menu URL directly to a PDF —
+ * we must detect that BEFORE reading the body so we don't end up text-
+ * extracting binary PDF bytes and finding zero candidates.
  */
-async function fetchRawHtml(url: string): Promise<string> {
+type MenuFetchResult =
+  | { type: 'html'; html: string }
+  | { type: 'pdf'; pdfUrl: string }
+
+const PDF_URL_EXT = /\.pdf(\?|#|$)/i
+
+/**
+ * Fetch a menu URL with a browser-ish User-Agent and 20s timeout. Returns
+ * either the HTML body or a sentinel marking the response as a direct PDF
+ * (caller short-circuits to PDF extraction). PDF detection prefers the
+ * Content-Type header but falls back to the resolved URL extension because
+ * some hosts (and some CDNs that strip mime types) serve PDFs as
+ * application/octet-stream.
+ */
+async function fetchRawHtml(url: string): Promise<MenuFetchResult> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 20000)
 
@@ -324,7 +352,7 @@ async function fetchRawHtml(url: string): Promise<string> {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-MenuBot/1.0)',
-        'Accept': 'text/html,application/xhtml+xml',
+        'Accept': 'text/html,application/xhtml+xml,application/pdf',
       },
     })
 
@@ -332,7 +360,16 @@ async function fetchRawHtml(url: string): Promise<string> {
       throw new Error(`HTTP ${response.status}`)
     }
 
-    return await response.text()
+    const finalUrl = response.url || url
+    const contentType = (response.headers.get('content-type') || '').toLowerCase()
+    const looksLikePdf = contentType.includes('application/pdf') || PDF_URL_EXT.test(finalUrl)
+    if (looksLikePdf) {
+      // Discard the body — we'll pass the URL itself to Sonnet's PDF tool.
+      await response.body?.cancel()
+      return { type: 'pdf', pdfUrl: finalUrl }
+    }
+
+    return { type: 'html', html: await response.text() }
   } finally {
     clearTimeout(timeout)
   }
@@ -386,10 +423,14 @@ function extractMenuTextFromHtml(html: string): string {
 
 /**
  * Legacy wrapper — same signature as before so existing callers still work.
+ * If the URL serves a PDF directly, returns '' so the caller's
+ * `content.length < 50` guard skips the restaurant (legacy path doesn't
+ * support direct-PDF extraction; queue-based path handles it).
  */
 async function fetchMenuContent(url: string): Promise<string> {
-  const html = await fetchRawHtml(url)
-  return extractMenuTextFromHtml(html)
+  const result = await fetchRawHtml(url)
+  if (result.type === 'pdf') return ''
+  return extractMenuTextFromHtml(result.html)
 }
 
 interface ExtractionAttempt {
@@ -504,9 +545,63 @@ async function extractMenuWithClaude(content: string, restaurantName: string): P
   }
 }
 
+// Anthropic accepts image/png, image/jpeg, image/webp, image/gif for vision.
+const ANTHROPIC_IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
+// 5MB is Anthropic's per-image cap; well under Edge Function memory limits at typical batch=3.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+/**
+ * Download an image and return it as base64 with its media type. Returns null
+ * if the URL is unreachable, the host blocks us, the response isn't a
+ * supported image type, or the bytes exceed Anthropic's per-image cap.
+ */
+async function downloadImageAsBase64(
+  url: string,
+  signal: AbortSignal
+): Promise<{ data: string; mediaType: string } | null> {
+  try {
+    const resp = await fetch(url, {
+      signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; WhatsGoodHere-MenuBot/1.0)',
+        'Accept': 'image/png,image/jpeg,image/webp,image/gif,image/*;q=0.8',
+      },
+    })
+    if (!resp.ok) return null
+    const contentType = (resp.headers.get('content-type') || '').toLowerCase().split(';')[0].trim()
+    if (!ANTHROPIC_IMAGE_MEDIA_TYPES.includes(contentType)) {
+      await resp.body?.cancel()
+      return null
+    }
+    // Pre-check Content-Length so a maliciously large image doesn't get
+    // fully buffered into memory before we reject it (Supabase Edge
+    // Functions cap at ~256MB; three parallel downloads share that).
+    const advertisedLength = parseInt(resp.headers.get('content-length') || '0', 10)
+    if (advertisedLength > MAX_IMAGE_BYTES) {
+      await resp.body?.cancel()
+      return null
+    }
+    const buffer = await resp.arrayBuffer()
+    if (buffer.byteLength > MAX_IMAGE_BYTES) return null
+    return {
+      // Anthropic only knows image/jpeg, not image/jpg — normalise.
+      mediaType: contentType === 'image/jpg' ? 'image/jpeg' : contentType,
+      data: encodeBase64(buffer),
+    }
+  } catch {
+    return null
+  }
+}
+
 /**
  * Extract dishes from one or more menu IMAGES (PNG/JPG/WEBP) using Sonnet vision.
- * Images are passed by URL so Sonnet fetches them server-side (no Edge Function OOM).
+ *
+ * Images are downloaded server-side and sent to Anthropic as base64 because
+ * Anthropic's URL-fetch path respects robots.txt, and Square/Wix-hosted menu
+ * CDNs (the very hosts where menus are most often image-based) deny crawlers
+ * in robots.txt — see S&S Kitchenette. Base64 mode bypasses that fetch
+ * entirely; we already have permission to download as the user's agent.
+ *
  * Vision is more expensive than document blocks per token — keep batches small (≤3).
  */
 async function extractMenuFromImagesWithClaude(
@@ -516,14 +611,34 @@ async function extractMenuFromImagesWithClaude(
   const httpsUrls = toHttpsUrls(imageUrls)
   if (httpsUrls.length === 0) return { dishes: [], menu_section_order: [] }
 
-  const content: Array<Record<string, unknown>> = httpsUrls.map(url => ({
+  // 20s overall budget for image downloads — Anthropic's call itself takes
+  // multiple seconds, so we can't afford slow image hosts.
+  const downloadCtrl = new AbortController()
+  const downloadTimeout = setTimeout(() => downloadCtrl.abort(), 20000)
+  let downloaded: Array<{ data: string; mediaType: string } | null>
+  try {
+    downloaded = await Promise.all(
+      httpsUrls.map(url => downloadImageAsBase64(url, downloadCtrl.signal))
+    )
+  } finally {
+    clearTimeout(downloadTimeout)
+  }
+
+  const successful = downloaded.filter((d): d is { data: string; mediaType: string } => d !== null)
+  if (successful.length === 0) {
+    // Every image failed (404, blocked, wrong type, oversized). Don't call
+    // Anthropic — that would just waste tokens.
+    return { dishes: [], menu_section_order: [] }
+  }
+
+  const content: Array<Record<string, unknown>> = successful.map(img => ({
     type: 'image',
-    source: { type: 'url', url },
+    source: { type: 'base64', media_type: img.mediaType, data: img.data },
   }))
 
   content.push({
     type: 'text',
-    text: `Extract the full menu from "${restaurantName}" from the ${httpsUrls.length === 1 ? 'attached image' : `${httpsUrls.length} attached images`}. The images are page-ordered. If different images represent different services (breakfast, lunch, dinner), preserve those as menu sections.`,
+    text: `Extract the full menu from "${restaurantName}" from the ${successful.length === 1 ? 'attached image' : `${successful.length} attached images`}. The images are page-ordered. If different images represent different services (breakfast, lunch, dinner), preserve those as menu sections.`,
   })
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -884,9 +999,9 @@ serve(async (req) => {
           }
 
           // --- Fetch + extract (with render fallback for JS-rendered sites) ---
-          let rawHtml: string
+          let fetchResult: MenuFetchResult
           try {
-            rawHtml = await fetchRawHtml(menuUrl)
+            fetchResult = await fetchRawHtml(menuUrl)
           } catch (fetchErr) {
             const classified = classifyError(fetchErr)
             const newAttemptCount = job.attempt_count + 1
@@ -903,6 +1018,77 @@ serve(async (req) => {
             results.push({ job_id: job.id, status: 'fetch_failed', restaurant: restaurant.name, error: classified.code })
             continue
           }
+
+          // Direct-PDF shortcut: menu_url served `application/pdf` (Squarespace
+          // restaurants commonly host their menu as a single PDF and 302 the
+          // /menus URL straight at it — e.g. 19 Raw Oyster Bar). Skip CMS
+          // detection, hash check, render fallbacks, sub-page traversal, all
+          // text extraction — none of it applies. Hand the URL to Sonnet's
+          // PDF tool directly.
+          if (fetchResult.type === 'pdf') {
+            const pdfAttempts: ExtractionAttempt[] = []
+            let pdfExtracted: MenuExtractionResult = { dishes: [], menu_section_order: [] }
+            try {
+              pdfExtracted = await extractMenuFromPdfsWithClaude([fetchResult.pdfUrl], restaurant.name)
+              pdfAttempts.push({ strategy: 'pdf', url_count: 1, dishes_found: pdfExtracted.dishes.length })
+            } catch (pdfErr) {
+              const message = pdfErr instanceof Error ? pdfErr.message : String(pdfErr)
+              pdfAttempts.push({ strategy: 'pdf', url_count: 1, dishes_found: 0, error: message })
+            }
+
+            if (pdfExtracted.dishes.length > 0) {
+              const stats = await upsertDishes(supabase, restaurant.id, pdfExtracted)
+              await supabase.from('restaurants').update({
+                menu_last_checked: new Date().toISOString(),
+              }).eq('id', restaurant.id)
+              await supabase.from('menu_import_jobs').update({
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                dishes_found: pdfExtracted.dishes.length,
+                dishes_inserted: stats.inserted,
+                dishes_updated: stats.updated,
+                dishes_unchanged: stats.unchanged,
+                error_context: {
+                  menu_url: menuUrl,
+                  resolved_pdf_url: fetchResult.pdfUrl,
+                  winning_strategy: 'pdf-direct',
+                  attempts: pdfAttempts,
+                },
+                lock_expires_at: null,
+                updated_at: new Date().toISOString(),
+              }).eq('id', job.id)
+              results.push({
+                job_id: job.id, status: 'success', restaurant: restaurant.name,
+                dishes: pdfExtracted.dishes.length, inserted: stats.inserted, updated: stats.updated,
+                strategy: 'pdf-direct',
+              })
+              continue
+            }
+
+            // PDF returned 0 dishes — record as no_dishes so the retry/dead
+            // logic in the queue handles it like every other extraction failure.
+            const classified = classifyError(null, 'no_dishes')
+            const newAttemptCount = job.attempt_count + 1
+            await supabase.from('menu_import_jobs').update({
+              status: newAttemptCount >= job.max_attempts ? 'dead' : 'pending',
+              attempt_count: newAttemptCount,
+              run_after: newAttemptCount >= job.max_attempts ? undefined : calculateBackoff(newAttemptCount).toISOString(),
+              error_code: classified.code,
+              error_message: classified.message,
+              error_context: {
+                menu_url: menuUrl,
+                resolved_pdf_url: fetchResult.pdfUrl,
+                winning_strategy: 'pdf-direct',
+                attempts: pdfAttempts,
+              },
+              lock_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', job.id)
+            results.push({ job_id: job.id, status: 'no_dishes', restaurant: restaurant.name })
+            continue
+          }
+
+          const rawHtml = fetchResult.html
 
           const cms = detectCms(rawHtml, menuUrl)
           const rawText = extractMenuTextFromHtml(rawHtml)
@@ -1091,8 +1277,25 @@ serve(async (req) => {
               const mergedSections: string[] = []
               for (const subUrl of subPages) {
                 try {
-                  const subHtml = await fetchRawHtml(subUrl)
-                  const subText = extractMenuTextFromHtml(subHtml)
+                  const subFetch = await fetchRawHtml(subUrl)
+                  // Sub-page itself served a PDF (e.g. /lunch redirects to lunch.pdf).
+                  // Pass it to Sonnet's PDF tool directly; the result joins the
+                  // merged sub-page output below.
+                  if (subFetch.type === 'pdf') {
+                    const subPdfResult = await extractMenuFromPdfsWithClaude([subFetch.pdfUrl], restaurant.name)
+                    attempts.push({ strategy: 'sub-page', url_count: 1, dishes_found: subPdfResult.dishes.length, url: subUrl })
+                    for (const dish of subPdfResult.dishes) {
+                      const key = `${dish.name.toLowerCase()}|${(dish.menu_section || '').toLowerCase()}`
+                      if (seenDishes.has(key)) continue
+                      seenDishes.add(key)
+                      mergedDishes.push(dish)
+                    }
+                    for (const sec of subPdfResult.menu_section_order) {
+                      if (!mergedSections.includes(sec)) mergedSections.push(sec)
+                    }
+                    continue
+                  }
+                  const subText = extractMenuTextFromHtml(subFetch.html)
                   if (subText.length < 50) {
                     attempts.push({ strategy: 'sub-page', url_count: 1, dishes_found: 0, url: subUrl, error: 'page_too_short' })
                     continue
