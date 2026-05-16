@@ -195,13 +195,12 @@ export const profileApi = {
   /**
    * Upload a new avatar for the current authenticated user. Strips EXIF,
    * center-crops to a square, resizes to AVATAR_MAX_EDGE, uploads to the
-   * 'avatars' bucket at `<user_id>/avatar.jpg`, then updates
-   * profiles.avatar_url with a cache-busted public URL so browsers and the
-   * service worker don't shadow the new file.
-   *
-   * TODO: gate uploads through the photo-moderate Edge Function (already
-   * used by src/api/dishPhotosApi.js for dish photos). Avatars currently
-   * skip that pass; revisit before opening to general users at scale.
+   * 'avatars' bucket at `<user_id>/avatar.jpg`, runs the upload through the
+   * photo-moderate Edge Function (only the `is_unsafe` flag — `is_food_photo`
+   * is dish-specific), then updates profiles.avatar_url with a cache-busted
+   * public URL so browsers and the service worker don't shadow the new file.
+   * Fail-closed: any moderation error rejects the upload and removes the
+   * orphan from storage.
    *
    * @param {File} file - Image file from <input type="file"> or drop
    * @returns {Promise<{ url: string }>} The new avatar URL (cache-busted)
@@ -250,9 +249,43 @@ export const profileApi = {
         .from('avatars')
         .getPublicUrl(path)
 
-      // Cache-bust on every upload — the path is stable, so without ?v=<ts>
-      // browsers and the service worker keep showing the old avatar.
+      // Cache-bust on every upload. Two roles:
+      //   1) When stored in profiles.avatar_url, the query param prevents
+      //      browsers and the service worker from showing the prior file.
+      //   2) Handed to the photo-moderate Edge Function below, the same
+      //      unique-per-upload URL prevents Sonnet from receiving a stale
+      //      cached copy from the storage CDN at the (stable) path.
       const cacheBustedUrl = `${publicUrl}?v=${Date.now()}`
+
+      // Pre-display moderation. For avatars we ONLY enforce `is_unsafe` —
+      // the is_food_photo flag is a dish-specific check and would obviously
+      // reject every selfie.
+      //
+      // Fail closed: only accept when modResult.is_unsafe is STRICTLY
+      // `false`. A missing field, a wrong type, an empty object, or any
+      // invoke error are all treated as unsafe. Better to refuse than
+      // publish an unmoderated avatar.
+      const { data: modResult, error: modError } = await supabase.functions.invoke(
+        'photo-moderate',
+        { body: { photo_url: cacheBustedUrl } }
+      )
+      const passedModeration = !modError
+        && modResult
+        && typeof modResult.is_unsafe === 'boolean'
+        && modResult.is_unsafe === false
+      if (!passedModeration) {
+        const { error: removeError } = await supabase.storage.from('avatars').remove([path])
+        if (removeError) {
+          logger.error('photo-moderate: failed to remove rejected avatar from storage', {
+            path, removeError,
+          })
+        }
+        const userMessage = (modResult && typeof modResult.reason === 'string' && modResult.reason)
+          || "Couldn't verify your photo. Please try a different one."
+        if (modError) logger.error('photo-moderate invoke failed (avatar):', modError)
+        else logger.warn('avatar rejected by moderation:', { reason: modResult?.reason })
+        throw new Error(userMessage)
+      }
 
       const { error: updateError } = await supabase
         .from('profiles')

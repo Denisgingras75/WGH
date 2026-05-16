@@ -177,25 +177,62 @@ serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }
-  // Allowlist: only URLs from THIS project's dish-photos bucket. Without this,
-  // any authenticated user could ask us to moderate arbitrary internet images.
-  const allowedPrefix = supabaseUrl ? `${supabaseUrl}/storage/v1/object/public/dish-photos/` : ''
-  if (!allowedPrefix || !photoUrl.startsWith(allowedPrefix)) {
-    return new Response(JSON.stringify({ error: 'photo_url must point to the dish-photos bucket' }), {
+  // Allowlist: only URLs from THIS project's dish-photos OR avatars buckets.
+  // Without this, any authenticated user could ask us to moderate arbitrary
+  // internet images and burn Anthropic tokens.
+  //
+  // Parse with `new URL` rather than substring-matching. Substring matching
+  // is brittle to path-traversal sequences like `..` and to query-string
+  // tricks. URL parsing normalizes the origin separately from the path so
+  // we can assert origin == supabaseUrl exactly, then walk the pathname
+  // segments without trusting their textual form.
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(photoUrl)
+  } catch {
+    return new Response(JSON.stringify({ error: 'photo_url is not a valid URL' }), {
       status: 400,
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }
+  const expectedOrigin = supabaseUrl ? new URL(supabaseUrl).origin : ''
+  if (!expectedOrigin || parsedUrl.origin !== expectedOrigin) {
+    return new Response(JSON.stringify({ error: 'photo_url must come from this Supabase project' }), {
+      status: 400,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+  // Strip leading slash and split. Empty segments (consecutive slashes) and
+  // path-traversal markers ('.', '..') are rejected so we can't be tricked
+  // into addressing a different file from what the textual path appears
+  // to claim. Expected layout for both buckets:
+  //   /storage/v1/object/public/<bucket>/<user_id>/<filename>
+  const segments = parsedUrl.pathname.replace(/^\/+/, '').split('/')
+  if (segments.some(s => s === '' || s === '.' || s === '..')) {
+    return new Response(JSON.stringify({ error: 'photo_url has invalid path segments' }), {
+      status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+  const [s0, s1, s2, s3, bucket, ownerSegment] = segments
+  if (s0 !== 'storage' || s1 !== 'v1' || s2 !== 'object' || s3 !== 'public') {
+    return new Response(JSON.stringify({ error: 'photo_url must point to a public storage object' }), {
+      status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+  if (bucket !== 'dish-photos' && bucket !== 'avatars') {
+    return new Response(JSON.stringify({ error: 'photo_url must point to the dish-photos or avatars bucket' }), {
+      status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
 
-  // Ownership check. Upload paths are `{user_id}/{dish_id}.jpg`, so the
-  // first path segment after the bucket prefix is the owner's UUID.
-  // Reject mismatches — without this, any authenticated user could ask us
-  // to moderate any other user's photo (still bucket-scoped, but they
-  // could enumerate URLs and burn tokens at someone else's expense, plus
-  // it leaks no-cost photo existence checks).
-  const tail = photoUrl.slice(allowedPrefix.length)
-  const ownerSegment = tail.split('/')[0]
-  if (ownerSegment !== authUser.id) {
+  // Ownership check. Upload paths are `{user_id}/{dish_id}.jpg` (dish-photos)
+  // or `{user_id}/avatar.jpg` (avatars) — in both buckets the first path
+  // segment after the bucket prefix is the owner's UUID. Reject mismatches —
+  // without this, any authenticated user could ask us to moderate any other
+  // user's photo (still bucket-scoped, but they could enumerate URLs and burn
+  // tokens at someone else's expense, plus it leaks no-cost photo existence
+  // checks).
+  if (!ownerSegment || ownerSegment !== authUser.id) {
     return new Response(JSON.stringify({ error: 'Photo does not belong to caller' }), {
       status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
     })
