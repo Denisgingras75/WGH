@@ -6,9 +6,11 @@ import { useEffect, useRef, useCallback } from 'react'
  *
  * @param {boolean} isOpen - Whether the modal is open
  * @param {Function} onClose - Callback to close the modal
+ * @param {Object} [options] - Optional configuration
+ * @param {Object} [options.initialFocusRef] - Ref to focus when modal opens (overrides first-focusable default)
  * @returns {Object} - ref to attach to the modal container
  */
-export function useFocusTrap(isOpen, onClose) {
+export function useFocusTrap(isOpen, onClose, { initialFocusRef } = {}) {
   const containerRef = useRef(null)
   const previousActiveElement = useRef(null)
 
@@ -23,14 +25,20 @@ export function useFocusTrap(isOpen, onClose) {
   useEffect(() => {
     if (!isOpen || !containerRef.current) return
 
-    const focusableElements = getFocusableElements(containerRef.current)
-    if (focusableElements.length > 0) {
-      // Small delay to ensure modal is fully rendered
-      requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (initialFocusRef?.current) {
+        initialFocusRef.current.focus({ preventScroll: true })
+        return
+      }
+      // Re-check containerRef.current — it may have been unmounted between
+      // scheduling and running the frame (fast open→close transitions).
+      if (!containerRef.current) return
+      const focusableElements = getFocusableElements(containerRef.current)
+      if (focusableElements.length > 0) {
         focusableElements[0].focus()
-      })
-    }
-  }, [isOpen])
+      }
+    })
+  }, [isOpen, initialFocusRef])
 
   // Restore focus when modal closes
   useEffect(() => {
@@ -39,6 +47,19 @@ export function useFocusTrap(isOpen, onClose) {
       previousActiveElement.current = null
     }
   }, [isOpen])
+
+  // Also restore focus on unmount — many callers (e.g. FollowListModal) toggle
+  // visibility by conditional render rather than flipping `isOpen` to false,
+  // so the effect above never fires. Without this cleanup, keyboard focus is
+  // orphaned on <body> after the modal goes away.
+  useEffect(() => {
+    return () => {
+      if (previousActiveElement.current && typeof previousActiveElement.current.focus === 'function') {
+        previousActiveElement.current.focus()
+        previousActiveElement.current = null
+      }
+    }
+  }, [])
 
   // Handle keyboard events
   const handleKeyDown = useCallback((e) => {
