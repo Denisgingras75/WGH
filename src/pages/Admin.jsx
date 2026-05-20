@@ -8,6 +8,18 @@ import { adminApi } from '../api/adminApi'
 import { restaurantManagerApi } from '../api/restaurantManagerApi'
 import { ALL_CATEGORIES } from '../constants/categories'
 
+function formatRetryAfter(seconds) {
+  if (seconds >= 3600) {
+    const hours = Math.ceil(seconds / 3600)
+    return hours === 1 ? '1 hour' : `${hours} hours`
+  }
+  if (seconds >= 60) {
+    const minutes = Math.ceil(seconds / 60)
+    return minutes === 1 ? '1 minute' : `${minutes} minutes`
+  }
+  return seconds === 1 ? '1 second' : `${seconds} seconds`
+}
+
 export function Admin() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
@@ -37,6 +49,14 @@ export function Admin() {
   // Restaurant manager state
   const [inviteRestaurantId, setInviteRestaurantId] = useState('')
   const [inviteLink, setInviteLink] = useState('')
+  const [inviteId, setInviteId] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [sendResult, setSendResult] = useState(null)
+  // Synchronous guard — React state updates aren't atomic, so a fast double-click
+  // could fire two sends before sendingEmail re-renders the disabled attribute.
+  // Refs flip immediately and are unaffected by render batching.
+  const sendingRef = useRef(false)
   const inviteInputRef = useRef(null)
   const [managers, setManagers] = useState([])
   const [managersLoading, setManagersLoading] = useState(false)
@@ -313,13 +333,58 @@ export function Admin() {
     }
 
     try {
-      const { token } = await restaurantManagerApi.createInvite(inviteRestaurantId)
+      const { id, token } = await restaurantManagerApi.createInvite(inviteRestaurantId)
       const link = `${window.location.origin}/invite/${token}`
       setInviteLink(link)
+      setInviteId(id)
+      setSendResult(null)
       setMessage({ type: 'success', text: 'Invite link generated!' })
     } catch (error) {
       logger.error('Error generating invite:', error)
       setMessage({ type: 'error', text: `Failed to generate invite: ${getUserMessage(error, 'generating invite')}` })
+    }
+  }
+
+  async function handleSendInviteEmail() {
+    if (sendingRef.current) return
+    setSendResult(null)
+    const email = recipientEmail.trim()
+    if (!email) {
+      setSendResult({ ok: false, message: 'Enter a recipient email first' })
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSendResult({ ok: false, message: 'That doesn\'t look like a valid email address' })
+      return
+    }
+    if (!inviteId || !inviteLink) {
+      setSendResult({ ok: false, message: 'Generate the invite link first' })
+      return
+    }
+
+    sendingRef.current = true
+    setSendingEmail(true)
+    try {
+      const result = await restaurantManagerApi.sendInviteEmail({
+        inviteId,
+        inviteUrl: inviteLink,
+        recipientEmail: email,
+      })
+      if (result.ok) {
+        setSendResult({ ok: true, message: `Email sent to ${email}` })
+      } else {
+        setSendResult({
+          ok: false,
+          message: result.message || 'Failed to send. Use Copy link instead.',
+          retryAfterSeconds: result.retryAfterSeconds,
+        })
+      }
+    } catch (err) {
+      logger.error('handleSendInviteEmail unexpected:', err)
+      setSendResult({ ok: false, message: 'Failed to send. Use Copy link instead.' })
+    } finally {
+      sendingRef.current = false
+      setSendingEmail(false)
     }
   }
 
@@ -689,6 +754,9 @@ export function Admin() {
                 if (inviteRestaurantId) {
                   setInviteRestaurantId('')
                   setInviteLink('')
+                  setInviteId('')
+                  setRecipientEmail('')
+                  setSendResult(null)
                   setManagers([])
                 }
               }}
@@ -703,6 +771,9 @@ export function Admin() {
                   setInviteRestaurantId('')
                   setInviteSearch('')
                   setInviteLink('')
+                  setInviteId('')
+                  setRecipientEmail('')
+                  setSendResult(null)
                   setManagers([])
                 }}
                 className="absolute right-2 top-[34px] text-sm px-1"
@@ -730,6 +801,9 @@ export function Admin() {
                         setInviteSearch(r.name)
                         setInviteDropdownOpen(false)
                         setInviteLink('')
+                        setInviteId('')
+                        setRecipientEmail('')
+                        setSendResult(null)
                         fetchManagers(r.id)
                       }}
                       className="w-full text-left px-3 py-2 text-sm hover:bg-[color:var(--color-surface-elevated)] transition-colors"
@@ -802,6 +876,80 @@ export function Admin() {
                     >
                       Copy
                     </button>
+                    <button
+                      onClick={() => {
+                        const restaurantName =
+                          restaurants.find((r) => r.id === inviteRestaurantId)?.name || 'your restaurant'
+                        const subject = `You're invited to manage ${restaurantName} on What's Good Here`
+                        const body = [
+                          `Hi,`,
+                          ``,
+                          `You've been invited to manage ${restaurantName} on What's Good Here — a mobile-first food discovery app for Martha's Vineyard.`,
+                          ``,
+                          `Once you accept, you'll be able to:`,
+                          `  • Add your menu (paste text or upload a PDF — we'll parse it automatically)`,
+                          `  • Update dish names, prices, and photos`,
+                          `  • Post specials (happy hour, daily deals)`,
+                          `  • Schedule events (live music, trivia nights)`,
+                          ``,
+                          `Click the link below to get started. The link expires in 7 days.`,
+                          ``,
+                          inviteLink,
+                          ``,
+                          `Questions? Just reply to this email.`,
+                          ``,
+                          `— The What's Good Here team`,
+                        ].join('\n')
+                        const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+                        window.location.href = mailto
+                      }}
+                      className="px-3 py-1 rounded text-xs font-medium"
+                      style={{ background: 'var(--color-accent-gold)', color: 'var(--color-text-on-primary)' }}
+                      title="Open your mail client with the invite prefilled (fallback)"
+                    >
+                      Email (mailto)
+                    </button>
+                  </div>
+
+                  {/* Primary: send via Resend through the Edge Function */}
+                  <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--color-divider)' }}>
+                    <label
+                      htmlFor="invite-recipient-email"
+                      className="block text-xs font-medium mb-1"
+                      style={{ color: 'var(--color-text-tertiary)' }}
+                    >
+                      Send directly to restaurant owner:
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="invite-recipient-email"
+                        type="email"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                        placeholder="owner@example.com"
+                        disabled={sendingEmail}
+                        className="flex-1 px-2 py-1 border rounded text-xs"
+                        style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+                      />
+                      <button
+                        onClick={handleSendInviteEmail}
+                        disabled={sendingEmail || !recipientEmail.trim()}
+                        className="px-3 py-1 rounded text-xs font-medium disabled:opacity-50"
+                        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      >
+                        {sendingEmail ? 'Sending…' : 'Send Email'}
+                      </button>
+                    </div>
+                    {sendResult && (
+                      <p
+                        className="mt-2 text-xs"
+                        style={{ color: sendResult.ok ? 'var(--color-success)' : 'var(--color-danger)' }}
+                      >
+                        {sendResult.ok ? '✓ ' : '⚠ '}
+                        {sendResult.message}
+                        {sendResult.retryAfterSeconds ? ` (try again in ${formatRetryAfter(sendResult.retryAfterSeconds)})` : ''}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
