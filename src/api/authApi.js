@@ -42,6 +42,21 @@ function buildWebRedirectUrl(returnPath) {
   }
 }
 
+// Coerce a caller-supplied path/URL into a same-origin relative path
+// (pathname + search + hash). Returns null for cross-origin, malformed, or
+// missing input. Used to sanitize `?next=` values before threading them
+// into emailRedirectTo or React Router navigate().
+function toSamePath(input) {
+  if (!input) return null
+  try {
+    const url = new URL(input, window.location.origin)
+    if (url.origin !== window.location.origin) return null
+    return url.pathname + url.search + url.hash
+  } catch {
+    return null
+  }
+}
+
 /**
  * Build a deterministic placeholder display name for a user who has no other
  * source. Used when Apple's SIWA picker had "Hide My Name" selected (no first/
@@ -409,9 +424,14 @@ export const authApi = {
    * @param {string} email - User email
    * @param {string} password - User password
    * @param {string} username - Display name (must be unique)
+   * @param {string|null} [redirectUrl=null] - Optional same-origin path the
+   *   user should land on after confirming their email. Wrapped into the
+   *   verification link as `/login?next=<encoded path>` so the intent
+   *   survives the email round-trip (and new-tab opens). Cross-origin or
+   *   malformed values fall back to `/login`.
    * @returns {Promise<Object>} Auth response
    */
-  async signUpWithPassword(email, password, username) {
+  async signUpWithPassword(email, password, username, redirectUrl = null) {
     try {
       const rateLimit = checkRateLimit('auth', RATE_LIMITS.auth)
       if (!rateLimit.allowed) {
@@ -440,11 +460,16 @@ export const authApi = {
         throw new Error('This username is already taken. Please choose another.')
       }
 
+      const safeNext = toSamePath(redirectUrl)
+      const verifyReturnPath = safeNext
+        ? `/login?next=${encodeURIComponent(safeNext)}`
+        : '/login'
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: buildWebRedirectUrl('/auth/callback?type=signup'),
+          emailRedirectTo: buildWebRedirectUrl(verifyReturnPath),
           data: {
             display_name: username,
           },

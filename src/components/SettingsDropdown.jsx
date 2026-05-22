@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { adminApi } from '../api/adminApi'
 import { useRestaurantManager } from '../hooks/useRestaurantManager'
@@ -13,6 +13,7 @@ import { logger } from '../utils/logger'
  */
 export function SettingsDropdown() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, signOut } = useAuth()
   const { isManager: isRestaurantManager } = useRestaurantManager()
   const [showDropdown, setShowDropdown] = useState(false)
@@ -61,7 +62,8 @@ export function SettingsDropdown() {
     const confirmed = window.confirm('Are you sure you want to sign out?')
     if (!confirmed) return
     await signOut()
-    navigate('/login')
+    const next = encodeURIComponent(location.pathname + location.search + location.hash)
+    navigate(`/login?next=${next}`)
   }
 
   if (!user) return null

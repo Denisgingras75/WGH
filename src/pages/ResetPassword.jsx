@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { authApi } from '../api/authApi'
 import { Seal } from '../components/Seal'
 
 export function ResetPassword() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -179,7 +180,10 @@ export function ResetPassword() {
       ) : (
         <div className="w-full max-w-sm">
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => {
+              const next = encodeURIComponent(location.pathname + location.search + location.hash)
+              navigate(`/login?next=${next}`)
+            }}
             className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >

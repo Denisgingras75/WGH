@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
@@ -70,6 +70,7 @@ function computeRatingStyle(avgRating, ratingVariance) {
 export function UserProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user: currentUser } = useAuth()
   const locationFilter = searchParams.get('location')
@@ -314,7 +315,8 @@ export function UserProfile() {
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
     if (!currentUser) {
-      navigate('/login')
+      const next = encodeURIComponent(location.pathname + location.search + location.hash)
+      navigate(`/login?next=${next}`)
       return
     }
 
