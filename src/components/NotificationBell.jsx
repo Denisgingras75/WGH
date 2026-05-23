@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { notificationsApi } from '../api/notificationsApi'
@@ -10,6 +10,7 @@ import { logger } from '../utils/logger'
  */
 export function NotificationBell() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [notifications, setNotifications] = useState([])
@@ -51,7 +52,8 @@ export function NotificationBell() {
   // Fetch notifications when dropdown opens
   const handleBellClick = async () => {
     if (!user) {
-      navigate('/login')
+      const next = encodeURIComponent(location.pathname + location.search + location.hash)
+      navigate(`/login?next=${next}`)
       return
     }
 

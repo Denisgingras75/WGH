@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { usePlaylistDetail } from '../hooks/usePlaylistDetail'
 import { usePlaylistMutations } from '../hooks/usePlaylistMutations'
@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 export function Playlist() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { playlist, loading, error } = usePlaylistDetail(id)
   const { follow, unfollow, removeDish } = usePlaylistMutations()
@@ -80,7 +81,11 @@ export function Playlist() {
   var coverPhotos = items.slice(0, 4).map(function (item) { return item.photo_url || null })
 
   var toggleFollow = function () {
-    if (!user) { navigate('/login'); return }
+    if (!user) {
+      var nextParam = encodeURIComponent(location.pathname + location.search + location.hash)
+      navigate('/login?next=' + nextParam)
+      return
+    }
     if (playlist.is_followed) {
       unfollow.mutate(id)
     } else {

@@ -14,6 +14,18 @@ export function AuthCallback() {
 
     const code = searchParams.get('code')
     const type = searchParams.get('type') || 'signup'
+    const nextParam = searchParams.get('next')
+    let safeNext = null
+    if (nextParam) {
+      try {
+        const url = new URL(nextParam, window.location.origin)
+        if (url.origin === window.location.origin && !url.pathname.startsWith('/auth/callback')) {
+          safeNext = url.pathname + url.search + url.hash
+        }
+      } catch {
+        safeNext = null
+      }
+    }
 
     if (!code) {
       navigate('/login', {
@@ -43,7 +55,7 @@ export function AuthCallback() {
           return
         }
 
-        navigate('/', { replace: true })
+        navigate(safeNext || '/', { replace: true })
       } catch (error) {
         if (cancelled) return
         logger.warn('AuthCallback exchangeCodeForSession failed', error)

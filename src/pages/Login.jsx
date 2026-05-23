@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { authApi } from '../api/authApi'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
@@ -16,6 +16,7 @@ export function Login() {
   useDocumentTitle('Sign in')
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -31,16 +32,38 @@ export function Login() {
   const [mode, setMode] = useState(isPostConfirmation ? 'signin' : 'options') // 'options' | 'signin' | 'signup' | 'forgot'
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'too-short' | 'checking' | 'available' | 'taken'
 
+  // Resolve where to send the user after auth. Priority:
+  //   1. `?next=<path>` query param — survives email verification + new tabs
+  //   2. `location.state.from` (React Router state) — same-session fallback
+  //   3. `/` — default home
+  // The ?next value is sanitized to a same-origin relative path to prevent
+  // open-redirect attacks (e.g. //evil.com gets rejected).
+  const resolveNext = () => {
+    const nextParam = searchParams.get('next')
+    if (nextParam) {
+      try {
+        const url = new URL(nextParam, window.location.origin)
+        if (url.origin === window.location.origin) {
+          return url.pathname + url.search + url.hash
+        }
+      } catch {
+        // fall through to state-based fallback
+      }
+    }
+    const fromLocation = location.state?.from
+    if (fromLocation) {
+      return fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || '')
+    }
+    return '/'
+  }
+
   // Redirect authenticated users to home (or where they came from)
   useEffect(() => {
     if (user) {
-      const fromLocation = location.state?.from
-      const from = fromLocation
-        ? fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || '')
-        : '/'
-      navigate(from, { replace: true })
+      navigate(resolveNext(), { replace: true })
     }
-  }, [user, navigate, location.state])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, navigate, location.state, searchParams])
 
   // Reset form when switching modes
   useEffect(() => {
@@ -78,23 +101,15 @@ export function Login() {
     return () => clearTimeout(timer)
   }, [username, mode])
 
-  const buildOAuthRedirect = () => {
-    const fromLocation = location.state?.from
-    return fromLocation
-      ? new URL(
-          fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || ''),
-          window.location.origin
-        ).toString()
-      : null
-  }
-
   // Native flow resolves in-place. On success the user-redirect effect at
   // the top of this component handles navigation; only cancel needs to
   // clear loading so the user can retry. Web redirect unmounts this page.
+  // NB: authApi.signInWithGoogle/Apple destructure their argument
+  // ({ returnPath }), so the positional-string form silently dropped intent.
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true)
-      const result = await authApi.signInWithGoogle(buildOAuthRedirect())
+      const result = await authApi.signInWithGoogle({ returnPath: resolveNext() })
       if (result?.cancelled) {
         setLoading(false)
       }
@@ -107,7 +122,7 @@ export function Login() {
   const handleAppleSignIn = async () => {
     try {
       setLoading(true)
-      const result = await authApi.signInWithApple(buildOAuthRedirect())
+      const result = await authApi.signInWithApple({ returnPath: resolveNext() })
       if (result?.cancelled) {
         setLoading(false)
       }
@@ -123,11 +138,7 @@ export function Login() {
       setLoading(true)
       setMessage(null)
       await authApi.signInWithPassword(email, password)
-      const fromLocation = location.state?.from
-      const from = fromLocation
-        ? fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || '')
-        : '/'
-      navigate(from)
+      navigate(resolveNext())
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
     } finally {
@@ -157,7 +168,7 @@ export function Login() {
       setLoading(true)
       setMessage(null)
 
-      const result = await authApi.signUpWithPassword(email, password, username)
+      const result = await authApi.signUpWithPassword(email, password, username, resolveNext())
 
       if (result.success) {
         setMessage({
@@ -311,9 +322,9 @@ export function Login() {
               </div>
             </div>
 
-            {/* Get Started Button - goes to homepage */}
+            {/* Get Started Button - skips auth, sends to ?next if present, else homepage */}
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(resolveNext())}
               className="w-full max-w-sm px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
