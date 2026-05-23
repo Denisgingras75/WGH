@@ -462,8 +462,8 @@ export const authApi = {
 
       const safeNext = toSamePath(redirectUrl)
       const verifyReturnPath = safeNext
-        ? `/login?next=${encodeURIComponent(safeNext)}`
-        : '/login'
+        ? `/auth/callback?type=signup&next=${encodeURIComponent(safeNext)}`
+        : '/auth/callback?type=signup'
 
       const { data, error } = await supabase.auth.signUp({
         email,
