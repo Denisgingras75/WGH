@@ -2,7 +2,7 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-05-23 (Denis's Claude session)
 
 ---
 
@@ -12,33 +12,37 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** _(Dan's terminal | Dan's other Claude | Denis's Claude | scheduled agent name)_
-- **Branch:** _(e.g., audit/supabase-2026-04-16 — or `main` if directly committing)_
-- **Files / modules claimed:** _(e.g., `src/api/votesApi.js`, `supabase/schema.sql §votes`, `src/pages/Profile.jsx`)_
-- **Safe for others to continue:** _(what parts of the repo are NOT touched and open for parallel work)_
-- **Do not duplicate:** _(specific tasks already in-flight — PR numbers, migration filenames, feature names)_
+- **Owner / session:** Denis's Claude
+- **Branch:** `claude/admin-menu-management-lWngH`
+- **Files / modules claimed:** none — work for this session is committed + pushed. Branch is open for review.
+- **Safe for others to continue:** everything outside the restaurant-manager invite flow. Specifically `src/pages/Admin.jsx`, `src/api/restaurantManagerApi.js`, `supabase/functions/send-invite-email/`, `supabase/migrations/invite-email-audit.sql` — read-only until branch merges.
+- **Do not duplicate:** restaurant manager invite emails (shipped this session — `8b75cf0`). Greater Boston geographic expansion (design doc only — DO NOT START execution; see `EXPANSION-BOSTON.md`).
 
 ---
 
-## This session — the goal
+## This session — what shipped
 
 <!-- One paragraph. What are we actually shipping this session?
      Skip the long context — CLAUDE.md + SPEC.md provide that. -->
 
-_(stub)_
+Restaurant manager invite emails via Resend. The existing admin `/admin` flow still mints `restaurant_invites` rows; the new `send-invite-email` Edge Function only sends. Sender + reply-to: `wghapp@wghapp.com` (DKIM/SPF/DMARC verified). New `invite_email_sends` audit table records every attempt (success and failure). Rate limit 20/hour/admin. UI adds a recipient input + "Send Email" primary button; existing **Copy** and **Email (mailto)** kept as fallbacks. Branch: `claude/admin-menu-management-lWngH`, commits `7b85a64` (mailto button) + `8b75cf0` (Resend integration). Needs Dan to: set `RESEND_API_KEY` secret, deploy the function, and run the migration in SQL Editor. Status posted to wgh-phone via a `for-dan:` issue body Denis pasted.
+
+Also drafted `EXPANSION-BOSTON.md` — design doc for Greater Boston expansion. Denis asked to pull restaurants 25mi around 01887; I pushed back because (a) Memorial Day launch is 2 days away, (b) the existing region scaffold needs concrete decisions before ingest. The doc lays out 8 workstreams and a 3-week post-launch phasing plan. **NOT approved to execute.** Park until post-launch.
 
 ## Blockers / waiting on
 
 <!-- Anything held up on Denis, Apple review, a design decision, etc.
      Claude should NOT quietly start work that's waiting on someone else. -->
 
-- _(nothing)_
+- Dan to deploy the Resend Edge Function in prod (3-step checklist in the wgh-phone issue body).
+- Dan to review / sign off on `EXPANSION-BOSTON.md` open questions (region name, category additions, brand voice in non-MV regions, budget ceiling) before any Boston work starts.
 
 ## Not this session
 
 <!-- Stuff explicitly parked. Claude: don't pick this up even if it looks tempting. -->
 
-- _(nothing)_
+- Greater Boston data ingestion. See `EXPANSION-BOSTON.md`. **Do not** run `discover-restaurants` against Boston coordinates, do not modify town centers, do not change category vocab until MV launch is shipped and Dan has answered the open questions in the doc.
+- Other unchecked items in `LAUNCH-READINESS.md` — Denis didn't ask me to pick those up this session. Available for parallel work by other sessions.
 
 ---
 
