@@ -40,7 +40,7 @@ async function checkVoteRateLimitOnce() {
   }
 }
 
-function normalizeVotePayload({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+function normalizeVotePayload({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null }) {
   if (!dishId) {
     throw new Error('Dish is required')
   }
@@ -66,11 +66,10 @@ function normalizeVotePayload({ dishId, rating10 = null, reviewText = null, puri
     purityData,
     jitterData,
     jitterScore,
-    badgeHash,
   }
 }
 
-async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityData, jitterData, jitterScore, badgeHash }) {
+async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityData, jitterData, jitterScore }) {
   var { data: vote, error } = await supabase.rpc('submit_vote_atomic', {
     p_dish_id: dishId,
     p_user_id: userId,
@@ -78,7 +77,6 @@ async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityDa
     p_review_text: reviewText,
     p_purity_score: purityData && purityData.purity != null ? purityData.purity : null,
     p_war_score: jitterScore && jitterScore.score != null ? jitterScore.score : null,
-    p_badge_hash: badgeHash || null,
   })
 
   if (error) {
@@ -121,7 +119,7 @@ export const votesApi = {
    * @param {string} params.reviewText - Optional review text (max 200 chars)
    * @returns {Promise<Object>} Success status
    */
-  async submitVote({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null, badgeHash = null }) {
+  async submitVote({ dishId, rating10 = null, reviewText = null, purityData = null, jitterData = null, jitterScore = null }) {
     try {
       var user = await getAuthenticatedUser()
       await checkVoteRateLimitOnce()
@@ -135,7 +133,6 @@ export const votesApi = {
           purityData,
           jitterData,
           jitterScore,
-          badgeHash,
         }),
       })
     } catch (error) {

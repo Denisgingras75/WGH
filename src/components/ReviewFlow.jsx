@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { useVote } from '../hooks/useVote'
 import { usePurityTracker } from '../hooks/usePurityTracker'
 import JitterBox from '../utils/jitter-box'
-import { jitterApi } from '../api/jitterApi'
 import { authApi } from '../api/authApi'
 import { dishPhotosApi } from '../api/dishPhotosApi'
 import { FoodRatingSlider } from './FoodRatingSlider'
@@ -177,22 +176,7 @@ export function ReviewFlow({
       ? { score: badge.war, flags: badge.flags, classification: badge.classification }
       : null
 
-    const attestResult = jitterScore && user
-      ? await jitterApi.attestReview({
-          userId: user.id,
-          warScore: jitterScore.score,
-          classification: jitterScore.classification,
-          flags: jitterScore.flags,
-          meta: {
-            keys: badge?.session?.keystrokes || 0,
-            paste_chars: badge?.session?.pasteChars || 0,
-            focus_ms: badge?.session?.duration ? badge.session.duration * 1000 : 0,
-          },
-        })
-      : null
-    const badgeHash = attestResult?.badge_hash || null
-
-    const result = await submitVote(dishId, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore, badgeHash)
+    const result = await submitVote(dishId, sliderValue, reviewTextToSubmit, purityData, jitterData, jitterScore)
 
     if (!result.success) {
       logger.error('Vote submission failed:', result.error)

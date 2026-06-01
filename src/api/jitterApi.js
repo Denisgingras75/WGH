@@ -38,47 +38,6 @@ export const jitterApi = {
   },
 
   /**
-   * Get trust badge type for a given user based on their jitter profile.
-   * Returns: 'trusted_reviewer' | 'human_verified' | 'building' | null
-   */
-  /**
-   * Attest a review — sends WAR score to JITTEr attestation server, returns badge_hash.
-   * Non-blocking, non-critical. Returns null on any failure.
-   */
-  async attestReview({ userId, warScore, classification, flags, meta }) {
-    try {
-      const attestUrl = import.meta.env.VITE_JITTER_ATTEST_URL
-      if (!attestUrl || !userId || warScore == null) return null
-
-      const res = await fetch(attestUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          site_key: 'wgh',
-          war_score: warScore,
-          classification,
-          flags: flags || [],
-          meta: meta || {},
-        }),
-      })
-
-      if (!res.ok) return null
-      const data = await res.json()
-      return {
-        badge_hash: data.badge_hash || null,
-        verifyUrl: data.badge_hash
-          ? attestUrl.replace('/attest', '/verify') + '?hash=' + data.badge_hash
-          : null,
-        profile: data.profile || null,
-      }
-    } catch (err) {
-      logger.warn('Attestation failed (non-critical):', err)
-      return null
-    }
-  },
-
-  /**
    * Join the Jitter waitlist (public landing page).
    * No auth required — anonymous insert.
    */
@@ -95,6 +54,11 @@ export const jitterApi = {
     }
   },
 
+  /**
+   * Derive the trust badge type from a user's jitter profile.
+   * jitter_profiles is the single source of trust — no client-asserted score.
+   * Returns: 'trusted_reviewer' | 'human_verified' | 'building' | null
+   */
   getTrustBadgeType(jitterProfile) {
     if (!jitterProfile) return null
     if (jitterProfile.flagged) return null

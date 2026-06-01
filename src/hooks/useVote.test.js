@@ -25,7 +25,7 @@ describe('useVote Hook', () => {
 
       let response
       await act(async () => {
-        response = await result.current.submitVote('dish-1', 8.5, 'great review', null, null, null, null)
+        response = await result.current.submitVote('dish-1', 8.5, 'great review', null, null, null)
       })
 
       expect(response.success).toBe(true)
@@ -36,7 +36,6 @@ describe('useVote Hook', () => {
         purityData: null,
         jitterData: null,
         jitterScore: null,
-        badgeHash: null,
       })
     })
 
@@ -103,7 +102,6 @@ describe('useVote Hook', () => {
         purityData: null,
         jitterData: null,
         jitterScore: null,
-        badgeHash: null,
       })
     })
   })
