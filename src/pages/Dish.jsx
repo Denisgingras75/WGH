@@ -39,10 +39,9 @@ export function Dish() {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [playlistSheetOpen, setPlaylistSheetOpen] = useState(false)
   const [showReportDish, setShowReportDish] = useState(false)
-  const [showRateFlow, setShowRateFlow] = useState(false)
-  const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
-  // When the user taps "+" on an unrated dish, we route them through the rate
-  // flow first, then auto-open the playlist sheet once a number is in.
+  // When the user taps "+" on a dish with no rating yet, we nudge them to the
+  // (always-visible) slider, then auto-open the playlist sheet once a number
+  // is in.
   const [pendingPlaylistAdd, setPendingPlaylistAdd] = useState(false)
   const [priorVote, setPriorVote] = useState(null)
   const [existingPhoto, setExistingPhoto] = useState(null)
@@ -51,6 +50,7 @@ export function Dish() {
   // Ear icon tooltip — show once per device
   const [showEarTooltip, setShowEarTooltip] = useState(false)
   const tooltipChecked = useRef(false)
+  const rateFlowRef = useRef(null)
 
   // Fetch prior vote + prior photo in parallel so the CTA label and the
   // ReviewFlow photo thumbnail both reflect current state.
@@ -82,15 +82,6 @@ export function Dish() {
     return () => { cancelled = true }
   }, [dishId, user])
 
-  // Auth-gate intent preservation: once the user finishes logging in,
-  // resume straight into the rate flow.
-  useEffect(() => {
-    if (user && pendingAction === 'rate') {
-      setPendingAction(null)
-      setShowRateFlow(true)
-    }
-  }, [user, pendingAction])
-
   useEffect(() => {
     if (dish && !tooltipChecked.current) {
       tooltipChecked.current = true
@@ -107,22 +98,7 @@ export function Dish() {
 
   const handleLoginRequired = () => setLoginModalOpen(true)
 
-  const handleRateClick = () => {
-    if (showRateFlow) {
-      setShowRateFlow(false)
-      setPendingPlaylistAdd(false)
-      return
-    }
-    if (!user) {
-      setPendingAction('rate')
-      setLoginModalOpen(true)
-      return
-    }
-    setShowRateFlow(true)
-  }
-
   const handleVoteSubmitted = () => {
-    setShowRateFlow(false)
     // If the rating was triggered by a "+ add to list" tap, finish the job:
     // the dish now has a number, so open the playlist sheet.
     if (pendingPlaylistAdd) {
@@ -301,8 +277,8 @@ export function Dish() {
               // Gate: a dish needs a number before it can go on a list.
               if (priorVote?.rating_10 == null) {
                 setPendingPlaylistAdd(true)
-                setShowRateFlow(true)
                 toast('Rate it first to add it to a list', { duration: 2500 })
+                rateFlowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 return
               }
               setPlaylistSheetOpen(true)
@@ -352,45 +328,32 @@ export function Dish() {
             parentDish={parentDish}
           />
 
-          {/* LAYER 2: THE ACTION — Rate CTA + inline rate flow */}
-          <div className="p-4 space-y-3">
-            <button
-              type="button"
-              onClick={handleRateClick}
-              aria-expanded={showRateFlow}
-              aria-controls="rate-flow-panel"
-              className="w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring active:scale-98 hover:shadow-xl"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          {/* LAYER 2: THE ACTION — rate flow, always visible (no button to tap) */}
+          <div className="p-4">
+            <div
+              id="rate-flow-panel"
+              ref={rateFlowRef}
+              className="p-4 rounded-xl"
+              style={{
+                background: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-divider)',
+              }}
             >
-              {showRateFlow
-                ? 'Close'
-                : priorVote ? 'Update your rating' : 'Rate this dish'}
-            </button>
-            {showRateFlow && (
-              <div
-                id="rate-flow-panel"
-                className="p-4 rounded-xl"
-                style={{
-                  background: 'var(--color-surface-elevated)',
-                  border: '1px solid var(--color-divider)',
-                }}
-              >
-                <ReviewFlow
-                  dishId={dish.dish_id}
-                  dishName={dish.dish_name}
-                  restaurantId={dish.restaurant_id}
-                  restaurantName={dish.restaurant_name}
-                  category={dish.category}
-                  price={dish.price}
-                  totalVotes={dish.total_votes}
-                  isRanked={isRanked}
-                  existingPhoto={existingPhoto}
-                  onVote={handleVoteSubmitted}
-                  onLoginRequired={handleLoginRequired}
-                  onPhotoUploaded={handlePhotoUploaded}
-                />
-              </div>
-            )}
+              <ReviewFlow
+                dishId={dish.dish_id}
+                dishName={dish.dish_name}
+                restaurantId={dish.restaurant_id}
+                restaurantName={dish.restaurant_name}
+                category={dish.category}
+                price={dish.price}
+                totalVotes={dish.total_votes}
+                isRanked={isRanked}
+                existingPhoto={existingPhoto}
+                onVote={handleVoteSubmitted}
+                onLoginRequired={handleLoginRequired}
+                onPhotoUploaded={handlePhotoUploaded}
+              />
+            </div>
           </div>
 
           {/* LAYER 3: THE EVIDENCE (reviews) */}

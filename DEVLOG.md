@@ -11,6 +11,8 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 **Ditched the "Add a review" collapse.** In `ReviewFlow.jsx` the review textarea now sits visible right under the slider (was hidden behind a `+ Add a review (optional)` button). Rating is still the only required input; words stay optional. JitterBox now attaches on mount instead of on-expand.
 
+**Ditched the "Rate this dish" button too.** On `Dish.jsx` the rate flow (slider + review bar) is now rendered inline and always visible — no button to tap to reveal it. Removed `showRateFlow` / `handleRateClick` / `pendingAction` machinery. The `+` rate-first gate now scrolls to the slider instead of toggling a panel open.
+
 **A dish needs a number before it can go on a list.** Adding to a playlist or a curator "My Top 10" now requires the user to have rated the dish first — chosen behavior is *rate-first-then-auto-add*, no dead-end error.
 - `Dish.jsx`: tapping `+` on an unrated dish opens the rate flow with a "Rate it first to add it to a list" toast; on submit the playlist sheet auto-opens. (`AddToPlaylistSheet` has a single entry point and `CreatePlaylistModal`'s seed-add lives inside it, so this one gate covers all user-playlist adds.)
 - `MyList.jsx`: curators tapping an unrated dish in search get an inline rate sheet (reuses `ReviewFlow`); once rated it's added automatically, preserving their unsaved list edits.
