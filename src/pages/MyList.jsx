@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useMyLocalList } from '../hooks/useMyLocalList'
 import { useDishSearch } from '../hooks/useDishSearch'
+import { useUserVotes } from '../hooks/useUserVotes'
 import { getCategoryEmoji } from '../constants/categories'
+import { ReviewFlow } from '../components/ReviewFlow'
 import { logger } from '../utils/logger'
 
 export function MyList() {
   var navigate = useNavigate()
+  var { user } = useAuth()
   var { listMeta, dishes, loading, saveList, saving } = useMyLocalList()
+
+  // Rated-dish lookup — a curator can only put dishes they've given a number to
+  // on their Top 10. Tapping an unrated dish opens an inline rate sheet first.
+  var { votes, refetch: refetchVotes } = useUserVotes(user && user.id)
+  var ratedSet = {}
+  votes.forEach(function (v) {
+    if (v.rating_10 != null && v.dishes) ratedSet[v.dishes.id] = true
+  })
+  var [pendingRateDish, setPendingRateDish] = useState(null)
 
   // Local state for editing
   var [tagline, setTagline] = useState('')
@@ -71,12 +84,11 @@ export function MyList() {
     )
   }
 
-  function handleAddDish(dish) {
-    if (items.length >= 10) return
+  function addToItems(dish) {
     var dishId = dish.dish_id || dish.id
-    if (items.some(function (item) { return item.dish_id === dishId })) return
-
     setItems(function (prev) {
+      if (prev.length >= 10) return prev
+      if (prev.some(function (item) { return item.dish_id === dishId })) return prev
       return prev.concat([{
         dish_id: dishId,
         dish_name: dish.dish_name || dish.name,
@@ -87,6 +99,26 @@ export function MyList() {
     })
     setSearchQuery('')
     setShowSearch(false)
+  }
+
+  function handleAddDish(dish) {
+    if (items.length >= 10) return
+    var dishId = dish.dish_id || dish.id
+    if (items.some(function (item) { return item.dish_id === dishId })) return
+
+    // Gate: must have rated the dish first. Open the inline rate sheet and add
+    // it automatically once a number is in.
+    if (!ratedSet[dishId]) {
+      setPendingRateDish(dish)
+      return
+    }
+    addToItems(dish)
+  }
+
+  function handleRated() {
+    if (pendingRateDish) addToItems(pendingRateDish)
+    setPendingRateDish(null)
+    if (refetchVotes) refetchVotes()
   }
 
   function handleRemoveDish(dishId) {
@@ -471,6 +503,44 @@ export function MyList() {
           {saving ? 'Saving...' : items.length > 0 ? 'Save & Publish' : 'Save (Unpublished)'}
         </button>
       </div>
+
+      {/* Rate-first sheet — a curator must give a dish a number before it can
+          go on their Top 10. Once rated, it's added automatically. */}
+      {pendingRateDish && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+          onClick={function (e) { if (e.target === e.currentTarget) setPendingRateDish(null) }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Rate this dish to add it"
+            className="w-full rounded-t-2xl"
+            style={{
+              background: 'var(--color-surface)',
+              padding: '8px 16px 24px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 16px' }} />
+            <div style={{ marginBottom: '4px', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+              Rate it to add it
+            </div>
+            <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
+              {(pendingRateDish.dish_name || pendingRateDish.name)} &middot; {pendingRateDish.restaurant_name}
+            </div>
+            <ReviewFlow
+              dishId={pendingRateDish.dish_id || pendingRateDish.id}
+              dishName={pendingRateDish.dish_name || pendingRateDish.name}
+              category={pendingRateDish.category}
+              onVote={handleRated}
+              onLoginRequired={function () { navigate('/login') }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

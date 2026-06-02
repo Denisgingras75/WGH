@@ -41,6 +41,9 @@ export function Dish() {
   const [showReportDish, setShowReportDish] = useState(false)
   const [showRateFlow, setShowRateFlow] = useState(false)
   const [pendingAction, setPendingAction] = useState(null) // 'rate' | null
+  // When the user taps "+" on an unrated dish, we route them through the rate
+  // flow first, then auto-open the playlist sheet once a number is in.
+  const [pendingPlaylistAdd, setPendingPlaylistAdd] = useState(false)
   const [priorVote, setPriorVote] = useState(null)
   const [existingPhoto, setExistingPhoto] = useState(null)
   const { isFavorite, toggleFavorite } = useFavorites(user?.id)
@@ -107,6 +110,7 @@ export function Dish() {
   const handleRateClick = () => {
     if (showRateFlow) {
       setShowRateFlow(false)
+      setPendingPlaylistAdd(false)
       return
     }
     if (!user) {
@@ -119,6 +123,12 @@ export function Dish() {
 
   const handleVoteSubmitted = () => {
     setShowRateFlow(false)
+    // If the rating was triggered by a "+ add to list" tap, finish the job:
+    // the dish now has a number, so open the playlist sheet.
+    if (pendingPlaylistAdd) {
+      setPendingPlaylistAdd(false)
+      setPlaylistSheetOpen(true)
+    }
     // Refresh prior-vote and prior-photo so CTA label and thumbnail stay current.
     // allSettled so a photo-fetch failure doesn't discard the vote result.
     if (user && dishId) {
@@ -288,6 +298,13 @@ export function Dish() {
           <button
             onClick={() => {
               if (!user) { setLoginModalOpen(true); return }
+              // Gate: a dish needs a number before it can go on a list.
+              if (priorVote?.rating_10 == null) {
+                setPendingPlaylistAdd(true)
+                setShowRateFlow(true)
+                toast('Rate it first to add it to a list', { duration: 2500 })
+                return
+              }
               setPlaylistSheetOpen(true)
             }}
             aria-label="Add to playlist"

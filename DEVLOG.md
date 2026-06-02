@@ -5,6 +5,25 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-06-02 — Dan + Claude
+
+### Review bar always-on + rate-first gate for lists
+
+**Ditched the "Add a review" collapse.** In `ReviewFlow.jsx` the review textarea now sits visible right under the slider (was hidden behind a `+ Add a review (optional)` button). Rating is still the only required input; words stay optional. JitterBox now attaches on mount instead of on-expand.
+
+**A dish needs a number before it can go on a list.** Adding to a playlist or a curator "My Top 10" now requires the user to have rated the dish first — chosen behavior is *rate-first-then-auto-add*, no dead-end error.
+- `Dish.jsx`: tapping `+` on an unrated dish opens the rate flow with a "Rate it first to add it to a list" toast; on submit the playlist sheet auto-opens. (`AddToPlaylistSheet` has a single entry point and `CreatePlaylistModal`'s seed-add lives inside it, so this one gate covers all user-playlist adds.)
+- `MyList.jsx`: curators tapping an unrated dish in search get an inline rate sheet (reuses `ReviewFlow`); once rated it's added automatically, preserving their unsaved list edits.
+
+**Note:** this is a UI/quality gate, not server-enforced — a raw `add_dish_to_playlist` RPC call could still bypass it. Follow-up if we want true integrity: add a vote-exists check inside the RPC.
+
+### Files changed
+- `src/components/ReviewFlow.jsx` — review textarea always visible; JitterBox attach on mount
+- `src/pages/Dish.jsx` — rate-first gate on the `+` add-to-playlist trigger
+- `src/pages/MyList.jsx` — rate-first inline sheet for curator Top 10 adds
+
+---
+
 ## 2026-02-25 — Dan + Claude
 
 ### Map becomes the homepage + major cleanup
