@@ -8,6 +8,7 @@ import { PlaylistCover } from '../components/playlists/PlaylistCover'
 import { PlaylistOwnerMenu } from '../components/playlists/PlaylistOwnerMenu'
 import { getCategoryNeonImage, categoryEmojiFor } from '../constants/categories'
 import { AddDishSearchSheet } from '../components/playlists/AddDishSearchSheet'
+import { CreatePlaylistModal } from '../components/playlists/CreatePlaylistModal'
 import { capture } from '../lib/analytics'
 import { shareOrCopy, canonicalShareUrl } from '../utils/share'
 import { ShareToInstagramButton } from '../components/share'
@@ -21,6 +22,7 @@ export function Playlist() {
   const { playlist, loading, error } = usePlaylistDetail(id)
   const { follow, unfollow, removeDish } = usePlaylistMutations()
   const [searchSheetOpen, setSearchSheetOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
 
   useDocumentTitle(playlist?.playlist_name || null)
 
@@ -307,6 +309,32 @@ export function Playlist() {
           })}
         </ol>
       )}
+
+      {/* Funnel: turn a viewer (often arriving from a shared image) into a creator */}
+      {!playlist.is_owner && (
+        <div style={{ padding: '24px 20px 8px', textAlign: 'center' }}>
+          <button
+            onClick={function () {
+              if (!user) {
+                var nextParam = encodeURIComponent(location.pathname + location.search + location.hash)
+                navigate('/login?next=' + nextParam)
+                return
+              }
+              capture('create_playlist_cta_clicked', { from: 'playlist_detail', playlist_id: id })
+              setCreateOpen(true)
+            }}
+            style={{ color: 'var(--color-accent-gold)', background: 'none', border: 'none', fontWeight: 700, fontSize: 14 }}
+          >
+            + Create your own playlist
+          </button>
+        </div>
+      )}
+
+      <CreatePlaylistModal
+        isOpen={createOpen}
+        onClose={function () { setCreateOpen(false) }}
+        onCreated={function (pl) { if (pl && pl.id) navigate('/playlist/' + pl.id) }}
+      />
 
       <AddDishSearchSheet
         isOpen={searchSheetOpen}
