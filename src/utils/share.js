@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { Share } from '@capacitor/share'
+import { Filesystem, Directory } from '@capacitor/filesystem'
 import { logger } from './logger'
 
 // Canonical public origin for share/invite URLs. Inside the iOS Capacitor
@@ -129,16 +130,43 @@ export function buildRestaurantShareData(restaurant) {
   }
 }
 
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(String(reader.result).split(',')[1] || '')
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
 /**
  * Share an image File via the platform share sheet, with graceful fallback.
- * Ladder: Web Share API w/ files → download the image + copy/share the link.
- * (Native Capacitor file-share is added in Phase 2 — needs @capacitor/filesystem.)
- * Never throws. Returns { method, success } so callers can toast accordingly.
+ * Ladder: Capacitor native file-share → Web Share API w/ files → download the
+ * image + copy/share the link. Never throws; returns { method, success }.
  *
  * @param {{ file: File, blob: Blob, url: string, text?: string, dialogTitle?: string }} options
  * @returns {Promise<{ method: string, success: boolean }>}
  */
-export async function shareImage({ file, blob, url, text }) {
+export async function shareImage({ file, blob, url, text, dialogTitle }) {
+  // 0. Capacitor native (iOS/Android): write the PNG to cache, share the file URI
+  if (Capacitor?.isNativePlatform?.()) {
+    try {
+      const base64 = await blobToBase64(blob || file)
+      const written = await Filesystem.writeFile({
+        path: 'wgh-share.png',
+        data: base64,
+        directory: Directory.Cache,
+      })
+      await Share.share({ files: [written.uri], url, dialogTitle: dialogTitle || 'Share to Instagram' })
+      return { method: 'native_capacitor_file', success: true }
+    } catch (err) {
+      if (err && (err.message || '').toLowerCase().includes('cancel')) {
+        return { method: 'native_capacitor_file', success: false }
+      }
+      logger.warn('Capacitor file share failed, falling back:', err)
+    }
+  }
+
   // 1. Web Share API with files (mobile browsers)
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
