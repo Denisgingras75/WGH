@@ -10,6 +10,7 @@ import { getCategoryNeonImage, categoryEmojiFor } from '../constants/categories'
 import { AddDishSearchSheet } from '../components/playlists/AddDishSearchSheet'
 import { capture } from '../lib/analytics'
 import { shareOrCopy, canonicalShareUrl } from '../utils/share'
+import { ShareToInstagramButton } from '../components/share'
 import { toast } from 'sonner'
 
 export function Playlist() {
@@ -26,6 +27,15 @@ export function Playlist() {
 
   const items = playlist?.items || []
   const existingDishIds = useMemo(() => items.map((i) => i.dish_id), [items])
+
+  // Share-card data — must stay above the early returns (Rules of Hooks).
+  const igCardData = useMemo(() => ({
+    title: playlist?.title || 'Playlist',
+    byline: `by ${playlist?.owner_display_name || 'a local'} · ${items.length} dish${items.length === 1 ? '' : 'es'}`,
+    emojis: items.slice(0, 4).map((i) => categoryEmojiFor(i.category)),
+    topItems: items.slice(0, 3).map((i) => i.dish_name),
+    footerUrl: 'wghapp.com',
+  }), [playlist?.title, playlist?.owner_display_name, items])
 
   useEffect(() => {
     if (playlist) {
@@ -147,7 +157,7 @@ export function Playlist() {
           {' · '}{playlist.item_count} {playlist.item_count === 1 ? 'dish' : 'dishes'}
           {playlist.follower_count > 0 && ` · ${playlist.follower_count} followers`}
         </div>
-        <div className="flex justify-center gap-3" style={{ marginTop: 16 }}>
+        <div className="flex justify-center gap-3 flex-wrap" style={{ marginTop: 16 }}>
           {!playlist.is_owner && (
             <button
               onClick={toggleFollow}
@@ -179,6 +189,13 @@ export function Playlist() {
           >
             Share
           </button>
+          <ShareToInstagramButton
+            surface="playlist"
+            id={id}
+            url={canonicalShareUrl('/playlist/' + id)}
+            cardData={igCardData}
+            shareText={playlist.title + " on What's Good Here"}
+          />
           {playlist.is_owner && <PlaylistOwnerMenu playlist={playlist} />}
         </div>
       </div>

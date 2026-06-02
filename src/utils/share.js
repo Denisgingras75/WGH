@@ -128,3 +128,42 @@ export function buildRestaurantShareData(restaurant) {
     text: `Check out ${restaurant.name}${restaurant.town ? ` in ${restaurant.town}` : ''} on What's Good Here!`,
   }
 }
+
+/**
+ * Share an image File via the platform share sheet, with graceful fallback.
+ * Ladder: Web Share API w/ files → download the image + copy/share the link.
+ * (Native Capacitor file-share is added in Phase 2 — needs @capacitor/filesystem.)
+ * Never throws. Returns { method, success } so callers can toast accordingly.
+ *
+ * @param {{ file: File, blob: Blob, url: string, text?: string, dialogTitle?: string }} options
+ * @returns {Promise<{ method: string, success: boolean }>}
+ */
+export async function shareImage({ file, blob, url, text }) {
+  // 1. Web Share API with files (mobile browsers)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      const data = { files: [file] }
+      if (text) data.text = text
+      await navigator.share(data)
+      return { method: 'web_share_file', success: true }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return { method: 'web_share_file', success: false }
+      logger.warn('Web file share failed, falling back:', err)
+    }
+  }
+
+  // 2. Fallback: download the image, then copy/share the link
+  try {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob || file)
+    a.download = (file && file.name) || 'wgh-share.png'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(a.href)
+  } catch (err) {
+    logger.warn('Image download fallback failed:', err)
+  }
+  const link = await shareOrCopy({ url, text })
+  return { method: 'download_copy', success: link.success }
+}
