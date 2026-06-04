@@ -124,6 +124,10 @@ export const STORAGE_KEYS = {
   RADIUS: 'wgh_radius',
   LOCATION_PERMISSION: 'whats-good-here-location-permission',
   EMAIL_CACHE: 'whats-good-here-email',
+  // Curator invite token stashed before a logged-out user is sent through
+  // signup/sign-in. Survives the email-verification round-trip so we can
+  // auto-accept on return no matter where the user lands.
+  PENDING_CURATOR_TOKEN: 'wgh_pending_curator_token',
 }
 
 // Pending vote storage helpers (survives OAuth redirect)

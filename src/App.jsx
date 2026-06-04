@@ -10,6 +10,7 @@ import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
 import { RouteProgress } from './components/RouteProgress'
+import { CuratorInviteResume } from './components/CuratorInviteResume'
 import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
 import { preloadCategoryImages } from './constants/categories'
@@ -127,6 +128,7 @@ function App() {
         <BrowserRouter>
           <RouteProgress />
           <WelcomeModal />
+          <CuratorInviteResume />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<><MapPage /><BottomNav /></>} />

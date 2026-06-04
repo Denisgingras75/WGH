@@ -65,6 +65,17 @@ export const localListsApi = {
     }
   },
 
+  async addDishToMyList(dishId) {
+    try {
+      const { data, error } = await supabase.rpc('add_dish_to_my_local_list', { p_dish_id: dishId })
+      if (error) throw createClassifiedError(error)
+      return data
+    } catch (error) {
+      logger.error('Failed to add dish to my local list:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
   async getMyList() {
     try {
       const { data, error } = await supabase.rpc('get_my_local_list')

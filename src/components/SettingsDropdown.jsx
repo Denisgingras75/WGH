@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { adminApi } from '../api/adminApi'
 import { useRestaurantManager } from '../hooks/useRestaurantManager'
+import { useMyLocalList } from '../hooks/useMyLocalList'
 import { DeleteAccountModal } from './profile'
 import { BlockedUsersModal } from './BlockedUsersModal'
 import { isSoundMuted, toggleSoundMute } from '../lib/sounds'
@@ -15,6 +16,7 @@ export function SettingsDropdown() {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const { isManager: isRestaurantManager } = useRestaurantManager()
+  const { isCurator } = useMyLocalList()
   const [showDropdown, setShowDropdown] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showBlockedModal, setShowBlockedModal] = useState(false)
@@ -140,6 +142,23 @@ export function SettingsDropdown() {
               style={{ borderColor: 'var(--color-divider)' }}
             >
               <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Admin Panel</span>
+              <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )}
+
+          {/* My Top 10 — local curators only. Their permanent way back to the
+              builder, so leaving the page never strands them. */}
+          {isCurator && (
+            <Link
+              role="menuitem"
+              to="/my-list"
+              onClick={() => setShowDropdown(false)}
+              className="w-full px-4 py-3 flex items-center justify-between transition-colors border-b"
+              style={{ borderColor: 'var(--color-divider)' }}
+            >
+              <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>My Top 10</span>
               <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

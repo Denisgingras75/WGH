@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { localListsApi } from '../api/localListsApi'
+import { setStorageItem, removeStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { logger } from '../utils/logger'
 
 export function AcceptCuratorInvite() {
@@ -14,6 +15,7 @@ export function AcceptCuratorInvite() {
   var [loading, setLoading] = useState(true)
   var [accepting, setAccepting] = useState(false)
   var [error, setError] = useState(null)
+  var acceptedRef = useRef(false)
 
   useEffect(function () {
     var cancelled = false
@@ -41,17 +43,24 @@ export function AcceptCuratorInvite() {
   }, [token])
 
   async function handleAccept() {
+    if (acceptedRef.current) return
+    acceptedRef.current = true
     setAccepting(true)
     setError(null)
 
     try {
       var result = await localListsApi.acceptCuratorInvite(token)
-      if (result.success) {
+      if (result.success || (result.error && /already used/i.test(result.error))) {
+        // Accepting clears any stashed token so the resume handler doesn't
+        // double-fire on the next navigation.
+        removeStorageItem(STORAGE_KEYS.PENDING_CURATOR_TOKEN)
         navigate('/my-list')
       } else {
+        acceptedRef.current = false
         setError(result.error || 'Failed to accept invite')
       }
     } catch (err) {
+      acceptedRef.current = false
       logger.error('Error accepting curator invite:', err)
       setError(err.message || 'Failed to accept invite')
     } finally {
@@ -59,7 +68,20 @@ export function AcceptCuratorInvite() {
     }
   }
 
+  // Already signed in with a valid invite → accept automatically. This also
+  // covers the OAuth return (Supabase redirects back to this page), so the
+  // curator never has to tap "Accept" a second time after authenticating.
+  useEffect(function () {
+    if (user && invite && !acceptedRef.current) {
+      handleAccept()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, invite])
+
   function handleSignIn() {
+    // Stash the token so we can resume after the signup/email-verification
+    // round-trip even if the user lands somewhere other than this page.
+    setStorageItem(STORAGE_KEYS.PENDING_CURATOR_TOKEN, token)
     navigate('/login', { state: { from: location } })
   }
 

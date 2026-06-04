@@ -5,6 +5,35 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-06-04 — Denis + Claude
+
+### Curator Top 10: durable mint links + add-from-anywhere
+
+Fixes the "mint link breaks" report: a curator invite link died through the
+signup round-trip and the Top 10 builder was a dead-end page with no way back.
+
+**Mint link survives signup.** New `PENDING_CURATOR_TOKEN` is stashed before a
+logged-out user is sent to login, and a new `CuratorInviteResume` component
+(mounted in `App.jsx`) auto-accepts it after auth wherever the user lands —
+covering the email-verification round-trip that drops `location.state`.
+`AcceptCuratorInvite.jsx` now also auto-accepts on mount when already signed in
+(no second tap, covers the OAuth return).
+
+**Permanent way back.** `SettingsDropdown` shows a "My Top 10" link for curators
+(`useMyLocalList().isCurator`), so leaving the builder never strands them.
+
+**Add to Top 10 from anywhere.** New `AddToTop10Button` (curator-only, renders
+nothing for everyone else) on the dish-page header and under each dish on the
+restaurant tab. Appends server-side so it persists even if you navigate away.
+
+**Server-enforced rate gate.** New RPC `add_dish_to_my_local_list(p_dish_id)`
+enforces the rate-first rule in the DB (was UI-only, the integrity gap flagged
+in PR #7) and returns a `code` so the client can open a rate sheet / toast
+"full" / "duplicate" cleanly. Migration:
+`supabase/migrations/2026-06-04-add-dish-to-my-local-list.sql`.
+
+---
+
 ## 2026-06-02 — Dan + Claude
 
 ### Review bar always-on + rate-first gate for lists

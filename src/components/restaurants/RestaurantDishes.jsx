@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
 import { DishListItem } from '../DishListItem'
+import { AddToTop10Button } from '../AddToTop10Button'
 import { SectionHeader } from '../SectionHeader'
 
 const TOP_DISHES_COUNT = 5
@@ -154,13 +155,15 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
       {sortedDishes.top.length > 0 ? (
         <div>
           {sortedDishes.top.map((dish, index) => (
-            <DishListItem
-              key={dish.dish_id}
-              dish={dish}
-              rank={index + 1}
-              showPhoto
-              isLast={index === sortedDishes.top.length - 1}
-            />
+            <div key={dish.dish_id}>
+              <DishListItem
+                dish={dish}
+                rank={index + 1}
+                showPhoto
+                isLast={index === sortedDishes.top.length - 1}
+              />
+              <AddToTop10Button dish={dish} variant="chip" />
+            </div>
           ))}
         </div>
       ) : (
@@ -217,13 +220,15 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
           {showAllDishes && (
             <div className="mt-4">
               {sortedDishes.rest.map((dish, index) => (
-                <DishListItem
-                  key={dish.dish_id}
-                  dish={dish}
-                  rank={TOP_DISHES_COUNT + index + 1}
-                  showPhoto
-                  isLast={index === sortedDishes.rest.length - 1}
-                />
+                <div key={dish.dish_id}>
+                  <DishListItem
+                    dish={dish}
+                    rank={TOP_DISHES_COUNT + index + 1}
+                    showPhoto
+                    isLast={index === sortedDishes.rest.length - 1}
+                  />
+                  <AddToTop10Button dish={dish} variant="chip" />
+                </div>
               ))}
             </div>
           )}

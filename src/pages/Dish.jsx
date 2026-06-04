@@ -14,6 +14,7 @@ import { HearingIcon } from '../components/HearingIcon'
 import { EarIconTooltip } from '../components/EarIconTooltip'
 import { DishHero, DishEvidence } from '../components/dish'
 import { AddToPlaylistSheet } from '../components/playlists/AddToPlaylistSheet'
+import { AddToTop10Button } from '../components/AddToTop10Button'
 import { ReportModal } from '../components/ReportModal'
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { MIN_VOTES_FOR_RANKING } from '../constants/app'
@@ -289,6 +290,8 @@ export function Dish() {
           >
             +
           </button>
+          {/* Add to my Top 10 — curator-only, renders nothing for everyone else */}
+          <AddToTop10Button dish={dish} variant="icon" />
           {user && dish && dish.created_by !== user.id && (
             <button
               type="button"
