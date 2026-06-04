@@ -32,18 +32,23 @@ export function AddToTop10Button({ dish, variant = 'chip' }) {
   async function attemptAdd() {
     try {
       const result = await addDish(dishId)
+      // Contract of add_dish_to_my_local_list (see schema.sql): a duplicate
+      // comes back success:true with already_present:true, "full" comes back
+      // with list_full:true, and the rate-first gate returns a "Rate this
+      // dish first" error (no machine code — match on the message).
       if (result && result.success) {
-        toast.success('Added to your Top 10', { duration: 2000 })
+        if (result.already_present) {
+          toast('Already on your Top 10', { duration: 2000 })
+        } else {
+          toast.success('Added to your Top 10', { duration: 2000 })
+        }
         return
       }
-      const code = result && result.code
-      if (code === 'not_rated') {
+      if (result && result.list_full) {
+        toast('Your Top 10 is full — remove one in My Top 10 first', { duration: 3000 })
+      } else if (result && /rate this dish/i.test(result.error || '')) {
         setPendingRate(true)
         toast('Rate it first to add it', { duration: 2500 })
-      } else if (code === 'full') {
-        toast('Your Top 10 is full — remove one in My Top 10 first', { duration: 3000 })
-      } else if (code === 'duplicate') {
-        toast('Already on your Top 10', { duration: 2000 })
       } else {
         toast.error((result && result.error) || 'Could not add to your Top 10', { duration: 3000 })
       }

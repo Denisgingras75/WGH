@@ -26,11 +26,15 @@ covering the email-verification round-trip that drops `location.state`.
 nothing for everyone else) on the dish-page header and under each dish on the
 restaurant tab. Appends server-side so it persists even if you navigate away.
 
-**Server-enforced rate gate.** New RPC `add_dish_to_my_local_list(p_dish_id)`
-enforces the rate-first rule in the DB (was UI-only, the integrity gap flagged
-in PR #7) and returns a `code` so the client can open a rate sheet / toast
-"full" / "duplicate" cleanly. Migration:
-`supabase/migrations/2026-06-04-add-dish-to-my-local-list.sql`.
+**Server-enforced rate gate.** The add path goes through
+`add_dish_to_my_local_list(p_dish_id)`, which enforces the rate-first rule in
+the DB (was UI-only — the integrity gap flagged in PR #7). This RPC was already
+live in production (Dan's parallel work for wgh-phone #184), so we conformed our
+client to its contract rather than overwrite it: added →
+`{success:true, already_present:false}`, duplicate →
+`{success:true, already_present:true}`, full → `{list_full:true}`, rate gate →
+`error:'Rate this dish first…'`. `schema.sql` mirrors the deployed definition;
+no DB change was applied from this branch.
 
 ---
 
