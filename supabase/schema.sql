@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS dishes (
   name TEXT NOT NULL,
   category TEXT NOT NULL,
   menu_section TEXT,
+  description TEXT,
   price DECIMAL(6, 2),
   photo_url TEXT,
   parent_dish_id UUID REFERENCES dishes(id) ON DELETE SET NULL,
@@ -71,6 +72,14 @@ CREATE TABLE IF NOT EXISTS dishes (
   value_score DECIMAL(6, 2),
   value_percentile DECIMAL(5, 2),
   category_median_price DECIMAL(6, 2),
+  -- Inclusion signal for value rankings (Phase 1). Inferred from the menu
+  -- description by scripts/classify-dish-inclusions.mjs. NULL = not yet
+  -- classified / unknown; we never guess. meal_completeness:
+  -- 'a_la_carte' | 'comes_with_sides' | 'full_platter'.
+  includes_sides BOOLEAN,
+  included_sides TEXT[] DEFAULT '{}',
+  meal_completeness TEXT CHECK (meal_completeness IN ('a_la_carte', 'comes_with_sides', 'full_platter')),
+  inclusion_inferred_at TIMESTAMPTZ,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

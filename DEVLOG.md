@@ -7,6 +7,36 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ## 2026-06-04 — Denis + Claude
 
+### Value rankings, Phase 1: dish inclusion signal
+
+Foundation for inclusion-aware value scoring — so a $24 entrée that comes with
+two sides isn't judged as "expensive" against an à-la-carte plate.
+
+**Discovery:** the menu `description` is already captured in production (3,801
+dishes have one — Dan's pipeline), and the "comes with sides" signal lives in
+that text (embedded as ingredients: "…French fries", "…mashed potatoes, green
+beans"). So Phase 1 is a backfill over data we already have — no menu re-fetch.
+
+**Schema (additive):** `dishes` gains `includes_sides BOOLEAN`,
+`included_sides TEXT[]`, `meal_completeness TEXT` (a_la_carte | comes_with_sides
+| full_platter), `inclusion_inferred_at TIMESTAMPTZ`. Also reconciled
+`description` into schema.sql (it existed in prod but was missing here — drift).
+Migration: `supabase/migrations/dish-inclusion-signal.sql`.
+
+**Classifier:** `scripts/classify-dish-inclusions.mjs` — standalone backfill
+that asks Claude to infer the inclusion fields from each dish's description.
+Deliberately does NOT touch the menu-parsing edge functions (the deployed
+`menu-refresh`/`parse-menu` are newer than this repo — Dan's description +
+dietary work — so editing our stale copies would regress them). Parse-time
+classification is a separate, coordinated change.
+
+Phase 2 (the scoring math: group value by (category, meal_completeness)) is not
+started — it touches Dan's value_score trigger, so coordinate first.
+
+---
+
+## 2026-06-04 — Denis + Claude
+
 ### Curator Top 10: durable mint links + add-from-anywhere
 
 Fixes the "mint link breaks" report: a curator invite link died through the
