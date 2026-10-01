@@ -45,10 +45,8 @@ export function CategoryChips({
     >
       <div
         ref={scrollRef}
-        className="flex px-3 overflow-x-auto"
+        className="flex px-3 overflow-x-auto scrollbar-hide"
         style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           minHeight: 'auto',
           marginTop: '4px',

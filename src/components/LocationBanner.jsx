@@ -9,8 +9,8 @@ export function LocationBanner({ permissionState, requestLocation, message }) {
     <div
       className="mb-4 p-4 rounded-xl flex items-center justify-between gap-3"
       style={{
-        background: 'rgba(217, 167, 101, 0.08)',
-        border: '1px solid rgba(217, 167, 101, 0.2)',
+        background: 'var(--color-card)',
+        border: '1px solid var(--color-divider)',
       }}
     >
       <div className="min-w-0">
@@ -22,11 +22,12 @@ export function LocationBanner({ permissionState, requestLocation, message }) {
         </p>
       </div>
       <button
+        type="button"
         onClick={requestLocation}
-        className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+        className="flex-shrink-0 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
         style={{
-          background: 'var(--color-accent-gold)',
-          color: 'var(--color-bg)',
+          background: 'var(--color-primary)',
+          color: 'var(--color-text-on-primary)',
         }}
       >
         Enable

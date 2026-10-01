@@ -13,14 +13,14 @@ import { calculateDistance } from '../utils/distance'
  * @param {number} geo.lng - User longitude
  * @param {number} geo.radiusMiles - Radius in miles (0 = no filter)
  * @param {boolean} geo.isUsingDefault - If true, skip distance filter
- * @returns {Object} { results, loading, error }
+ * @returns {Object} { results, loading, error, refetch }
  */
 export function useDishSearch(query, limit, geo) {
   if (limit === undefined || limit === null) limit = 5
   var trimmedQuery = (query || '').trim()
   var isActive = trimmedQuery.length >= 2
 
-  var { dishes, loading: cacheLoading, error } = useAllDishes({ enabled: isActive })
+  var { dishes, loading: cacheLoading, error, refetch } = useAllDishes({ enabled: isActive })
 
   var lat = geo && geo.lat
   var lng = geo && geo.lng
@@ -47,5 +47,6 @@ export function useDishSearch(query, limit, geo) {
     results: results,
     loading: cacheLoading && trimmedQuery.length >= 2,
     error: error,
+    refetch: refetch,
   }
 }

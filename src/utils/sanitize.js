@@ -93,7 +93,7 @@ export function sanitizeUrl(url) {
       return null
     }
     return trimmed
-  } catch (_e) {
+  } catch {
     // Not a valid absolute URL — block it
     logger.warn('sanitizeUrl: blocked invalid URL:', trimmed.slice(0, 80))
     return null

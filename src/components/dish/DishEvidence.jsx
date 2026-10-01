@@ -2,9 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { TrustBadge, TrustSummary, JitterExplainer } from '../jitter'
 import { VariantSelector } from '../VariantPicker'
+import { SectionHeader } from '../SectionHeader'
 import { getRatingColor, formatScore10 } from '../../utils/ranking'
 import { formatRelativeTime } from '../../utils/formatters'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { ReportModal } from '../ReportModal'
+
+function isVerifiedBadge(r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }
+function isAiBadge(r) { return r.trust_badge === 'ai_estimated' }
 
 /**
  * Dish evidence section: friends votes, smart snippet, photos, reviews, variants.
@@ -12,7 +17,6 @@ import { ReportModal } from '../ReportModal'
  */
 export function DishEvidence({
   dish,
-  dishId,
   user,
   shouldLoadEvidence,
   evidenceSentinelRef,
@@ -29,19 +33,19 @@ export function DishEvidence({
   const [showAllPhotos, setShowAllPhotos] = useState(false)
   const [lightboxPhoto, setLightboxPhoto] = useState(null)
   const [explainerOpen, setExplainerOpen] = useState(false)
-  const [explainerData, setExplainerData] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
+  const lightboxRef = useFocusTrap(!!lightboxPhoto, () => setLightboxPhoto(null))
 
   const displayPhotos = showAllPhotos ? allPhotos : communityPhotos.slice(0, 4)
-  const hasMorePhotos = allPhotos.length > 4 && !showAllPhotos
+  const hasMorePhotos = !showAllPhotos && allPhotos.length > displayPhotos.length
 
   return (
     <>
       <div ref={evidenceSentinelRef} aria-hidden="true" />
-      <div className="px-3 pt-4 pb-4">
+      <div className="px-4 pt-4 pb-4">
 
         {/* Evidence skeleton while secondary data loads */}
-        {!shouldLoadEvidence && (
+        {(!shouldLoadEvidence || reviewsLoading) && (
           <div className="space-y-3 animate-pulse" role="status" aria-label="Loading details">
             <div className="h-20 rounded-xl" style={{ background: 'var(--color-divider)' }} />
             <div className="grid grid-cols-4 gap-2">
@@ -62,23 +66,24 @@ export function DishEvidence({
           var gap = count <= 3 ? 20 : count <= 5 ? 16 : 12
           return (
           <div className="mb-4">
-            <h3 style={{
+            <h2 style={{
               fontFamily: "'Amatic SC', cursive",
               fontSize: '24px',
               fontWeight: 700,
               letterSpacing: '0.02em',
+              lineHeight: 1.1,
               color: 'var(--color-text-primary)',
               marginBottom: '12px',
             }}>
               Friends Who Rated This
-            </h3>
+            </h2>
             <div
-              className={'flex overflow-x-auto pb-2' + (count <= 3 ? ' justify-center' : '')}
-              style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+              className={'flex overflow-x-auto pb-2 scrollbar-hide' + (count <= 3 ? ' justify-center' : '')}
+              style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch' }}
             >
               {friendsVotes.map(function (vote) {
                 var avatarColors = ['#E4440A', '#3B82F6', '#9333EA', '#16A34A', '#F59E0B', '#EC4899', '#06B6D4']
-                var colorIndex = (vote.display_name || '').charCodeAt(0) % avatarColors.length
+                var colorIndex = ((vote.display_name || '?').charCodeAt(0) || 0) % avatarColors.length
                 return (
                   <Link
                     key={vote.user_id}
@@ -92,7 +97,7 @@ export function DishEvidence({
                         width: avatarSize + 'px',
                         height: avatarSize + 'px',
                         background: avatarColors[colorIndex],
-                        color: 'white',
+                        color: 'var(--color-text-on-primary)',
                         fontSize: avatarFont + 'px',
                       }}
                     >
@@ -145,7 +150,7 @@ export function DishEvidence({
                 <button
                   type="button"
                   onClick={() => setReportTarget({ type: 'review', id: smartSnippet.id })}
-                  className="flex-shrink-0 p-1 rounded-full"
+                  className="flex-shrink-0 w-11 h-11 -m-2.5 flex items-center justify-center rounded-full"
                   aria-label="Report review"
                   style={{ color: 'var(--color-text-tertiary)' }}
                 >
@@ -161,8 +166,8 @@ export function DishEvidence({
               <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
                 — @{smartSnippet.profiles?.display_name || 'Anonymous'}
               </span>
-              {smartSnippet.rating_10 && (
-                <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
+              {smartSnippet.rating_10 != null && (
+                <span className="text-xs" style={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--color-rating)' }}>
                   {formatScore10(smartSnippet.rating_10)}
                 </span>
               )}
@@ -171,37 +176,43 @@ export function DishEvidence({
         )}
 
         {/* Photos grid */}
-        {displayPhotos.length > 0 && (
+        {allPhotos.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Photos ({displayPhotos.length})
-            </h3>
-            <div className="grid grid-cols-4 gap-2">
-              {displayPhotos.map((photo) => (
-                <button
-                  key={photo.id}
-                  onClick={() => setLightboxPhoto(photo)}
-                  aria-label={'View photo of ' + dish.dish_name}
-                  className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
-                  style={{ border: '1.5px solid var(--color-divider)' }}
-                >
-                  <img
-                    src={photo.photo_url}
-                    alt={dish.dish_name}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                    onError={function (e) { e.target.parentElement.style.display = 'none' }}
-                  />
-                </button>
-              ))}
+            <div className="mb-3">
+              <SectionHeader
+                level="h2"
+                title="Photos"
+                subtitle={allPhotos.length + ' photo' + (allPhotos.length === 1 ? '' : 's')}
+              />
             </div>
+            {displayPhotos.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {displayPhotos.map((photo) => (
+                  <button
+                    key={photo.id}
+                    onClick={() => setLightboxPhoto(photo)}
+                    aria-label={'View photo of ' + dish.dish_name}
+                    className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
+                    style={{ border: '1.5px solid var(--color-divider)' }}
+                  >
+                    <img
+                      src={photo.photo_url}
+                      alt={dish.dish_name}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                      onError={function (e) { e.target.parentElement.style.display = 'none' }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
             {hasMorePhotos && (
               <button
                 onClick={function () { setShowAllPhotos(true) }}
-                className="mt-3 text-sm font-bold"
+                className="mt-1 inline-flex items-center min-h-[44px] text-sm font-semibold"
                 style={{ color: 'var(--color-primary)' }}
               >
-                See all {allPhotos.length} photos
+                {'See all ' + allPhotos.length + ' photo' + (allPhotos.length === 1 ? '' : 's')}
               </button>
             )}
           </div>
@@ -219,13 +230,17 @@ export function DishEvidence({
           })
           return filteredReviews.length > 0 && (
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Reviews ({filteredReviews.length})
-              </h3>
-              <TrustSummary
-                verifiedCount={reviews.filter(function (r) { return r.trust_badge === 'human_verified' || r.trust_badge === 'trusted_reviewer' }).length}
-                aiCount={reviews.filter(function (r) { return r.trust_badge === 'ai_estimated' }).length}
+            <div className="mb-3">
+              <SectionHeader
+                level="h2"
+                title="Reviews"
+                subtitle={filteredReviews.length + ' review' + (filteredReviews.length === 1 ? '' : 's')}
+                action={
+                  <TrustSummary
+                    verifiedCount={filteredReviews.filter(isVerifiedBadge).length}
+                    aiCount={filteredReviews.filter(isAiBadge).length}
+                  />
+                }
               />
             </div>
             <div
@@ -233,36 +248,50 @@ export function DishEvidence({
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {filteredReviews.map(function (review) {
-                var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
+                var reviewerName = review.profiles?.display_name || 'Anonymous'
                 return (
                   <div
                     key={review.id}
                     className="p-4 rounded-xl flex-shrink-0 snap-start"
-                    style={{ width: '280px', background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
+                    style={{
+                      width: '280px',
+                      background: 'var(--color-card)',
+                      border: '1px solid var(--color-divider)',
+                      borderLeft: review.rating_10 != null ? '3px solid ' + getRatingColor(review.rating_10) : '1px solid var(--color-divider)',
+                    }}
                   >
                     <div className="flex items-start gap-2 mb-2.5">
-                      <Link to={'/user/' + review.user_id} className="flex items-center gap-3 min-w-0 flex-1">
-                        <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Link
+                          to={'/user/' + review.user_id}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="flex-shrink-0"
                         >
-                          {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
-                        </div>
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm"
+                            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                          >
+                            {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                        </Link>
                         <div className="min-w-0">
                           <span className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
-                              @{review.profiles?.display_name || 'Anonymous'}
-                            </span>
+                            <Link
+                              to={'/user/' + review.user_id}
+                              className="text-sm font-bold truncate"
+                              style={{ color: 'var(--color-text-primary)' }}
+                            >
+                              @{reviewerName}
+                            </Link>
                             <TrustBadge type={review.trust_badge} profileData={review.jitter_profile} />
                             {review.trust_badge && review.trust_badge !== 'building' && (
                               <button
-                                onClick={function (e) {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  setExplainerData({ warScore: review.war_score, stats: review.jitter_profile })
+                                type="button"
+                                onClick={function () {
                                   setExplainerOpen(true)
                                 }}
-                                className="flex-shrink-0"
+                                className="flex-shrink-0 w-11 h-11 -m-3.5 inline-flex items-center justify-center"
                                 style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', lineHeight: 1 }}
                                 aria-label="What is this badge?"
                               >
@@ -274,12 +303,12 @@ export function DishEvidence({
                             {formatRelativeTime(review.review_created_at)}{dish.restaurant_town ? ' · ' + dish.restaurant_town : ''}
                           </span>
                         </div>
-                      </Link>
+                      </div>
                       {user && user.id !== review.user_id && (
                         <button
                           type="button"
                           onClick={() => setReportTarget({ type: 'review', id: review.id })}
-                          className="flex-shrink-0 p-1 rounded-full"
+                          className="flex-shrink-0 w-11 h-11 -m-2.5 flex items-center justify-center rounded-full"
                           aria-label={'Report review by ' + (review.profiles?.display_name || 'user')}
                           style={{ color: 'var(--color-text-tertiary)' }}
                         >
@@ -292,11 +321,16 @@ export function DishEvidence({
                       )}
                     </div>
 
-                    {review.rating_10 ? (
+                    {review.rating_10 != null ? (
                       <div className="flex items-center gap-2 mb-2.5">
                         <span
-                          className="rounded-full px-2.5 py-0.5 font-bold text-sm"
-                          style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
+                          className="text-sm"
+                          style={{
+                            fontWeight: 800,
+                            letterSpacing: '-0.02em',
+                            fontVariantNumeric: 'tabular-nums',
+                            color: getRatingColor(review.rating_10),
+                          }}
                         >
                           {formatScore10(review.rating_10)}
                         </span>
@@ -304,7 +338,7 @@ export function DishEvidence({
                     ) : null}
 
                     {review.review_text && (
-                      <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                         {review.review_text}
                       </p>
                     )}
@@ -317,10 +351,10 @@ export function DishEvidence({
         })()}
 
         {/* No reviews message */}
-        {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
+        {shouldLoadEvidence && !reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
           <div
             className="mb-4 p-4 rounded-xl text-center"
-            style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+            style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-divider)' }}
           >
             <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
               No written reviews yet — be the first to share your thoughts!
@@ -329,11 +363,11 @@ export function DishEvidence({
         )}
 
         {/* Variant Selector */}
-        {variants.length > 0 && (
+        {variants.some(function (v) { return v.dish_id !== dish.dish_id }) && (
           <div className="mb-4">
-            <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {isVariant ? 'Other flavors' : 'Available flavors'}
-            </p>
+            <div className="mb-3">
+              <SectionHeader level="h2" title={isVariant ? 'Other flavors' : 'Available flavors'} />
+            </div>
             <VariantSelector
               variants={variants}
               currentDishId={dish.dish_id}
@@ -347,24 +381,33 @@ export function DishEvidence({
       {/* Photo Lightbox */}
       {lightboxPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          ref={lightboxRef}
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
           style={{ background: 'rgba(0, 0, 0, 0.9)' }}
           onClick={() => setLightboxPhoto(null)}
           role="dialog"
-          aria-label="Photo lightbox"
+          aria-modal="true"
+          aria-label={'Photo of ' + dish.dish_name}
         >
           <button
-            className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-2xl"
-            style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
-            onClick={() => setLightboxPhoto(null)}
-            aria-label="Close lightbox"
+            type="button"
+            className="absolute top-4 right-4 w-11 h-11 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(255, 255, 255, 0.2)', color: 'var(--color-text-on-primary)' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              setLightboxPhoto(null)
+            }}
+            aria-label="Close"
           >
-            &times;
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
           </button>
           {user && lightboxPhoto.id && lightboxPhoto.user_id && lightboxPhoto.user_id !== user.id && (
             <button
-              className="absolute top-4 left-4 px-3 py-2 rounded-full text-xs font-semibold"
-              style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
+              type="button"
+              className="absolute top-4 left-4 min-h-[44px] px-4 rounded-full text-xs font-semibold"
+              style={{ background: 'rgba(255, 255, 255, 0.2)', color: 'var(--color-text-on-primary)' }}
               onClick={(e) => {
                 e.stopPropagation()
                 setReportTarget({ type: 'photo', id: lightboxPhoto.id })
@@ -394,8 +437,6 @@ export function DishEvidence({
       <JitterExplainer
         open={explainerOpen}
         onClose={function () { setExplainerOpen(false) }}
-        warScore={explainerData && explainerData.warScore}
-        stats={explainerData && explainerData.stats}
       />
     </>
   )

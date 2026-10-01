@@ -8,4 +8,6 @@ export const FEATURES = {
   // Apple Developer enrollment + App ID + Services ID + .p8 key).
   // Plan: docs/superpowers/plans/2026-04-13-h2-sign-in-with-apple.md
   APPLE_SIGNIN_ENABLED: import.meta.env.VITE_FEATURES_APPLE_SIGNIN === 'true',
+  // Restaurant "Happening Here" specials + events block — off until Launch 2.0 (stale scraped data)
+  HAPPENING_HERE_ENABLED: import.meta.env.VITE_HAPPENING_HERE_ENABLED === 'true',
 }

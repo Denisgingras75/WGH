@@ -13,10 +13,7 @@
 export function PoweredByGoogle({ className = '', align = 'left' }) {
   const justify = align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start'
   return (
-    <div
-      className={`flex items-center ${justify} ${className}`}
-      aria-label="Data from Google Maps"
-    >
+    <div className={`flex items-center ${justify} ${className}`}>
       <span
         style={{
           color: 'var(--color-text-tertiary)',

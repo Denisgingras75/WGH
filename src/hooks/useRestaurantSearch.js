@@ -12,9 +12,10 @@ import { logger } from '../utils/logger'
  * @param {number|null} lng - User longitude
  * @param {boolean} enabled - Whether to search (default true)
  * @param {number} radiusMiles - Radius in miles for biasing Google Places results
+ * @param {boolean} localOnly - Skip the (paid) Google Places autocomplete call
  * @returns {{ localResults: Array, externalResults: Array, loading: boolean }}
  */
-export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles = null) {
+export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles = null, localOnly = false) {
   const [localResults, setLocalResults] = useState([])
   const [externalResults, setExternalResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -50,10 +51,12 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
             logger.error('Local restaurant search error:', err)
             return []
           }),
-          placesApi.autocomplete(trimmed, searchLat, searchLng, searchRadiusMeters).catch((err) => {
-            logger.error('Places autocomplete error:', err)
-            return []
-          }),
+          localOnly
+            ? Promise.resolve([])
+            : placesApi.autocomplete(trimmed, searchLat, searchLng, searchRadiusMeters).catch((err) => {
+              logger.error('Places autocomplete error:', err)
+              return []
+            }),
         ])
 
         if (!mountedRef.current) return
@@ -85,7 +88,7 @@ export function useRestaurantSearch(query, lat, lng, enabled = true, radiusMiles
     // Debounce
     const timer = setTimeout(fetchResults, 400)
     return () => clearTimeout(timer)
-  }, [query, lat, lng, enabled, radiusMiles])
+  }, [query, lat, lng, enabled, radiusMiles, localOnly])
 
   return { localResults, externalResults, loading }
 }

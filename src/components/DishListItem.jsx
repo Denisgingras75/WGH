@@ -1,7 +1,7 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING, VALUE_BADGE_THRESHOLD } from '../constants/app'
-import { getRatingColor } from '../utils/ranking'
+import { getRatingColor, formatScore10 } from '../utils/ranking'
 import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
 import { RestaurantAvatar } from './RestaurantAvatar'
 import { HearingIcon } from './HearingIcon'
@@ -45,6 +45,7 @@ export const DishListItem = memo(function DishListItem({
   hideVotes = false,
 }) {
   const navigate = useNavigate()
+  const [photoFailed, setPhotoFailed] = useState(false)
 
   // Normalize data shapes between different sources
   const dishName = dish.dish_name || dish.name
@@ -68,6 +69,7 @@ export const DishListItem = memo(function DishListItem({
   const restaurantLng = dish.restaurant_lng || dish.lng
 
   var handleClick = onClick || function () { navigate('/dish/' + dishId) }
+  var hasCoords = restaurantLat != null && restaurantLng != null
 
   // --- VOTED VARIANT (profile pages) ---
   if (variant === 'voted') {
@@ -81,10 +83,7 @@ export const DishListItem = memo(function DishListItem({
   return (
     <div
       data-dish-id={dishId}
-      role="button"
-      tabIndex={0}
       onClick={handleClick}
-      onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
       className={'w-full text-left active:scale-[0.98]' + (isPodium ? ' rounded-xl' : '')}
       style={{
         background: highlighted
@@ -94,7 +93,7 @@ export const DishListItem = memo(function DishListItem({
             : 'transparent',
         padding: isPodium ? '10px 10px' : '8px 10px',
         cursor: 'pointer',
-        transition: 'background 1s ease-out',
+        transition: 'background 1s ease-out, transform 0.1s ease',
         borderBottom: !isPodium && !isLast ? '1px solid var(--color-divider)' : 'none',
       }}
     >
@@ -109,6 +108,7 @@ export const DishListItem = memo(function DishListItem({
             fontSize: isPodium ? '22px' : '15px',
             fontWeight: 800,
             letterSpacing: '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
             color: rank === 1
               ? 'var(--color-medal-gold)'
               : rank === 2
@@ -142,15 +142,21 @@ export const DishListItem = memo(function DishListItem({
       )}
 
       {/* Photo thumbnail (restaurant detail only) */}
-      {showPhoto && photoUrl && (
+      {showPhoto && photoUrl && !photoFailed && (
         <div
           className="flex-shrink-0 rounded-lg overflow-hidden"
           style={{ width: '48px', height: '48px', marginLeft: '6px', background: 'var(--color-surface)' }}
         >
-          <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
+          <img
+            src={photoUrl}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onError={function () { setPhotoFailed(true) }}
+          />
         </div>
       )}
-      {showPhoto && !photoUrl && (
+      {showPhoto && (!photoUrl || photoFailed) && (
         <div
           className="flex-shrink-0 rounded-lg overflow-hidden relative"
           style={{ width: '48px', height: '48px', marginLeft: '6px' }}
@@ -161,21 +167,28 @@ export const DishListItem = memo(function DishListItem({
 
       {/* Name + restaurant + distance */}
       <div className="flex-1 min-w-0" style={{ marginLeft: showPhoto ? '6px' : (isPodium ? '8px' : '6px') }}>
-        <p
-          className="font-bold line-clamp-2"
-          style={{
-            fontSize: isPodium ? '15px' : '14px',
-            fontWeight: isPodium ? 800 : 700,
-            color: 'var(--color-text-primary)',
-            lineHeight: 1.3,
-            letterSpacing: '-0.01em',
-          }}
+        <button
+          type="button"
+          className="block w-full text-left"
+          onClick={function (e) { e.stopPropagation(); handleClick(e) }}
         >
-          {dishName}
-        </p>
-        <div className="flex items-center gap-1.5" style={{ marginTop: '2px' }}>
+          <span
+            className="font-bold line-clamp-2"
+            style={{
+              fontSize: isPodium ? '15px' : '14px',
+              fontWeight: isPodium ? 800 : 700,
+              color: 'var(--color-text-primary)',
+              lineHeight: 1.3,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {dishName}
+          </span>
+        </button>
+        {/* Wraps so GREAT VALUE drops under a long restaurant name instead of squeezing it */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5" style={{ marginTop: '2px' }}>
           <p
-            className="truncate"
+            className="truncate min-w-0"
             style={{
               fontSize: isPodium ? '12px' : '11px',
               color: 'var(--color-text-tertiary)',
@@ -202,12 +215,13 @@ export const DishListItem = memo(function DishListItem({
           </p>
           {valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD && (
             <span
+              className="flex-shrink-0 whitespace-nowrap"
               style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
-                color: 'var(--color-medal-gold)',
-                background: 'rgba(232, 184, 32, 0.12)',
+                color: 'var(--color-text-primary)',
+                background: 'var(--color-medal-gold)',
                 padding: '1px 5px',
                 borderRadius: '4px',
                 marginTop: '2px',
@@ -218,36 +232,36 @@ export const DishListItem = memo(function DishListItem({
             </span>
           )}
         </div>
-        {/* Action buttons — Order / Directions */}
-        {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
-          <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
+        {/* Action buttons — Order / Directions. Same colors as the Dish action bar:
+            Order = accent-orange fill, Directions = gold. Pills never wrap their label;
+            the row wraps instead so a narrow column never overflows into the rating. */}
+        {(toastSlug || sanitizeUrl(orderUrl) || hasCoords) && (
+          <div className="flex flex-wrap items-center gap-2" style={{ marginTop: '4px' }}>
             {(toastSlug || sanitizeUrl(orderUrl)) && (
               <a
                 href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : sanitizeUrl(orderUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                className="inline-flex items-center flex-shrink-0 whitespace-nowrap min-h-[36px] px-3 rounded-full text-xs font-semibold"
                 style={{
-                  background: 'var(--color-primary)',
-                  color: 'white',
-                  fontSize: '10px',
+                  background: 'var(--color-accent-orange)',
+                  color: 'var(--color-text-on-primary)',
                 }}
               >
                 Order Now
               </a>
             )}
-            {restaurantLat && restaurantLng && (
+            {hasCoords && (
               <a
                 href={'https://www.google.com/maps/dir/?api=1&destination=' + restaurantLat + ',' + restaurantLng}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                className="inline-flex items-center flex-shrink-0 whitespace-nowrap min-h-[36px] px-3 rounded-full text-xs font-semibold"
                 style={{
                   border: '1px solid var(--color-divider)',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '10px',
+                  color: 'var(--color-accent-gold)',
                 }}
               >
                 Directions
@@ -268,22 +282,21 @@ export const DishListItem = memo(function DishListItem({
                   fontSize: isPodium ? '20px' : '16px',
                   fontWeight: 800,
                   letterSpacing: '-0.02em',
+                  fontVariantNumeric: 'tabular-nums',
                   color: getRatingColor(avgRating),
                 }}
               >
-                {avgRating}
+                {formatScore10(avgRating)}
               </span>
               {valueRating != null && (
                 <span
                   style={{
                     fontSize: isPodium ? '13px' : '11px',
                     fontWeight: 700,
-                    color: 'var(--color-medal-gold)',
-                    opacity: 0.85,
+                    color: 'var(--color-text-secondary)',
                   }}
-                  title="WGH Value Rating"
                 >
-                  {valueRating.toFixed(1)}v
+                  {valueRating.toFixed(1)}<span aria-hidden="true">v</span><span className="sr-only"> value rating out of 10</span>
                 </span>
               )}
             </div>
@@ -306,7 +319,7 @@ export const DishListItem = memo(function DishListItem({
               fontWeight: 500,
             }}
           >
-            {totalVotes ? totalVotes + ' vote' + (totalVotes === 1 ? '' : 's') : 'New'}
+            {totalVotes ? (hideVotes ? null : totalVotes + ' vote' + (totalVotes === 1 ? '' : 's')) : 'New'}
           </span>
         )}
       </div>
@@ -331,7 +344,7 @@ export const DishListItem = memo(function DishListItem({
     return (
       <CardTag
         {...cardProps}
-        className={'rounded-xl border overflow-hidden' + (isOtherProfile ? ' w-full text-left hover:shadow-md transition-all active:scale-[0.99]' : ' transition-all')}
+        className={'rounded-xl border overflow-hidden' + (isOtherProfile ? ' w-full text-left transition-all active:scale-[0.99]' : ' transition-all')}
         style={{
           background: 'var(--color-card)',
           borderColor: 'var(--color-divider)',
@@ -390,7 +403,7 @@ export const DishListItem = memo(function DishListItem({
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                       · avg {dish.community_avg.toFixed(1)}
                       {ownRatingDiff !== 0 && (
-                        <span style={{ color: ownRatingDiff > 0 ? 'var(--color-emerald)' : 'var(--color-red)' }}>
+                        <span style={{ color: ownRatingDiff > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
                           {' '}({ownRatingDiff > 0 ? '+' : ''}{ownRatingDiff.toFixed(1)})
                         </span>
                       )}
@@ -399,8 +412,10 @@ export const DishListItem = memo(function DishListItem({
                 </div>
                 {tab === 'saved' && onUnsave && (
                   <button
+                    type="button"
                     onClick={function (e) { e.stopPropagation(); onUnsave() }}
-                    className="transition-colors"
+                    aria-label="Remove from heard list"
+                    className="w-11 h-11 -m-2.5 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
                   >
                     <HearingIcon size={24} active={true} />
                   </button>

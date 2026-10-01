@@ -55,7 +55,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
   return (
     <button
       onClick={handleClick}
-      className="w-full rounded-xl p-4 text-left transition-all hover:shadow-lg active:scale-[0.99]"
+      className="w-full rounded-xl p-4 text-left transition-all active:scale-[0.98]"
       style={{
         background: 'var(--color-card)',
         border: '1px solid var(--color-divider)',

@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { restaurantManagerApi } from '../api/restaurantManagerApi'
-import { logger } from '../utils/logger'
+import { getUserMessage } from '../utils/errorHandler'
 
 export function useRestaurantManager() {
   const { user } = useAuth()
 
-  const { data: result, isLoading: loading } = useQuery({
+  const { data: result, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['restaurantManager', user?.id],
     queryFn: () => restaurantManagerApi.getMyRestaurant(),
     enabled: !!user,
@@ -15,17 +14,16 @@ export function useRestaurantManager() {
   })
 
   if (!user) {
-    return { isManager: false, restaurant: null, loading: false }
+    return { isManager: false, restaurant: null, loading: false, error: null, refetch }
   }
 
-  const isManager = !!result?.restaurant
   const restaurant = result?.restaurant ?? null
 
-  useEffect(() => {
-    if (result === undefined && !loading) {
-      logger.error('Unexpected null result from getMyRestaurant')
-    }
-  }, [result, loading])
-
-  return { isManager, restaurant, loading }
+  return {
+    isManager: !!restaurant,
+    restaurant,
+    loading,
+    error: error ? { message: getUserMessage(error, 'loading your restaurant') } : null,
+    refetch,
+  }
 }

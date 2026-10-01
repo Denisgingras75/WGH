@@ -33,3 +33,10 @@ export function setBackButtonInterceptor(callback) {
 export function clearBackButtonInterceptor() {
   interceptCallback = null
 }
+
+/**
+ * True while a flow (e.g. an unsaved rating draft) is guarding the back button.
+ */
+export function hasBackButtonInterceptor() {
+  return interceptCallback !== null
+}

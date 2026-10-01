@@ -1,11 +1,11 @@
 /**
  * Route transition loading bar using NProgress
- * Shows a slim orange progress bar at the top during route changes
+ * Shows a slim brand-colored progress bar at the top during route changes
+ * (styles for #nprogress live in index.css; the library stylesheet is not imported)
  */
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import NProgress from 'nprogress'
-import 'nprogress/nprogress.css'
 
 // Configure NProgress - no spinner, just the bar
 NProgress.configure({
@@ -30,7 +30,7 @@ export function RouteProgress() {
       previousPath.current = location.pathname
       return () => clearTimeout(timer)
     }
-  }, [location])
+  }, [location.pathname])
 
   return null
 }

@@ -4,14 +4,14 @@ import { toast } from 'sonner'
 import { capture } from '../lib/analytics'
 import { blocksApi } from '../api/blocksApi'
 import { useAuth } from '../context/AuthContext'
-import { getUserMessage } from '../utils/errorHandler'
+import { getUserMessage, getUserFacingMessage } from '../utils/errorHandler'
 
 export function useBlockedUsers() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const userId = user?.id
 
-  const { data: blocks = [], isLoading: loading } = useQuery({
+  const { data: blocks = [], isLoading: loading, error, refetch } = useQuery({
     queryKey: ['blocks', userId],
     queryFn: () => blocksApi.getMyBlocks(),
     enabled: !!userId,
@@ -60,10 +60,11 @@ export function useBlockedUsers() {
       toast.success('User blocked')
       return { error: null }
     } catch (err) {
-      // Prefer the specific RPC message (e.g. "Cannot block yourself",
-      // rate-limit text) over the generic fallback.
-      toast.error(err.message || getUserMessage(err, 'blocking user'))
-      return { error: err.message }
+      // RPC messages ("Cannot block yourself", rate-limit text) are user-facing;
+      // network/server failures get the classified, human message.
+      const message = getUserFacingMessage(err, 'blocking this user')
+      toast.error(message)
+      return { error: message }
     }
   }
 
@@ -75,14 +76,17 @@ export function useBlockedUsers() {
       toast.success('User unblocked')
       return { error: null }
     } catch (err) {
-      toast.error(err.message || getUserMessage(err, 'unblocking user'))
-      return { error: err.message }
+      const message = getUserFacingMessage(err, 'unblocking this user')
+      toast.error(message)
+      return { error: message }
     }
   }
 
   return {
     blocks,
     loading: userId ? loading : false,
+    error: error ? { message: getUserMessage(error, 'loading blocked users') } : null,
+    refetch,
     isBlocked,
     blockUser,
     unblockUser,

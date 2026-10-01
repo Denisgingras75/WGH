@@ -10,36 +10,26 @@ import { BottomNav } from './components/BottomNav'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { WelcomeModal } from './components/Auth/WelcomeModal'
 import { RouteProgress } from './components/RouteProgress'
+import { ScrollToTop } from './components/ScrollToTop'
+import { OfflineIndicator } from './components/OfflineIndicator'
+import { PageSkeleton } from './components/Skeleton'
 import { getSessionItem, removeSessionItem, setSessionItem } from './lib/storage'
 import { preloadSounds } from './lib/sounds'
 import { preloadCategoryImages } from './constants/categories'
+import { CHUNK_RELOAD_KEY, isChunkLoadError } from './utils/chunkErrors'
 
-// Helper to handle chunk load failures after new deploys
-// If a lazy-loaded chunk fails to load (e.g., after deploy), reload the page once
-function isChunkLoadError(error) {
-  const msg = error?.message || ''
-  return (
-    msg.includes('Failed to fetch dynamically imported module') || // Chrome
-    msg.includes('error loading dynamically imported module') ||   // Safari
-    msg.includes('Importing a module script failed') ||            // Firefox
-    msg.includes('Loading chunk') ||                               // Generic bundler
-    msg.includes('Failed to fetch')                                // Network-level
-  )
-}
-
-const RELOAD_KEY = 'wgh_chunk_reload'
-
+// Lazy-load a page; if its chunk fails to load (e.g., after a deploy), reload the page once
 function lazyWithRetry(importFn, namedExport) {
   return lazy(() =>
     importFn()
       .then(m => {
         // Successful load — clear any reload flag
-        removeSessionItem(RELOAD_KEY)
+        removeSessionItem(CHUNK_RELOAD_KEY)
         return { default: namedExport ? m[namedExport] : m.default }
       })
       .catch((error) => {
-        if (isChunkLoadError(error) && !getSessionItem(RELOAD_KEY)) {
-          setSessionItem(RELOAD_KEY, '1')
+        if (isChunkLoadError(error) && !getSessionItem(CHUNK_RELOAD_KEY)) {
+          setSessionItem(CHUNK_RELOAD_KEY, '1')
           window.location.reload()
           return { default: () => null }
         }
@@ -74,32 +64,6 @@ const RestaurantReviews = lazyWithRetry(() => import('./pages/RestaurantReviews'
 const PlaylistPage = lazyWithRetry(() => import('./pages/Playlist'), 'Playlist')
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound')
 
-// Prefetch functions for smoother navigation - call on hover/focus
-export const prefetchRoutes = {
-  browse: () => import('./pages/Browse'),
-  dish: () => import('./pages/Dish'),
-  map: () => import('./pages/Map'),
-  restaurants: () => import('./pages/Restaurants'),
-  restaurantDetail: () => import('./pages/RestaurantDetail'),
-  profile: () => import('./pages/Profile'),
-}
-
-// Loading fallback
-const PageLoader = () => (
-  <div
-    role="status"
-    aria-label="Loading page"
-    className="min-h-screen flex items-center justify-center"
-    style={{ background: 'var(--color-surface)' }}
-  >
-    <div className="animate-pulse text-center">
-      <div className="w-12 h-12 mx-auto mb-3 rounded-full" style={{ background: 'var(--color-divider)' }} />
-      <div className="h-4 w-24 mx-auto rounded" style={{ background: 'var(--color-divider)' }} />
-      <span className="sr-only">Loading...</span>
-    </div>
-  </div>
-)
-
 function App() {
   // Preload sounds and category images on app start
   useEffect(() => {
@@ -115,6 +79,7 @@ function App() {
         expand={false}
         duration={4000}
         closeButton
+        style={{ fontFamily: 'inherit' }}
         toastOptions={{
           style: {
             padding: '16px',
@@ -125,9 +90,11 @@ function App() {
       <AuthProvider>
       <LocationProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <RouteProgress />
+          <OfflineIndicator />
           <WelcomeModal />
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Routes>
               <Route path="/" element={<><MapPage /><BottomNav /></>} />
               <Route path="/map" element={<Navigate to="/" replace />} />

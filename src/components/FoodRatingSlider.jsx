@@ -1,11 +1,12 @@
 import { useRef } from 'react'
 import { playBiteSound } from '../lib/sounds'
-import { getCategoryNeonImage } from '../constants/categories'
+import { getCategoryNeonImage, getDishNameIcon, ICON_VERSION_QUERY } from '../constants/categories'
+import { getRatingColor } from '../utils/ranking'
 
-const BURGER_FALLBACK = '/categories/icons/burger.webp'
+const BURGER_FALLBACK = '/categories/icons/burger.webp' + ICON_VERSION_QUERY
 
-export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.1, category, unrated = false }) {
-  const iconSrc = getCategoryNeonImage(category) || BURGER_FALLBACK
+export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.1, category, dishName, unrated = false }) {
+  const iconSrc = getDishNameIcon(dishName) || getCategoryNeonImage(category) || BURGER_FALLBACK
   const lastValue = useRef(value)
   const lastBiteSoundTime = useRef(0)
 
@@ -69,7 +70,17 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
             <span className="text-lg font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Tap to rate</span>
           ) : (
             <>
-              <span className="text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
+              <span
+                className="text-4xl"
+                style={{
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: getRatingColor(value),
+                }}
+              >
+                {value.toFixed(1)}
+              </span>
               <span className="text-xl" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
             </>
           )}
@@ -94,18 +105,14 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
           step={step}
           value={value}
           onChange={handleChange}
-          aria-label={unrated ? 'Rate this dish from 0 to 10' : `Rating: ${value.toFixed(1)} out of 10. ${getRatingLabel(value)}`}
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={value}
           aria-valuetext={unrated ? 'Not rated yet' : `${value.toFixed(1)} out of 10: ${getRatingLabel(value)}`}
           className="rating-slider w-full h-3 rounded-full appearance-none cursor-pointer
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-9 [&::-webkit-slider-thumb]:h-9
+            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-11 [&::-webkit-slider-thumb]:h-11
             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-xl
             [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:cursor-pointer
             [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
             [&::-webkit-slider-thumb]:active:scale-95
-            [&::-moz-range-thumb]:w-9 [&::-moz-range-thumb]:h-9 [&::-moz-range-thumb]:rounded-full
+            [&::-moz-range-thumb]:w-11 [&::-moz-range-thumb]:h-11 [&::-moz-range-thumb]:rounded-full
             [&::-moz-range-thumb]:shadow-xl [&::-moz-range-thumb]:border-4
             [&::-moz-range-thumb]:cursor-pointer"
           style={{
@@ -130,6 +137,5 @@ function getRatingLabel(value) {
   if (value >= 7.5) return "GOOD Here"
   if (value >= 7) return "Pretty Good Here"
   if (value >= 6) return "Not Bad Here"
-  if (value >= 0.1) return "Bad Here"
-  return "🍽️ Slide to rate!"
+  return "Bad Here"
 }

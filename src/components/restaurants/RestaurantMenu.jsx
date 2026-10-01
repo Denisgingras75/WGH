@@ -1,32 +1,23 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
 import { getRatingColor } from '../../utils/ranking'
+import { EmptyState } from '../EmptyState'
 
 // Split-pane restaurant menu: section nav on left, dishes on right
-export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuSectionOrder = [] }) {
+export function RestaurantMenu({ dishes, loading, error, menuSectionOrder = [], onRetry }) {
   const [activeSection, setActiveSection] = useState(null)
   const navigate = useNavigate()
+  const rightRef = useRef(null)
 
   // Group dishes by menu_section, ordered by restaurant's menu_section_order
   const sectionGroups = useMemo(() => {
     if (!dishes?.length) return { sections: [], uncategorized: [] }
 
-    // Filter by search query if provided
-    let filteredDishes = dishes
-    const query = searchQuery.toLowerCase().trim()
-    if (query) {
-      filteredDishes = dishes.filter(d =>
-        (d.dish_name || '').toLowerCase().includes(query) ||
-        (d.category || '').toLowerCase().includes(query) ||
-        (d.menu_section || '').toLowerCase().includes(query)
-      )
-    }
-
     // Split into sectioned and uncategorized
     const groups = {}
     const uncategorized = []
-    filteredDishes.forEach(dish => {
+    dishes.forEach(dish => {
       const section = dish.menu_section
       if (!section) {
         uncategorized.push(dish)
@@ -73,7 +64,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
       })),
       uncategorized,
     }
-  }, [dishes, searchQuery, menuSectionOrder])
+  }, [dishes, menuSectionOrder])
 
   // All sections including uncategorized
   const allSections = useMemo(() => {
@@ -84,26 +75,24 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
     return result
   }, [sectionGroups])
 
-  // Auto-select first section
+  // Auto-select first section (and recover if the active one disappears after a refetch)
   useEffect(() => {
-    if (allSections.length > 0 && !activeSection) {
+    if (allSections.length && !allSections.some(s => s.name === activeSection)) {
       setActiveSection(allSections[0].name)
     }
   }, [allSections, activeSection])
 
-  // Reset active section when search changes
+  // Start each section's dish list at the top
   useEffect(() => {
-    if (allSections.length > 0) {
-      setActiveSection(allSections[0].name)
-    } else {
-      setActiveSection(null)
-    }
-  }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (rightRef.current) rightRef.current.scrollTop = 0
+  }, [activeSection])
 
   const activeDishes = useMemo(() => {
     const section = allSections.find(s => s.name === activeSection)
     return section ? section.dishes : []
   }, [allSections, activeSection])
+
+  const activeIndex = allSections.findIndex(s => s.name === activeSection)
 
   if (loading) {
     return (
@@ -127,7 +116,16 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
   if (error) {
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{error?.message || error}</p>
+        <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>{error?.message || error}</p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          >
+            Try again
+          </button>
+        )}
       </div>
     )
   }
@@ -135,59 +133,54 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
   if (allSections.length === 0) {
     return (
       <div className="px-4 py-5">
-        <div
-          className="py-10 text-center rounded-xl"
-          style={{
-            background: 'var(--color-bg)',
-            border: '1.5px solid var(--color-divider)',
-            boxShadow: 'none',
-          }}
-        >
-          <p className="font-semibold" style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-            {searchQuery
-              ? `No dishes matching "${searchQuery}"`
-              : 'Menu not set up yet'
-            }
-          </p>
-          {!searchQuery && (
-            <p className="mt-1.5 font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
-              Check back soon
-            </p>
-          )}
-        </div>
+        <EmptyState emoji="📋" title="Menu not set up yet" subtitle="Check back soon." />
       </div>
     )
   }
 
   return (
     <div
-      className="flex mx-3 my-4 rounded-xl overflow-hidden"
+      className="flex mx-4 my-4 rounded-xl overflow-hidden"
       style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-divider)',
         minHeight: '420px',
+        maxHeight: '70vh',
       }}
     >
       {/* Left: Section Navigation */}
       <nav
-        className="flex-shrink-0 overflow-y-auto py-3"
+        className="flex-shrink-0 overflow-y-auto py-3 scrollbar-hide"
         style={{
           width: '33%',
           background: 'var(--color-bg)',
           borderRight: '1px solid var(--color-divider)',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
         }}
         role="tablist"
         aria-label="Menu sections"
+        aria-orientation="vertical"
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+          e.preventDefault()
+          const current = activeIndex === -1 ? 0 : activeIndex
+          const delta = e.key === 'ArrowDown' ? 1 : -1
+          const nextIndex = (current + delta + allSections.length) % allSections.length
+          setActiveSection(allSections[nextIndex].name)
+          requestAnimationFrame(() => {
+            document.getElementById('menu-section-tab-' + nextIndex)?.focus()
+          })
+        }}
       >
-        {allSections.map((section) => {
+        {allSections.map((section, index) => {
           const isActive = section.name === activeSection
           return (
             <button
               key={section.name}
               role="tab"
+              id={'menu-section-tab-' + index}
               aria-selected={isActive}
+              aria-controls="menu-section-panel"
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveSection(section.name)}
               className="w-full text-left px-3.5 py-3 transition-all relative"
               style={{
@@ -211,7 +204,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                 className="block font-semibold leading-tight"
                 style={{
                   fontSize: '14px',
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -232,7 +225,13 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
       </nav>
 
       {/* Right: Dish List */}
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div
+        ref={rightRef}
+        className="flex-1 overflow-y-auto scrollbar-hide"
+        role="tabpanel"
+        id="menu-section-panel"
+        aria-labelledby={activeIndex >= 0 ? 'menu-section-tab-' + activeIndex : undefined}
+      >
         {/* Section title */}
         <div
           className="sticky top-0 z-10 px-4 py-3"
@@ -241,7 +240,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
             borderBottom: '1px solid var(--color-divider)',
           }}
         >
-          <h3
+          <h2
             className="font-bold"
             style={{
               fontFamily: "'Amatic SC', cursive",
@@ -252,7 +251,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
             }}
           >
             {activeSection}
-          </h3>
+          </h2>
         </div>
 
         {/* Dish rows */}
@@ -260,9 +259,8 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
           {activeDishes.map((dish, i) => {
             const isRanked = (dish.total_votes || 0) >= MIN_VOTES_FOR_RANKING
             const votes = dish.total_votes || 0
-            const displayRating = (dish.has_variants && dish.best_variant_rating)
-              ? dish.best_variant_rating
-              : dish.avg_rating
+            const priceNum = Number(dish.price)
+            const priceLabel = '$' + (Number.isInteger(priceNum) ? priceNum : priceNum.toFixed(2))
 
             return (
               <button
@@ -280,12 +278,12 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                   <div className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
                       <span
-                        className="font-semibold"
                         style={{
                           color: 'var(--color-text-primary)',
-                          fontSize: '13px',
+                          fontSize: '14px',
+                          fontWeight: 700,
                           letterSpacing: '-0.01em',
-                          lineHeight: '1.3',
+                          lineHeight: 1.3,
                         }}
                       >
                         {dish.dish_name}
@@ -293,27 +291,31 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                       {dish.tags?.includes('lunch-only') && (
                         <span
                           className="flex-shrink-0 px-1 py-0.5 rounded font-bold"
+                          title="Lunch only"
                           style={{
-                            fontSize: '9px',
-                            background: 'var(--color-accent-gold-muted, rgba(232, 102, 60, 0.1))',
+                            fontSize: '10px',
+                            background: 'var(--color-accent-gold-muted)',
                             color: 'var(--color-accent-gold)',
                             lineHeight: '1',
                           }}
                         >
-                          L
+                          <span aria-hidden="true">L</span>
+                          <span className="sr-only">Lunch only</span>
                         </span>
                       )}
                       {dish.tags?.includes('dinner-only') && (
                         <span
                           className="flex-shrink-0 px-1 py-0.5 rounded font-bold"
+                          title="Dinner only"
                           style={{
-                            fontSize: '9px',
+                            fontSize: '10px',
                             background: 'var(--color-primary-muted)',
                             color: 'var(--color-primary)',
                             lineHeight: '1',
                           }}
                         >
-                          D
+                          <span aria-hidden="true">D</span>
+                          <span className="sr-only">Dinner only</span>
                         </span>
                       )}
                     </span>
@@ -337,11 +339,11 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
-                        ${Number(dish.price).toFixed(0)}
+                        {priceLabel}
                       </span>
                     ) : (
-                      <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
-                        --
+                      <span aria-hidden="true" style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
+                        —
                       </span>
                     )}
                   </div>
@@ -352,19 +354,21 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                   {isRanked ? (
                     <>
                       <span
-                        className="font-bold"
                         style={{
-                          color: getRatingColor(displayRating),
+                          color: getRatingColor(dish.avg_rating),
                           fontSize: '13px',
+                          fontWeight: 800,
+                          letterSpacing: '-0.02em',
+                          fontVariantNumeric: 'tabular-nums',
                         }}
                       >
-                        {displayRating}
+                        {dish.avg_rating}
                       </span>
                       <span
                         className="font-medium"
-                        style={{ color: 'var(--color-text-tertiary)', fontSize: '10px' }}
+                        style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}
                       >
-                        {votes} rating{votes === 1 ? '' : 's'}
+                        {votes} vote{votes === 1 ? '' : 's'}
                       </span>
                     </>
                   ) : (

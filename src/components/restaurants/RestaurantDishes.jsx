@@ -3,28 +3,20 @@ import { Link } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
 import { DishListItem } from '../DishListItem'
 import { SectionHeader } from '../SectionHeader'
+import { EmptyState } from '../EmptyState'
+import { DishRowSkeleton } from '../Skeleton'
 
 const TOP_DISHES_COUNT = 5
 
 // Restaurant dishes component - Job #2: "What should I order?"
-export function RestaurantDishes({ dishes, loading, error, searchQuery = '', friendsVotesByDish = {} }) {
+export function RestaurantDishes({ dishes, loading, error, friendsVotesByDish = {}, onRetry }) {
   const [showAllDishes, setShowAllDishes] = useState(false)
 
-  // Filter and sort dishes
+  // Sort dishes
   const sortedDishes = useMemo(() => {
-    if (!dishes?.length) return { top: [], rest: [], filtered: false }
+    if (!dishes?.length) return { top: [], rest: [] }
 
-    // Filter by search query if provided
-    let filteredDishes = dishes
-    const query = searchQuery.toLowerCase().trim()
-    if (query) {
-      filteredDishes = dishes.filter(d =>
-        (d.dish_name || '').toLowerCase().includes(query) ||
-        (d.category || '').toLowerCase().includes(query)
-      )
-    }
-
-    const sorted = [...filteredDishes].sort((a, b) => {
+    const sorted = [...dishes].sort((a, b) => {
       const aRanked = (a.total_votes || 0) >= MIN_VOTES_FOR_RANKING
       const bRanked = (b.total_votes || 0) >= MIN_VOTES_FOR_RANKING
       // Ranked dishes first
@@ -43,10 +35,8 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
     return {
       top: sorted.slice(0, TOP_DISHES_COUNT),
       rest: sorted.slice(TOP_DISHES_COUNT),
-      filtered: query.length > 0,
-      totalMatches: filteredDishes.length,
     }
-  }, [dishes, searchQuery])
+  }, [dishes])
 
   const rankedCount = dishes?.filter(d => (d.total_votes || 0) >= MIN_VOTES_FOR_RANKING).length || 0
 
@@ -61,17 +51,8 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
 
   if (loading) {
     return (
-      <div className="px-4 py-6" role="status" aria-label="Loading dishes">
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)' }}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+      <div className="px-4 py-6">
+        <DishRowSkeleton count={5} />
       </div>
     )
   }
@@ -79,7 +60,26 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
   if (error) {
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-sm" style={{ color: 'var(--color-primary)' }}>{error?.message || error}</p>
+        <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+          {error?.message || error}
+        </p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          >
+            Try again
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  if (!dishes?.length) {
+    return (
+      <div className="px-4 py-5">
+        <EmptyState emoji="🍽️" title="No dishes here yet" subtitle="Check back soon." />
       </div>
     )
   }
@@ -89,33 +89,26 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
       {/* Section Header */}
       <div className="mb-5">
         <SectionHeader
-          title={sortedDishes.filtered
-            ? `Results for "${searchQuery}"`
-            : rankedCount > 0
-              ? "What's Good Here"
-              : 'Help decide what to order here'
+          title={rankedCount > 0 ? "What's Good Here" : 'Help decide what to order here'}
+          subtitle={rankedCount > 0
+            ? `Top picks based on ${rankedCount} rated ${rankedCount === 1 ? 'dish' : 'dishes'}`
+            : 'Vote on dishes to shape the rankings'
           }
-          subtitle={sortedDishes.filtered
-            ? `${sortedDishes.totalMatches} ${sortedDishes.totalMatches === 1 ? 'dish' : 'dishes'} found`
-            : rankedCount > 0
-              ? `Top picks based on ${rankedCount} rated ${rankedCount === 1 ? 'dish' : 'dishes'}`
-              : 'Vote on dishes to shape the rankings'
-          }
-          level="h3"
+          level="h2"
         />
       </div>
 
       {/* Friends banner */}
       {uniqueFriends > 0 && (
         <div
-          className="mb-4 px-3.5 py-3 rounded-xl flex items-center gap-3"
+          className="mb-4 pl-1.5 pr-3.5 py-1 rounded-xl flex items-center gap-2"
           style={{
             background: 'var(--color-surface-elevated)',
-            border: '1.5px solid var(--color-primary)',
+            border: '1px solid var(--color-divider)',
           }}
         >
-          {/* Stacked avatars */}
-          <div className="flex -space-x-2 flex-shrink-0">
+          {/* Friend avatars: each link is a full 44px target (no overlap) around a 32px circle */}
+          <div className="flex flex-shrink-0">
             {(() => {
               const seen = new Set()
               const friendList = []
@@ -127,21 +120,29 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
                   }
                 })
               })
-              return friendList.slice(0, 3).map((friend, i) => (
-                <Link
-                  key={friend.user_id}
-                  to={`/user/${friend.user_id}`}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ring-2"
-                  style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                    ringColor: 'var(--color-surface-elevated)',
-                    zIndex: 3 - i,
-                  }}
-                >
-                  {friend.display_name?.charAt(0).toUpperCase() || '?'}
-                </Link>
-              ))
+              return friendList.slice(0, 3).map((friend) => {
+                const label = 'View ' + (friend.display_name || 'friend') + "'s profile"
+                return (
+                  <Link
+                    key={friend.user_id}
+                    to={`/user/${friend.user_id}`}
+                    aria-label={label}
+                    title={label}
+                    className="w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{
+                        background: 'var(--color-primary)',
+                        color: 'var(--color-text-on-primary)',
+                      }}
+                    >
+                      {friend.display_name?.charAt(0).toUpperCase() || '?'}
+                    </span>
+                  </Link>
+                )
+              })
             })()}
           </div>
           <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -151,55 +152,29 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
       )}
 
       {/* Top Dishes */}
-      {sortedDishes.top.length > 0 ? (
-        <div>
-          {sortedDishes.top.map((dish, index) => (
-            <DishListItem
-              key={dish.dish_id}
-              dish={dish}
-              rank={index + 1}
-              showPhoto
-              isLast={index === sortedDishes.top.length - 1}
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          className="py-10 text-center rounded-xl"
-          style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
-          }}
-        >
-          <p className="font-bold" style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
-            {sortedDishes.filtered
-              ? `No dishes matching "${searchQuery}"`
-              : 'No dishes at this restaurant yet'
-            }
-          </p>
-          {sortedDishes.filtered ? (
-            <p className="mt-1.5 font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
-              Try a different search term
-            </p>
-          ) : (
-            <p className="mt-1 font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
-              No dishes ranked yet
-            </p>
-          )}
-        </div>
-      )}
+      <div>
+        {sortedDishes.top.map((dish, index) => (
+          <DishListItem
+            key={dish.dish_id}
+            dish={dish}
+            rank={index + 1}
+            showPhoto
+            isLast={index === sortedDishes.top.length - 1}
+          />
+        ))}
+      </div>
 
       {/* More Dishes */}
       {sortedDishes.rest.length > 0 && (
         <div className="mt-6">
           <button
             onClick={() => setShowAllDishes(!showAllDishes)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold card-press"
+            aria-expanded={showAllDishes}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
             style={{
               background: 'var(--color-surface-elevated)',
-              color: 'var(--color-primary)',
-              border: '1px solid var(--color-card-border)',
-              fontSize: '13px',
+              border: '1px solid var(--color-divider)',
+              color: 'var(--color-text-primary)',
             }}
           >
             {showAllDishes ? 'Show less' : `See ${sortedDishes.rest.length} more dishes`}
@@ -209,6 +184,7 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>

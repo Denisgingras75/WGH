@@ -3,8 +3,9 @@ import { toast } from 'sonner'
 import { reportsApi, REPORT_REASONS, REPORT_DETAILS_MAX_LENGTH } from '../api/reportsApi'
 import { capture } from '../lib/analytics'
 import { useFocusTrap } from '../hooks/useFocusTrap'
-import { getUserMessage } from '../utils/errorHandler'
+import { getUserFacingMessage } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+import { INPUT_CLASS, INPUT_STYLE } from '../constants/styles'
 
 const REASON_LABELS = {
   spam: 'Spam',
@@ -58,13 +59,18 @@ export function ReportModal({ isOpen, onClose, target }) {
         has_details: !!details.trim(),
       })
       toast.success("Thanks. We'll review this.")
-      handleClose()
+      // Reset loading directly — handleClose() here is the stale closure from
+      // the render where loading was false, and the modal stays mounted in
+      // every caller, so it must reopen in a clean state.
+      setLoading(false)
+      onClose()
+      setReason('')
+      setDetails('')
     } catch (error) {
       logger.error('ReportModal: submit failed', error)
-      // Surface the backend's specific message when it's a user-facing one
-      // (e.g. "You already reported this", "Cannot report your own content",
-      // rate-limit text). Fall back to the generic classifier otherwise.
-      toast.error(error.message || getUserMessage(error, 'submitting your report'))
+      // Backend text is shown only when reportsApi flags it as user-facing
+      // (e.g. "You already reported this"); network errors get the classified message.
+      toast.error(getUserFacingMessage(error, 'submitting your report'))
       setLoading(false)
     }
   }
@@ -85,11 +91,11 @@ export function ReportModal({ isOpen, onClose, target }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
+        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-surface-elevated)' }}
+        style={{ background: 'var(--color-surface-elevated)', maxHeight: 'calc(100dvh - 32px)' }}
       >
-        <div className="p-8">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-8 pt-8 pb-4">
           <h2
             id="report-modal-title"
             className="text-2xl font-bold mb-2"
@@ -113,7 +119,7 @@ export function ReportModal({ isOpen, onClose, target }) {
                   className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors"
                   style={{
                     border: `1px solid ${reason === value ? 'var(--color-primary)' : 'var(--color-divider)'}`,
-                    background: reason === value ? 'var(--color-surface)' : 'transparent',
+                    background: reason === value ? 'var(--color-primary-muted)' : 'transparent',
                   }}
                 >
                   <input
@@ -133,64 +139,67 @@ export function ReportModal({ isOpen, onClose, target }) {
             </div>
           </fieldset>
 
-          <label className="block mb-5">
-            <span
-              className="text-sm font-medium mb-2 block"
-              style={{ color: 'var(--color-text-primary)' }}
+          <div>
+            <label
+              htmlFor="report-details"
+              className="block text-sm font-medium mb-1.5"
+              style={{ color: 'var(--color-text-secondary)' }}
             >
               Details <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 400 }}>(optional)</span>
-            </span>
+            </label>
             <textarea
+              id="report-details"
+              aria-describedby="report-details-count"
               value={details}
               onChange={(e) => setDetails(e.target.value.slice(0, REPORT_DETAILS_MAX_LENGTH))}
               placeholder="Anything else we should know?"
               rows={3}
               disabled={loading}
-              className="w-full px-3 py-2 rounded-xl text-sm resize-none"
-              style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
-              }}
+              className={INPUT_CLASS + ' resize-none'}
+              style={INPUT_STYLE}
             />
             <div
+              id="report-details-count"
               className="text-xs mt-1 text-right"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
               {details.length} / {REPORT_DETAILS_MAX_LENGTH}
             </div>
-          </label>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
-                fontSize: '15px',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
-              style={{
-                background: canSubmit ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: canSubmit ? '#FFFFFF' : 'var(--color-text-tertiary)',
-                fontSize: '15px',
-                opacity: loading ? 0.7 : 1,
-              }}
-            >
-              {loading ? 'Submitting…' : 'Submit report'}
-            </button>
           </div>
+        </div>
+
+        <div
+          className="flex gap-3 px-8 pt-4 pb-8"
+          style={{ borderTop: '1px solid var(--color-divider)' }}
+        >
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-divider)',
+              color: 'var(--color-text-primary)',
+              fontSize: '15px',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: canSubmit ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: canSubmit ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+              fontSize: '15px',
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? 'Submitting…' : 'Submit report'}
+          </button>
         </div>
       </div>
     </div>

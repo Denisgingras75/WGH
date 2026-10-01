@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import { useBlockedUsers } from '../hooks/useBlockedUsers'
+import { EmptyState } from './EmptyState'
 
 export function BlockedUsersModal({ isOpen, onClose }) {
-  const { blocks, loading, unblockUser, unblocking } = useBlockedUsers()
+  const { blocks, loading, error, refetch, unblockUser } = useBlockedUsers()
+  const [pendingId, setPendingId] = useState(null)
   const modalRef = useFocusTrap(isOpen, onClose)
 
   if (!isOpen) return null
@@ -38,11 +41,11 @@ export function BlockedUsersModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full"
+            className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center transition-all active:scale-95"
             aria-label="Close"
-            style={{ color: 'var(--color-text-secondary)' }}
+            style={{ color: 'var(--color-text-primary)' }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -50,19 +53,42 @@ export function BlockedUsersModal({ isOpen, onClose }) {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-8 text-center text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-              Loading…
+            <div className="animate-pulse" role="status" aria-label="Loading blocked users">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="px-6 py-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full" style={{ background: 'var(--color-divider)' }} />
+                  <div className="h-4 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+                {error.message}
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="py-3 px-4 rounded-xl font-bold text-sm min-h-[44px] transition-all active:scale-[0.98]"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              >
+                Try again
+              </button>
             </div>
           ) : blocks.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                You haven't blocked anyone. When you block someone, you can manage them here.
-              </p>
-            </div>
+            <EmptyState
+              emoji="🙌"
+              title="No blocked users"
+              subtitle="When you block someone, you can manage them here."
+            />
           ) : (
-            <ul className="divide-y" style={{ borderColor: 'var(--color-divider)' }}>
-              {blocks.map((block) => (
-                <li key={block.blockedId} className="px-6 py-4 flex items-center gap-3">
+            <ul>
+              {blocks.map((block, i) => (
+                <li
+                  key={block.blockedId}
+                  className="px-6 py-4 flex items-center gap-3"
+                  style={{ borderBottom: i < blocks.length - 1 ? '1px solid var(--color-divider)' : 'none' }}
+                >
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                     style={{ background: 'var(--color-surface)' }}
@@ -82,17 +108,22 @@ export function BlockedUsersModal({ isOpen, onClose }) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => unblockUser(block.blockedId)}
-                    disabled={unblocking}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    onClick={async () => {
+                      setPendingId(block.blockedId)
+                      await unblockUser(block.blockedId)
+                      setPendingId(null)
+                    }}
+                    disabled={!!pendingId}
+                    aria-label={'Unblock ' + (block.displayName || 'user')}
+                    className="px-4 py-3 min-h-[44px] rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
                     style={{
                       background: 'transparent',
                       border: '1px solid var(--color-primary)',
                       color: 'var(--color-primary)',
-                      opacity: unblocking ? 0.6 : 1,
+                      opacity: pendingId ? 0.7 : 1,
                     }}
                   >
-                    Unblock
+                    {pendingId === block.blockedId ? 'Unblocking…' : 'Unblock'}
                   </button>
                 </li>
               ))}

@@ -1,21 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { notificationsApi } from '../api/notificationsApi'
+import { getUserMessage } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 /**
- * Notification bell icon with dropdown
+ * Notification bell icon with dropdown.
+ * Notifications that were displayed while the panel was open are deleted when it closes;
+ * anything that arrives afterwards (or a fetch that resolves after close) is kept.
  */
 export function NotificationBell() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [notifications, setNotifications] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
-  const [loading, setLoading] = useState(false)
   const dropdownRef = useRef(null)
+  // Ids of notifications rendered while the panel was open — the only ones deleted on close
+  const shownIdsRef = useRef([])
 
   // Fetch unread count via React Query with polling
   const { data: unreadCount = 0 } = useQuery({
@@ -25,6 +28,45 @@ export function NotificationBell() {
     refetchInterval: 60000,
     staleTime: 30000,
   })
+
+  // Notification list — only fetched while the panel is open
+  const {
+    data: notificationsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['notifications', 'list', user?.id],
+    queryFn: () => notificationsApi.getNotifications(20),
+    enabled: !!user && showDropdown,
+    gcTime: 0,
+  })
+  const notifications = notificationsData || []
+
+  const { mutate: deleteShownNotifications } = useMutation({
+    mutationFn: (ids) => notificationsApi.deleteByIds(ids),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onError: (err) => logger.error('Failed to delete notifications:', err),
+  })
+
+  // While open, remember what the user has seen and clear the unread badge
+  useEffect(() => {
+    if (!showDropdown || !notificationsData || notificationsData.length === 0) return
+    const seen = new Set(shownIdsRef.current)
+    notificationsData.forEach((n) => seen.add(n.id))
+    shownIdsRef.current = Array.from(seen)
+    queryClient.setQueryData(['notifications', 'unreadCount', user?.id], 0)
+  }, [showDropdown, notificationsData, queryClient, user?.id])
+
+  // On close, delete only the notifications that were displayed, and drop the cached list
+  // (also cancels a fetch still in flight) so the next open starts fresh
+  useEffect(() => {
+    if (showDropdown) return
+    const ids = shownIdsRef.current
+    shownIdsRef.current = []
+    if (ids.length > 0) deleteShownNotifications(ids)
+    queryClient.resetQueries({ queryKey: ['notifications', 'list', user?.id] })
+  }, [showDropdown, deleteShownNotifications, queryClient, user?.id])
 
   // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
@@ -48,48 +90,9 @@ export function NotificationBell() {
     }
   }, [showDropdown])
 
-  // Fetch notifications when dropdown opens
-  const handleBellClick = async () => {
-    if (!user) {
-      navigate('/login')
-      return
-    }
-
-    setShowDropdown(!showDropdown)
-
-    if (!showDropdown) {
-      setLoading(true)
-      try {
-        const data = await notificationsApi.getNotifications(20)
-        setNotifications(data)
-        // Mark that we've viewed these notifications - they'll be deleted when dropdown closes
-        if (data.length > 0) {
-          queryClient.setQueryData(['notifications', 'unreadCount', user?.id], 0)
-        }
-      } catch (err) {
-        logger.error('Failed to fetch notifications:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const handleBellClick = () => {
+    setShowDropdown((open) => !open)
   }
-
-  // Delete notifications when dropdown closes
-  useEffect(() => {
-    if (!showDropdown && notifications.length > 0) {
-      // Delete from database and clear local state
-      const deleteNotifications = async () => {
-        try {
-          await notificationsApi.deleteAll()
-          queryClient.invalidateQueries({ queryKey: ['notifications', 'unreadCount'] })
-        } catch (err) {
-          logger.error('Failed to delete notifications:', err)
-        }
-      }
-      deleteNotifications()
-      setNotifications([])
-    }
-  }, [showDropdown, notifications.length])
 
   // Handle clicking a notification
   const handleNotificationClick = (notification) => {
@@ -121,19 +124,21 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon */}
       <button
+        type="button"
         onClick={handleBellClick}
-        className="relative p-2 rounded-full transition-all duration-150 active:scale-95 active:opacity-80"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="relative w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95"
+        style={{ color: 'var(--color-text-primary)' }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         aria-expanded={showDropdown}
-        aria-haspopup="true"
+        aria-controls="notifications-panel"
       >
         <svg
-          className="w-6 h-6"
+          className="w-5 h-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           strokeWidth={2}
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -145,8 +150,8 @@ export function NotificationBell() {
         {/* Unread Badge */}
         {unreadCount > 0 && (
           <span
-            className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center text-xs font-bold rounded-full px-1 shadow-lg"
-            style={{ background: 'var(--color-red)', color: '#FFFFFF' }}
+            className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center text-xs font-bold rounded-full px-1"
+            style={{ background: 'var(--color-red)', color: 'var(--color-text-on-primary)' }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -156,8 +161,8 @@ export function NotificationBell() {
       {/* Dropdown */}
       {showDropdown && (
         <div
-          role="menu"
-          aria-label="Notifications menu"
+          id="notifications-panel"
+          aria-label="Notifications"
           className="fixed top-14 right-4 w-80 max-h-96 overflow-y-auto rounded-xl shadow-xl border z-50"
           style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-divider)' }}
         >
@@ -170,18 +175,31 @@ export function NotificationBell() {
           </div>
 
           {/* Content */}
-          {loading ? (
+          {isLoading ? (
             <div className="py-8 flex justify-center" role="status">
               <div
-                className="w-6 h-6 border-2 rounded-full animate-spin"
-                style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }}
+                className="spinner w-6 h-6"
                 aria-hidden="true"
               />
-              <span className="sr-only">Loading notifications...</span>
+              <span className="sr-only">Loading notifications…</span>
+            </div>
+          ) : error ? (
+            <div className="px-4 py-6 text-center">
+              <p role="alert" className="text-sm mb-3" style={{ color: 'var(--color-danger)' }}>
+                {getUserMessage(error, 'loading notifications')}
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              >
+                Try again
+              </button>
             </div>
           ) : notifications.length === 0 ? (
             <div className="py-8 text-center">
-              <div className="text-3xl mb-2">🔔</div>
+              <div className="text-3xl mb-2" aria-hidden="true">🔔</div>
               <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 No notifications yet
               </p>
@@ -190,8 +208,8 @@ export function NotificationBell() {
             <div>
               {notifications.map((notification) => (
                 <button
+                  type="button"
                   key={notification.id}
-                  role="menuitem"
                   onClick={() => handleNotificationClick(notification)}
                   className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-150 active:scale-[0.98] active:opacity-80 border-b last:border-b-0"
                   style={{

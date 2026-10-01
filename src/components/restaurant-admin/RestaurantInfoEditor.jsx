@@ -1,97 +1,134 @@
 import { useState } from 'react'
+import { sanitizeUrl } from '../../utils/sanitize'
+import { INPUT_CLASS, INPUT_STYLE, LABEL_CLASS, LABEL_STYLE } from '../../constants/styles'
+
+const URL_FIELDS = [
+  { key: 'website_url', id: 'info-website', label: 'Website', placeholder: 'https://...' },
+  { key: 'facebook_url', id: 'info-facebook', label: 'Facebook', placeholder: 'https://facebook.com/...' },
+  { key: 'instagram_url', id: 'info-instagram', label: 'Instagram', placeholder: 'https://instagram.com/...' },
+]
+
+// "www.myplace.com" → "https://www.myplace.com". The public restaurant page only
+// renders absolute http(s) links (sanitizeUrl), so a bare domain would silently vanish.
+function normalizeUrl(value) {
+  const trimmed = value.trim()
+  return trimmed && !/^https?:\/\//i.test(trimmed) ? 'https://' + trimmed : trimmed
+}
 
 /**
  * RestaurantInfoEditor - Editable contact/social fields for restaurant managers
  */
 export function RestaurantInfoEditor({ restaurant, onUpdate }) {
-  const [phone, setPhone] = useState(restaurant?.phone || '')
-  const [websiteUrl, setWebsiteUrl] = useState(restaurant?.website_url || '')
-  const [facebookUrl, setFacebookUrl] = useState(restaurant?.facebook_url || '')
-  const [instagramUrl, setInstagramUrl] = useState(restaurant?.instagram_url || '')
+  const [values, setValues] = useState({
+    phone: restaurant?.phone || '',
+    website_url: restaurant?.website_url || '',
+    facebook_url: restaurant?.facebook_url || '',
+    instagram_url: restaurant?.instagram_url || '',
+  })
+  const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
 
-  const handleSave = async () => {
+  function setField(key, value) {
+    setValues(prev => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: null }))
+  }
+
+  async function handleSave() {
+    if (saving) return
+
+    const normalized = { ...values }
+    const nextErrors = {}
+    for (const { key } of URL_FIELDS) {
+      normalized[key] = normalizeUrl(values[key])
+      if (normalized[key] && !sanitizeUrl(normalized[key])) {
+        nextErrors[key] = 'Enter a full web address, like https://example.com'
+      }
+    }
+    setValues(normalized)
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+
     setSaving(true)
     try {
-      await onUpdate({
-        phone,
-        website_url: websiteUrl,
-        facebook_url: facebookUrl,
-        instagram_url: instagramUrl,
-      })
+      await onUpdate(normalized)
     } finally {
       setSaving(false)
     }
   }
 
-  const inputStyle = {
-    background: 'var(--color-bg)',
-    border: '1.5px solid var(--color-divider)',
-    color: 'var(--color-text-primary)',
-  }
-
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        Restaurant Info
-      </h3>
+    <form
+      onSubmit={(e) => { e.preventDefault(); handleSave() }}
+      noValidate
+      className="rounded-xl p-4 space-y-4"
+      style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
+    >
+      <h2
+        style={{
+          fontFamily: "'Amatic SC', cursive",
+          fontSize: '24px',
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          lineHeight: 1.1,
+          color: 'var(--color-text-primary)',
+        }}
+      >
+        Contact &amp; social
+      </h2>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Phone</label>
+        <label htmlFor="info-phone" className={LABEL_CLASS} style={LABEL_STYLE}>Phone</label>
         <input
+          id="info-phone"
           type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          autoComplete="off"
+          value={values.phone}
+          onChange={(e) => setField('phone', e.target.value)}
           placeholder="(508) 555-1234"
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
-          style={inputStyle}
+          className={INPUT_CLASS}
+          style={INPUT_STYLE}
         />
       </div>
 
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Website</label>
-        <input
-          type="url"
-          value={websiteUrl}
-          onChange={(e) => setWebsiteUrl(e.target.value)}
-          placeholder="https://..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
-          style={inputStyle}
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Facebook</label>
-        <input
-          type="url"
-          value={facebookUrl}
-          onChange={(e) => setFacebookUrl(e.target.value)}
-          placeholder="https://facebook.com/..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
-          style={inputStyle}
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Instagram</label>
-        <input
-          type="url"
-          value={instagramUrl}
-          onChange={(e) => setInstagramUrl(e.target.value)}
-          placeholder="https://instagram.com/..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
-          style={inputStyle}
-        />
-      </div>
+      {URL_FIELDS.map(({ key, id, label, placeholder }) => (
+        <div key={key}>
+          <label htmlFor={id} className={LABEL_CLASS} style={LABEL_STYLE}>{label}</label>
+          <input
+            id={id}
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            value={values[key]}
+            onChange={(e) => setField(key, e.target.value)}
+            placeholder={placeholder}
+            aria-invalid={errors[key] ? true : undefined}
+            aria-describedby={errors[key] ? `${id}-error` : undefined}
+            className={INPUT_CLASS}
+            style={errors[key] ? { ...INPUT_STYLE, borderColor: 'var(--color-danger)' } : INPUT_STYLE}
+          />
+          {errors[key] && (
+            <p id={`${id}-error`} role="alert" className="text-sm mt-1" style={{ color: 'var(--color-danger)' }}>
+              {errors[key]}
+            </p>
+          )}
+        </div>
+      ))}
 
       <button
-        onClick={handleSave}
+        type="submit"
         disabled={saving}
-        className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
-        style={{ background: 'var(--color-primary)', color: 'white' }}
+        className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+        style={{
+          background: 'var(--color-primary)',
+          color: 'var(--color-text-on-primary)',
+          opacity: saving ? 0.7 : 1,
+        }}
       >
-        {saving ? 'Saving...' : 'Save Changes'}
+        {saving ? 'Saving…' : 'Save changes'}
       </button>
-    </div>
+    </form>
   )
 }

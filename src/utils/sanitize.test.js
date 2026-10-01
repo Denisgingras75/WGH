@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { sanitizeSearchQuery, extractSafeFilename, isValidUUID } from './sanitize'
 
 // Mock logger to prevent console output during tests

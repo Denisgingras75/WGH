@@ -71,12 +71,14 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
         cursor: profileData ? 'pointer' : 'default',
       }}
       title={config.label}
-      onClick={() => profileData && setShowPopover(!showPopover)}
+      role="img"
+      aria-label={config.label}
+      onClick={() => profileData && setShowPopover(v => !v)}
       onMouseEnter={() => profileData && setShowPopover(true)}
       onMouseLeave={() => setShowPopover(false)}
     >
       {(type === 'human_verified' || type === 'trusted_reviewer') && (
-        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
             d="M5 13l4 4L19 7"
             stroke={isTrusted ? 'white' : config.color}
@@ -87,13 +89,13 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
         </svg>
       )}
       {type === 'ai_estimated' && (
-        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="7" r="1.5" fill={config.color} />
           <rect x="10.5" y="11" width="3" height="7" rx="1" fill={config.color} />
         </svg>
       )}
       {type === 'building' && (
-        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="8" stroke={config.color} strokeWidth="2" strokeDasharray="4 3" />
         </svg>
       )}

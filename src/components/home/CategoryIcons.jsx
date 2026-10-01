@@ -1,7 +1,8 @@
 // WGH Icon System v2.0 — Flat vector food icons
 // Consistent outline weight, flat color fills, transparent backgrounds
 // See ICON-SPEC.md for the full system spec
-import { getDishNameIcon as getDishNameIconFn } from '../../constants/categories'
+import { useState } from 'react'
+import { getDishNameIcon as getDishNameIconFn, ICON_VERSION_QUERY } from '../../constants/categories'
 
 const categoryIcons = {
   // === BROWSE CATEGORIES (19 of 23 have icons) ===
@@ -52,10 +53,7 @@ const categoryIcons = {
   wrap: '/categories/icons/wrap.webp',                // mostly cream/white, coral only in spots
 }
 
-// Inline SVG fallbacks — only for categories with NO poster icon
-const svgFallbacks = {}
-
-// Default icon for unknown categories
+// Default icon for unknown categories, or when the image fails to load
 const defaultIcon = (
   <path d="M24 6C14 6 6 14 6 24s8 18 18 18 18-8 18-18S34 6 24 6zm-2 10h4v2h4v4h-4v2h-4v-2h-4v-4h4v-2zm-2 14h8v4h-8v-4z" />
 )
@@ -64,33 +62,33 @@ const defaultIcon = (
  * CategoryIcon — renders a coral flat food icon
  * Uses webp coral icons when available, falls back to inline SVG
  * @param {string} categoryId - category key (e.g. 'pizza', 'burger')
- * @param {string} dishName - optional dish name (unused for now, kept for API compat)
+ * @param {string} dishName - optional dish name; dish-specific icon takes precedence
  * @param {number} size - icon size in px (default 32)
  * @param {string} color - fill color for SVG fallback (default 'currentColor')
  */
 export function CategoryIcon({ categoryId, dishName, size = 32, color = 'currentColor' }) {
+  var [failedSrc, setFailedSrc] = useState(null)
   var key = categoryId?.toLowerCase()
   // Try dish-name-specific icon first, then category icon
   var iconSrc = getDishNameIconFn(dishName) || categoryIcons[key]
 
-  // Prefer webp/image icon when available
-  if (iconSrc) {
+  // Prefer webp/image icon when available (and it hasn't failed to load)
+  if (iconSrc && failedSrc !== iconSrc) {
     return (
       <img
-        src={iconSrc + (iconSrc.includes('?') ? '' : '?v=4')}
+        src={iconSrc + (iconSrc.includes('?') ? '' : ICON_VERSION_QUERY)}
         alt=""
         width={size}
         height={size}
         loading="lazy"
         style={{ display: 'block', flexShrink: 0, objectFit: 'contain' }}
         aria-hidden="true"
-        onError={function (e) { e.target.style.display = 'none' }}
+        onError={function () { setFailedSrc(iconSrc) }}
       />
     )
   }
 
   // Fall back to inline SVG
-  var icon = svgFallbacks[key] || defaultIcon
   return (
     <svg
       width={size}
@@ -100,17 +98,9 @@ export function CategoryIcon({ categoryId, dishName, size = 32, color = 'current
       style={{ display: 'block', flexShrink: 0 }}
       aria-hidden="true"
     >
-      {icon}
+      {defaultIcon}
     </svg>
   )
-}
-
-/**
- * Check if a category has an icon (webp or SVG)
- */
-export function hasCategoryIcon(categoryId) {
-  const key = categoryId?.toLowerCase()
-  return !!(categoryIcons[key] || svgFallbacks[key])
 }
 
 /**
@@ -118,11 +108,9 @@ export function hasCategoryIcon(categoryId) {
  * Used by Leaflet map pins (raw HTML, not React).
  * Returns webp path if available, null otherwise.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getCategoryIconSrc(categoryId) {
   var key = categoryId ? categoryId.toLowerCase() : ''
   var src = categoryIcons[key] || null
-  return src ? src + '?v=4' : null
+  return src ? src + ICON_VERSION_QUERY : null
 }
-
-// Keep old name for backwards compatibility with RestaurantMap
-export var getPosterIconSrc = getCategoryIconSrc

@@ -1,15 +1,37 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
+import { toast } from 'sonner'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useDishSearch } from '../../hooks/useDishSearch'
 import { useRestaurantSearch } from '../../hooks/useRestaurantSearch'
+import { useDishes } from '../../hooks/useDishes'
+import { useUserVotes } from '../../hooks/useUserVotes'
 import { usePlaylistMutations } from '../../hooks/usePlaylistMutations'
+import { useAuth } from '../../context/AuthContext'
 import { useLocationContext } from '../../context/LocationContext'
 import { calculateDistance } from '../../utils/distance'
-import { getCategoryNeonImage, categoryEmojiFor } from '../../constants/categories'
-import { dishesApi } from '../../api/dishesApi'
+import { MAX_ITEMS_PER_PLAYLIST } from '../../constants/playlists'
+import { ReviewFlow } from '../ReviewFlow'
+import { EmptyState } from '../EmptyState'
+import { DishAddRowSkeleton } from '../Skeleton'
+import { DishAddRow } from '../DishAddRow'
+import { RestaurantAvatar } from '../RestaurantAvatar'
 import { capture } from '../../lib/analytics'
+import { getUserMessage, getUserFacingMessage } from '../../utils/errorHandler'
 import { logger } from '../../utils/logger'
-import { toast } from 'sonner'
+import { INPUT_FOCUS_CLASS } from '../../constants/styles'
+
+var ICON_BUTTON = 'w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95'
+var BACK_PATH = 'M15.75 19.5 8.25 12l7.5-7.5'
+var HINT_STYLE = { fontSize: 13, fontWeight: 500, color: 'var(--color-text-tertiary)' }
+
+function BackIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d={BACK_PATH} />
+    </svg>
+  )
+}
 
 /**
  * Two-mode search sheet for adding dishes to a playlist.
@@ -17,14 +39,30 @@ import { toast } from 'sonner'
  * "By Dish" — type a dish name, see results sorted by distance, tap to add.
  * "By Restaurant" — type a restaurant name, tap one, see its dishes, tap to add.
  *
+ * A dish needs the owner's rating before it can go on a list: tapping an
+ * unrated dish swaps the results for an inline rate view, and the dish is
+ * added once the rating is in.
+ *
  * Stays open for multi-add without closing between each.
  */
 export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishIds }) {
   var [mode, setMode] = useState('dish') // 'dish' | 'restaurant'
   var [query, setQuery] = useState('')
   var inputRef = useRef(null)
+  var { user } = useAuth()
   var { location, isUsingDefault } = useLocationContext()
   var { addDish } = usePlaylistMutations()
+
+  // --- Rated-dish gate ---
+  var { votes, loading: votesLoading, refetch: refetchVotes } = useUserVotes(isOpen && user ? user.id : null)
+  var ratedSet = useMemo(function () {
+    var set = {}
+    votes.forEach(function (v) {
+      if (v.rating_10 != null && v.dishes) set[v.dishes.id] = true
+    })
+    return set
+  }, [votes])
+  var [rateDish, setRateDish] = useState(null)
 
   // --- Dish search ---
   var { results: dishResults, loading: dishLoading, error: dishError } = useDishSearch(query, 20)
@@ -42,18 +80,20 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
     })
   }, [dishResults, location, isUsingDefault])
 
-  // --- Restaurant search ---
-  var placesLat = isUsingDefault ? null : (location ? location.lat : null)
-  var placesLng = isUsingDefault ? null : (location ? location.lng : null)
+  // --- Restaurant search (local DB only — Places results aren't used here) ---
   var { localResults: restResults, loading: restLoading } = useRestaurantSearch(
-    query, placesLat, placesLng, mode === 'restaurant' && isOpen
+    query, null, null, mode === 'restaurant' && isOpen, null, true
   )
 
   // --- Restaurant drill-down ---
   var [selectedRestaurant, setSelectedRestaurant] = useState(null)
-  var [restaurantDishes, setRestaurantDishes] = useState([])
-  var [restaurantDishesLoading, setRestaurantDishesLoading] = useState(false)
   var [dishFilter, setDishFilter] = useState('')
+  var {
+    dishes: restaurantDishes,
+    loading: restaurantDishesLoading,
+    error: restaurantDishesError,
+    refetch: refetchRestaurantDishes,
+  } = useDishes(null, null, null, selectedRestaurant ? selectedRestaurant.id : null)
 
   var filteredRestaurantDishes = useMemo(function () {
     if (!dishFilter.trim()) return restaurantDishes
@@ -64,63 +104,37 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
     })
   }, [restaurantDishes, dishFilter])
 
-  // Track which restaurant ID the current async fetch is for — discard stale
-  // responses if the user backs out and selects a different restaurant before
-  // the first one resolves.
-  var activeRestaurantRef = useRef(null)
-
-  var selectRestaurant = useCallback(function (restaurant) {
+  var selectRestaurant = function (restaurant) {
     setSelectedRestaurant(restaurant)
     setDishFilter('')
-    setRestaurantDishesLoading(true)
-    setRestaurantDishes([])
-    activeRestaurantRef.current = restaurant.id
-    dishesApi.getDishesForRestaurant({ restaurantId: restaurant.id })
-      .then(function (dishes) {
-        if (activeRestaurantRef.current !== restaurant.id) return // stale
-        setRestaurantDishes(dishes || [])
-      })
-      .catch(function (err) {
-        if (activeRestaurantRef.current !== restaurant.id) return
-        logger.error('Failed to load restaurant dishes:', err)
-        setRestaurantDishes([])
-        toast('Failed to load dishes')
-      })
-      .finally(function () {
-        if (activeRestaurantRef.current === restaurant.id) {
-          setRestaurantDishesLoading(false)
-        }
-      })
-  }, [])
+  }
 
   // --- Shared add state ---
   var [addedIds, setAddedIds] = useState({})
   var [pendingIds, setPendingIds] = useState({})
-  var prevOpen = useRef(false)
 
   useEffect(function () {
-    if (isOpen && !prevOpen.current) {
-      setMode('dish')
-      setQuery('')
-      setSelectedRestaurant(null)
-      setRestaurantDishes([])
-      setDishFilter('')
-      var existing = {}
-      if (existingDishIds) {
-        for (var i = 0; i < existingDishIds.length; i++) {
-          existing[existingDishIds[i]] = true
-        }
-      }
-      setAddedIds(existing)
-      setPendingIds({})
-      var focusTimer = setTimeout(function () { if (inputRef.current) inputRef.current.focus() }, 100)
-      return function () { clearTimeout(focusTimer) }
-    }
-    prevOpen.current = isOpen
-  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps -- only seed on open transition, not on existingDishIds rerender
+    if (!isOpen) return
+    setMode('dish')
+    setQuery('')
+    setSelectedRestaurant(null)
+    setDishFilter('')
+    setRateDish(null)
+    var existing = {}
+    if (existingDishIds) existingDishIds.forEach(function (d) { existing[d] = true })
+    setAddedIds(existing)
+    setPendingIds({})
+    var t = setTimeout(function () { if (inputRef.current) inputRef.current.focus() }, 100)
+    return function () { clearTimeout(t) }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps -- seed only on open
 
   var handleAdd = useCallback(function (dishId, dishName) {
     if (addedIds[dishId] || pendingIds[dishId]) return
+    // addedIds is seeded with the playlist's existing dishes
+    if (Object.keys(addedIds).length >= MAX_ITEMS_PER_PLAYLIST) {
+      toast.error('Playlists can hold up to ' + MAX_ITEMS_PER_PLAYLIST + ' dishes')
+      return
+    }
     setPendingIds(function (prev) {
       return { ...prev, [dishId]: true }
     })
@@ -137,7 +151,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
       })
       .catch(function (err) {
         logger.error('Add dish failed:', err)
-        toast(err?.message || 'Failed to add ' + (dishName || 'dish'))
+        toast.error(getUserFacingMessage(err, 'adding ' + (dishName || 'the dish')))
         setAddedIds(function (prev) {
           var next = { ...prev }; delete next[dishId]; return next
         })
@@ -153,252 +167,311 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
 
   if (!isOpen) return null
 
-  // --- Shared dish row renderer ---
+  var placeholderText = selectedRestaurant ? 'Filter dishes…' : mode === 'dish' ? 'Search dishes…' : 'Search restaurants…'
+
+  var switchMode = function (next) {
+    setMode(next)
+    setQuery('')
+  }
+
+  // --- Shared dish row renderer (same DishAddRow as My Top 10 search) ---
   var renderDishRow = function (dish) {
     var id = dish.dish_id || dish.id
     var name = dish.dish_name || dish.name
-    var isAdded = !!addedIds[id]
     return (
-      <button
+      <DishAddRow
         key={id}
-        onClick={function () { handleAdd(id, name) }}
-        disabled={isAdded || !!pendingIds[id]}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          padding: '12px 20px', width: '100%',
-          background: 'transparent', border: 'none',
-          borderBottom: '1px solid var(--color-divider)',
-          textAlign: 'left', opacity: isAdded ? 0.5 : 1,
+        dish={dish}
+        added={!!addedIds[id]}
+        disabled={!!pendingIds[id]}
+        onAdd={function () {
+          if (votesLoading) return
+          if (!ratedSet[id]) { setRateDish(dish); return }
+          handleAdd(id, name)
         }}
-      >
-        <div style={{
-          width: 36, height: 36, borderRadius: 6,
-          background: 'var(--color-category-strip)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, flexShrink: 0, overflow: 'hidden',
-        }}>
-          {getCategoryNeonImage(dish.category) ? (
-            <img src={getCategoryNeonImage(dish.category)} alt="" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
-          ) : (
-            categoryEmojiFor(dish.category)
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>{name}</div>
-          {dish.restaurant_name && (
-            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-              {dish.restaurant_name}
-              {dish.restaurant_town && <span> &middot; {dish.restaurant_town}</span>}
-            </div>
-          )}
-        </div>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          border: '2px solid ' + (isAdded ? 'var(--color-rating)' : 'var(--color-primary)'),
-          background: isAdded ? 'var(--color-rating)' : 'transparent',
-          color: isAdded ? '#fff' : 'var(--color-primary)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, fontWeight: 700, flexShrink: 0,
-        }}>
-          {isAdded ? '\u2713' : '+'}
-        </div>
-      </button>
+      />
     )
   }
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
-      onClick={function (e) { if (e.target === e.currentTarget) onClose() }}
-      onKeyDown={function (e) { if (e.key === 'Escape') onClose() }}
-    >
+  var renderNoResults = function (title, term) {
+    return <EmptyState emoji="🔍" title={title} subtitle={'Nothing matches “' + term.trim() + '”'} />
+  }
+
+  var renderResults = function () {
+    // --- Restaurant drill-down: show dishes ---
+    if (selectedRestaurant) {
+      if (restaurantDishesLoading) return <DishAddRowSkeleton label="Searching" />
+      if (restaurantDishesError) {
+        return (
+          <div className="px-6 py-4">
+            <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>
+              {getUserMessage(restaurantDishesError, 'loading dishes')}
+            </p>
+            <button
+              onClick={function () { refetchRestaurantDishes() }}
+              className="mt-3 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              Try again
+            </button>
+          </div>
+        )
+      }
+      if (filteredRestaurantDishes.length === 0) {
+        return dishFilter.trim()
+          ? renderNoResults('No dishes found', dishFilter)
+          : <EmptyState emoji="🍽️" title="No dishes listed yet" />
+      }
+      return filteredRestaurantDishes.map(renderDishRow)
+    }
+
+    // --- Dish mode ---
+    if (mode === 'dish') {
+      if (dishError) {
+        return (
+          <p role="alert" className="text-sm px-6 py-4" style={{ color: 'var(--color-danger)' }}>
+            {getUserMessage(dishError, 'searching dishes')}
+          </p>
+        )
+      }
+      if (query.trim().length < 2) {
+        return <p className="px-6 py-10 text-center" style={HINT_STYLE}>Type a dish name to search</p>
+      }
+      if (dishLoading) return <DishAddRowSkeleton label="Searching" />
+      if (sortedDishResults.length === 0) return renderNoResults('No dishes found', query)
+      return sortedDishResults.map(renderDishRow)
+    }
+
+    // --- Restaurant mode ---
+    if (query.trim().length < 2) {
+      return <p className="px-6 py-10 text-center" style={HINT_STYLE}>Type a restaurant name to search</p>
+    }
+    if (restLoading) return <DishAddRowSkeleton label="Searching" />
+    if (restResults.length === 0) return renderNoResults('No restaurants found', query)
+    return restResults.map(function (r) {
+      return (
+        <button
+          key={r.id}
+          onClick={function () { selectRestaurant(r) }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '14px 16px', width: '100%',
+            background: 'transparent', border: 'none',
+            borderBottom: '1px solid var(--color-divider)',
+            textAlign: 'left',
+          }}
+        >
+          <RestaurantAvatar name={r.name} size={40} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              {r.name}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              {r.address || ''}
+            </div>
+          </div>
+          <svg style={{ width: 16, height: 16, color: 'var(--color-text-tertiary)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )
+    })
+  }
+
+  var rateDishId = rateDish ? (rateDish.dish_id || rateDish.id) : null
+  var rateDishName = rateDish ? (rateDish.dish_name || rateDish.name) : null
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      <div
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: 'rgba(0,0,0,0.5)' }}
+        aria-hidden="true"
+        onClick={onClose}
+      />
       <div
         ref={containerRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Add dishes to playlist"
-        className="w-full rounded-t-2xl flex flex-col"
-        style={{ background: 'var(--color-surface)', maxHeight: '85vh' }}
+        aria-labelledby="add-dish-title"
+        className="relative w-full max-w-lg rounded-t-3xl flex flex-col"
+        style={{ background: 'var(--color-surface-elevated)', maxHeight: '85vh' }}
       >
-        {/* Grabber */}
-        <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 0' }} />
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--color-divider)' }} />
+        </div>
 
-        {/* Mode toggle — only when NOT drilled into a restaurant */}
-        {!selectedRestaurant && (
-          <div className="flex gap-2 px-5 pt-3 pb-2">
-            {['dish', 'restaurant'].map(function (m) {
-              var active = mode === m
-              return (
-                <button
-                  key={m}
-                  onClick={function () { setMode(m); setQuery('') }}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold"
-                  style={{
-                    background: active ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
-                    color: active ? '#fff' : 'var(--color-text-secondary)',
-                    border: active ? 'none' : '1px solid var(--color-divider)',
-                  }}
-                >
-                  {m === 'dish' ? 'By Dish' : 'By Restaurant'}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Restaurant drill-down header */}
-        {selectedRestaurant && (
-          <div className="flex items-center gap-3 px-5 pt-3 pb-2" style={{ borderBottom: '1px solid var(--color-divider)' }}>
-            <button
-              onClick={function () { setSelectedRestaurant(null); setRestaurantDishes([]) }}
-              style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--color-text-secondary)', padding: 0 }}
-              aria-label="Back to restaurant search"
-            >
-              &larr;
-            </button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {selectedRestaurant.name}
+        {rateDish ? (
+          <>
+            {/* Rate-first view — replaces search until the dish has a number */}
+            <div className="flex items-center gap-2 px-4 pb-3" style={{ borderBottom: '1px solid var(--color-divider)' }}>
+              <button
+                onClick={function () { setRateDish(null) }}
+                aria-label="Back to search"
+                className={ICON_BUTTON}
+                style={{ background: 'transparent', color: 'var(--color-text-primary)' }}
+              >
+                <BackIcon />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h2 id="add-dish-title" className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                  Rate it to add it
+                </h2>
+                <p className="text-sm truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                  {rateDishName}{rateDish.restaurant_name ? ' · ' + rateDish.restaurant_name : ''}
+                </p>
               </div>
-              {selectedRestaurant.town && (
-                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-                  {selectedRestaurant.town}
-                </div>
-              )}
             </div>
-          </div>
+            <div className="px-6 py-4 overflow-y-auto overscroll-contain" style={{ flex: 1, minHeight: 0 }}>
+              <ReviewFlow
+                dishId={rateDishId}
+                dishName={rateDishName}
+                category={rateDish.category}
+                onVote={function () {
+                  handleAdd(rateDishId, rateDishName)
+                  setRateDish(null)
+                  if (refetchVotes) refetchVotes()
+                }}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Title + mode tabs — only when NOT drilled into a restaurant */}
+            {!selectedRestaurant && (
+              <>
+                <div className="px-6 pb-4">
+                  <h2 id="add-dish-title" className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                    Add dishes
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    Tap a dish to add it
+                  </p>
+                </div>
+                <div
+                  role="tablist"
+                  aria-label="Search by"
+                  className="flex rounded-xl p-1 mx-4 mb-2"
+                  style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}
+                >
+                  {['dish', 'restaurant'].map(function (m) {
+                    var active = mode === m
+                    return (
+                      <button
+                        key={m}
+                        role="tab"
+                        id={'add-tab-' + m}
+                        aria-selected={active}
+                        aria-controls="add-dish-results"
+                        tabIndex={active ? 0 : -1}
+                        onClick={function () { switchMode(m) }}
+                        onKeyDown={function (e) {
+                          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                            e.preventDefault()
+                            var next = m === 'dish' ? 'restaurant' : 'dish'
+                            switchMode(next)
+                            var nextTab = document.getElementById('add-tab-' + next)
+                            if (nextTab) nextTab.focus()
+                          }
+                        }}
+                        className="flex-1 py-2.5 text-sm font-semibold rounded-lg"
+                        style={{
+                          background: active ? 'var(--color-primary)' : 'transparent',
+                          color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                        }}
+                      >
+                        {m === 'dish' ? 'By Dish' : 'By Restaurant'}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Restaurant drill-down header */}
+            {selectedRestaurant && (
+              <div className="flex items-center gap-2 px-4 pb-2" style={{ borderBottom: '1px solid var(--color-divider)' }}>
+                <button
+                  onClick={function () { setSelectedRestaurant(null) }}
+                  aria-label="Back to restaurant search"
+                  className={ICON_BUTTON}
+                  style={{ background: 'transparent', color: 'var(--color-text-primary)' }}
+                >
+                  <BackIcon />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <h2 id="add-dish-title" className="truncate" style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                    {selectedRestaurant.name}
+                  </h2>
+                  {selectedRestaurant.address && (
+                    <p className="truncate" style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                      {selectedRestaurant.address}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Search input */}
+            <div className="px-4 py-2" style={{ borderBottom: selectedRestaurant ? 'none' : '1px solid var(--color-divider)' }}>
+              <div className="relative">
+                <svg
+                  className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                  aria-hidden="true"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <input
+                  ref={inputRef}
+                  type="search"
+                  enterKeyHint="search"
+                  value={selectedRestaurant ? dishFilter : query}
+                  onChange={function (e) {
+                    if (selectedRestaurant) { setDishFilter(e.target.value) }
+                    else { setQuery(e.target.value) }
+                  }}
+                  aria-label={placeholderText}
+                  placeholder={placeholderText}
+                  autoComplete="off"
+                  className={'w-full pl-10 pr-4 py-3 rounded-xl text-sm ' + INPUT_FOCUS_CLASS}
+                  style={{
+                    background: 'var(--color-bg)',
+                    color: 'var(--color-text-primary)',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Results area */}
+            <div
+              id="add-dish-results"
+              role={selectedRestaurant ? undefined : 'tabpanel'}
+              aria-labelledby={selectedRestaurant ? undefined : 'add-tab-' + mode}
+              style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
+            >
+              {renderResults()}
+            </div>
+          </>
         )}
-
-        {/* Search input */}
-        <div style={{ padding: '8px 20px 8px', borderBottom: selectedRestaurant ? 'none' : '1px solid var(--color-divider)' }}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={selectedRestaurant ? dishFilter : query}
-            onChange={function (e) {
-              if (selectedRestaurant) { setDishFilter(e.target.value) }
-              else { setQuery(e.target.value) }
-            }}
-            placeholder={
-              selectedRestaurant ? 'Filter dishes...'
-                : mode === 'dish' ? 'Search dishes...'
-                : 'Search restaurants...'
-            }
-            autoComplete="off"
-            className="w-full px-4 py-2.5 rounded-xl text-sm"
-            style={{
-              background: 'var(--color-bg)',
-              border: '1.5px solid var(--color-divider)',
-              color: 'var(--color-text-primary)',
-            }}
-          />
-        </div>
-
-        {/* Results area */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-
-          {/* --- Restaurant drill-down: show dishes --- */}
-          {selectedRestaurant ? (
-            restaurantDishesLoading ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
-              </div>
-            ) : filteredRestaurantDishes.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-                {dishFilter ? 'No matching dishes' : 'No dishes found'}
-              </div>
-            ) : (
-              filteredRestaurantDishes.map(renderDishRow)
-            )
-
-          /* --- Dish mode --- */
-          ) : mode === 'dish' ? (
-            dishError ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-danger)', fontSize: 14 }}>
-                {dishError.message || 'Could not load dishes.'}
-              </div>
-            ) : query.trim().length < 2 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-                Type a dish name to search
-              </div>
-            ) : dishLoading ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
-              </div>
-            ) : sortedDishResults.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-                No dishes found for &ldquo;{query.trim()}&rdquo;
-              </div>
-            ) : (
-              sortedDishResults.map(renderDishRow)
-            )
-
-          /* --- Restaurant mode --- */
-          ) : (
-            query.trim().length < 2 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-                Type a restaurant name to search
-              </div>
-            ) : restLoading ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
-              </div>
-            ) : restResults.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-                No restaurants found for &ldquo;{query.trim()}&rdquo;
-              </div>
-            ) : (
-              restResults.map(function (r) {
-                return (
-                  <button
-                    key={r.id}
-                    onClick={function () { selectRestaurant(r) }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '14px 20px', width: '100%',
-                      background: 'transparent', border: 'none',
-                      borderBottom: '1px solid var(--color-divider)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: 'var(--color-primary)', color: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {(r.name || '?').charAt(0)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                        {r.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                        {r.town || r.address || ''}
-                      </div>
-                    </div>
-                    <svg style={{ width: 16, height: 16, color: 'var(--color-text-tertiary)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                )
-              })
-            )
-          )}
-        </div>
 
         {/* Done button */}
-        <div style={{ padding: '12px 20px', borderTop: '1px solid var(--color-divider)' }}>
+        <div style={{ padding: '12px 24px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-divider)' }}>
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl font-semibold text-sm"
-            style={{ background: 'var(--color-primary)', color: '#fff' }}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Done
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

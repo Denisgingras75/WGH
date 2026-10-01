@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { logger } from '../utils/logger'
-import { createClassifiedError } from '../utils/errorHandler'
+import { createClassifiedError, createUserFacingError } from '../utils/errorHandler'
 import { validateUserContent } from '../lib/reviewBlocklist'
 import {
   checkPlaylistCreateRateLimit,
@@ -14,10 +14,9 @@ function rateLimitError(retryAfterMs) {
   return new Error(`Too many requests — try again in ${secs}s`)
 }
 
+// Blocklist messages are readable as-is (getUserFacingMessage shows them)
 function contentError(msg) {
-  const e = new Error(msg)
-  e.type = 'VALIDATION'
-  return e
+  return createUserFacingError(msg)
 }
 
 export const userPlaylistsApi = {

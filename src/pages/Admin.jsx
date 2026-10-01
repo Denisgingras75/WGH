@@ -1,11 +1,74 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
+import { getUserMessage, getUserFacingMessage } from '../utils/errorHandler'
+import { validateUserContent } from '../lib/reviewBlocklist'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { adminApi } from '../api/adminApi'
 import { restaurantManagerApi } from '../api/restaurantManagerApi'
 import { ALL_CATEGORIES } from '../constants/categories'
+import { EmptyState } from '../components/EmptyState'
+import { PageHeader } from '../components/PageHeader'
+import { AMATIC_TITLE, CARD_STYLE, INPUT_CLASS, INPUT_FOCUS_CLASS, INPUT_STYLE, LABEL_CLASS, LABEL_STYLE, PAGE_INPUT_STYLE, PRIMARY_BUTTON_CLASS, ROW_ACTION_CLASS, SECONDARY_BUTTON_CLASS, SECONDARY_BUTTON_STYLE } from '../constants/styles'
+
+const INPUT_BASE_CLASS = 'w-full rounded-xl text-sm ' + INPUT_FOCUS_CLASS
+const META_STYLE = { fontSize: '13px', fontWeight: 500, color: 'var(--color-text-tertiary)' }
+
+function primaryStyle(busy) {
+  return { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', opacity: busy ? 0.7 : 1 }
+}
+
+function SectionTitle({ as: Tag = 'h2', size = 24, children }) {
+  return (
+    <Tag className="mb-3" style={{ ...AMATIC_TITLE, fontSize: `${size}px` }}>
+      {children}
+    </Tag>
+  )
+}
+
+function AdminDishRow({ dish, isEditing, isLast, onEdit, onDelete }) {
+  return (
+    <div
+      className="px-4 py-2 flex items-center justify-between gap-2"
+      style={{
+        background: isEditing ? 'var(--color-primary-muted)' : 'transparent',
+        outline: isEditing ? '1px solid var(--color-primary)' : 'none',
+        outlineOffset: '-1px',
+        borderBottom: isLast ? 'none' : '1px solid var(--color-divider)',
+      }}
+    >
+      <div className="flex-1 min-w-0 py-1">
+        <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+          {dish.name}
+        </p>
+        <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+          {dish.restaurants?.name} · {dish.category}{dish.price != null ? ` · $${dish.price}` : ''}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 -mr-3 flex-shrink-0">
+        <button onClick={() => onEdit(dish)} className={ROW_ACTION_CLASS} style={{ color: 'var(--color-accent-gold)' }}>
+          Edit
+        </button>
+        <button onClick={() => onDelete(dish.id, dish.name)} className={ROW_ACTION_CLASS} style={{ color: 'var(--color-danger)' }}>
+          Delete
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Spinner() {
+  return (
+    <div role="status" className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
+      <div
+        className="spinner"
+      />
+      <span className="sr-only">Loading…</span>
+    </div>
+  )
+}
 
 export function Admin() {
   const navigate = useNavigate()
@@ -13,7 +76,7 @@ export function Admin() {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState(null)
+  const [formError, setFormError] = useState(null)
   const [recentDishes, setRecentDishes] = useState([])
 
   // Admin status from database (matches RLS)
@@ -22,6 +85,7 @@ export function Admin() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
+  const [lastSearched, setLastSearched] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
 
@@ -31,9 +95,11 @@ export function Admin() {
   // Restaurant manager state
   const [inviteRestaurantId, setInviteRestaurantId] = useState('')
   const [inviteLink, setInviteLink] = useState('')
-  const inviteInputRef = useRef(null)
+  const [generating, setGenerating] = useState(false)
   const [managers, setManagers] = useState([])
   const [managersLoading, setManagersLoading] = useState(false)
+  const [managersError, setManagersError] = useState(null)
+  const managersReqRef = useRef(null)
   const [inviteSearch, setInviteSearch] = useState('')
   const [inviteDropdownOpen, setInviteDropdownOpen] = useState(false)
   const inviteSearchRef = useRef(null)
@@ -78,13 +144,15 @@ export function Admin() {
     fetchRecentDishes()
   }, [])
 
+  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/'))
+
   async function fetchRestaurants() {
     try {
       const data = await restaurantsApi.getOpen()
       setRestaurants(data)
     } catch (error) {
       logger.error('Error fetching restaurants:', error)
-      setMessage({ type: 'error', text: 'Failed to load restaurants' })
+      toast.error(getUserMessage(error, 'loading restaurants'))
     } finally {
       setLoading(false)
     }
@@ -101,18 +169,21 @@ export function Admin() {
 
   async function handleSearch(e) {
     e.preventDefault()
-    if (!searchQuery.trim()) {
+    const query = searchQuery.trim()
+    if (!query) {
       setSearchResults([])
+      setLastSearched('')
       return
     }
 
     setSearching(true)
     try {
-      const results = await adminApi.searchDishes(searchQuery)
+      const results = await adminApi.searchDishes(query)
       setSearchResults(results)
+      setLastSearched(query)
     } catch (error) {
       logger.error('Error searching dishes:', error)
-      setMessage({ type: 'error', text: 'Search failed' })
+      toast.error(getUserMessage(error, 'searching dishes'))
     } finally {
       setSearching(false)
     }
@@ -120,36 +191,50 @@ export function Admin() {
 
   function handleEdit(dish) {
     setEditingDishId(dish.id)
-    setRestaurantId(dish.restaurant_id)
-    setDishName(dish.name)
-    setCategory(dish.category)
-    setPrice(dish.price ? String(dish.price) : '')
+    setRestaurantId(dish.restaurant_id || dish.restaurants?.id || '')
+    setDishName(dish.name || '')
+    setCategory(dish.category || '')
+    setPrice(dish.price != null ? String(dish.price) : '')
     setPhotoUrl(dish.photo_url || '')
+    setFormError(null)
     // Scroll to form
-    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
     window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
   }
 
-  function handleCancelEdit() {
-    setEditingDishId(null)
+  function resetForm() {
     setRestaurantId('')
     setDishName('')
     setCategory('')
     setPrice('')
     setPhotoUrl('')
+    setFormError(null)
+  }
+
+  function handleCancelEdit() {
+    setEditingDishId(null)
+    resetForm()
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
 
-    if (!restaurantId || !dishName || !category) {
-      setMessage({ type: 'error', text: 'Please fill in restaurant, dish name, and category' })
+    const name = dishName.trim()
+    if (!restaurantId || !name || !category) {
+      setFormError('Please fill in restaurant, dish name, and category')
+      return
+    }
+
+    const contentError = validateUserContent(name, 'Dish name')
+    if (contentError) {
+      setFormError(contentError)
       return
     }
 
     // Validate price is a valid number if provided
     if (price && (isNaN(parseFloat(price)) || parseFloat(price) < 0)) {
-      setMessage({ type: 'error', text: 'Please enter a valid price (positive number)' })
+      setFormError('Please enter a valid price (positive number)')
       return
     }
 
@@ -158,56 +243,44 @@ export function Admin() {
       try {
         const url = new URL(photoUrl)
         if (!['http:', 'https:'].includes(url.protocol)) {
-          setMessage({ type: 'error', text: 'Photo URL must use http or https protocol' })
+          setFormError('Photo URL must use http or https protocol')
           return
         }
       } catch {
-        setMessage({ type: 'error', text: 'Please enter a valid photo URL' })
+        setFormError('Please enter a valid photo URL')
         return
       }
     }
 
     setSubmitting(true)
-    setMessage(null)
+    setFormError(null)
 
     try {
+      const params = {
+        restaurantId,
+        name,
+        category,
+        price: price ? parseFloat(price) : null,
+        photoUrl,
+      }
       if (editingDishId) {
-        // Update existing dish
-        await adminApi.updateDish(editingDishId, {
-          restaurantId,
-          name: dishName,
-          category,
-          price: price ? parseFloat(price) : null,
-          photoUrl,
-        })
-        setMessage({ type: 'success', text: `Updated "${dishName}" successfully!` })
+        await adminApi.updateDish(editingDishId, params)
+        toast.success(`Updated "${name}"`)
         setEditingDishId(null)
       } else {
-        // Add new dish
-        await adminApi.addDish({
-          restaurantId,
-          name: dishName,
-          category,
-          price: price ? parseFloat(price) : null,
-          photoUrl,
-        })
-        setMessage({ type: 'success', text: `Added "${dishName}" successfully!` })
+        await adminApi.addDish(params)
+        toast.success(`Added "${name}"`)
       }
-      // Reset form
-      setRestaurantId('')
-      setDishName('')
-      setCategory('')
-      setPrice('')
-      setPhotoUrl('')
+      resetForm()
       // Refresh lists
       fetchRecentDishes()
-      if (searchQuery) {
-        const results = await adminApi.searchDishes(searchQuery)
+      if (lastSearched) {
+        const results = await adminApi.searchDishes(lastSearched)
         setSearchResults(results)
       }
     } catch (error) {
       logger.error('Error saving dish:', error)
-      setMessage({ type: 'error', text: `Failed to save dish: ${error.message}` })
+      toast.error(getUserFacingMessage(error, 'saving the dish'))
     } finally {
       setSubmitting(false)
     }
@@ -218,11 +291,11 @@ export function Admin() {
 
     try {
       await adminApi.deleteDish(dishId)
-      setMessage({ type: 'success', text: `Deleted "${deletedDishName}"` })
+      toast.success(`Deleted "${deletedDishName}"`)
       fetchRecentDishes()
       // Also refresh search results if searching
-      if (searchQuery) {
-        const results = await adminApi.searchDishes(searchQuery)
+      if (lastSearched) {
+        const results = await adminApi.searchDishes(lastSearched)
         setSearchResults(results)
       }
       // Clear edit mode if deleting the dish being edited
@@ -231,42 +304,88 @@ export function Admin() {
       }
     } catch (error) {
       logger.error('Error deleting dish:', error)
-      setMessage({ type: 'error', text: `Failed to delete: ${error.message}` })
+      toast.error(getUserFacingMessage(error, 'deleting the dish'))
     }
   }
 
   async function handleGenerateInvite() {
+    if (generating) return
     if (!inviteRestaurantId) {
-      setMessage({ type: 'error', text: 'Select a restaurant first' })
+      toast.error('Select a restaurant first')
       return
     }
 
+    setGenerating(true)
     try {
       const { token } = await restaurantManagerApi.createInvite(inviteRestaurantId)
       const link = `${window.location.origin}/invite/${token}`
       setInviteLink(link)
-      setMessage({ type: 'success', text: 'Invite link generated!' })
+      toast.success('Invite link generated')
     } catch (error) {
       logger.error('Error generating invite:', error)
-      setMessage({ type: 'error', text: `Failed to generate invite: ${error.message}` })
+      toast.error(getUserFacingMessage(error, 'generating the invite'))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  function handleCopyInvite() {
+    // Use a temporary textarea for maximum compatibility.
+    // navigator.clipboard.writeText loses user-gesture context
+    // on mobile Safari when called with async/await.
+    const ta = document.createElement('textarea')
+    ta.value = inviteLink
+    ta.style.position = 'fixed'
+    ta.style.left = '-9999px'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    let copied = false
+    try {
+      // execCommand returns false (rather than throwing) when the copy is blocked
+      copied = document.execCommand('copy')
+    } catch {
+      copied = false
+    }
+    document.body.removeChild(ta)
+    if (copied) {
+      toast.success('Invite link copied')
+    } else {
+      toast.error('Copy failed. Long-press the link to copy it.')
     }
   }
 
   async function fetchManagers(selectedRestaurantId) {
+    managersReqRef.current = selectedRestaurantId
+    setManagersError(null)
     if (!selectedRestaurantId) {
       setManagers([])
+      setManagersLoading(false)
       return
     }
 
     setManagersLoading(true)
     try {
       const data = await restaurantManagerApi.getManagersForRestaurant(selectedRestaurantId)
+      // Ignore responses for a restaurant that is no longer selected
+      if (managersReqRef.current !== selectedRestaurantId) return
       setManagers(data)
     } catch (err) {
+      if (managersReqRef.current !== selectedRestaurantId) return
       logger.error('Error fetching managers:', err)
+      setManagersError(err)
     } finally {
-      setManagersLoading(false)
+      if (managersReqRef.current === selectedRestaurantId) setManagersLoading(false)
     }
+  }
+
+  function clearInviteSelection() {
+    managersReqRef.current = null
+    setInviteRestaurantId('')
+    setInviteLink('')
+    setManagers([])
+    setManagersError(null)
+    setManagersLoading(false)
   }
 
   async function handleRevokeManager(managerId, name) {
@@ -275,117 +394,94 @@ export function Admin() {
     try {
       await restaurantManagerApi.removeManager(managerId)
       setManagers(prev => prev.filter(m => m.id !== managerId))
-      setMessage({ type: 'success', text: 'Manager access revoked' })
+      toast.success('Manager access revoked')
     } catch (error) {
       logger.error('Error revoking manager:', error)
-      setMessage({ type: 'error', text: `Failed to revoke: ${error.message}` })
+      toast.error(getUserFacingMessage(error, 'revoking access'))
     }
   }
 
   // Show loading while checking auth or admin status
   if (authLoading || loading || !adminCheckDone) {
+    return <Spinner />
+  }
+
+  // Unauthorized (the route is wrapped in ProtectedRoute, so the user is signed in)
+  if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--color-primary)' }}></div>
-          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Loading...</p>
+      <div
+        className="min-h-screen flex flex-col"
+        style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+      >
+        <PageHeader onBack={goBack} standalone />
+        {/* Emoji → title → subtitle → action, all from EmptyState; the h1 is for screen readers */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <h1 className="sr-only">Access denied</h1>
+          <EmptyState
+            emoji="🔒"
+            title="Access denied"
+            subtitle="You don't have permission to access the admin area."
+            action={
+              <button onClick={() => navigate('/')} className={PRIMARY_BUTTON_CLASS} style={primaryStyle(false)}>
+                Go home
+              </button>
+            }
+          />
         </div>
       </div>
     )
   }
 
-  // Unauthorized - not logged in or not an admin
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
-        <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
-            <span className="text-2xl">🔒</span>
-          </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-            Access Denied
-          </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-            {!user
-              ? "You need to be logged in to access this page."
-              : "You don't have permission to access the admin area."
-            }
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            Go Home
-          </button>
-        </div>
-      </div>
-    )
-  }
+  const inviteQuery = inviteSearch.trim().toLowerCase()
+  const filteredRestaurants = inviteQuery
+    ? restaurants.filter(r => r.name.toLowerCase().includes(inviteQuery) || (r.address || '').toLowerCase().includes(inviteQuery))
+    : restaurants
+  const categoryIsUnlisted = category && !ALL_CATEGORIES.some(c => c.id === category)
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--color-surface)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+    >
       {/* Header */}
-      <header className="px-4 py-4 border-b" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              Admin - {editingDishId ? 'Edit Dish' : 'Add Dishes'}
-            </h1>
-          </div>
-          {editingDishId && (
-            <button
-              onClick={handleCancelEdit}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-              style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
-            >
-              Cancel Edit
-            </button>
-          )}
-        </div>
-      </header>
-
-      <div className="max-w-lg mx-auto px-4 py-6">
-        {/* Message */}
-        {message && (
-          <div
-            className="mb-4 p-3 rounded-lg text-sm font-medium"
-            style={message.type === 'error'
-              ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
-              : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
-            }
+      <PageHeader
+        title="Admin"
+        meta={editingDishId ? 'Edit dish' : 'Add dishes'}
+        onBack={goBack}
+        standalone
+        contained
+        actions={editingDishId && (
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            className={SECONDARY_BUTTON_CLASS}
+            style={SECONDARY_BUTTON_STYLE}
           >
-            {message.text}
-          </div>
+            Cancel edit
+          </button>
         )}
+      />
 
-        {/* Add Dish Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        {/* Add / Edit Dish Form */}
+        <form onSubmit={handleSubmit} className="rounded-xl p-4 space-y-4" style={CARD_STYLE}>
           {/* Restaurant */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label htmlFor="admin-restaurant" className={LABEL_CLASS} style={LABEL_STYLE}>
               Restaurant *
             </label>
             <select
+              id="admin-restaurant"
               value={restaurantId}
               onChange={(e) => setRestaurantId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
               required
             >
-              <option value="">Select a restaurant...</option>
+              <option value="">Select a restaurant…</option>
               {restaurants.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name} - {r.address}
+                  {r.name}{r.address ? ` - ${r.address}` : ''}
                 </option>
               ))}
             </select>
@@ -393,33 +489,37 @@ export function Admin() {
 
           {/* Dish Name */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
-              Dish Name *
+            <label htmlFor="admin-dish-name" className={LABEL_CLASS} style={LABEL_STYLE}>
+              Dish name *
             </label>
             <input
+              id="admin-dish-name"
               type="text"
+              autoComplete="off"
               value={dishName}
               onChange={(e) => setDishName(e.target.value)}
               placeholder="e.g., Chicken Tendys"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
               required
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label htmlFor="admin-category" className={LABEL_CLASS} style={LABEL_STYLE}>
               Category *
             </label>
             <select
+              id="admin-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
               required
             >
-              <option value="">Select a category...</option>
+              <option value="">Select a category…</option>
+              {categoryIsUnlisted && <option value={category}>{category}</option>}
               {ALL_CATEGORIES.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.label}
@@ -430,304 +530,269 @@ export function Admin() {
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label htmlFor="admin-price" className={LABEL_CLASS} style={LABEL_STYLE}>
               Price ($)
             </label>
             <input
+              id="admin-price"
               type="number"
+              inputMode="decimal"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="e.g., 12.99"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
             />
           </div>
 
           {/* Photo URL */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label htmlFor="admin-photo-url" className={LABEL_CLASS} style={LABEL_STYLE}>
               Photo URL (optional)
             </label>
             <input
+              id="admin-photo-url"
               type="url"
+              inputMode="url"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={photoUrl}
               onChange={(e) => setPhotoUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              aria-describedby="admin-photo-url-help"
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
             />
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
-              Leave blank to use category default image
+            <p id="admin-photo-url-help" className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+              Use a Supabase storage or Unsplash link. Other hosts won't display. Leave blank to use the category image.
             </p>
           </div>
+
+          {formError && (
+            <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>{formError}</p>
+          )}
 
           {/* Submit */}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 rounded-lg font-semibold transition-all disabled:opacity-50"
-            style={{ background: editingDishId ? 'var(--color-green-dark)' : 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className={`w-full ${PRIMARY_BUTTON_CLASS}`}
+            style={primaryStyle(submitting)}
           >
             {submitting
-              ? (editingDishId ? 'Updating...' : 'Adding...')
-              : (editingDishId ? 'Update Dish' : 'Add Dish')
+              ? (editingDishId ? 'Updating…' : 'Adding…')
+              : (editingDishId ? 'Update dish' : 'Add dish')
             }
           </button>
         </form>
 
         {/* Search Dishes */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
-            Search Dishes
-          </h2>
-          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by dish name..."
-              className="flex-1 px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
-            />
+        <section className="mt-8">
+          <SectionTitle>Search dishes</SectionTitle>
+          <form onSubmit={handleSearch} role="search" className="flex gap-2 mb-3">
+            <div className="relative flex-1 min-w-0">
+              <label htmlFor="admin-search" className="sr-only">Search dishes</label>
+              <svg
+                className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: 'var(--color-text-tertiary)' }}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                id="admin-search"
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (!e.target.value.trim()) {
+                    setSearchResults([])
+                    setLastSearched('')
+                  }
+                }}
+                placeholder="Search by dish name…"
+                className={`${INPUT_BASE_CLASS} pl-10 pr-4 py-3`}
+                style={PAGE_INPUT_STYLE}
+              />
+            </div>
             <button
               type="submit"
               disabled={searching}
-              className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              className={`flex-shrink-0 ${PRIMARY_BUTTON_CLASS}`}
+              style={primaryStyle(searching)}
             >
-              {searching ? '...' : 'Search'}
+              {searching ? 'Searching…' : 'Search'}
             </button>
           </form>
 
           {/* Search Results */}
           {searchResults.length > 0 && (
-            <div className="space-y-2 mb-6">
-              <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+            <div className="mb-6">
+              <p className="mb-2" style={META_STYLE}>
+                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{lastSearched}"
               </p>
-              {searchResults.map((dish) => (
-                <div
-                  key={dish.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                  style={{
-                    background: 'var(--color-bg)',
-                    borderColor: 'var(--color-divider)',
-                    boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
-                      {dish.name}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
-                      {dish.restaurants?.name} · {dish.category} {dish.price ? `· $${dish.price}` : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 ml-2">
-                    <button
-                      onClick={() => handleEdit(dish)}
-                      className="text-sm font-medium" style={{ color: 'var(--color-blue)' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(dish.id, dish.name)}
-                      className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+              <div className="rounded-xl overflow-hidden" style={CARD_STYLE}>
+                {searchResults.map((dish, index) => (
+                  <AdminDishRow
+                    key={dish.id}
+                    dish={dish}
+                    isEditing={editingDishId === dish.id}
+                    isLast={index === searchResults.length - 1}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
             </div>
           )}
-          {searchQuery && searchResults.length === 0 && !searching && (
-            <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)' }}>
-              No dishes found for "{searchQuery}"
-            </p>
+          {lastSearched && !searching && searchResults.length === 0 && (
+            <EmptyState emoji="🔍" title={`No dishes match "${lastSearched}"`} />
           )}
-        </div>
+        </section>
 
         {/* Recent Dishes */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
-            Recent Dishes
-          </h2>
-          <div className="space-y-2">
-            {recentDishes.map((dish) => (
-              <div
-                key={dish.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-                style={{
-                  background: 'var(--color-bg)',
-                  borderColor: 'var(--color-divider)',
-                  boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
-                }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
-                    {dish.name}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
-                    {dish.restaurants?.name} · {dish.category} {dish.price ? `· $${dish.price}` : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  <button
-                    onClick={() => handleEdit(dish)}
-                    className="text-sm font-medium" style={{ color: 'var(--color-blue)' }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(dish.id, dish.name)}
-                    className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-            {recentDishes.length === 0 && (
-              <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)' }}>
-                No dishes yet
-              </p>
-            )}
-          </div>
-        </div>
+        <section className="mt-8">
+          <SectionTitle>Recent dishes</SectionTitle>
+          {recentDishes.length > 0 ? (
+            <div className="rounded-xl overflow-hidden" style={CARD_STYLE}>
+              {recentDishes.map((dish, index) => (
+                <AdminDishRow
+                  key={dish.id}
+                  dish={dish}
+                  isEditing={editingDishId === dish.id}
+                  isLast={index === recentDishes.length - 1}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No dishes yet" />
+          )}
+        </section>
 
         {/* Restaurant Managers Section */}
-        <div className="mt-8 pt-8 border-t" style={{ borderColor: 'var(--color-divider)' }}>
-          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-            Restaurant Managers
-          </h2>
+        <section className="mt-8 pt-8" style={{ borderTop: '1px solid var(--color-divider)' }}>
+          <SectionTitle>Restaurant managers</SectionTitle>
 
           {/* Restaurant selector (searchable) */}
-          <div className="mb-4 relative" ref={inviteSearchRef}>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+          <div className="mb-4" ref={inviteSearchRef}>
+            <label htmlFor="invite-restaurant" className={LABEL_CLASS} style={LABEL_STYLE}>
               Restaurant
             </label>
-            <input
-              type="text"
-              value={inviteSearch}
-              onChange={(e) => {
-                setInviteSearch(e.target.value)
-                setInviteDropdownOpen(true)
-                if (inviteRestaurantId) {
-                  setInviteRestaurantId('')
-                  setInviteLink('')
-                  setManagers([])
-                }
-              }}
-              onFocus={() => setInviteDropdownOpen(true)}
-              placeholder="Search restaurants..."
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
-            />
-            {inviteRestaurantId && (
-              <button
-                onClick={() => {
-                  setInviteRestaurantId('')
-                  setInviteSearch('')
-                  setInviteLink('')
-                  setManagers([])
+            <div className="relative">
+              <input
+                id="invite-restaurant"
+                type="text"
+                autoComplete="off"
+                value={inviteSearch}
+                onChange={(e) => {
+                  setInviteSearch(e.target.value)
+                  setInviteDropdownOpen(true)
+                  if (inviteRestaurantId) clearInviteSelection()
                 }}
-                className="absolute right-2 top-[34px] text-sm px-1"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                ✕
-              </button>
-            )}
-            {inviteDropdownOpen && !inviteRestaurantId && (
-              <div
-                className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
-              >
-                {restaurants
-                  .filter((r) => {
-                    if (!inviteSearch.trim()) return true
-                    const q = inviteSearch.toLowerCase()
-                    return r.name.toLowerCase().includes(q) || (r.address || '').toLowerCase().includes(q)
-                  })
-                  .map((r) => (
+                onFocus={() => setInviteDropdownOpen(true)}
+                placeholder="Search restaurants…"
+                className={`${INPUT_BASE_CLASS} pl-4 pr-11 py-3`}
+                style={PAGE_INPUT_STYLE}
+              />
+              {inviteRestaurantId && (
+                <button
+                  type="button"
+                  aria-label="Clear restaurant"
+                  onClick={() => {
+                    clearInviteSelection()
+                    setInviteSearch('')
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              {inviteDropdownOpen && !inviteRestaurantId && (
+                <div
+                  className="absolute left-0 top-full z-10 w-full mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-xl"
+                  style={{
+                    background: 'var(--color-surface-elevated)',
+                    border: '1px solid var(--color-divider)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  {filteredRestaurants.map((r) => (
                     <button
+                      type="button"
                       key={r.id}
                       onClick={() => {
                         setInviteRestaurantId(r.id)
                         setInviteSearch(r.name)
                         setInviteDropdownOpen(false)
                         setInviteLink('')
+                        setManagers([])
                         fetchManagers(r.id)
                       }}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-[color:var(--color-surface-elevated)] transition-colors"
+                      className="w-full text-left px-4 py-3 min-h-[44px] text-sm"
                       style={{ color: 'var(--color-text-primary)' }}
                     >
                       <span className="font-medium">{r.name}</span>
-                      <span className="ml-1" style={{ color: 'var(--color-text-tertiary)' }}>- {r.address}</span>
+                      {r.address && (
+                        <span className="ml-1" style={{ color: 'var(--color-text-tertiary)' }}>- {r.address}</span>
+                      )}
                     </button>
                   ))}
-                {restaurants.filter((r) => {
-                  if (!inviteSearch.trim()) return true
-                  const q = inviteSearch.toLowerCase()
-                  return r.name.toLowerCase().includes(q) || (r.address || '').toLowerCase().includes(q)
-                }).length === 0 && (
-                  <p className="px-3 py-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                    No restaurants found
-                  </p>
-                )}
-              </div>
-            )}
+                  {filteredRestaurants.length === 0 && (
+                    <p className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+                      No restaurants found
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Generate Invite */}
           {inviteRestaurantId && (
-            <div className="mb-4">
+            <div className="mb-6">
               <button
                 onClick={handleGenerateInvite}
-                className="px-4 py-2 rounded-lg font-medium transition-all text-sm"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                disabled={generating}
+                className={PRIMARY_BUTTON_CLASS}
+                style={primaryStyle(generating)}
               >
-                Generate Invite Link
+                {generating ? 'Generating…' : 'Generate invite link'}
               </button>
 
               {inviteLink && (
-                <div className="mt-3 p-3 rounded-lg border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                    Invite Link (expires in 7 days):
-                  </p>
+                <div className="mt-3 rounded-xl p-4" style={CARD_STYLE}>
+                  <label htmlFor="invite-link" className="block mb-1.5" style={META_STYLE}>
+                    Invite link (expires in 7 days)
+                  </label>
                   <div className="flex items-center gap-2">
                     <input
-                      ref={inviteInputRef}
+                      id="invite-link"
                       type="text"
                       readOnly
                       value={inviteLink}
-                      className="flex-1 px-2 py-1 border rounded text-xs"
-                      style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+                      onFocus={(e) => e.target.select()}
+                      className={`flex-1 min-w-0 ${INPUT_CLASS}`}
+                      style={INPUT_STYLE}
                     />
                     <button
-                      onClick={() => {
-                        // Use a temporary textarea for maximum compatibility.
-                        // navigator.clipboard.writeText loses user-gesture context
-                        // on mobile Safari when called with async/await.
-                        const ta = document.createElement('textarea')
-                        ta.value = inviteLink
-                        ta.style.position = 'fixed'
-                        ta.style.left = '-9999px'
-                        document.body.appendChild(ta)
-                        ta.focus()
-                        ta.select()
-                        try {
-                          document.execCommand('copy')
-                          setMessage({ type: 'success', text: 'Link copied!' })
-                        } catch {
-                          setMessage({ type: 'error', text: 'Copy failed — please select and copy manually' })
-                        }
-                        document.body.removeChild(ta)
-                      }}
-                      className="px-3 py-1 rounded text-xs font-medium"
-                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      onClick={handleCopyInvite}
+                      className={`flex-shrink-0 ${PRIMARY_BUTTON_CLASS}`}
+                      style={primaryStyle(false)}
                     >
                       Copy
                     </button>
@@ -740,21 +805,36 @@ export function Admin() {
           {/* Current Managers */}
           {inviteRestaurantId && (
             <div>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                Current Managers
-              </h3>
+              <SectionTitle as="h3" size={22}>Current managers</SectionTitle>
               {managersLoading ? (
-                <p className="text-sm py-2" style={{ color: 'var(--color-text-tertiary)' }}>Loading...</p>
+                <div className="space-y-3 animate-pulse" role="status" aria-label="Loading managers">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="h-16 rounded-xl" style={{ background: 'var(--color-divider)' }} />
+                  ))}
+                </div>
+              ) : managersError ? (
+                <div className="py-4">
+                  <p role="alert" className="text-sm mb-3" style={{ color: 'var(--color-danger)' }}>
+                    {getUserMessage(managersError, 'loading managers')}
+                  </p>
+                  <button
+                    onClick={() => fetchManagers(inviteRestaurantId)}
+                    className={PRIMARY_BUTTON_CLASS}
+                    style={primaryStyle(false)}
+                  >
+                    Try again
+                  </button>
+                </div>
               ) : managers.length > 0 ? (
-                <div className="space-y-2">
-                  {managers.map((mgr) => (
+                <div className="rounded-xl overflow-hidden" style={CARD_STYLE}>
+                  {managers.map((mgr, index) => (
                     <div
                       key={mgr.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                      style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                      className="px-4 py-2 flex items-center justify-between gap-2"
+                      style={{ borderBottom: index < managers.length - 1 ? '1px solid var(--color-divider)' : 'none' }}
                     >
-                      <div>
-                        <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                      <div className="flex-1 min-w-0 py-1">
+                        <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
                           {mgr.profiles?.display_name || 'Unknown'}
                         </p>
                         <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -763,7 +843,8 @@ export function Admin() {
                       </div>
                       <button
                         onClick={() => handleRevokeManager(mgr.id, mgr.profiles?.display_name)}
-                        className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
+                        className={`${ROW_ACTION_CLASS} -mr-3 flex-shrink-0`}
+                        style={{ color: 'var(--color-danger)' }}
                       >
                         Revoke
                       </button>
@@ -771,14 +852,12 @@ export function Admin() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm py-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                  No managers assigned yet
-                </p>
+                <EmptyState title="No managers assigned yet" />
               )}
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   )
 }

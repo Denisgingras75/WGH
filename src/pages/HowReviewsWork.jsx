@@ -1,34 +1,19 @@
-import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { TrustBadge } from '../components/TrustBadge'
+import { TRUST_BADGE_LEGEND } from '../constants/jitter'
+import { AMATIC_TITLE } from '../constants/styles'
+
+const sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 export function HowReviewsWork() {
-  const navigate = useNavigate()
-
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
-      <header className="px-5 pt-6 pb-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm font-medium mb-4"
-          style={{ color: 'var(--color-primary)' }}
-        >
-          &#8592; Back
-        </button>
-        <h1
-          className="font-bold"
-          style={{ color: 'var(--color-text-primary)', fontSize: '26px', letterSpacing: '-0.02em' }}
-        >
-          How Our Reviews Work
-        </h1>
-      </header>
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+      <PageHeader title="How Our Reviews Work" />
 
-      <div className="px-5 space-y-8">
+      <div className="px-4 py-5 space-y-8">
         {/* Section 1: AI-Estimated Ratings */}
         <section>
-          <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
-          >
+          <h2 className="mb-3" style={sectionTitleStyle}>
             Getting Started with Real Data
           </h2>
           <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -36,8 +21,11 @@ export function HowReviewsWork() {
             AI reads what people said about specific dishes and translates their feedback into
             our 1-10 rating scale. These ratings are labeled clearly:
           </p>
-          <div className="mb-3">
+          <div className="flex items-center gap-3 mb-3">
             <TrustBadge type="ai_estimated" size="md" />
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              AI Estimated
+            </span>
           </div>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
             As more locals and visitors rate dishes themselves, AI estimates are gradually
@@ -47,10 +35,7 @@ export function HowReviewsWork() {
 
         {/* Section 2: Human Verification */}
         <section>
-          <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
-          >
+          <h2 className="mb-3" style={sectionTitleStyle}>
             Verified Human Reviews
           </h2>
           <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -60,33 +45,27 @@ export function HowReviewsWork() {
             with more at-bats.
           </p>
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-3">
-              <TrustBadge type="building" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                New reviewers (1-4 reviews)
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <TrustBadge type="human_verified" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                Consistent typing pattern (5+ reviews)
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <TrustBadge type="trusted_reviewer" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                Highly consistent (15+ reviews)
-              </span>
-            </div>
+            {TRUST_BADGE_LEGEND.filter(function (badge) { return badge.type !== 'ai_estimated' }).map(function (badge) {
+              return (
+                <div key={badge.type} className="flex items-center gap-3">
+                  <TrustBadge type={badge.type} size="md" />
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                      {badge.label}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {badge.description}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </section>
 
         {/* Section 3: Why This Matters */}
         <section>
-          <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
-          >
+          <h2 className="mb-3" style={sectionTitleStyle}>
             Why This Matters
           </h2>
           <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -101,13 +80,10 @@ export function HowReviewsWork() {
 
         {/* Section 4: Privacy */}
         <section
-          className="rounded-2xl p-4"
-          style={{ border: '1px solid var(--color-divider)' }}
+          className="rounded-xl p-4"
+          style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
         >
-          <h2
-            className="font-bold mb-2"
-            style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}
-          >
+          <h2 className="mb-3" style={sectionTitleStyle}>
             Your Privacy
           </h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>

@@ -6,7 +6,7 @@ import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
 import { detectRegion } from '../constants/towns'
 
 // Default location: Martha's Vineyard center (between Vineyard Haven, Oak Bluffs, Edgartown)
-const DEFAULT_LOCATION = {
+export const DEFAULT_LOCATION = {
   lat: 41.43,
   lng: -70.56,
 }

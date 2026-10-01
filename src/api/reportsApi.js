@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { createClassifiedError } from '../utils/errorHandler'
+import { createClassifiedError, createUserFacingError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 const VALID_TARGET_TYPES = ['dish', 'review', 'photo', 'user']
@@ -24,10 +24,10 @@ export const reportsApi = {
         throw new Error('Report target is required')
       }
       if (!VALID_REASONS.includes(reason)) {
-        throw new Error('Please pick a reason')
+        throw createUserFacingError('Please pick a reason')
       }
       if (details && details.length > MAX_DETAILS_LENGTH) {
-        throw new Error(`Details must be ${MAX_DETAILS_LENGTH} characters or less`)
+        throw createUserFacingError(`Details must be ${MAX_DETAILS_LENGTH} characters or less`)
       }
 
       const { data, error } = await supabase.rpc('submit_report', {
@@ -42,7 +42,7 @@ export const reportsApi = {
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Could not submit report')
+        throw createUserFacingError(data?.error || 'Could not submit report')
       }
 
       return { success: true, reportId: data.report_id }

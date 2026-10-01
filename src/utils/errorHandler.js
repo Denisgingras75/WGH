@@ -34,8 +34,8 @@ export function classifyError(error) {
   const message = (error.message || '').toLowerCase()
   const code = error.code || error.status
 
-  // Network errors
-  if (message.includes('network') || message.includes('failed to fetch')) {
+  // Network errors (Safari reports "Load failed" where Chrome says "Failed to fetch")
+  if (message.includes('network') || message.includes('failed to fetch') || message.includes('load failed')) {
     return ErrorTypes.NETWORK_ERROR
   }
 
@@ -58,8 +58,8 @@ export function classifyError(error) {
     return ErrorTypes.NOT_FOUND
   }
 
-  // Conflict
-  if (code === 409 || message.includes('conflict') || message.includes('already exists')) {
+  // Conflict (Postgres unique violation = 23505)
+  if (code === 409 || code === '23505' || message.includes('conflict') || message.includes('already exists') || message.includes('duplicate key')) {
     return ErrorTypes.CONFLICT
   }
 
@@ -116,6 +116,20 @@ export function getUserMessage(error, context = '') {
 }
 
 /**
+ * Message for auth flows (sign in, sign up, reset password). Supabase Auth
+ * errors carry readable text ("Invalid login credentials"), so show it as-is —
+ * except raw network failures, which get the classified, human message.
+ * @param {Error} error - The error
+ * @param {string} context - e.g. 'signing in'
+ * @returns {string} User-facing message
+ */
+export function getAuthErrorMessage(error, context = '') {
+  const isNetwork = error?.type === ErrorTypes.NETWORK_ERROR || classifyError(error) === ErrorTypes.NETWORK_ERROR
+  if (isNetwork) return getUserMessage(error, context)
+  return error?.message || getUserMessage(error, context)
+}
+
+/**
  * Create an Error with a classified .type property attached
  * @param {Error} error - The original error
  * @returns {Error} New error with .type and .originalError
@@ -125,6 +139,34 @@ export function createClassifiedError(error) {
   classifiedError.type = classifyError(error)
   classifiedError.originalError = error
   return classifiedError
+}
+
+/**
+ * Classified error whose message is written for end users (e.g. an RPC's
+ * { success: false, error: 'You already reported this' }). UI shows
+ * error.message when error.userFacing is set, otherwise getUserMessage().
+ * @param {string} message - Readable message
+ * @returns {Error} Classified error with userFacing = true
+ */
+export function createUserFacingError(message) {
+  const error = createClassifiedError(new Error(message))
+  error.userFacing = true
+  return error
+}
+
+/**
+ * Message for a failed user action: the error's own text when it was written
+ * for users (createUserFacingError, or a Postgres RAISE EXCEPTION = P0001 from
+ * a trigger/RPC guard), otherwise the classified getUserMessage() text.
+ * @param {Error} error - The error
+ * @param {string} context - e.g. 'saving your list'
+ * @returns {string} User-facing message
+ */
+export function getUserFacingMessage(error, context = '') {
+  if (error?.userFacing || error?.originalError?.code === 'P0001') {
+    return error.message
+  }
+  return getUserMessage(error, context)
 }
 
 /**

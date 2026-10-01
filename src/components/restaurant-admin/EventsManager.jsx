@@ -1,5 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { EVENT_TYPES } from '../../constants/eventTypes'
+import { EmptyState } from '../EmptyState'
+import { CARD_STYLE, INPUT_CLASS, INPUT_STYLE, LABEL_CLASS, LABEL_STYLE, PRIMARY_BUTTON_CLASS, ROW_ACTION_CLASS, SECONDARY_BUTTON_CLASS, SECONDARY_BUTTON_STYLE } from '../../constants/styles'
+
+function formatEventDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return null
+  const [h, m] = timeStr.split(':')
+  const hour = parseInt(h, 10)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return m === '00' ? `${hour12}${ampm}` : `${hour12}:${m}${ampm}`
+}
 
 export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactivate }) {
   const [showForm, setShowForm] = useState(false)
@@ -12,6 +28,13 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
   const [eventType, setEventType] = useState('live_music')
   const [recurringPattern, setRecurringPattern] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const formRef = useRef(null)
+
+  useEffect(() => {
+    if (!showForm) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    formRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }, [showForm, editingId])
 
   function resetForm() {
     setEventName('')
@@ -39,12 +62,13 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
     if (!eventName.trim() || !eventDate) return
 
     setSubmitting(true)
     try {
-      if (editingId) {
-        await onUpdate(editingId, {
+      const ok = editingId
+        ? await onUpdate(editingId, {
           event_name: eventName.trim(),
           description: description.trim() || null,
           event_date: eventDate,
@@ -53,8 +77,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
           event_type: eventType,
           recurring_pattern: recurringPattern || null,
         })
-      } else {
-        await onAdd({
+        : await onAdd({
           restaurantId,
           eventName: eventName.trim(),
           description: description.trim() || null,
@@ -64,10 +87,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
           eventType,
           recurringPattern: recurringPattern || null,
         })
-      }
-      resetForm()
-    } catch {
-      // Parent handles error display via setMessage
+      if (ok) resetForm()
     } finally {
       setSubmitting(false)
     }
@@ -76,120 +96,143 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
   const activeEvents = events.filter(e => e.is_active)
   const inactiveEvents = events.filter(e => !e.is_active)
 
-  function formatEventDate(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00')
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  }
-
-  function formatTime(timeStr) {
-    if (!timeStr) return null
-    const [h, m] = timeStr.split(':')
-    const hour = parseInt(h, 10)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const hour12 = hour % 12 || 12
-    return m === '00' ? `${hour12}${ampm}` : `${hour12}:${m}${ampm}`
-  }
-
   return (
     <div>
       {/* Add/Edit Form Toggle */}
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full py-3 rounded-xl border-2 border-dashed transition-all mb-4"
-          style={{ borderColor: 'var(--color-divider)', color: 'var(--color-primary)' }}
+          className={`w-full mb-4 ${PRIMARY_BUTTON_CLASS}`}
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
-          <span className="font-semibold text-sm">+ Add Event</span>
+          + Add event
         </button>
       ) : (
-        <form onSubmit={handleSubmit} className="mb-4 p-4 rounded-xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-          <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
-            {editingId ? 'Edit Event' : 'New Event'}
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="mb-4 rounded-xl p-4"
+          style={{ ...CARD_STYLE, scrollMarginTop: 'calc(84px + env(safe-area-inset-top))' }}
+        >
+          <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            {editingId ? 'Edit event' : 'New event'}
           </h3>
           <div className="space-y-3">
-            <input
-              type="text"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              placeholder="Event name (e.g., Jazz Night with The Trio)"
-              required
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
-            />
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description (optional)"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
-            />
-            <select
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
-            >
-              {EVENT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-3">
+            <div>
+              <label htmlFor="event-name" className={LABEL_CLASS} style={LABEL_STYLE}>Event name</label>
               <input
-                type="date"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
+                id="event-name"
+                type="text"
+                autoComplete="off"
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="e.g., Jazz Night with The Trio"
                 required
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
               />
+            </div>
+            <div>
+              <label htmlFor="event-description" className={LABEL_CLASS} style={LABEL_STYLE}>Description</label>
+              <input
+                id="event-description"
+                type="text"
+                autoComplete="off"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional"
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
+              />
+            </div>
+            <div>
+              <label htmlFor="event-type" className={LABEL_CLASS} style={LABEL_STYLE}>Type</label>
               <select
-                value={recurringPattern}
-                onChange={(e) => setRecurringPattern(e.target.value)}
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+                id="event-type"
+                value={eventType}
+                onChange={(e) => setEventType(e.target.value)}
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
               >
-                <option value="">One-time</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+                {EVENT_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="flex gap-3">
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                placeholder="Start time"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
-              />
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                placeholder="End time"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <label htmlFor="event-date" className={LABEL_CLASS} style={LABEL_STYLE}>Date</label>
+                <input
+                  id="event-date"
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  required
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                />
+              </div>
+              <div className="min-w-0">
+                <label htmlFor="event-repeats" className={LABEL_CLASS} style={LABEL_STYLE}>Repeats</label>
+                <select
+                  id="event-repeats"
+                  value={recurringPattern}
+                  onChange={(e) => setRecurringPattern(e.target.value)}
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                >
+                  <option value="">One-time</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-              >
-                {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Event'}
-              </button>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <label htmlFor="event-start" className={LABEL_CLASS} style={LABEL_STYLE}>Start time</label>
+                <input
+                  id="event-start"
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                />
+              </div>
+              <div className="min-w-0">
+                <label htmlFor="event-end" className={LABEL_CLASS} style={LABEL_STYLE}>End time</label>
+                <input
+                  id="event-end"
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+                className={`flex-1 ${SECONDARY_BUTTON_CLASS}`}
+                style={SECONDARY_BUTTON_STYLE}
               >
                 Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`flex-1 ${PRIMARY_BUTTON_CLASS}`}
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                  opacity: submitting ? 0.7 : 1,
+                }}
+              >
+                {submitting ? 'Saving…' : editingId ? 'Update' : 'Add event'}
               </button>
             </div>
           </div>
@@ -198,64 +241,62 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
 
       {/* Active Events */}
       {activeEvents.length > 0 && (
-        <div className="space-y-2 mb-4">
-          {activeEvents.map((event) => (
+        <div className="rounded-xl overflow-hidden mb-4" style={CARD_STYLE}>
+          {activeEvents.map((event, index) => (
             <div
               key={event.id}
-              className="p-3 rounded-xl border"
-              style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+              className="px-4 py-2 flex flex-wrap items-start justify-between gap-x-2"
+              style={{
+                background: editingId === event.id ? 'var(--color-primary-muted)' : 'transparent',
+                borderBottom: index < activeEvents.length - 1 ? '1px solid var(--color-divider)' : 'none',
+              }}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                    {event.event_name}
+              <div className="flex-1 min-w-[10rem] py-1">
+                <p className="font-semibold text-sm break-words" style={{ color: 'var(--color-text-primary)' }}>
+                  {event.event_name}
+                </p>
+                {event.description && (
+                  <p className="text-xs mt-0.5 break-words" style={{ color: 'var(--color-text-secondary)' }}>
+                    {event.description}
                   </p>
-                  {event.description && (
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                      {event.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span
-                      className="text-xs font-medium px-1.5 py-0.5 rounded"
-                      style={{
-                        background: 'rgba(var(--color-primary-rgb), 0.15)',
-                        color: 'var(--color-primary)',
-                      }}
-                    >
-                      {EVENT_TYPES.find(t => t.value === event.event_type)?.label || event.event_type}
-                    </span>
+                )}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}
+                  >
+                    {EVENT_TYPES.find(t => t.value === event.event_type)?.label || event.event_type}
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {formatEventDate(event.event_date)}
+                  </span>
+                  {event.start_time && (
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                      {formatEventDate(event.event_date)}
+                      {formatTime(event.start_time)}
                     </span>
-                    {event.start_time && (
-                      <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                        {formatTime(event.start_time)}
-                      </span>
-                    )}
-                    {event.recurring_pattern && (
-                      <span className="text-xs" style={{ color: 'var(--color-accent-gold)' }}>
-                        {event.recurring_pattern}
-                      </span>
-                    )}
-                  </div>
+                  )}
+                  {event.recurring_pattern && (
+                    <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      {event.recurring_pattern}
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 ml-2">
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="text-xs font-medium px-2 py-1 rounded"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDeactivate(event.id)}
-                    className="text-xs font-medium px-2 py-1 rounded"
-                    style={{ color: 'var(--color-danger)' }}
-                  >
-                    Deactivate
-                  </button>
-                </div>
+              </div>
+              <div className="flex items-center gap-2 -mr-3 ml-auto">
+                <button
+                  onClick={() => handleEdit(event)}
+                  className={ROW_ACTION_CLASS}
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDeactivate(event.id)}
+                  className={ROW_ACTION_CLASS}
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  Deactivate
+                </button>
               </div>
             </div>
           ))}
@@ -265,24 +306,22 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
       {/* Inactive Events */}
       {inactiveEvents.length > 0 && (
         <div>
-          <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+          <h3 className="mb-2" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}>
             Inactive
-          </p>
-          <div className="space-y-2 opacity-50">
-            {inactiveEvents.map((event) => (
+          </h3>
+          <div className="rounded-xl overflow-hidden" style={CARD_STYLE}>
+            {inactiveEvents.map((event, index) => (
               <div
                 key={event.id}
-                className="p-3 rounded-xl border flex items-center justify-between"
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="px-4 py-2 flex items-center justify-between gap-2"
+                style={{ borderBottom: index < inactiveEvents.length - 1 ? '1px solid var(--color-divider)' : 'none' }}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm line-through" style={{ color: 'var(--color-text-secondary)' }}>
-                    {event.event_name}
-                  </p>
-                </div>
+                <p className="flex-1 min-w-0 font-medium text-sm line-through break-words" style={{ color: 'var(--color-text-tertiary)' }}>
+                  {event.event_name}
+                </p>
                 <button
                   onClick={() => onUpdate(event.id, { is_active: true })}
-                  className="text-xs font-medium px-2 py-1 rounded"
+                  className={`${ROW_ACTION_CLASS} -mr-3 flex-shrink-0`}
                   style={{ color: 'var(--color-primary)' }}
                 >
                   Reactivate
@@ -295,11 +334,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
 
       {/* Empty State */}
       {events.length === 0 && !showForm && (
-        <div className="text-center py-8">
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-            No events yet. Add your first one!
-          </p>
-        </div>
+        <EmptyState emoji="🎶" title="No events yet" subtitle="Add your first event above" />
       )}
     </div>
   )

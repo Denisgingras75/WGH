@@ -1,8 +1,9 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useLocalLists } from '../../hooks/useLocalLists'
 import { useLocalListDetail } from '../../hooks/useLocalListDetail'
+import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
+import { getRatingColor } from '../../utils/ranking'
 
 // Menu card styles — module-level constants
 var MENU_CARD = {
@@ -14,13 +15,13 @@ var MENU_CARD = {
 var CURATOR_AVATAR = {
   width: '32px', height: '32px', borderRadius: '50%',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontWeight: 700, fontSize: '13px', color: '#fff', flexShrink: 0,
+  fontWeight: 700, fontSize: '13px', color: 'var(--color-text-on-primary)', flexShrink: 0,
   boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
 }
 var CURATOR_NAME = { fontFamily: "'Amatic SC', cursive", fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }
 var CURATOR_TAGLINE = { fontSize: '10px', color: 'var(--color-text-tertiary)', marginTop: '1px', fontStyle: 'italic' }
 var RESTAURANT_HEADER = { fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-accent-gold)', letterSpacing: '0.02em', marginBottom: '3px' }
-var DISH_NAME_STYLE = { fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }
+var DISH_NAME_STYLE = { fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }
 var DISH_DOTS = { flex: 1, borderBottom: '1px dotted var(--color-divider)', minWidth: '12px', alignSelf: 'baseline', marginBottom: '3px' }
 var DISH_RATING_STYLE = { fontSize: '13px', fontWeight: 700, color: 'var(--color-rating)', flexShrink: 0 }
 var MENU_FOOTER = { borderTop: '1px solid var(--color-divider)', paddingTop: '10px', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
@@ -50,10 +51,10 @@ function MenuCard({ list, index }) {
   }
 
   var restaurantCount = groups.length
-  var dishCount = items ? items.length : (list.item_count || 0)
+  var dishCount = items.length > 0 ? items.length : (list.item_count || 0)
 
   return (
-    <div style={MENU_CARD} className="active:scale-[0.98] transition-transform">
+    <div style={MENU_CARD}>
       {/* Curator header */}
       <div className="flex items-center gap-2.5" style={{ marginBottom: '10px' }}>
         {list.avatar_url ? (
@@ -72,7 +73,11 @@ function MenuCard({ list, index }) {
 
       {/* Restaurant-grouped dishes */}
       {loading ? (
-        <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '8px 0' }}>Loading...</p>
+        <div role="status" aria-label="Loading list" className="animate-pulse space-y-2 py-1">
+          <div className="h-3 rounded w-3/4" style={{ background: 'var(--color-divider)' }} />
+          <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-divider)' }} />
+          <div className="h-3 rounded w-1/2" style={{ background: 'var(--color-divider)' }} />
+        </div>
       ) : groups.length > 0 ? (
         groups.slice(0, 3).map(function (group) {
           return (
@@ -84,6 +89,7 @@ function MenuCard({ list, index }) {
                 {group.restaurant_name}
               </button>
               {group.dishes.slice(0, 3).map(function (dish) {
+                var ranked = (dish.total_votes || 0) >= MIN_VOTES_FOR_RANKING && dish.avg_rating != null
                 return (
                   <button
                     key={dish.dish_id}
@@ -93,7 +99,9 @@ function MenuCard({ list, index }) {
                   >
                     <span style={DISH_NAME_STYLE}>{dish.dish_name}</span>
                     <span style={DISH_DOTS} />
-                    <span style={DISH_RATING_STYLE}>{dish.avg_rating ? Number(dish.avg_rating).toFixed(1) : '\u2014'}</span>
+                    <span style={Object.assign({}, DISH_RATING_STYLE, { color: ranked ? getRatingColor(dish.avg_rating) : 'var(--color-text-tertiary)' })}>
+                      {ranked ? Number(dish.avg_rating).toFixed(1) : '\u2014'}
+                    </span>
                   </button>
                 )
               })}
@@ -108,7 +116,9 @@ function MenuCard({ list, index }) {
           {restaurantCount > 0 ? restaurantCount + ' restaurant' + (restaurantCount === 1 ? '' : 's') + ' \u00B7 ' : ''}{dishCount} dish{dishCount === 1 ? '' : 'es'}
         </span>
         <button
+          type="button"
           onClick={function () { navigate('/user/' + list.user_id) }}
+          className="inline-flex items-center min-h-[44px]"
           style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary)' }}
         >
           {'See full list \u2192'}
@@ -118,45 +128,54 @@ function MenuCard({ list, index }) {
   )
 }
 
-export function LocalListsSection({ onListExpanded }) {
+export function LocalListsSection() {
   var { user } = useAuth()
   var { lists, loading } = useLocalLists(user ? user.id : null)
 
-  if (loading || lists.length === 0) return null
+  if (!loading && lists.length === 0) return null
 
   return (
     <div style={{ padding: '8px 0 24px' }}>
       {/* Section header — centered with flanking lines */}
-      <div className="flex items-center gap-4" style={{ padding: '0 20px', marginBottom: '4px' }}>
+      <div className="flex items-center gap-4" style={{ padding: '0 16px', marginBottom: '4px' }}>
         <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
         <div style={{ textAlign: 'center' }}>
-          <p style={{
-            fontFamily: "'Amatic SC', cursive", fontSize: '26px', fontWeight: 700,
-            color: 'var(--color-text-primary)', whiteSpace: 'nowrap', lineHeight: 1.1,
+          <h2 style={{
+            fontFamily: "'Amatic SC', cursive", fontSize: '24px', fontWeight: 700,
+            color: 'var(--color-text-primary)', lineHeight: 1.1, letterSpacing: '0.02em',
           }}>
-            A Local's Guide to <span style={{ color: 'var(--color-primary)' }}>Martha's Vineyard</span>
-          </p>
+            A Local's Guide to Martha's Vineyard
+          </h2>
         </div>
         <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
       </div>
-      <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 500, color: 'var(--color-text-tertiary)', padding: '2px 20px 14px' }}>
+      <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 500, color: 'var(--color-text-tertiary)', padding: '2px 16px 14px' }}>
         Curated by people who live here
       </p>
 
-      {/* Horizontal scroll of menu cards */}
-      <div
-        className="flex overflow-x-auto"
-        style={{
-          gap: '14px', padding: '0 20px 8px',
-          scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-        }}
-      >
-        {lists.map(function (list, i) {
-          return <MenuCard key={list.list_id} list={list} index={i} />
-        })}
-      </div>
+      {loading ? (
+        /* Reserve the card row's space so the carousel below doesn't jump */
+        <div
+          role="status"
+          aria-label="Loading local lists"
+          className="animate-pulse"
+          style={{ margin: '0 16px', width: '270px', height: '380px', borderRadius: '3px', background: 'var(--color-divider)' }}
+        />
+      ) : (
+        /* Horizontal scroll of menu cards */
+        <div
+          className="flex overflow-x-auto scrollbar-hide"
+          style={{
+            gap: '14px', padding: '0 16px 8px',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {lists.map(function (list, i) {
+            return <MenuCard key={list.list_id} list={list} index={i} />
+          })}
+        </div>
+      )}
     </div>
   )
 }

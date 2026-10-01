@@ -7,7 +7,8 @@ export function HearingIcon({ size = 20, className = '', active = false }) {
   return (
     <img
       src="/hearing.webp"
-      alt="heard good here"
+      alt=""
+      aria-hidden="true"
       className={`inline-block object-contain transition-all duration-200 ${className}`}
       style={{
         width: scaledSize,
@@ -20,5 +21,3 @@ export function HearingIcon({ size = 20, className = '', active = false }) {
     />
   )
 }
-
-export default HearingIcon

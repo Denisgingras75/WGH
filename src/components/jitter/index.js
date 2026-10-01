@@ -1,6 +1,5 @@
 export { JitterInput } from './JitterInput'
 export { SessionBadge } from './SessionBadge'
-export { SessionCard } from './SessionCard'
 export { ProfileJitterCard } from './ProfileJitterCard'
 export { TrustBadge, TrustSummary } from '../TrustBadge'
 export { JitterExplainer } from './JitterExplainer'

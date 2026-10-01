@@ -68,7 +68,7 @@ export var RestaurantAvatar = memo(function RestaurantAvatar({
           ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
           : { width: size, height: size, background: 'var(--color-surface)', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
         }
-        aria-label={(name || 'Restaurant') + ' icon'}
+        aria-hidden="true"
       >
         {initial}
       </div>
@@ -82,7 +82,7 @@ export var RestaurantAvatar = memo(function RestaurantAvatar({
         ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
         : { width: size, height: size, background: 'var(--color-surface)' }
       }
-      aria-label={(name || 'Restaurant') + ' icon'}
+      aria-hidden="true"
     >
       <img
         src={iconSrc}
@@ -96,8 +96,3 @@ export var RestaurantAvatar = memo(function RestaurantAvatar({
     </div>
   )
 })
-
-// Keep getTownStyle export for backwards compat (used by EventCard, SpecialCard)
-export function getTownStyle(town) {
-  return { bg: 'var(--color-surface)', text: 'var(--color-text-tertiary)', isGradient: false }
-}

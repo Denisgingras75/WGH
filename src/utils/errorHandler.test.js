@@ -5,6 +5,10 @@ import {
   isRetryable,
   withRetry,
   ErrorTypes,
+  getAuthErrorMessage,
+  createUserFacingError,
+  getUserFacingMessage,
+  createClassifiedError,
 } from '../utils/errorHandler'
 
 describe('Error Handler Utilities', () => {
@@ -172,3 +176,24 @@ describe('Error Handler Utilities', () => {
 
 // Add vitest import for vi.fn() mocking in test
 import { vi } from 'vitest'
+
+describe('user-facing error helpers', () => {
+  it('classifies Safari "Load failed" as a network error', () => {
+    expect(classifyError(new Error('Load failed'))).toBe(ErrorTypes.NETWORK_ERROR)
+  })
+
+  it('classifies Postgres unique violations as conflicts', () => {
+    expect(classifyError({ code: '23505', message: 'duplicate key value violates unique constraint' })).toBe(ErrorTypes.CONFLICT)
+  })
+
+  it('getAuthErrorMessage shows auth text but humanizes network failures', () => {
+    expect(getAuthErrorMessage(new Error('Invalid login credentials'), 'signing in')).toBe('Invalid login credentials')
+    expect(getAuthErrorMessage(new Error('Failed to fetch'), 'signing in')).toMatch(/No internet connection while signing in/)
+  })
+
+  it('getUserFacingMessage passes through user-facing and P0001 messages only', () => {
+    expect(getUserFacingMessage(createUserFacingError('You already reported this'), 'reporting')).toBe('You already reported this')
+    expect(getUserFacingMessage(createClassifiedError({ code: 'P0001', message: 'Playlist limit reached' }), 'saving')).toBe('Playlist limit reached')
+    expect(getUserFacingMessage(new Error('relation "x" does not exist'), 'saving')).toBe('Something went wrong while saving. Please try again.')
+  })
+})

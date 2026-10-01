@@ -8,7 +8,8 @@ import { useState } from 'react'
 export function ProfileJitterCard({ profile, user, userProfile, displayName, isPublic }) {
   const [expanded, setExpanded] = useState(false)
 
-  if (!profile) return null
+  // Flagged (suspected bot) profiles never get a positive public trust card
+  if (!profile || profile.flagged) return null
 
   const data = profile.profile_data || {}
   const hasPrivateData = !isPublic && Object.keys(data).length > 0
@@ -43,7 +44,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
           {/* Right side — title, tier, description */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
                 Review Fingerprint
               </span>
               <span
@@ -141,7 +142,12 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 function StatCell({ label, value }) {
   return (
     <div>
-      <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{value}</div>
+      <div
+        className="text-lg"
+        style={{ color: 'var(--color-text-primary)', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}
+      >
+        {value}
+      </div>
       <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{label}</div>
     </div>
   )

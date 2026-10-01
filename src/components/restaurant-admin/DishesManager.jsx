@@ -1,6 +1,9 @@
-import { useState } from 'react'
-import { MAIN_CATEGORIES } from '../../constants/categories'
+import { useState, useEffect, useRef } from 'react'
+import { ALL_CATEGORIES } from '../../constants/categories'
+import { sanitizeUrl } from '../../utils/sanitize'
+import { EmptyState } from '../EmptyState'
 import { MenuImportWizard } from './MenuImportWizard'
+import { CARD_STYLE, INPUT_CLASS, INPUT_STYLE, LABEL_CLASS, LABEL_STYLE, PRIMARY_BUTTON_CLASS, ROW_ACTION_CLASS, SECONDARY_BUTTON_CLASS, SECONDARY_BUTTON_STYLE } from '../../constants/styles'
 
 export function DishesManager({ restaurantId, dishes, onAdd, onUpdate, onDelete, onBulkAdd, restaurantName }) {
   const [showForm, setShowForm] = useState(false)
@@ -10,14 +13,25 @@ export function DishesManager({ restaurantId, dishes, onAdd, onUpdate, onDelete,
   const [category, setCategory] = useState('')
   const [price, setPrice] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
+  const [formError, setFormError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const formRef = useRef(null)
+
+  // Bring the form into view when it opens or switches to another dish —
+  // Edit on a row far down the list otherwise looks like it did nothing.
+  useEffect(() => {
+    if (!showForm) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    formRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }, [showForm, editingId])
 
   function resetForm() {
     setName('')
     setCategory('')
     setPrice('')
     setPhotoUrl('')
+    setFormError(null)
     setEditingId(null)
     setShowForm(false)
   }
@@ -26,36 +40,41 @@ export function DishesManager({ restaurantId, dishes, onAdd, onUpdate, onDelete,
     setEditingId(dish.id)
     setName(dish.name || '')
     setCategory(dish.category || '')
-    setPrice(dish.price ? String(dish.price) : '')
+    setPrice(dish.price != null ? String(dish.price) : '')
     setPhotoUrl(dish.photo_url || '')
+    setFormError(null)
     setShowForm(true)
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
     if (!name.trim() || (!editingId && !category)) return
+
+    if (photoUrl.trim() && !sanitizeUrl(photoUrl)) {
+      setFormError('Photo URL must start with http:// or https://')
+      return
+    }
+    setFormError(null)
 
     setSubmitting(true)
     try {
-      if (editingId) {
-        await onUpdate(editingId, {
+      const ok = editingId
+        ? await onUpdate(editingId, {
           name: name.trim(),
           price: price || null,
           photoUrl: photoUrl || null,
-          category,
+          // Blank select must never overwrite the stored category with ''
+          category: category || undefined,
         })
-      } else {
-        await onAdd({
+        : await onAdd({
           restaurantId,
           name: name.trim(),
           category,
           price: price || null,
           photoUrl: photoUrl || null,
         })
-      }
-      resetForm()
-    } catch {
-      // Parent handles error display via setMessage
+      if (ok) resetForm()
     } finally {
       setSubmitting(false)
     }
@@ -76,107 +95,143 @@ export function DishesManager({ restaurantId, dishes, onAdd, onUpdate, onDelete,
     grouped[cat].push(dish)
   }
   const categoryKeys = Object.keys(grouped).sort()
+  const categoryIsUnlisted = category && !ALL_CATEGORIES.some(c => c.id === category)
 
   // Show import wizard
   if (showImport) {
     return (
-      <div>
-        <MenuImportWizard
-          restaurantName={restaurantName}
-          onBulkAdd={onBulkAdd}
-          onClose={() => setShowImport(false)}
-        />
-      </div>
+      <MenuImportWizard
+        restaurantName={restaurantName}
+        onBulkAdd={onBulkAdd}
+        onClose={() => setShowImport(false)}
+      />
     )
   }
 
   return (
     <div>
-      {/* Import Menu Button (primary) */}
-      {!showForm && (
-        <button
-          onClick={() => setShowImport(true)}
-          className="w-full py-3 rounded-xl font-semibold text-sm transition-all mb-2"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-        >
-          Import Menu
-        </button>
-      )}
-
-      {/* Add/Edit Form Toggle */}
       {!showForm ? (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full py-3 rounded-xl border-2 border-dashed transition-all mb-4"
-          style={{ borderColor: 'var(--color-divider)', color: 'var(--color-primary)' }}
-        >
-          <span className="font-semibold text-sm">+ Add Dish</span>
-        </button>
+        <div className="space-y-2 mb-4">
+          <button
+            onClick={() => setShowImport(true)}
+            className={`w-full ${PRIMARY_BUTTON_CLASS}`}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          >
+            Import menu
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className={`w-full ${SECONDARY_BUTTON_CLASS}`}
+            style={SECONDARY_BUTTON_STYLE}
+          >
+            + Add dish
+          </button>
+        </div>
       ) : (
-        <form onSubmit={handleSubmit} className="mb-4 p-4 rounded-xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-          <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
-            {editingId ? 'Edit Dish' : 'New Dish'}
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="mb-4 rounded-xl p-4"
+          style={{ ...CARD_STYLE, scrollMarginTop: 'calc(84px + env(safe-area-inset-top))' }}
+        >
+          <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            {editingId ? 'Edit dish' : 'New dish'}
           </h3>
           <div className="space-y-3">
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Dish name"
-              required
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
-            />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required={!editingId}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
-            >
-              <option value="">Select category...</option>
-              {MAIN_CATEGORIES.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.emoji} {cat.label}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-3">
+            <div>
+              <label htmlFor="dish-name" className={LABEL_CLASS} style={LABEL_STYLE}>Dish name</label>
               <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="Price ($)"
-                step="0.01"
-                min="0"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
-              />
-              <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="Photo URL"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                id="dish-name"
+                type="text"
+                autoComplete="off"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Lobster Roll"
+                required
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
               />
             </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-              >
-                {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Dish'}
-              </button>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <label htmlFor="dish-category" className={LABEL_CLASS} style={LABEL_STYLE}>Category</label>
+                <select
+                  id="dish-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  required={!editingId}
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                >
+                  <option value="">Select category…</option>
+                  {categoryIsUnlisted && <option value={category}>{category}</option>}
+                  {ALL_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="min-w-0">
+                <label htmlFor="dish-price" className={LABEL_CLASS} style={LABEL_STYLE}>Price</label>
+                <input
+                  id="dish-price"
+                  type="number"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="$"
+                  step="0.01"
+                  min="0"
+                  className={INPUT_CLASS}
+                  style={INPUT_STYLE}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="dish-photo-url" className={LABEL_CLASS} style={LABEL_STYLE}>Photo URL</label>
+              <input
+                id="dish-photo-url"
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={photoUrl}
+                onChange={(e) => { setPhotoUrl(e.target.value); setFormError(null) }}
+                placeholder="https://..."
+                aria-describedby="dish-photo-url-help"
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
+              />
+              <p id="dish-photo-url-help" className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                Use a Supabase storage or Unsplash link. Other hosts won't display.
+              </p>
+            </div>
+            {formError && (
+              <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>{formError}</p>
+            )}
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+                className={`flex-1 ${SECONDARY_BUTTON_CLASS}`}
+                style={SECONDARY_BUTTON_STYLE}
               >
                 Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`flex-1 ${PRIMARY_BUTTON_CLASS}`}
+                style={{
+                  background: 'var(--color-primary)',
+                  color: 'var(--color-text-on-primary)',
+                  opacity: submitting ? 0.7 : 1,
+                }}
+              >
+                {submitting ? 'Saving…' : editingId ? 'Update' : 'Add dish'}
               </button>
             </div>
           </div>
@@ -184,89 +239,101 @@ export function DishesManager({ restaurantId, dishes, onAdd, onUpdate, onDelete,
       )}
 
       {/* Dishes grouped by category */}
-      {categoryKeys.map((cat) => (
-        <div key={cat} className="mb-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
-            {cat}
-          </h3>
-          <div className="space-y-1.5">
-            {grouped[cat].map((dish) => (
-              <div
-                key={dish.id}
-                className="p-3 rounded-xl border transition-colors"
-                style={{ background: 'var(--color-bg)', borderColor: editingId === dish.id ? 'var(--color-primary)' : 'var(--color-divider)' }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                      {dish.name}
-                    </p>
+      {categoryKeys.map((cat) => {
+        const meta = ALL_CATEGORIES.find(c => c.id === cat)
+        const group = grouped[cat]
+        return (
+          <div key={cat} className="mb-4">
+            <h3 className="mb-2" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}>
+              {meta ? `${meta.emoji} ${meta.label}` : cat}
+            </h3>
+            <div className="rounded-xl overflow-hidden" style={CARD_STYLE}>
+              {group.map((dish, index) => {
+                const locked = dish.total_votes > 0
+                return (
+                  <div
+                    key={dish.id}
+                    className="px-4 py-2 flex items-center justify-between gap-2"
+                    style={{
+                      background: editingId === dish.id ? 'var(--color-primary-muted)' : 'transparent',
+                      borderBottom: index < group.length - 1 ? '1px solid var(--color-divider)' : 'none',
+                    }}
+                  >
+                    <div className="flex-1 min-w-0 py-1">
+                      <p className="font-semibold text-sm break-words" style={{ color: 'var(--color-text-primary)' }}>
+                        {dish.name}
+                      </p>
+                      {dish.price != null && (
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                          ${Number(dish.price).toFixed(2)}
+                        </p>
+                      )}
+                      {locked && (
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                          Has ratings, so it can't be removed
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 -mr-3 flex-shrink-0">
+                      {confirmDeleteId === dish.id ? (
+                        <>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className={ROW_ACTION_CLASS}
+                            style={{ color: 'var(--color-text-secondary)' }}
+                          >
+                            No
+                          </button>
+                          <button
+                            onClick={() => handleDelete(dish.id)}
+                            className={ROW_ACTION_CLASS}
+                            style={{ color: 'var(--color-danger)' }}
+                          >
+                            Confirm
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEdit(dish)}
+                            className={ROW_ACTION_CLASS}
+                            style={{ color: 'var(--color-text-secondary)' }}
+                          >
+                            Edit
+                          </button>
+                          {locked ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-3 text-sm font-semibold"
+                              style={{ color: 'var(--color-text-tertiary)' }}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              Locked
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteId(dish.id)}
+                              className={ROW_ACTION_CLASS}
+                              style={{ color: 'var(--color-danger)' }}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 ml-2">
-                    {dish.price && (
-                      <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                        ${Number(dish.price).toFixed(2)}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleEdit(dish)}
-                      className="text-xs font-medium px-2 py-1 rounded"
-                      style={{ color: 'var(--color-text-secondary)' }}
-                    >
-                      Edit
-                    </button>
-                    {dish.total_votes > 0 ? (
-                      <span
-                        title="Locked — this dish has ratings from the community. Contact support to remove."
-                        className="text-xs font-medium px-2 py-1 rounded inline-flex items-center gap-1"
-                        style={{ color: 'var(--color-text-tertiary)' }}
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Locked
-                      </span>
-                    ) : confirmDeleteId === dish.id ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleDelete(dish.id)}
-                          className="text-xs font-medium px-2 py-1 rounded"
-                          style={{ color: 'var(--color-danger, #dc2626)' }}
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="text-xs font-medium px-2 py-1 rounded"
-                          style={{ color: 'var(--color-text-tertiary)' }}
-                        >
-                          No
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(dish.id)}
-                        className="text-xs font-medium px-2 py-1 rounded"
-                        style={{ color: 'var(--color-danger, #dc2626)' }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                )
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* Empty State */}
       {dishes.length === 0 && !showForm && (
-        <div className="text-center py-8">
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-            No dishes yet. Import your menu or add one manually!
-          </p>
-        </div>
+        <EmptyState emoji="🍽️" title="No dishes yet" subtitle="Import your menu or add a dish above" />
       )}
     </div>
   )

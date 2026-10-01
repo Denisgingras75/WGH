@@ -7,8 +7,6 @@ export function PhotoUploadButton({
   dishId,
   onPhotoUploaded,
   onLoginRequired,
-  compact = false,
-  label,
 }) {
   const fileInputRef = useRef(null)
   const { user } = useAuth()
@@ -24,6 +22,9 @@ export function PhotoUploadButton({
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
+    // Clear the input up front so the same file can be re-picked after a
+    // rejection ("Try again"). The File object stays valid after clearing.
+    e.target.value = ''
     if (!file) return
 
     clearError()
@@ -32,53 +33,20 @@ export function PhotoUploadButton({
       const result = await uploadPhoto(dishId, file)
 
       // If rejected by quality checks, error is set in the hook
-      if (result?.rejected) {
-        // Error already displayed via the hook's error state
-        return
-      }
+      if (result?.rejected) return
 
       onPhotoUploaded?.(result)
     } catch {
       // Error is already set in the hook
     }
-
-    // Clear the input so the same file can be selected again
-    e.target.value = ''
   }
 
   const isProcessing = analyzing || uploading
 
-  if (compact) {
-    return (
-      <>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-                    onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-        <button
-          onClick={handleClick}
-          disabled={isProcessing}
-          className="photo-upload-btn-compact tap-target"
-          title="Add photo"
-          aria-label="Add photo"
-        >
-          {isProcessing ? (
-            <span className="upload-spinner" />
-          ) : (
-            <CameraIcon size={18} />
-          )}
-        </button>
-      </>
-    )
-  }
-
   const getButtonText = () => {
-    if (analyzing) return 'Checking photo quality...'
-    if (uploading) return `Uploading... ${uploadProgress}%`
-    return label || 'Add Photo'
+    if (analyzing) return 'Checking photo…'
+    if (uploading) return `Uploading… ${uploadProgress}%`
+    return 'Add Photo'
   }
 
   return (
@@ -87,7 +55,7 @@ export function PhotoUploadButton({
         ref={fileInputRef}
         type="file"
         accept="image/*"
-                onChange={handleFileChange}
+        onChange={handleFileChange}
         style={{ display: 'none' }}
       />
 
@@ -96,22 +64,13 @@ export function PhotoUploadButton({
         disabled={isProcessing}
         className="photo-upload-btn tap-target"
       >
-        {isProcessing ? (
-          <>
-            <span className="upload-spinner" />
-            <span>{getButtonText()}</span>
-          </>
-        ) : (
-          <>
-            <CameraIcon size={18} />
-            <span>{label || 'Add Photo'}</span>
-          </>
-        )}
+        {isProcessing ? <span className="upload-spinner" /> : <CameraIcon size={18} />}
+        <span aria-live="polite">{getButtonText()}</span>
       </button>
 
       {error && (
         <div className="photo-upload-error-container">
-          <p className="photo-upload-error">{error}</p>
+          <p role="alert" className="photo-upload-error">{error}</p>
           <button
             onClick={handleClick}
             className="photo-upload-retry-btn tap-target"

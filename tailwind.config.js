@@ -16,7 +16,7 @@ export default {
         'xl': 'var(--shadow-xl)',
       },
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['Libre Baskerville', 'Georgia', 'serif'],
       },
       animation: {

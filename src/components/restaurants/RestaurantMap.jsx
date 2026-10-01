@@ -1,15 +1,18 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, AttributionControl, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { logger } from '../../utils/logger'
 import { getCategoryEmoji, getDishNameIcon } from '../../constants/categories'
-import { getPosterIconSrc } from '../home/CategoryIcons'
+import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
+import { getCategoryIconSrc } from '../home/CategoryIcons'
 import { calculateDistance } from '../../utils/distance'
+import { getRatingColor } from '../../utils/ranking'
+import { getSessionItem, setSessionItem, removeSessionItem } from '../../lib/storage'
+import { DEFAULT_LOCATION } from '../../context/LocationContext'
 
-const MILES_TO_METERS = 1609.34
 const PROXIMITY_THRESHOLD_MI = 0.062 // ~100m
+var SELECTED_RESTAURANT_KEY = 'wgh_map_selected_restaurant'
 
 // ─── Expose map instance to parent via ref ───────────────────────────────────
 function MapRefExposer({ mapRef }) {
@@ -20,22 +23,7 @@ function MapRefExposer({ mapRef }) {
   return null
 }
 
-// ─── Shared: Auto-fit bounds on first render ─────────────────────────────────
-function FitBounds({ points }) {
-  const map = useMap()
-  const fittedRef = useRef(false)
-
-  useEffect(() => {
-    if (fittedRef.current || points.length === 0) return
-    const bounds = L.latLngBounds(points)
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
-    fittedRef.current = true
-  }, [points, map])
-
-  return null
-}
-
-// ─── Shared: Fly to a location when prop changes ─────────────────────────────
+// ─── Fly to a location when prop changes ─────────────────────────────────────
 function FlyToLocation({ lat, lng }) {
   var map = useMap()
   var prevRef = useRef(null)
@@ -51,7 +39,7 @@ function FlyToLocation({ lat, lng }) {
   return null
 }
 
-// ─── Shared: Click handler to dismiss dish mini-card ─────────────────────────
+// ─── Click handler to dismiss dish mini-card ─────────────────────────────────
 function MapClickHandler({ onMapClick }) {
   useMapEvents({
     click: () => {
@@ -61,92 +49,11 @@ function MapClickHandler({ onMapClick }) {
   return null
 }
 
-// ─── Restaurant Mode: Search bar ─────────────────────────────────────────────
-function MapSearchBar({ onSearch }) {
-  const [query, setQuery] = useState('')
-  const [searching, setSearching] = useState(false)
-  const map = useMap()
-
-  const handleSearch = async () => {
-    if (!query.trim()) return
-    setSearching(true)
-    try {
-      const encoded = encodeURIComponent(query.trim())
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1&countrycodes=us`
-      )
-      const data = await res.json()
-      if (data.length > 0) {
-        const { lat, lon } = data[0]
-        map.flyTo([parseFloat(lat), parseFloat(lon)], 14, { duration: 1.5 })
-        if (onSearch) onSearch(query.trim())
-      }
-    } catch (err) {
-      logger.error('Map geocode error:', err)
-    } finally {
-      setSearching(false)
-    }
-  }
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        right: '50px',
-        zIndex: 1000,
-        display: 'flex',
-        gap: '6px',
-      }}
-    >
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        placeholder="Search a location..."
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          borderRadius: '8px',
-          border: '1px solid rgba(0,0,0,0.2)',
-          background: 'white',
-          fontSize: '13px',
-          color: '#333',
-          outline: 'none',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-        }}
-      />
-      <button
-        onClick={handleSearch}
-        disabled={searching}
-        style={{
-          padding: '8px 12px',
-          borderRadius: '8px',
-          border: 'none',
-          background: '#6BB384',
-          color: 'white',
-          fontSize: '13px',
-          fontWeight: 600,
-          cursor: searching ? 'wait' : 'pointer',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-          opacity: searching ? 0.7 : 1,
-        }}
-      >
-        {searching ? '...' : 'Go'}
-      </button>
-    </div>
-  )
-}
-
-// ─── Dish Mode: Build category icon divIcon ─────────────────────────────────
-function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelected, ranks) {
-  var posterImage = getDishNameIcon(dishName) || getPosterIconSrc(category)
+// ─── Build category icon divIcon ─────────────────────────────────────────────
+function buildCategoryIcon(category, hasHighRating, dishName, isSelected, ranks) {
+  var posterImage = getDishNameIcon(dishName) || getCategoryIconSrc(category)
   var emoji = getCategoryEmoji(category)
   var bestRank = (ranks && ranks.length > 0) ? ranks[0] : null
-
-  var badge = ''
 
   var medalBg = bestRank === 1 ? 'var(--color-medal-gold)'
     : bestRank === 2 ? 'var(--color-medal-silver)'
@@ -181,7 +88,8 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
 
   return L.divIcon({
     className: '',
-    html: '<div style="' +
+    // aria-hidden: the Marker's `title` names the pin; keep emoji/rank digit out of its accessible name
+    html: '<div aria-hidden="true" style="' +
       'position:relative;width:' + size + 'px;height:' + size + 'px;' +
       'display:flex;align-items:center;justify-content:center;' +
       'cursor:pointer;' +
@@ -190,56 +98,43 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
       borderStyle +
       'transition:all 0.2s ease;' +
       glow +
-    '">' + innerContent + badge + rankBadge + '</div>',
+    '">' + innerContent + rankBadge + '</div>',
     iconSize: [size, size],
-    iconAnchor: [23, 23],
+    iconAnchor: [size / 2, size / 2],
   })
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export function RestaurantMap({
-  mode = 'dish',
-  restaurants = [],
   dishes = [],
   userLocation,
-  town,
-  onSelectRestaurant,
   onSelectDish,
   onMapClick,
-  isAuthenticated,
-  radiusMi,
   permissionGranted,
-  compact = false,
   fullScreen = false,
   focusDishId = null,
   mapRef = null,
   dishRanks = {},
-  rankingContext = 'nearby',
 }) {
   const nav = useNavigate()
-  const defaultCenter = [41.43, -70.56]
   const center = userLocation?.lat && userLocation?.lng
     ? [userLocation.lat, userLocation.lng]
-    : defaultCenter
+    : [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng]
 
-  // ─── Dish mode state ───
+  // ─── Selected restaurant (persisted for the session) ───
   const [selectedRestaurantId, _setSelectedRestaurantId] = useState(function () {
-    try {
-      return sessionStorage.getItem('wgh_map_selected_restaurant') || null
-    } catch (e) { return null }
+    return getSessionItem(SELECTED_RESTAURANT_KEY)
   })
   var setSelectedRestaurantId = function (id) {
     _setSelectedRestaurantId(id)
-    try {
-      if (id) { sessionStorage.setItem('wgh_map_selected_restaurant', id) }
-      else { sessionStorage.removeItem('wgh_map_selected_restaurant') }
-    } catch (e) { /* noop */ }
+    if (id) setSessionItem(SELECTED_RESTAURANT_KEY, id)
+    else removeSessionItem(SELECTED_RESTAURANT_KEY)
   }
   const [dismissedProximity, setDismissedProximity] = useState({})
 
-  // ─── Dish mode: group dishes by restaurant ───
+  // ─── Group dishes by restaurant ───
   const restaurantGroups = useMemo(() => {
-    if (mode !== 'dish' || !dishes || dishes.length === 0) return []
+    if (!dishes || dishes.length === 0) return []
 
     const groupMap = {}
     for (let i = 0; i < dishes.length; i++) {
@@ -266,9 +161,9 @@ export function RestaurantMap({
     }
 
     return groups
-  }, [mode, dishes])
+  }, [dishes])
 
-  // ─── Dish mode: selected group for mini card ───
+  // ─── Selected group for mini card ───
   const selectedGroup = useMemo(() => {
     if (!selectedRestaurantId) return null
     for (let i = 0; i < restaurantGroups.length; i++) {
@@ -279,7 +174,7 @@ export function RestaurantMap({
     return null
   }, [selectedRestaurantId, restaurantGroups])
 
-  // ─── Dish mode: focus on a dish from the list ───
+  // ─── Focus on a dish from the list ───
   var [flyTarget, setFlyTarget] = useState(null)
   var [focusedSingleDish, setFocusedSingleDish] = useState(null)
   var handledFocusRef = useRef(null)
@@ -303,12 +198,33 @@ export function RestaurantMap({
     }
   }, [focusDishId, restaurantGroups, onSelectDish])
 
-  // Clear focused single dish when user taps background
-  // (tapping a different pin goes through the marker click handler which also clears it)
+  // ─── Sync a selection restored from sessionStorage with the parent ───
+  // The parent hides its floating controls only after onSelectDish; without this
+  // a restored mini-card sits underneath them and can't be tapped.
+  var restoredSyncRef = useRef(false)
+  useEffect(function () {
+    if (restoredSyncRef.current || restaurantGroups.length === 0) return
+    restoredSyncRef.current = true
+    // Nothing restored, or the focus effect above owns the selection
+    if (!selectedRestaurantId || focusDishId) return
+    var group = null
+    for (var i = 0; i < restaurantGroups.length; i++) {
+      if (restaurantGroups[i].restaurant_id === selectedRestaurantId) {
+        group = restaurantGroups[i]
+        break
+      }
+    }
+    if (group) {
+      if (onSelectDish) onSelectDish(group.dishes[0].dish_id)
+    } else {
+      // Stale key — restaurant isn't on the map any more
+      setSelectedRestaurantId(null)
+    }
+  }, [restaurantGroups, onSelectDish, selectedRestaurantId, focusDishId])
 
-  // ─── Dish mode: proximity detection ───
+  // ─── Proximity detection ───
   const nearbyRestaurant = useMemo(() => {
-    if (mode !== 'dish' || !permissionGranted || !userLocation?.lat || !userLocation?.lng) return null
+    if (!permissionGranted || !userLocation?.lat || !userLocation?.lng) return null
 
     for (let i = 0; i < restaurantGroups.length; i++) {
       const g = restaurantGroups[i]
@@ -320,43 +236,19 @@ export function RestaurantMap({
       if (dist <= PROXIMITY_THRESHOLD_MI) return g
     }
     return null
-  }, [mode, permissionGranted, userLocation, restaurantGroups, dismissedProximity])
+  }, [permissionGranted, userLocation, restaurantGroups, dismissedProximity])
 
-  // ─── Dish mode: compute distance for selected group ───
+  // ─── Distance for selected group (only from a real GPS fix) ───
   const selectedGroupDistance = useMemo(() => {
-    if (!selectedGroup || !userLocation?.lat || !userLocation?.lng) return null
+    if (!selectedGroup || !permissionGranted || !userLocation?.lat || !userLocation?.lng) return null
     const dist = calculateDistance(
       userLocation.lat, userLocation.lng,
       selectedGroup.restaurant_lat, selectedGroup.restaurant_lng
     )
     return dist.toFixed(1)
-  }, [selectedGroup, userLocation])
+  }, [selectedGroup, permissionGranted, userLocation])
 
-  // ─── Fit bounds points ───
-  const fitBoundsPoints = useMemo(() => {
-    const pts = []
-    if (userLocation?.lat && userLocation?.lng) {
-      pts.push([userLocation.lat, userLocation.lng])
-    }
-
-    if (mode === 'dish') {
-      for (let i = 0; i < restaurantGroups.length; i++) {
-        const g = restaurantGroups[i]
-        if (g.restaurant_lat && g.restaurant_lng) {
-          pts.push([g.restaurant_lat, g.restaurant_lng])
-        }
-      }
-    } else {
-      for (let i = 0; i < restaurants.length; i++) {
-        const r = restaurants[i]
-        if (r.lat && r.lng) pts.push([r.lat, r.lng])
-      }
-    }
-
-    return pts
-  }, [mode, restaurantGroups, restaurants, userLocation])
-
-  // ─── Dish mode: total votes for selected group ───
+  // ─── Total votes for selected group ───
   const selectedGroupVotes = useMemo(() => {
     if (!selectedGroup) return 0
     let total = 0
@@ -366,34 +258,38 @@ export function RestaurantMap({
     return total
   }, [selectedGroup])
 
+  function clearSelection() {
+    setSelectedRestaurantId(null)
+    setFocusedSingleDish(null)
+    if (onMapClick) onMapClick()
+  }
+
   // ────────────────────── RENDER ──────────────────────
-
-  const isDishMode = mode === 'dish'
-
-  var mapHeight = fullScreen ? '100vh' : compact ? '260px' : 'calc(100dvh - 160px)'
 
   return (
     <div
-      role="application"
+      role="region"
       aria-label="Dish map"
+      className={fullScreen ? 'wgh-map-fullscreen' : undefined}
       style={{
-        height: mapHeight,
+        height: '100%',
         width: '100%',
-        borderRadius: fullScreen ? '0' : '12px',
         overflow: 'hidden',
-        border: fullScreen ? 'none' : '1px solid var(--color-divider)',
         position: 'relative',
       }}
     >
       <MapContainer
         center={center}
-        zoom={fullScreen ? 13 : 13}
+        zoom={13}
         style={{ height: '100%', width: '100%' }}
-        attributionControl={true}
+        attributionControl={false}
         zoomControl={!fullScreen}
       >
         {/* Expose map instance to parent */}
         {mapRef && <MapRefExposer mapRef={mapRef} />}
+
+        {/* Tile licence attribution — bottom-left, clear of the FAB */}
+        <AttributionControl position="bottomleft" />
 
         {/* Tiles — CartoDB Voyager (free, no API key, includes labels) */}
         <TileLayer
@@ -404,24 +300,12 @@ export function RestaurantMap({
           className="wgh-map-tiles"
         />
 
-        {/* Fit bounds — skip on fullscreen map so it stays zoomed to user location */}
-        {!fullScreen && <FitBounds points={fitBoundsPoints} />}
-
         {/* Click handler — dismisses dish mini-card */}
-        {isDishMode && (
-          <MapClickHandler onMapClick={() => {
-            setSelectedRestaurantId(null)
-            setFocusedSingleDish(null)
-            if (onMapClick) onMapClick()
-          }} />
-        )}
-        {isDishMode && flyTarget && <FlyToLocation lat={flyTarget.lat} lng={flyTarget.lng} />}
+        <MapClickHandler onMapClick={clearSelection} />
+        {flyTarget && <FlyToLocation lat={flyTarget.lat} lng={flyTarget.lng} />}
 
-        {/* ─── Restaurant mode internals (disabled in fullScreen) ─── */}
-        {!isDishMode && !fullScreen && <MapSearchBar />}
-
-        {/* User location — blue pulsing dot (both modes) */}
-        {userLocation?.lat && userLocation?.lng && (
+        {/* User location — blue pulsing dot (only from a real GPS fix) */}
+        {permissionGranted && userLocation?.lat && userLocation?.lng && (
           <>
             <CircleMarker
               center={[userLocation.lat, userLocation.lng]}
@@ -451,8 +335,8 @@ export function RestaurantMap({
           </>
         )}
 
-        {/* ─── Dish mode: emoji pins ─── */}
-        {isDishMode && restaurantGroups.map(group => {
+        {/* ─── Dish pins ─── */}
+        {restaurantGroups.map(group => {
           const topDish = group.dishes[0]
           if (!topDish) return null
           const hasHighRating = group.dishes.some(d => (d.avg_rating || 0) >= 9)
@@ -464,13 +348,14 @@ export function RestaurantMap({
             if (dr) ranks.push(dr)
           }
           ranks.sort(function (a, b) { return a - b })
-          const icon = buildCategoryIcon(topDish.category, group.dishes.length, hasHighRating, topDish.dish_name, isSelected, ranks)
+          const icon = buildCategoryIcon(topDish.category, hasHighRating, topDish.dish_name, isSelected, ranks)
 
           return (
             <Marker
               key={group.restaurant_id}
               position={[group.restaurant_lat, group.restaurant_lng]}
               icon={icon}
+              title={topDish.dish_name + ' at ' + group.restaurant_name + (ranks[0] ? ', ranked #' + ranks[0] : '')}
               zIndexOffset={isSelected ? 1000 : 0}
               eventHandlers={{
                 click: () => {
@@ -488,131 +373,64 @@ export function RestaurantMap({
           )
         })}
 
-        {/* ─── Restaurant mode: gold pins ─── */}
-        {!isDishMode && restaurants
-          .filter(r => r.lat && r.lng)
-          .map(restaurant => {
-            const isOpen = restaurant.is_open !== false
-            const dishCount = restaurant.dish_count ?? restaurant.dishCount ?? 0
-            const distanceMiles = restaurant.distance_miles
-
-            return (
-              <CircleMarker
-                key={restaurant.id}
-                center={[restaurant.lat, restaurant.lng]}
-                radius={8}
-                pathOptions={{
-                  color: isOpen ? '#D9A765' : '#7D7168',
-                  fillColor: isOpen ? '#D9A765' : '#7D7168',
-                  fillOpacity: isOpen ? 0.9 : 0.5,
-                  weight: 2,
-                  opacity: 1,
-                }}
-              >
-                <Popup>
-                  <div style={{ minWidth: '140px' }}>
-                    <button
-                      onClick={() => onSelectRestaurant(restaurant)}
-                      style={{
-                        all: 'unset',
-                        cursor: 'pointer',
-                        display: 'block',
-                        width: '100%',
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
-                        {restaurant.name}
-                      </div>
-                      {restaurant.cuisine && (
-                        <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '2px' }}>
-                          {restaurant.cuisine}
-                        </div>
-                      )}
-                      <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                        {dishCount} {dishCount === 1 ? 'dish' : 'dishes'}
-                        {distanceMiles != null && ` \u00b7 ${distanceMiles} mi`}
-                      </div>
-                      {!isOpen && (
-                        <div style={{ fontSize: '11px', color: 'var(--color-primary)', marginTop: '2px', fontWeight: 600 }}>
-                          Closed for Season
-                        </div>
-                      )}
-                      <div style={{ fontSize: '11px', color: 'var(--color-accent-gold)', marginTop: '4px', fontWeight: 500 }}>
-                        View dishes &rarr;
-                      </div>
-                    </button>
-                  </div>
-                </Popup>
-              </CircleMarker>
-            )
-          })}
-
       </MapContainer>
 
-      {/* ─── Dish mode: Proximity banner ─── */}
-      {isDishMode && nearbyRestaurant && (
+      {/* ─── Proximity banner — sits below the parent's floating search + category bars ─── */}
+      {nearbyRestaurant && !selectedGroup && (
         <div
           style={{
             position: 'absolute',
-            top: '10px',
+            top: 'calc(env(safe-area-inset-top, 0px) + 136px)',
             left: '10px',
             right: '10px',
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 14px',
-            borderRadius: '10px',
+            padding: '4px 4px 4px 14px',
+            borderRadius: '12px',
             background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-accent-gold)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+            border: '1px solid var(--color-divider)',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)', paddingTop: '8px' }}>
               You're at {nearbyRestaurant.restaurant_name}
             </div>
             <button
-              onClick={() => {
-                if (onSelectRestaurant) {
-                  onSelectRestaurant({ id: nearbyRestaurant.restaurant_id, name: nearbyRestaurant.restaurant_name })
-                }
-              }}
+              type="button"
+              onClick={function () { nav('/restaurants/' + nearbyRestaurant.restaurant_id) }}
+              className="inline-flex items-center min-h-[44px]"
               style={{
                 background: 'none',
                 border: 'none',
                 padding: 0,
-                fontSize: '12px',
+                fontSize: '13px',
                 fontWeight: 600,
                 color: 'var(--color-accent-gold)',
                 cursor: 'pointer',
-                marginTop: '2px',
               }}
             >
               See their menu &rarr;
             </button>
           </div>
           <button
+            type="button"
             onClick={() => setDismissedProximity(prev => ({ ...prev, [nearbyRestaurant.restaurant_id]: true }))}
-            aria-label="Dismiss"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '18px',
-              lineHeight: 1,
-              color: 'var(--color-text-tertiary)',
-              padding: '2px',
-              flexShrink: 0,
-            }}
+            aria-label="Dismiss nearby restaurant"
+            className="w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ color: 'var(--color-text-tertiary)' }}
           >
-            &#10005;
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       )}
 
-      {/* ─── Dish mode: Mini card overlay ─── */}
-      {isDishMode && selectedGroup && (() => {
+      {/* ─── Mini card overlay ─── */}
+      {selectedGroup && (() => {
         // If we're focusing on a single dish (from "See on map"), show only that dish
         var rankedDishes = []
         if (focusedSingleDish) {
@@ -651,24 +469,37 @@ export function RestaurantMap({
               overflowY: 'auto',
             }}
           >
-            {/* Restaurant name — clickable */}
-            <button
-              onClick={function () { nav('/restaurants/' + selectedGroup.restaurant_id) }}
-              style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'var(--color-accent-gold)',
-                cursor: 'pointer',
-                marginBottom: '2px',
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                textAlign: 'left',
-              }}
-            >
-              {selectedGroup.restaurant_name} →
-            </button>
+            {/* Restaurant name — clickable, plus close */}
+            <div className="flex items-start gap-2">
+              <button
+                type="button"
+                onClick={function () { nav('/restaurants/' + selectedGroup.restaurant_id) }}
+                className="inline-flex items-center min-h-[44px] text-left flex-1 min-w-0"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: 'var(--color-accent-gold)',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                <span className="truncate min-w-0">{selectedGroup.restaurant_name}</span>
+                <span aria-hidden="true">&nbsp;→</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={clearSelection}
+                className="w-11 h-11 -mr-2 -mt-2 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
             {/* Meta line */}
             <div style={{
@@ -677,13 +508,13 @@ export function RestaurantMap({
               marginBottom: '8px',
             }}>
               {selectedGroupDistance != null ? selectedGroupDistance + ' mi' : ''}
-              {selectedGroupDistance != null && selectedGroupVotes > 0 ? ' \u00b7 ' : ''}
+              {selectedGroupDistance != null && selectedGroupVotes > 0 ? ' · ' : ''}
               {selectedGroupVotes > 0 ? selectedGroupVotes + ' vote' + (selectedGroupVotes !== 1 ? 's' : '') : ''}
             </div>
 
             {/* Dish list */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-              {rankedDishes.map(function (item) {
+              {rankedDishes.map(function (item, idx) {
                 var dish = item.dish
                 var rank = item.rank
                 var medalColor = rank === 1 ? 'var(--color-medal-gold)'
@@ -692,10 +523,12 @@ export function RestaurantMap({
                   : 'var(--color-text-tertiary)'
 
                 var voteCount = dish.total_votes || 0
+                var showRating = voteCount >= MIN_VOTES_FOR_RANKING && dish.avg_rating != null
 
                 return (
                   <button
                     key={dish.dish_id}
+                    type="button"
                     onClick={function () { nav('/dish/' + dish.dish_id) }}
                     style={{
                       display: 'flex',
@@ -703,8 +536,7 @@ export function RestaurantMap({
                       gap: '8px',
                       padding: '10px 4px',
                       background: 'none',
-                      border: 'none',
-                      borderTop: '1px solid var(--color-divider)',
+                      borderBottom: idx === rankedDishes.length - 1 ? 'none' : '1px solid var(--color-divider)',
                       cursor: 'pointer',
                       width: '100%',
                       textAlign: 'left',
@@ -725,12 +557,13 @@ export function RestaurantMap({
                       </span>
                     )}
 
-                    {/* Name + progress bar */}
+                    {/* Name + rating */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                         <span style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          letterSpacing: '-0.01em',
                           color: 'var(--color-text-primary)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -738,14 +571,18 @@ export function RestaurantMap({
                         }}>
                           {dish.dish_name}
                         </span>
-                        <span style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: 'var(--color-rating)',
-                          flexShrink: 0,
-                        }}>
-                          {dish.avg_rating != null ? Number(dish.avg_rating).toFixed(1) : '--'}
-                        </span>
+                        {showRating && (
+                          <span style={{
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            letterSpacing: '-0.02em',
+                            fontVariantNumeric: 'tabular-nums',
+                            color: getRatingColor(dish.avg_rating),
+                            flexShrink: 0,
+                          }}>
+                            {Number(dish.avg_rating).toFixed(1)}
+                          </span>
+                        )}
                       </div>
 
                       {/* Vote count */}
@@ -753,9 +590,9 @@ export function RestaurantMap({
                         <span style={{
                           fontSize: '11px',
                           fontWeight: 500,
-                          color: 'var(--color-text-secondary)',
+                          color: 'var(--color-text-tertiary)',
                         }}>
-                          {voteCount} rating{voteCount === 1 ? '' : 's'}
+                          {voteCount ? voteCount + ' vote' + (voteCount === 1 ? '' : 's') : 'New'}
                         </span>
                       </div>
                     </div>
@@ -767,64 +604,6 @@ export function RestaurantMap({
           </div>
         )
       })()}
-
-      {/* ─── Legend ─── */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '10px',
-          left: '10px',
-          zIndex: 1000,
-          background: isDishMode ? 'rgba(13,27,34,0.9)' : 'rgba(255,255,255,0.95)',
-          borderRadius: '8px',
-          padding: '8px 12px',
-          fontSize: '11px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-        }}
-      >
-        {isDishMode ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '14px' }}>🍕</span>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Dish category</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '16px',
-                height: '16px',
-                borderRadius: '8px',
-                background: 'var(--color-accent-gold)',
-                color: 'var(--color-bg)',
-                fontSize: '9px',
-                fontWeight: 700,
-              }}>3</span>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Dish count</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{
-                display: 'inline-block',
-                width: '14px',
-                height: '14px',
-                borderRadius: '50%',
-                boxShadow: '0 0 6px 2px rgba(217,167,101,0.5)',
-                border: '2px solid var(--color-divider)',
-              }} />
-              <span style={{ color: 'var(--color-text-secondary)' }}>Rated 9+</span>
-            </div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D9A765', display: 'inline-block' }} />
-            <span style={{ color: '#555' }}>On WGH</span>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

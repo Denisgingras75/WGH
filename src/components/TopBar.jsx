@@ -6,10 +6,10 @@ import { SettingsDropdown } from './SettingsDropdown'
  */
 export function TopBar() {
   return (
-    <div className="top-bar">
-      <div className="top-bar-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 12px' }}>
-        {/* Spacer for symmetry */}
-        <div style={{ width: '60px' }} />
+    <header className="top-bar">
+      <div className="top-bar-content" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', padding: '0 12px' }}>
+        {/* Empty left column keeps the wordmark centered regardless of the right group's width */}
+        <div aria-hidden="true" />
 
         {/* WGH wordmark — centered, Amatic SC */}
         <span
@@ -27,11 +27,11 @@ export function TopBar() {
         </span>
 
         {/* Settings + Notifications grouped right */}
-        <div className="flex items-center">
+        <div className="flex items-center" style={{ justifySelf: 'end' }}>
           <SettingsDropdown />
           <NotificationBell />
         </div>
       </div>
-    </div>
+    </header>
   )
 }

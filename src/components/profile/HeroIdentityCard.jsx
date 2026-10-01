@@ -24,6 +24,7 @@ export function HeroIdentityCard({
   editingName,
   newName,
   nameStatus,
+  savingName = false,
   setEditingName,
   setNewName,
   setNameStatus,
@@ -32,8 +33,26 @@ export function HeroIdentityCard({
   jitterProfile,
 }) {
   const [jitterExpanded, setJitterExpanded] = useState(false)
+  const [nameFocused, setNameFocused] = useState(false)
   const jitterData = jitterProfile?.profile_data || {}
   const hasJitterDetail = !!(jitterProfile && Object.keys(jitterData).length > 0)
+
+  const trimmedLength = (newName || '').trim().length
+  const nameTooShort = trimmedLength > 0 && trimmedLength < 2
+  const saveDisabled = savingName || trimmedLength < 2 || nameStatus === 'taken' || nameStatus === 'checking'
+  const nameStatusText = nameStatus === 'taken'
+    ? 'Username taken'
+    : nameStatus === 'available'
+      ? 'Available'
+      : nameTooShort
+        ? 'At least 2 characters'
+        : ''
+
+  const cancelEdit = () => {
+    setEditingName(false)
+    setNewName(profile?.display_name || '')
+    setNameStatus(null)
+  }
 
   return (
     <div
@@ -67,61 +86,107 @@ export function HeroIdentityCard({
         <div className="flex-1 min-w-0">
           {/* Display Name */}
           {editingName ? (
-            <div className="flex flex-col gap-1">
+            <form
+              className="flex flex-col gap-1"
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleSaveName()
+              }}
+            >
               <div className="relative">
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value.replace(/\s/g, ''))}
-                  className="w-full px-3 py-1.5 border rounded-lg text-lg font-bold focus:outline-none pr-8"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      cancelEdit()
+                    }
+                  }}
+                  onFocus={() => setNameFocused(true)}
+                  onBlur={() => setNameFocused(false)}
+                  aria-label="Display name"
+                  aria-invalid={nameStatus === 'taken'}
+                  aria-describedby="profile-name-status"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                  className="w-full px-3 py-1.5 rounded-lg text-lg font-bold focus:outline-none pr-8"
                   style={{
-                    background: 'var(--color-surface-elevated)',
-                    borderColor: nameStatus === 'taken' ? 'var(--color-red)' : nameStatus === 'available' ? 'var(--color-emerald)' : 'var(--color-divider)',
+                    background: 'var(--color-surface)',
+                    border: '2px solid ' + (
+                      nameStatus === 'taken'
+                        ? 'var(--color-danger)'
+                        : nameStatus === 'available'
+                          ? 'var(--color-success)'
+                          : nameFocused
+                            ? 'var(--color-primary)'
+                            : 'var(--color-divider)'
+                    ),
                     color: 'var(--color-text-primary)'
                   }}
                   autoFocus
                   maxLength={30}
                 />
                 {nameStatus && nameStatus !== 'same' && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm">
-                    {nameStatus === 'checking' && '\u23F3'}
-                    {nameStatus === 'available' && '\u2713'}
-                    {nameStatus === 'taken' && '\u2717'}
+                  <span aria-hidden="true" className="absolute right-2 top-1/2 -translate-y-1/2 text-sm">
+                    {nameStatus === 'checking' && '⏳'}
+                    {nameStatus === 'available' && '✓'}
+                    {nameStatus === 'taken' && '✗'}
                   </span>
                 )}
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={handleSaveName}
-                  disabled={nameStatus === 'taken' || nameStatus === 'checking'}
-                  className="px-3 py-1 rounded-lg text-sm font-medium disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  type="submit"
+                  disabled={saveDisabled}
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
+                  style={{
+                    background: saveDisabled && !savingName ? 'var(--color-surface)' : 'var(--color-primary)',
+                    color: saveDisabled && !savingName ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
+                    opacity: savingName ? 0.7 : 1,
+                  }}
                 >
-                  Save
+                  {savingName ? 'Saving…' : 'Save'}
                 </button>
                 <button
-                  onClick={() => {
-                    setEditingName(false)
-                    setNewName(profile?.display_name || '')
-                    setNameStatus(null)
+                  type="button"
+                  onClick={cancelEdit}
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--color-divider)',
+                    color: 'var(--color-text-primary)',
                   }}
-                  className="px-3 py-1 rounded-lg text-sm font-medium"
-                  style={{ color: 'var(--color-text-secondary)' }}
                 >
                   Cancel
                 </button>
               </div>
-              {nameStatus === 'taken' && (
-                <p className="text-xs" style={{ color: 'var(--color-red)' }}>Username taken</p>
-              )}
-              {nameStatus === 'available' && (
-                <p className="text-xs" style={{ color: 'var(--color-emerald)' }}>Available!</p>
-              )}
-            </div>
+              {/* Always rendered so screen readers announce status changes */}
+              <p
+                id="profile-name-status"
+                aria-live="polite"
+                className="text-xs"
+                style={{
+                  color: nameStatus === 'taken'
+                    ? 'var(--color-danger)'
+                    : nameStatus === 'available'
+                      ? 'var(--color-success)'
+                      : 'var(--color-text-tertiary)',
+                }}
+              >
+                {nameStatusText}
+              </p>
+            </form>
           ) : (
             <button
+              type="button"
               onClick={() => setEditingName(true)}
-              className="font-bold transition-colors inline-flex items-center gap-1.5"
+              aria-label={profile?.display_name ? 'Edit display name, ' + profile.display_name : undefined}
+              className="font-bold transition-colors inline-flex items-center gap-1.5 max-w-full min-w-0 min-h-[44px]"
               style={{
                 color: 'var(--color-text-primary)',
                 fontSize: '22px',
@@ -129,47 +194,55 @@ export function HeroIdentityCard({
                 lineHeight: '1.2',
               }}
             >
-              {profile?.display_name || 'Set your name'}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span className="truncate">{profile?.display_name || 'Set your name'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true" className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
               </svg>
             </button>
           )}
 
           {/* Stats row — dishes · restaurants · followers */}
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap" style={{ fontSize: '13px' }}>
+          <div className="flex items-center gap-x-2 flex-wrap" style={{ fontSize: '13px' }}>
             {stats.totalVotes > 0 && (
               <>
                 <span style={{ color: 'var(--color-text-secondary)' }}>
-                  <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span> dishes
+                  <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span>
+                  {stats.totalVotes === 1 ? ' dish' : ' dishes'}
                 </span>
                 {stats.uniqueRestaurants > 0 && (
                   <>
-                    <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
+                    <span aria-hidden="true" style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
                     <span style={{ color: 'var(--color-text-secondary)' }}>
-                      <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span> spots
+                      <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span>
+                      {stats.uniqueRestaurants === 1 ? ' spot' : ' spots'}
                     </span>
                   </>
                 )}
               </>
             )}
             <button
+              type="button"
               onClick={() => setFollowListModal('followers')}
-              className="hover:underline transition-colors"
+              aria-label={followCounts.followers + (followCounts.followers === 1 ? ' follower' : ' followers')}
+              className="inline-flex items-center min-h-[44px]"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {followCounts.followers}
-              </span> followers
+              </span>
+              {followCounts.followers === 1 ? ' follower' : ' followers'}
             </button>
             <button
+              type="button"
               onClick={() => setFollowListModal('following')}
-              className="hover:underline transition-colors"
+              aria-label={followCounts.following + ' following'}
+              className="inline-flex items-center min-h-[44px]"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {followCounts.following}
-              </span> following
+              </span>
+              {' following'}
             </button>
           </div>
         </div>
@@ -177,10 +250,19 @@ export function HeroIdentityCard({
         {/* Compact Jitter Fingerprint — tap to expand */}
         {jitterProfile && (() => {
           const tier = getTierInfo(jitterProfile.confidence_level, jitterProfile.consistency_score)
+          const JitterTag = hasJitterDetail ? 'button' : 'div'
+          const interactiveProps = hasJitterDetail
+            ? {
+                type: 'button',
+                onClick: () => setJitterExpanded(!jitterExpanded),
+                'aria-expanded': jitterExpanded,
+                'aria-controls': 'jitter-detail',
+              }
+            : {}
           return (
-            <button
-              onClick={hasJitterDetail ? () => setJitterExpanded(!jitterExpanded) : undefined}
-              className={'flex-shrink-0 rounded-xl px-3 py-2.5 text-center transition-all active:scale-95' + (hasJitterDetail ? '' : '')}
+            <JitterTag
+              {...interactiveProps}
+              className="flex-shrink-0 rounded-xl px-3 py-2.5 text-center transition-all active:scale-95"
               style={{
                 background: jitterExpanded ? tier.bg : 'var(--color-card)',
                 border: '1px solid ' + (jitterExpanded ? tier.color : 'var(--color-divider)'),
@@ -198,22 +280,22 @@ export function HeroIdentityCard({
                 <div className="font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '18px', lineHeight: 1 }}>
                   {jitterProfile.review_count || 0}
                 </div>
-                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>reviews</div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 500, marginTop: '2px' }}>reviews</div>
               </div>
               <div className="mt-1">
                 <div className="font-semibold" style={{ color: 'var(--color-accent-gold)', fontSize: '12px', lineHeight: 1 }}>
                   {jitterProfile.consistency_score != null
                     ? getRhythmLabel(Number(jitterProfile.consistency_score))
-                    : '\u2014'}
+                    : '—'}
                 </div>
-                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>rhythm</div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 500, marginTop: '2px' }}>rhythm</div>
               </div>
               {hasJitterDetail && (
-                <div className="mt-1.5" style={{ color: 'var(--color-accent-gold)', fontSize: '10px' }}>
-                  {jitterExpanded ? '\u25B2 less' : '\u25BC detail'}
+                <div className="mt-1.5" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 600 }}>
+                  {jitterExpanded ? '▲ less' : '▼ detail'}
                 </div>
               )}
-            </button>
+            </JitterTag>
           )
         })()}
       </div>
@@ -221,16 +303,17 @@ export function HeroIdentityCard({
       {/* Expanded Jitter Detail Panel */}
       {jitterExpanded && hasJitterDetail && (
         <div
-          className="mx-4 mt-3 rounded-xl overflow-hidden"
+          id="jitter-detail"
+          className="mt-3 rounded-xl overflow-hidden"
           style={{
             background: 'var(--color-card)',
             border: '1px solid var(--color-divider)',
           }}
         >
           <div className="px-4 py-3 space-y-2">
-            <DetailRow label="Typing pace" value={jitterData.mean_inter_key ? Math.round(jitterData.mean_inter_key) + 'ms between keys' : '\u2014'} />
-            <DetailRow label="Key press" value={jitterData.mean_dwell ? Math.round(jitterData.mean_dwell) + 'ms avg hold' : '\u2014'} />
-            <DetailRow label="Typo rate" value={jitterData.edit_ratio != null ? Math.round(jitterData.edit_ratio * 100) + '% corrections' : '\u2014'} />
+            <DetailRow label="Typing pace" value={jitterData.mean_inter_key ? Math.round(jitterData.mean_inter_key) + 'ms between keys' : '—'} />
+            <DetailRow label="Key press" value={jitterData.mean_dwell ? Math.round(jitterData.mean_dwell) + 'ms avg hold' : '—'} />
+            <DetailRow label="Typo rate" value={jitterData.edit_ratio != null ? Math.round(jitterData.edit_ratio * 100) + '% corrections' : '—'} />
             {jitterProfile.created_at && (
               <DetailRow label="Reviewing since" value={new Date(jitterProfile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} />
             )}

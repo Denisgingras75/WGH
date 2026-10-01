@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { getCompatColor } from '../utils/formatters'
+import { getUserMessage } from '../utils/errorHandler'
 import { shareOrCopy } from '../utils/share'
 import { capture } from '../lib/analytics'
 import { toast } from 'sonner'
@@ -10,9 +11,11 @@ import { followsApi } from '../api/followsApi'
 import { votesApi } from '../api/votesApi'
 import { FollowListModal } from '../components/FollowListModal'
 import { ProfileSkeleton } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
+import { SectionHeader } from '../components/SectionHeader'
+import { LoginModal } from '../components/Auth/LoginModal'
 import { FoodMap, JournalFeed, LocalListCard } from '../components/profile'
 import { useUserPlaylists } from '../hooks/useUserPlaylists'
-import { PlaylistStripCard } from '../components/playlists/PlaylistStripCard'
 import { PlaylistGridCard } from '../components/playlists/PlaylistGridCard'
 import { useLocalListDetail } from '../hooks/useLocalListDetail'
 import { TrustBadge, ProfileJitterCard } from '../components/jitter'
@@ -21,6 +24,9 @@ import { profileApi } from '../api/profileApi'
 import { ReportModal } from '../components/ReportModal'
 import { BlockUserModal } from '../components/BlockUserModal'
 import { useBlockedUsers } from '../hooks/useBlockedUsers'
+import { computeRatingStyle } from '../hooks/useUserVotes'
+import { PageHeader } from '../components/PageHeader'
+import { AMATIC_TITLE } from '../constants/styles'
 
 // Known location display names for URL slugs
 var LOCATION_NAMES = {
@@ -35,55 +41,42 @@ function formatLocationName(slug) {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase() })
 }
 
-// Shelves collapsed to a single "My Ratings" feed — Worth-It/Avoid split retired
-// with the binary vote (Apr 2026). The shelf filter UI is no longer rendered;
-// kept only for search-history compatibility.
+var PROFILE_TABS = ['journal', 'playlists']
 
-/**
- * Compute rating style from average rating and variance
- */
-function computeRatingStyle(avgRating, ratingVariance) {
-  if (avgRating === null) return null
-
-  let level, label
-  if (avgRating < 6.0) {
-    level = 'tough'
-    label = 'Tough Critic'
-  } else if (avgRating < 7.5) {
-    level = 'fair'
-    label = 'Fair Judge'
-  } else if (avgRating < 8.5) {
-    level = 'generous'
-    label = 'Generous Rater'
-  } else {
-    level = 'easy'
-    label = 'Easy to Please'
-  }
-
-  return { level, label }
-}
+// Height of the sticky detail header: 44px row + py-3 (24px) + 1px divider.
+// The sticky tab bar pins directly beneath it.
+var HEADER_HEIGHT = 69
 
 /**
  * Public User Profile Page
- * View another user's profile, stats, badges, and recent ratings
+ * View another user's profile, stats, badges, and recent ratings.
+ *
+ * Keyed on userId so navigating /user/A → /user/B (e.g. from the follow list)
+ * remounts with fresh per-user state instead of leaking A's badge, picks,
+ * taste match or follow state onto B.
  */
 export function UserProfile() {
+  const { userId } = useParams()
+  return <UserProfileContent key={userId} />
+}
+
+function UserProfileContent() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user: currentUser } = useAuth()
+  const currentUserId = currentUser?.id
   const locationFilter = searchParams.get('location')
 
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [notFound, setNotFound] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followListModal, setFollowListModal] = useState(null) // 'followers' | 'following' | null
-  const [myRatings, setMyRatings] = useState({}) // { dishId: rating }
   const [userReviews, setUserReviews] = useState([])
-  const [reviewsLoading, setReviewsLoading] = useState(false)
-  // selectedReview state removed — ReviewDetailModal doesn't exist yet
   const [tasteCompat, setTasteCompat] = useState(null)
   const [ratingBias, setRatingBias] = useState(null)
   const [standoutPicks, setStandoutPicks] = useState({})
@@ -93,14 +86,21 @@ export function UserProfile() {
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showBlockModal, setShowBlockModal] = useState(false)
-  const { playlists: userPlaylists } = useUserPlaylists(userId)
-  const { isBlocked, unblockUser } = useBlockedUsers()
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const {
+    playlists: userPlaylists,
+    loading: playlistsLoading,
+    error: playlistsError,
+    refetch: refetchPlaylists,
+  } = useUserPlaylists(userId)
+  const { isBlocked, unblockUser, unblocking, loading: blocksLoading } = useBlockedUsers()
 
   var localList = useLocalListDetail(userId)
   const actionsMenuRef = useRef(null)
+  const moreBtnRef = useRef(null)
 
   // Check if viewing own profile
-  const isOwnProfile = currentUser?.id === userId
+  const isOwnProfile = currentUserId === userId
   const viewerHasBlocked = !!currentUser && !isOwnProfile && isBlocked(userId)
 
   // Close actions menu on outside click or Escape
@@ -129,34 +129,38 @@ export function UserProfile() {
     }
   }, [isOwnProfile, navigate])
 
-  // Fetch all independent data in parallel
+  // Fetch all independent data in parallel.
+  // Depends on the viewer's id (not the user object) so auth token refreshes
+  // and tab-refocus SIGNED_IN events don't blank the page with a skeleton.
   useEffect(() => {
-    if (!userId) return
+    // Own profile redirects to /profile — skip the fetches; the skeleton
+    // stays up until the redirect lands.
+    if (!userId || isOwnProfile) return
     let cancelled = false
 
     async function fetchAll() {
       setLoading(true)
-      setReviewsLoading(true)
       setError(null)
+      setNotFound(false)
 
       // Build the list of parallel fetches
       const fetches = [
         // 0: profile (always)
         followsApi.getUserProfile(userId),
-        // 1: follow status (only if logged in and not own profile)
-        currentUser && !isOwnProfile
+        // 1: follow status (only if logged in)
+        currentUserId
           ? followsApi.isFollowing(userId)
           : Promise.resolve(null),
-        // 2: taste compatibility (only if logged in and not own profile)
-        currentUser && !isOwnProfile
+        // 2: taste compatibility (only if logged in)
+        currentUserId
           ? followsApi.getTasteCompatibility(userId)
           : Promise.resolve(null),
         // 3: rating bias
         profileApi.getRatingBias(userId),
         // 4: jitter badge
         jitterApi.getJitterBadges([userId]),
-        // 5: reviews
-        votesApi.getReviewsForUser(userId),
+        // 5: reviews (matches the 50-vote window the journal is built from)
+        votesApi.getReviewsForUser(userId, { limit: 50 }),
       ]
 
       const results = await Promise.allSettled(fetches)
@@ -166,13 +170,13 @@ export function UserProfile() {
       if (results[0].status === 'fulfilled') {
         const data = results[0].value
         if (!data) {
-          setError('User not found')
+          setNotFound(true)
         } else {
           setProfile(data)
         }
       } else {
         logger.error('Failed to fetch profile:', results[0].reason)
-        setError('Failed to load profile')
+        setError(results[0].reason)
       }
 
       // 1: Follow status
@@ -215,119 +219,100 @@ export function UserProfile() {
       }
 
       setLoading(false)
-      setReviewsLoading(false)
     }
 
     fetchAll()
     return () => { cancelled = true }
-  }, [userId, currentUser, isOwnProfile])
+  }, [userId, currentUserId, isOwnProfile, reloadKey])
 
-  // Dependent fetches: compute standout picks + fetch my ratings (need profile.recent_votes)
+  // Dependent fetch: standout picks need profile.recent_votes + community averages
   useEffect(() => {
     if (!profile?.recent_votes?.length) return
     let cancelled = false
 
-    async function fetchDependentData() {
+    async function fetchStandoutPicks() {
       const ratedVotes = profile.recent_votes.filter(v => v.rating != null)
       const dishIds = ratedVotes.map(v => v.dish?.id).filter(Boolean)
       if (dishIds.length === 0) return
 
-      // Build dependent fetches in parallel
-      const fetches = [
-        // 0: community averages for standout picks
-        votesApi.getCommunityAvgsForDishes(dishIds),
-        // 1: my ratings for comparison (only if logged in and not own profile)
-        currentUser && !isOwnProfile
-          ? votesApi.getMyRatingsForDishes(dishIds)
-          : Promise.resolve(null),
-      ]
-
-      const results = await Promise.allSettled(fetches)
+      let communityAvgs
+      try {
+        communityAvgs = await votesApi.getCommunityAvgsForDishes(dishIds)
+      } catch (err) {
+        logger.error('Failed to fetch community averages:', err)
+        return
+      }
       if (cancelled) return
 
-      // 0: Compute standout picks
-      if (results[0].status === 'fulfilled') {
-        try {
-          const communityAvgs = results[0].value
-          const MIN_COMMUNITY = 3
-          const picks = {}
+      try {
+        const MIN_COMMUNITY = 3
+        const picks = {}
 
-          const comparisons = ratedVotes
-            .filter(v => v.dish?.id && communityAvgs[v.dish.id]?.count >= MIN_COMMUNITY)
-            .map(v => ({
-              dish_name: v.dish.name,
-              restaurant_name: v.dish.restaurant_name,
-              userRating: v.rating,
-              communityAvg: communityAvgs[v.dish.id].avg,
-              diff: v.rating - communityAvgs[v.dish.id].avg,
-            }))
+        const comparisons = ratedVotes
+          .filter(v => v.dish?.id && communityAvgs[v.dish.id]?.count >= MIN_COMMUNITY)
+          .map(v => ({
+            dish_name: v.dish.name,
+            restaurant_name: v.dish.restaurant_name,
+            userRating: v.rating,
+            communityAvg: communityAvgs[v.dish.id].avg,
+            diff: v.rating - communityAvgs[v.dish.id].avg,
+          }))
 
-          if (comparisons.length > 0) {
-            // Best find: highest user rating, tie-break by positive diff
-            const best = comparisons.slice().sort((a, b) => {
-              if (b.userRating !== a.userRating) return b.userRating - a.userRating
-              return b.diff - a.diff
-            })
-            picks.bestFind = best[0]
+        if (comparisons.length > 0) {
+          // Best find: highest user rating, tie-break by positive diff
+          const best = comparisons.slice().sort((a, b) => {
+            if (b.userRating !== a.userRating) return b.userRating - a.userRating
+            return b.diff - a.diff
+          })
+          picks.bestFind = best[0]
 
-            // Hottest take: biggest negative diff (user rates much lower than community), min -1.0
-            const harsh = comparisons.slice().sort((a, b) => a.diff - b.diff)
-            if (harsh[0] && harsh[0].diff <= -1.0) {
-              picks.harshestTake = harsh[0]
-            }
-
-            setStandoutPicks(picks)
+          // Hottest take: biggest negative diff (user rates much lower than community), min -1.0
+          const harsh = comparisons.slice().sort((a, b) => a.diff - b.diff)
+          if (harsh[0] && harsh[0].diff <= -1.0) {
+            picks.harshestTake = harsh[0]
           }
-        } catch (err) {
-          logger.error('Failed to compute standout picks:', err)
-        }
-      } else {
-        logger.error('Failed to fetch community averages:', results[0].reason)
-      }
 
-      // 1: My ratings
-      if (results[1].status === 'fulfilled' && results[1].value !== null) {
-        setMyRatings(results[1].value)
-      } else if (results[1].status === 'rejected') {
-        logger.error('Failed to fetch my ratings:', results[1].reason)
+          setStandoutPicks(picks)
+        }
+      } catch (err) {
+        logger.error('Failed to compute standout picks:', err)
       }
     }
 
-    fetchDependentData()
+    fetchStandoutPicks()
     return () => { cancelled = true }
-  }, [profile?.recent_votes, currentUser, isOwnProfile])
+  }, [profile?.recent_votes])
 
-  // Handle follow/unfollow
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/')
+  }
+
+  // Handle follow/unfollow — optimistic with rollback
   const handleFollowToggle = async () => {
     if (!currentUser) {
-      navigate('/login')
+      setLoginModalOpen(true)
       return
     }
+    if (followLoading) return
 
+    const was = isFollowing
     setFollowLoading(true)
+    setIsFollowing(!was)
+    setProfile(p => p ? {
+      ...p,
+      follower_count: Math.max(0, (p.follower_count || 0) + (was ? -1 : 1)),
+    } : p)
     try {
-      if (isFollowing) {
-        await followsApi.unfollow(userId)
-        setIsFollowing(false)
-        setProfile(prev => ({
-          ...prev,
-          follower_count: Math.max(0, (prev.follower_count || 0) - 1)
-        }))
-      } else {
-        await followsApi.follow(userId)
-        setIsFollowing(true)
-        setProfile(prev => ({
-          ...prev,
-          follower_count: (prev.follower_count || 0) + 1
-        }))
-      }
+      await (was ? followsApi.unfollow(userId) : followsApi.follow(userId))
     } catch (error) {
       logger.error('Failed to toggle follow:', error)
-      setIsFollowing(prev => !prev)
-      setProfile(prev => prev ? {
-        ...prev,
-        follower_count: (prev.follower_count || 0) + (isFollowing ? 1 : -1)
-      } : prev)
+      setIsFollowing(was)
+      setProfile(p => p ? {
+        ...p,
+        follower_count: Math.max(0, (p.follower_count || 0) + (was ? 1 : -1)),
+      } : p)
+      toast.error(getUserMessage(error, was ? 'unfollowing' : 'following'))
     } finally {
       setFollowLoading(false)
     }
@@ -349,18 +334,48 @@ export function UserProfile() {
 
     if (result.success && result.method !== 'native') {
       toast.success('Link copied!', { duration: 2000 })
+    } else if (!result.success && result.method !== 'native') {
+      toast.error("Couldn't copy the link. Try again.")
     }
   }
 
+  // Unblock from the blocked screen, then refetch the follow state, counts,
+  // reviews and taste match that were filtered while the block was in place.
+  const handleUnblock = async () => {
+    if (unblocking) return
+    const { error: unblockError } = await unblockUser(userId)
+    if (!unblockError) setReloadKey(k => k + 1)
+  }
+
+  // Return focus to the More button after a safety modal closes (the menu
+  // item that opened it has already unmounted).
+  const restoreMoreFocus = () => {
+    requestAnimationFrame(() => moreBtnRef.current?.focus())
+  }
+
+  const handleTabKeyDown = (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+    e.preventDefault()
+    const idx = PROFILE_TABS.indexOf(activeTab)
+    const step = e.key === 'ArrowRight' ? 1 : -1
+    const next = PROFILE_TABS[(idx + step + PROFILE_TABS.length) % PROFILE_TABS.length]
+    setActiveTab(next)
+    requestAnimationFrame(() => {
+      document.getElementById('user-tab-' + next)?.focus()
+    })
+  }
+
   // Compute stats from recent votes — single "My Ratings" shelf, sorted by recency.
-  const { uniqueRestaurants, foodMapStats, ratingStyle } = useMemo(() => {
-    if (!profile?.recent_votes?.length) {
-      return { uniqueRestaurants: 0, foodMapStats: { totalVotes: 0, uniqueRestaurants: 0, categoryCounts: {} }, ratingStyle: null }
+  const { foodMapStats, ratingStyle } = useMemo(() => {
+    const recentVotes = profile?.recent_votes || []
+    const totalVotes = profile?.stats?.total_votes ?? recentVotes.length
+    if (!recentVotes.length) {
+      return { foodMapStats: { totalVotes, uniqueRestaurants: 0, categoryCounts: {} }, ratingStyle: null }
     }
     const restaurantNames = new Set()
     const catCounts = {}
     const ratings = []
-    profile.recent_votes.forEach(vote => {
+    recentVotes.forEach(vote => {
       if (vote.dish?.restaurant_name) {
         restaurantNames.add(vote.dish.restaurant_name)
       }
@@ -384,15 +399,14 @@ export function UserProfile() {
     }
 
     return {
-      uniqueRestaurants: restaurantNames.size,
       foodMapStats: {
-        totalVotes: profile.recent_votes.length,
+        totalVotes,
         uniqueRestaurants: restaurantNames.size,
         categoryCounts: catCounts,
       },
       ratingStyle: style,
     }
-  }, [profile?.recent_votes])
+  }, [profile?.recent_votes, profile?.stats?.total_votes])
 
   // Transform votes into JournalFeed shape — one shelf, sorted most-recent-first.
   var journalRatings = (profile?.recent_votes || [])
@@ -425,27 +439,47 @@ export function UserProfile() {
     })
   }
 
-  if (loading) {
+  if (loading || (currentUser && blocksLoading)) {
     return <ProfileSkeleton />
   }
 
-  if (error || !profile) {
+  if (error || notFound || !profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--color-surface)' }}>
-        <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
-        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-          User not found
-        </h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-          This profile doesn't exist or may have been removed.
-        </p>
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 rounded-lg text-sm font-medium"
-          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-        >
-          Go Back
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center" style={{ background: 'var(--color-bg)' }}>
+        {error ? (
+          <>
+            <h1 className="sr-only">Profile</h1>
+            <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+              {getUserMessage(error, 'loading this profile')}
+            </p>
+            <button
+              type="button"
+              onClick={() => setReloadKey(k => k + 1)}
+              className="py-3 px-4 rounded-xl font-bold text-sm min-h-[44px] transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              Try again
+            </button>
+          </>
+        ) : (
+          <>
+            <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
+            <h1 className="mb-2" style={{ ...AMATIC_TITLE, fontSize: '28px' }}>
+              User not found
+            </h1>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+              This profile doesn't exist or may have been removed.
+            </p>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="py-3 px-4 rounded-xl font-bold text-sm min-h-[44px] transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              Go Back
+            </button>
+          </>
+        )}
       </div>
     )
   }
@@ -454,24 +488,25 @@ export function UserProfile() {
 
   if (viewerHasBlocked) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--color-bg)' }}>
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold mb-5"
           style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-tertiary)' }}
+          aria-hidden="true"
         >
           {profile.display_name?.charAt(0).toUpperCase() || '?'}
         </div>
-        <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="mb-2" style={{ ...AMATIC_TITLE, fontSize: '28px' }}>
           You blocked {profile.display_name}
-        </h2>
+        </h1>
         <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: 'var(--color-text-secondary)' }}>
           You won't see their reviews, photos, or activity. Unblock to restore their profile.
         </p>
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            onClick={handleBack}
+            className="py-3 px-5 min-h-[44px] rounded-xl font-semibold transition-all active:scale-[0.98]"
             style={{
               background: 'transparent',
               border: '1px solid var(--color-divider)',
@@ -483,41 +518,47 @@ export function UserProfile() {
           </button>
           <button
             type="button"
-            onClick={() => unblockUser(userId)}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            onClick={handleUnblock}
+            disabled={unblocking}
+            className="py-3 px-5 min-h-[44px] rounded-xl font-semibold transition-all active:scale-[0.98]"
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-on-primary)',
               fontSize: '14px',
+              opacity: unblocking ? 0.7 : 1,
             }}
           >
-            Unblock
+            {unblocking ? 'Unblocking…' : 'Unblock'}
           </button>
         </div>
       </div>
     )
   }
 
+  const secondaryButtonStyle = {
+    background: 'var(--color-surface-elevated)',
+    color: 'var(--color-text-primary)',
+    border: '1px solid var(--color-divider)',
+  }
+
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
-      <h1 className="sr-only">{profile.display_name}'s Profile</h1>
-      {/* Header */}
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+      {/* Sticky detail header: back + name */}
+      <PageHeader
+        title={profile.display_name || 'Anonymous'}
+        titleAside={jitterBadgeType ? <TrustBadge type={jitterBadgeType} size="md" /> : null}
+        onBack={handleBack}
+      />
+
+      {/* Hero */}
       <div
-        className="relative px-4 pt-8 pb-6 overflow-hidden"
+        className="relative px-4 pt-5 pb-6"
         style={{
           background: 'var(--color-bg)',
+          borderBottom: '1px solid var(--color-divider)',
         }}
       >
-        {/* Bottom divider */}
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-          style={{
-            width: '90%',
-            background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-          }}
-        />
-
-        {/* Avatar + Name row */}
+        {/* Avatar + follow stats row */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
@@ -528,71 +569,67 @@ export function UserProfile() {
                 color: 'var(--color-text-on-primary)',
                 boxShadow: '0 0 0 3px var(--color-primary-muted)',
               }}
+              aria-hidden="true"
             >
               {profile.display_name?.charAt(0).toUpperCase() || '?'}
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            {/* Display Name */}
-            <div className="flex items-center gap-2">
-              <h2
-                className="font-bold"
-                style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  color: 'var(--color-text-primary)',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  lineHeight: '1.2',
-                }}
-              >
-                {profile.display_name || 'Anonymous'}
-              </h2>
-              {jitterBadgeType && <TrustBadge type={jitterBadgeType} size="md" />}
-            </div>
-
             {/* Follow Stats */}
-            <div className="flex items-center gap-2 mt-1.5" style={{ fontSize: '13px' }}>
+            <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '13px' }}>
               <button
+                type="button"
                 onClick={() => setFollowListModal('followers')}
-                className="hover:underline transition-colors"
+                className="inline-flex items-center min-h-[44px] hover:underline"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
-                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <span className="font-bold mr-1" style={{ color: 'var(--color-text-primary)' }}>
                   {profile.follower_count || 0}
-                </span> followers
+                </span>
+                followers
               </button>
-              <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
+              <span style={{ color: 'var(--color-text-tertiary)' }} aria-hidden="true">&middot;</span>
               <button
+                type="button"
                 onClick={() => setFollowListModal('following')}
-                className="hover:underline transition-colors"
+                className="inline-flex items-center min-h-[44px] hover:underline"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
-                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <span className="font-bold mr-1" style={{ color: 'var(--color-text-primary)' }}>
                   {profile.following_count || 0}
-                </span> following
+                </span>
+                following
               </button>
             </div>
           </div>
         </div>
 
         {/* Taste Compatibility */}
-        {!isOwnProfile && tasteCompat && (
+        {tasteCompat && (
           <div
-            className="mt-4 px-3.5 py-3 rounded-xl"
+            className="mt-4 rounded-xl p-4"
             style={{
-              background: tasteCompat.compatibility_pct != null
-                ? `linear-gradient(135deg, ${getCompatColor(tasteCompat.compatibility_pct)}14 0%, ${getCompatColor(tasteCompat.compatibility_pct)}0A 100%)`
-                : 'var(--color-surface-elevated)',
-              border: tasteCompat.compatibility_pct != null
-                ? `1px solid ${getCompatColor(tasteCompat.compatibility_pct)}26`
-                : '1px solid var(--color-divider)',
+              background: 'var(--color-card)',
+              border: '1px solid var(--color-divider)',
             }}
           >
             {tasteCompat.compatibility_pct != null ? (
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold" style={{ color: getCompatColor(tasteCompat.compatibility_pct) }}>
+                <span
+                  aria-hidden="true"
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: getCompatColor(tasteCompat.compatibility_pct) }}
+                />
+                <span
+                  className="text-2xl"
+                  style={{
+                    color: 'var(--color-text-primary)',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
                   {tasteCompat.compatibility_pct}%
                 </span>
                 <div>
@@ -620,23 +657,13 @@ export function UserProfile() {
           <div className="mt-4 flex gap-2.5">
             {ratingStyle && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
+                className="flex-1 rounded-xl p-4"
                 style={{
                   background: 'var(--color-card)',
-                  borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
+                  border: '1px solid var(--color-divider)',
                 }}
               >
-                <p
-                  className="text-sm font-bold"
-                  style={{
-                    color: ratingStyle.level === 'generous' || ratingStyle.level === 'easy'
-                      ? 'var(--color-emerald)'
-                      : ratingStyle.level === 'tough'
-                      ? 'var(--color-red)'
-                      : 'var(--color-orange)',
-                  }}
-                >
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
                   {ratingStyle.label}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -646,26 +673,13 @@ export function UserProfile() {
             )}
             {ratingBias && ratingBias.votesWithConsensus > 0 && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
+                className="flex-1 rounded-xl p-4"
                 style={{
                   background: 'var(--color-card)',
-                  borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
+                  border: '1px solid var(--color-divider)',
                 }}
               >
-                <p className="text-sm font-bold" style={{
-                  color: (() => {
-                    const isAbove = ratingStyle?.level === 'generous' || ratingStyle?.level === 'easy'
-                    if (isAbove) {
-                      return ratingBias.ratingBias < 1.0 ? 'var(--color-emerald)' : 'var(--color-emerald-light)'
-                    }
-                    const isBelow = ratingStyle?.level === 'tough'
-                    if (isBelow) {
-                      return ratingBias.ratingBias < 1.0 ? 'var(--color-red-light)' : 'var(--color-red)'
-                    }
-                    return 'var(--color-orange)' // fair judge
-                  })(),
-                }}>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
                   {ratingBias.biasLabel}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -678,44 +692,42 @@ export function UserProfile() {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-4">
-          {isOwnProfile ? (
-            <Link
-              to="/profile"
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-center transition-colors"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
-            >
-              Edit Profile
-            </Link>
-          ) : (
-            <button
-              onClick={handleFollowToggle}
-              disabled={followLoading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
-              style={{
-                background: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-                color: isFollowing ? 'var(--color-text-primary)' : 'var(--color-text-on-primary)',
-              }}
-            >
-              {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-            </button>
-          )}
           <button
+            type="button"
+            onClick={handleFollowToggle}
+            disabled={followLoading}
+            className={`flex-1 py-3 min-h-[44px] rounded-xl text-sm transition-all active:scale-[0.98] ${isFollowing ? 'font-semibold' : 'font-bold'}`}
+            style={isFollowing ? {
+              ...secondaryButtonStyle,
+              opacity: followLoading ? 0.7 : 1,
+            } : {
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+              border: '1px solid transparent',
+              opacity: followLoading ? 0.7 : 1,
+            }}
+          >
+            {isFollowing ? 'Following' : 'Follow'}
+          </button>
+          <button
+            type="button"
             onClick={handleShare}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="px-4 py-3 min-h-[44px] rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
+            style={secondaryButtonStyle}
           >
             Share
           </button>
-          {currentUser && !isOwnProfile && (
+          {currentUser && (
             <div className="relative" ref={actionsMenuRef}>
               <button
+                ref={moreBtnRef}
                 type="button"
                 onClick={() => setShowActionsMenu((v) => !v)}
                 aria-label="More actions"
                 aria-expanded={showActionsMenu}
-                aria-haspopup="menu"
-                className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+                aria-controls="user-actions-menu"
+                className="w-11 h-full min-h-[44px] flex items-center justify-center rounded-xl transition-all active:scale-[0.98]"
+                style={secondaryButtonStyle}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="5" cy="12" r="2" />
@@ -725,13 +737,12 @@ export function UserProfile() {
               </button>
               {showActionsMenu && (
                 <div
-                  role="menu"
-                  aria-label={`Actions for ${profile.display_name}`}
+                  id="user-actions-menu"
                   className="absolute right-0 mt-2 w-48 rounded-xl shadow-xl border overflow-hidden z-40"
                   style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-divider)' }}
                 >
                   <button
-                    role="menuitem"
+                    type="button"
                     onClick={() => { setShowActionsMenu(false); setShowReportModal(true) }}
                     className="w-full px-4 py-3 text-left text-sm font-medium transition-colors border-b"
                     style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-divider)' }}
@@ -739,7 +750,7 @@ export function UserProfile() {
                     Report user
                   </button>
                   <button
-                    role="menuitem"
+                    type="button"
                     onClick={() => { setShowActionsMenu(false); setShowBlockModal(true) }}
                     className="w-full px-4 py-3 text-left text-sm font-medium transition-colors"
                     style={{ color: 'var(--color-danger)' }}
@@ -777,8 +788,8 @@ export function UserProfile() {
                 borderColor: 'var(--color-divider)',
               }}
             >
-              <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-accent-gold)' }}>
-                {'\u2B50'}
+              <span className="text-lg flex-shrink-0" aria-hidden="true">
+                {'⭐'}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -799,14 +810,14 @@ export function UserProfile() {
               className="rounded-xl border px-3.5 py-3 flex items-center gap-3"
               style={{
                 background: 'var(--color-card)',
-                borderColor: 'var(--color-red-muted, rgba(239, 68, 68, 0.2))',
+                borderColor: 'var(--color-divider)',
               }}
             >
-              <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-red)' }}>
-                {'\uD83C\uDF36\uFE0F'}
+              <span className="text-lg flex-shrink-0" aria-hidden="true">
+                {'🌶️'}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold" style={{ color: 'var(--color-red)' }}>
+                <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
                   Hottest take
                 </p>
                 <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
@@ -822,7 +833,7 @@ export function UserProfile() {
       )}
 
       {/* Review Fingerprint — public view */}
-      {jitterBadgeData && (
+      {jitterBadgeData && jitterBadgeType && (
         <div className="px-4 pt-3">
           <ProfileJitterCard
             profile={jitterBadgeData}
@@ -835,7 +846,7 @@ export function UserProfile() {
       {/* Location Filter Banner */}
       {locationFilter && (
         <div
-          className="mx-4 mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between"
+          className="mx-4 mt-3 pl-4 pr-2 py-1 rounded-xl flex items-center justify-between"
           style={{
             background: 'var(--color-surface-elevated)',
             border: '1px solid var(--color-divider)',
@@ -845,8 +856,9 @@ export function UserProfile() {
             Showing picks in <strong style={{ color: 'var(--color-text-primary)' }}>{formatLocationName(locationFilter)}</strong>
           </span>
           <button
+            type="button"
             onClick={function () { setSearchParams({}) }}
-            className="font-semibold"
+            className="inline-flex items-center min-h-[44px] px-2 font-semibold"
             style={{ color: 'var(--color-primary)', fontSize: '13px' }}
           >
             Show all
@@ -856,28 +868,38 @@ export function UserProfile() {
 
       {/* Tabs: Journal / Playlists (no Saved — that's personal) */}
       <div
+        role="tablist"
+        aria-label="Profile sections"
+        onKeyDown={handleTabKeyDown}
         className="flex"
         style={{
           borderBottom: '1px solid var(--color-divider)',
-          background: 'var(--color-surface)',
+          background: 'var(--color-bg)',
           position: 'sticky',
-          top: 0,
+          top: HEADER_HEIGHT,
           zIndex: 10,
         }}
       >
-        {['journal', 'playlists'].map(function (tab) {
+        {PROFILE_TABS.map(function (tab) {
+          var selected = activeTab === tab
           return (
             <button
               key={tab}
+              type="button"
+              role="tab"
+              id={'user-tab-' + tab}
+              aria-selected={selected}
+              aria-controls={'user-panel-' + tab}
+              tabIndex={selected ? 0 : -1}
               onClick={function () { setActiveTab(tab) }}
               className="flex-1 py-3 text-xs font-semibold text-center"
               style={{
-                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                color: selected ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
                 background: 'transparent',
                 border: 'none',
                 borderBottomWidth: 2,
                 borderBottomStyle: 'solid',
-                borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                borderBottomColor: selected ? 'var(--color-primary)' : 'transparent',
               }}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -888,37 +910,54 @@ export function UserProfile() {
 
       {/* --- Journal tab --- */}
       {activeTab === 'journal' && (
-        <>
-          {/* My Ratings shelf title */}
+        <div role="tabpanel" id="user-panel-journal" aria-labelledby="user-tab-journal">
+          {/* Ratings shelf title */}
           <div className="px-4 pt-5 pb-1">
-            <h2
-              style={{
-                fontFamily: "'Amatic SC', cursive",
-                color: 'var(--color-text-primary)',
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-              }}
-            >
-              {profile.display_name}'s Ratings
-            </h2>
+            <SectionHeader title={profile.display_name + "'s Ratings"} />
           </div>
 
           {/* Journal Feed — single chronological shelf */}
-          <JournalFeed
-            ratings={journalRatings}
-            loading={reviewsLoading}
-          />
-        </>
+          {journalRatings.length === 0 ? (
+            <EmptyState
+              emoji="🍽️"
+              title={(profile.display_name || 'This user') + " hasn't rated any dishes yet"}
+            />
+          ) : (
+            <JournalFeed ratings={journalRatings} />
+          )}
+        </div>
       )}
 
       {/* --- Playlists tab --- */}
       {activeTab === 'playlists' && (
-        <div className="px-4 pt-4 pb-6">
-          {userPlaylists.length === 0 ? (
-            <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-              No playlists yet
+        <div
+          role="tabpanel"
+          id="user-panel-playlists"
+          aria-labelledby="user-tab-playlists"
+          className="px-4 pt-4 pb-6"
+        >
+          {playlistsLoading ? (
+            <div className="grid grid-cols-2 gap-3 animate-pulse" role="status" aria-label="Loading playlists">
+              {[0, 1, 2, 3].map(function (i) {
+                return <div key={i} className="rounded-xl aspect-square" style={{ background: 'var(--color-divider)' }} />
+              })}
             </div>
+          ) : playlistsError ? (
+            <div className="py-10 text-center">
+              <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+                {playlistsError.message}
+              </p>
+              <button
+                type="button"
+                onClick={function () { refetchPlaylists() }}
+                className="py-3 px-4 rounded-xl font-bold text-sm min-h-[44px] transition-all active:scale-[0.98]"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              >
+                Try again
+              </button>
+            </div>
+          ) : userPlaylists.length === 0 ? (
+            <EmptyState emoji="🎵" title="No playlists yet" />
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {userPlaylists.map(function (p) { return <PlaylistGridCard key={p.id} playlist={p} /> })}
@@ -945,7 +984,7 @@ export function UserProfile() {
           <div className="flex gap-3 mt-4 justify-center">
             <Link
               to="/"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+              className="inline-flex items-center justify-center py-3 px-5 min-h-[44px] rounded-xl font-semibold transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
@@ -954,9 +993,10 @@ export function UserProfile() {
             >
               Explore the Map
             </Link>
-            <Link
-              to="/login"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+            <button
+              type="button"
+              onClick={() => setLoginModalOpen(true)}
+              className="py-3 px-5 min-h-[44px] rounded-xl font-semibold transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-surface-elevated)',
                 color: 'var(--color-text-primary)',
@@ -965,7 +1005,7 @@ export function UserProfile() {
               }}
             >
               Sign Up Free
-            </Link>
+            </button>
           </div>
         </div>
       )}
@@ -981,13 +1021,17 @@ export function UserProfile() {
 
       <ReportModal
         isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
+        onClose={() => { setShowReportModal(false); restoreMoreFocus() }}
         target={{ type: 'user', id: userId, label: profile.display_name }}
       />
       <BlockUserModal
         isOpen={showBlockModal}
-        onClose={() => setShowBlockModal(false)}
+        onClose={() => { setShowBlockModal(false); restoreMoreFocus() }}
         user={{ id: userId, displayName: profile.display_name }}
+      />
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
       />
     </div>
   )

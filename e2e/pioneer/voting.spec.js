@@ -7,7 +7,7 @@ test.describe('Pioneer — Voting (single-screen rate flow)', () => {
     // Wait for dishes to load, click first one
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 15_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // The rate CTA button should be visible (authed users see "Rate this dish"
@@ -21,7 +21,7 @@ test.describe('Pioneer — Voting (single-screen rate flow)', () => {
 
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 15_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // Open the rate flow overlay
@@ -48,7 +48,7 @@ test.describe('Pioneer — Voting (single-screen rate flow)', () => {
 
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 15_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // Open overlay
