@@ -32,4 +32,14 @@ export default defineConfig([
       'react-refresh/only-export-components': 'warn',
     },
   },
+  {
+    // Playwright specs + configs run in Node; Playwright's fixture `use()` is not a React hook
+    files: ['e2e/**/*.js', '**/playwright.config.js'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
 ])
