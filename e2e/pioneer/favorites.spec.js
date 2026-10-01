@@ -6,7 +6,7 @@ test.describe('Pioneer — Favorites & sharing', () => {
 
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 15_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // Look for the ear/favorite icon button
@@ -26,7 +26,7 @@ test.describe('Pioneer — Favorites & sharing', () => {
 
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 15_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // Look for share button

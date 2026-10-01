@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { prefetchRoutes } from '../App'
+import { prefetchRoutes } from '../lib/prefetchRoutes'
 
 export function BottomNav() {
   const tabs = [
@@ -38,15 +38,15 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50"
+      className="fixed bottom-0 left-0 right-0 z-50 pb-safe"
       style={{
         background: 'rgba(var(--color-bg-rgb), 0.85)',
         backdropFilter: 'blur(16px) saturate(180%)',
         WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        borderTop: '2px solid var(--color-divider)',
+        borderTop: '1px solid var(--color-divider)',
       }}
     >
-      <div className="flex justify-around items-center h-16 pb-safe">
+      <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}

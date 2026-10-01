@@ -1,32 +1,21 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { WghSeal } from '../components/WghSeal'
+import { AMATIC_TITLE } from '../constants/styles'
+
+const sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 export function Privacy() {
-  const navigate = useNavigate()
-
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+    >
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Privacy Policy
-          </h1>
-        </div>
-      </header>
+      <PageHeader title="Privacy Policy" standalone contained />
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
@@ -34,7 +23,7 @@ export function Privacy() {
           <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Last updated: April 18, 2026</p>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Overview
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -57,7 +46,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Information We Collect
             </h2>
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -112,13 +101,13 @@ export function Privacy() {
                   service so your reviews can be attested as human-written. We do not use it
                   to identify you outside the service, we do not sell it, and we do not share
                   it with advertisers. Learn more at{' '}
-                  <a
-                    href="/jitter"
+                  <Link
+                    to="/jitter"
                     className="font-medium"
                     style={{ color: 'var(--color-primary)' }}
                   >
                     whatsgoodhere.app/jitter
-                  </a>
+                  </Link>
                   .
                 </p>
               </div>
@@ -155,10 +144,10 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               How We Use Your Information
             </h2>
-            <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <li>To provide and improve the app's features</li>
               <li>To display community ratings and rankings</li>
               <li>To show you relevant dishes and restaurants near you</li>
@@ -170,14 +159,14 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Third-Party Services
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               We do not sell your personal information. We share data only with services that
               help us run the app:
             </p>
-            <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <li><strong>Supabase</strong> — our database, authentication, and file storage</li>
               <li><strong>Vercel</strong> — our hosting provider</li>
               <li><strong>Google</strong> — Sign in with Google, and the Google Places API for restaurant discovery (we send location queries to Google to find nearby places)</li>
@@ -188,7 +177,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Your Votes Are Public
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -199,13 +188,13 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Device Permissions
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               The app asks your permission before accessing:
             </p>
-            <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <li><strong>Location</strong> — to show nearby restaurants and dishes</li>
               <li><strong>Camera</strong> — to take a photo of a dish to upload</li>
               <li><strong>Photos library</strong> — to pick an existing photo to upload</li>
@@ -217,7 +206,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Deleting Your Account
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -230,7 +219,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Your Rights
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -244,7 +233,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Children
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -255,7 +244,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Data Retention
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -270,7 +259,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Where Your Data Lives
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -282,7 +271,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Copyright (DMCA)
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -307,7 +296,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Changes to This Policy
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -317,7 +306,7 @@ export function Privacy() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Contact Us
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -332,7 +321,7 @@ export function Privacy() {
             </p>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

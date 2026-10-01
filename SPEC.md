@@ -216,7 +216,7 @@ Evidence: `schema.sql:1534-1776`
 
 **User flow:** Tap category → see ranked dishes filtered by category → search, sort, vote
 **Screens:** `Browse.jsx`
-**Components:** `RankedDishRow`, `SortDropdown`, `CategoryGrid`, `DishCardSkeleton`, `LoginModal`, `ImpactFeedback`
+**Components:** `DishListItem`, `BrowseResults`, `BrowseSearchBar`, `SortDropdown`, `DishRowSkeleton`, `LoginModal`
 **Hooks:** `useDishes`, `useUserVotes`, `useDishSearch`, `useFavorites`
 **API calls:** `dishesApi.getRankedDishes()`, `dishesApi.search()`, `votesApi.submitVote()`
 **Data reads:** `get_ranked_dishes` RPC, dishes table (search)

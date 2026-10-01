@@ -9,7 +9,7 @@ test.describe('Dish Detail — Tourist view', () => {
     await expect(firstDish).toBeVisible({ timeout: 20_000 })
 
     // Click the first dish
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
 
     // Should navigate to dish detail page
     await page.waitForURL(/\/dish\//)
@@ -24,7 +24,7 @@ test.describe('Dish Detail — Tourist view', () => {
     // Navigate to a dish
     const firstDish = page.locator('[data-dish-id]').first()
     await expect(firstDish).toBeVisible({ timeout: 20_000 })
-    await firstDish.click()
+    await firstDish.click({ position: { x: 16, y: 16 } })
     await page.waitForURL(/\/dish\//)
 
     // Wait for dish detail to render

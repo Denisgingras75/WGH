@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { capture } from '../lib/analytics'
 import { useAuth } from '../context/AuthContext'
 import { useLocationContext } from '../context/LocationContext'
@@ -10,10 +11,12 @@ import { LocationBanner } from '../components/LocationBanner'
 import { getRatingColor } from '../utils/ranking'
 import { placesApi } from '../api/placesApi'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
+import { EmptyState } from '../components/EmptyState'
+import { SectionHeader } from '../components/SectionHeader'
 import { PoweredByGoogle } from '../components/PoweredByGoogle'
 import { PlaceAttributions } from '../components/PlaceAttributions'
-import { logger } from '../utils/logger'
 import { getStorageItem, setStorageItem } from '../lib/storage'
+import { RadiusChip } from '../components/home/RadiusChip'
 
 // Bayesian shrinkage — restaurants with few votes get pulled toward the global mean
 // so a 1-vote 9.5 doesn't beat a 50-vote 8.6
@@ -38,8 +41,10 @@ export function Restaurants() {
 
   var [restaurantTab, setRestaurantTab] = useState('open')
   var [searchQuery, setSearchQuery] = useState('')
+  var [searchFocused, setSearchFocused] = useState(false)
   var [showRadiusSheet, setShowRadiusSheet] = useState(false)
   var [addModalOpen, setAddModalOpen] = useState(false)
+  var [addQuery, setAddQuery] = useState('')
   var [sortBy, setSortBy] = useState(function () {
     return getStorageItem(SORT_STORAGE_KEY) || 'distance'
   })
@@ -53,6 +58,7 @@ export function Restaurants() {
   var restaurants = restData.restaurants
   var loading = restData.loading
   var fetchError = restData.error
+  var refetch = restData.refetch
   var isDistanceFiltered = restData.isDistanceFiltered
 
   // Existing restaurants to filter out of discovery (by place_id OR name+proximity)
@@ -80,12 +86,13 @@ export function Restaurants() {
 
   // Filter by open/closed tab + search, then sort by chosen mode
   var filteredRestaurants = useMemo(function () {
+    var q = searchQuery.trim().toLowerCase()
     var filtered = restaurants
       .filter(function (r) {
         return restaurantTab === 'open' ? r.is_open !== false : r.is_open === false
       })
       .filter(function (r) {
-        return r.name.toLowerCase().includes(searchQuery.toLowerCase())
+        return (r.name || '').toLowerCase().includes(q)
       })
 
     if (sortBy === 'top-rated') {
@@ -115,19 +122,58 @@ export function Restaurants() {
     navigate('/restaurants/' + restaurant.id)
   }
 
+  var handleTabKeyDown = function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+    e.preventDefault()
+    var next = restaurantTab === 'open' ? 'closed' : 'open'
+    setRestaurantTab(next)
+    requestAnimationFrame(function () {
+      document.getElementById('restaurants-tab-' + next)?.focus()
+    })
+  }
+
+  var trimmedQuery = searchQuery.trim()
+  var canWidenRadius = isDistanceFiltered && radius !== 0
+  var emptyAction = null
+  if (trimmedQuery) {
+    emptyAction = (
+      <button
+        type="button"
+        onClick={function () {
+          setAddQuery(trimmedQuery)
+          setAddModalOpen(true)
+        }}
+        className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+      >
+        {'Add "' + trimmedQuery + '"'}
+      </button>
+    )
+  } else if (canWidenRadius) {
+    emptyAction = (
+      <button
+        type="button"
+        onClick={function () { setShowRadiusSheet(true) }}
+        className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+      >
+        Change radius
+      </button>
+    )
+  }
+
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
-      <h1 className="sr-only">Restaurants</h1>
-
       {/* Header */}
       <header
         className="px-4 pt-4 pb-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '2px solid var(--color-divider)',
+          borderBottom: '1px solid var(--color-divider)',
         }}
       >
         {/* Search bar */}
+        <label htmlFor="restaurant-search" className="sr-only">Search restaurants</label>
         <div className="relative">
           <svg
             aria-hidden="true"
@@ -144,16 +190,19 @@ export function Restaurants() {
           <input
             id="restaurant-search"
             name="restaurant-search"
-            type="text"
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
             autoComplete="off"
-            placeholder="Search restaurants..."
-            aria-label="Search restaurants"
+            placeholder="Search restaurants…"
             value={searchQuery}
             onChange={function (e) { setSearchQuery(e.target.value) }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl"
+            onFocus={function () { setSearchFocused(true) }}
+            onBlur={function () { setSearchFocused(false) }}
+            className="w-full pl-10 pr-4 py-3 rounded-xl outline-none"
             style={{
               background: 'var(--color-surface)',
-              border: '1.5px solid var(--color-divider)',
+              border: searchFocused ? '2px solid var(--color-primary)' : '2px solid var(--color-divider)',
               color: 'var(--color-text-primary)',
               fontSize: '14px',
             }}
@@ -162,38 +211,23 @@ export function Restaurants() {
       </header>
 
       <div className="p-4 pt-5">
-        {/* Section Header */}
+        {/* Page title */}
         <div className="mb-4 flex items-center justify-between">
-          <h2
-            className="font-bold"
+          <h1
             style={{
               fontFamily: "'Amatic SC', cursive",
-              color: 'var(--color-primary)',
               fontSize: '32px',
               fontWeight: 700,
               letterSpacing: '0.02em',
+              lineHeight: 1.1,
+              color: 'var(--color-text-primary)',
             }}
           >
             Restaurants
-          </h2>
+          </h1>
 
           {/* Radius chip */}
-          <button
-            onClick={function () { setShowRadiusSheet(true) }}
-            aria-label={'Search radius: ' + radius + ' miles'}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold"
-            style={{
-              fontSize: '13px',
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
-              border: '1.5px solid var(--color-divider)',
-            }}
-          >
-            {radius} mi
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+          <RadiusChip radius={radius} onOpen={function () { setShowRadiusSheet(true) }} />
         </div>
 
         {/* Location permission banner */}
@@ -207,32 +241,41 @@ export function Restaurants() {
         <div
           className="flex rounded-xl p-1 mb-5"
           style={{
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            background: 'var(--color-surface-elevated)',
+            border: '1px solid var(--color-divider)',
           }}
-          role="group"
-          aria-label="Filter by status"
+          role="tablist"
+          aria-label="Restaurant status"
+          onKeyDown={handleTabKeyDown}
         >
           <button
-            role="button"
-            aria-pressed={restaurantTab === 'open'}
+            type="button"
+            role="tab"
+            id="restaurants-tab-open"
+            aria-selected={restaurantTab === 'open'}
+            aria-controls="restaurants-tab-panel"
+            tabIndex={restaurantTab === 'open' ? 0 : -1}
             onClick={function () { setRestaurantTab('open') }}
-            className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all"
             style={{
               background: restaurantTab === 'open' ? 'var(--color-primary)' : 'transparent',
-              color: restaurantTab === 'open' ? 'var(--color-surface-elevated)' : 'var(--color-text-tertiary)',
+              color: restaurantTab === 'open' ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
             }}
           >
             Open
           </button>
           <button
-            role="button"
-            aria-pressed={restaurantTab === 'closed'}
+            type="button"
+            role="tab"
+            id="restaurants-tab-closed"
+            aria-selected={restaurantTab === 'closed'}
+            aria-controls="restaurants-tab-panel"
+            tabIndex={restaurantTab === 'closed' ? 0 : -1}
             onClick={function () { setRestaurantTab('closed') }}
-            className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all"
             style={{
               background: restaurantTab === 'closed' ? 'var(--color-primary)' : 'transparent',
-              color: restaurantTab === 'closed' ? 'var(--color-surface-elevated)' : 'var(--color-text-tertiary)',
+              color: restaurantTab === 'closed' ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
             }}
           >
             Closed
@@ -242,24 +285,26 @@ export function Restaurants() {
         {/* Sort pills */}
         <div className="flex items-center gap-2 mb-4">
           <button
+            type="button"
             onClick={function () { setSortBy('distance') }}
             aria-pressed={sortBy === 'distance'}
-            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            className="px-3 py-2 rounded-full text-xs font-semibold min-h-[36px] transition-all"
             style={{
               background: sortBy === 'distance' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: sortBy === 'distance' ? 'white' : 'var(--color-text-secondary)',
+              color: sortBy === 'distance' ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
               border: sortBy === 'distance' ? 'none' : '1.5px solid var(--color-divider)',
             }}
           >
-            Distance
+            {isDistanceFiltered ? 'Distance' : 'A–Z'}
           </button>
           <button
+            type="button"
             onClick={function () { setSortBy('top-rated') }}
             aria-pressed={sortBy === 'top-rated'}
-            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            className="px-3 py-2 rounded-full text-xs font-semibold min-h-[36px] transition-all"
             style={{
               background: sortBy === 'top-rated' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: sortBy === 'top-rated' ? 'white' : 'var(--color-text-secondary)',
+              color: sortBy === 'top-rated' ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
               border: sortBy === 'top-rated' ? 'none' : '1.5px solid var(--color-divider)',
             }}
           >
@@ -268,63 +313,68 @@ export function Restaurants() {
         </div>
 
         {/* Restaurant List */}
+        <div role="tabpanel" id="restaurants-tab-panel" aria-labelledby={'restaurants-tab-' + restaurantTab}>
         {fetchError ? (
           <div className="text-center py-12">
             <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
-              {fetchError.message || fetchError}
+              {fetchError.message}
             </p>
             <button
-              onClick={function () { window.location.reload() }}
-              className="px-5 py-2.5 text-sm font-bold rounded-lg"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-surface-elevated)' }}
+              type="button"
+              onClick={function () { refetch() }}
+              className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
-              Try Again
+              Try again
             </button>
           </div>
         ) : loading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 animate-pulse" role="status" aria-label="Loading restaurants">
             {[0, 1, 2, 3, 4, 5].map(function (i) {
               return (
                 <div
                   key={i}
-                  className="h-24 rounded-xl animate-pulse"
-                  style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
-                />
+                  className="rounded-xl p-4"
+                  style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
+                >
+                  <div className="h-5 w-2/3 rounded" style={{ background: 'var(--color-divider)' }} />
+                  <div className="h-3 w-1/3 rounded mt-2" style={{ background: 'var(--color-divider)' }} />
+                </div>
               )
             })}
+            <span className="sr-only">Loading restaurants</span>
           </div>
         ) : (
           <div className="space-y-3">
             {filteredRestaurants.map(function (restaurant) {
+              var isOpen = restaurant.is_open !== false
               return (
                 <div
                   key={restaurant.id}
-                  className="w-full rounded-xl p-4 transition-all"
+                  className="w-full rounded-xl p-4 card-press"
                   style={{
-                    background: restaurant.is_open
-                      ? 'var(--color-surface-elevated)'
-                      : 'var(--color-surface)',
-                    border: '1.5px solid var(--color-divider)',
-                    boxShadow: restaurant.is_open ? '0 2px 12px rgba(0, 0, 0, 0.06)' : 'none',
+                    background: isOpen ? 'var(--color-card)' : 'var(--color-surface)',
+                    border: '1px solid var(--color-divider)',
                   }}
                 >
                   <button
+                    type="button"
                     onClick={function () { handleRestaurantSelect(restaurant) }}
-                    className="w-full text-left active:scale-[0.98] transition-all"
+                    className="w-full text-left"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <h3
+                        <h2
                           className="font-bold"
                           style={{
-                            color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                            fontSize: restaurant.is_open ? '18px' : '14px',
+                            color: isOpen ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                            fontSize: isOpen ? '18px' : '14px',
                             letterSpacing: '-0.01em',
                           }}
                         >
                           {restaurant.name}
-                        </h3>
-                        {restaurant.is_open && restaurant.town && (
+                        </h2>
+                        {isOpen && (restaurant.town || restaurant.distance_miles != null) && (
                           <p
                             className="mt-0.5 font-medium"
                             style={{
@@ -334,18 +384,18 @@ export function Restaurants() {
                               textTransform: 'uppercase',
                             }}
                           >
-                            {restaurant.town}
-                            {restaurant.distance_miles != null && (
-                              ' · ' + restaurant.distance_miles + ' mi'
-                            )}
+                            {[
+                              restaurant.town,
+                              restaurant.distance_miles != null ? Number(restaurant.distance_miles).toFixed(1) + ' mi' : null,
+                            ].filter(Boolean).join(' · ')}
                           </p>
                         )}
-                        {!restaurant.is_open && (
+                        {!isOpen && (
                           <span
                             className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
                             style={{
-                              fontSize: '10px',
-                              background: 'rgba(228, 68, 10, 0.08)',
+                              fontSize: '11px',
+                              background: 'var(--color-primary-muted)',
                               color: 'var(--color-primary)',
                               border: '1px solid var(--color-primary)',
                             }}
@@ -364,40 +414,42 @@ export function Restaurants() {
                             </span>
                             {' · '}
                             <span
-                              className="font-bold"
-                              style={{ color: getRatingColor(restaurant.knownFor.rating) }}
+                              style={{
+                                fontWeight: 800,
+                                color: getRatingColor(restaurant.knownFor.rating),
+                              }}
                             >
-                              {restaurant.knownFor.rating}
+                              {Number(restaurant.knownFor.rating).toFixed(1)}
                             </span>
                           </p>
                         )}
                       </div>
 
                       {/* Chevron */}
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
                   </button>
 
                   {/* Rating row — tappable, navigates to reviews */}
-                  {restaurant.is_open && restaurant.avg_rating != null && (
+                  {isOpen && restaurant.avg_rating != null && (
                     <button
-                      onClick={function (e) {
-                        e.stopPropagation()
-                        navigate('/restaurants/' + restaurant.id + '/reviews')
-                      }}
-                      className="flex items-center gap-2 mt-2.5 pt-2.5 w-full text-left active:opacity-70 transition-opacity"
+                      type="button"
+                      onClick={function () { navigate('/restaurants/' + restaurant.id + '/reviews') }}
+                      className="flex items-center gap-2 mt-2.5 pt-2.5 w-full min-h-[44px] text-left active:opacity-70 transition-opacity"
                       style={{ borderTop: '1px solid var(--color-divider)' }}
                     >
                       <span
-                        className="font-bold"
                         style={{
                           fontSize: '18px',
-                          color: getRatingColor(restaurant.avg_rating),
+                          fontWeight: 800,
+                          letterSpacing: '-0.02em',
+                          fontVariantNumeric: 'tabular-nums',
+                          color: 'var(--color-rating)',
                         }}
                       >
-                        {restaurant.avg_rating}
+                        {Number(restaurant.avg_rating).toFixed(1)}
                       </span>
                       <span
                         className="font-medium"
@@ -405,7 +457,7 @@ export function Restaurants() {
                       >
                         WGH Score · {restaurant.total_votes || 0} vote{(restaurant.total_votes || 0) === 1 ? '' : 's'}
                       </span>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--color-text-tertiary)' }}>
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--color-text-tertiary)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>
                     </button>
@@ -415,50 +467,28 @@ export function Restaurants() {
             })}
 
             {filteredRestaurants.length === 0 && (
-              <div
-                className="text-center py-12 rounded-xl"
-                style={{
-                  color: 'var(--color-text-tertiary)',
-                  background: 'var(--color-surface)',
-                  border: '1.5px solid var(--color-divider)',
-                }}
-              >
-                <p className="font-bold" style={{ fontSize: '14px' }}>
-                  {searchQuery
-                    ? 'No restaurants found'
-                    : restaurantTab === 'open'
-                      ? 'No open restaurants found'
-                      : 'No closed restaurants'
-                  }
-                </p>
-                {isDistanceFiltered && (
-                  <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                    Try increasing your search radius
-                  </p>
-                )}
-              </div>
+              <EmptyState
+                emoji="🍽️"
+                title={trimmedQuery
+                  ? 'No restaurants found'
+                  : restaurantTab === 'open'
+                    ? 'No open restaurants found'
+                    : 'No closed restaurants'
+                }
+                subtitle={canWidenRadius ? 'Try increasing your search radius' : undefined}
+                action={emptyAction}
+              />
             )}
           </div>
         )}
+        </div>
 
         {/* Discover More Restaurants — Google Places (auth only) */}
         {user && nearbyPlaces.length > 0 && (
           <div className="mt-8">
-            <h2
-              className="font-bold mb-3"
-              style={{
-                fontFamily: "'Amatic SC', cursive",
-                color: 'var(--color-text-primary)',
-                fontSize: '28px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-              }}
-            >
-              Discover more restaurants
-            </h2>
-            <p className="text-xs mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
-              Found on Google Maps — not yet on WGH
-            </p>
+            <div className="mb-3">
+              <SectionHeader title="Discover more restaurants" subtitle="Found on Google Maps — not yet on WGH" />
+            </div>
             <div className="space-y-2">
               {nearbyPlaces.map(function (place) {
                 return (
@@ -474,17 +504,29 @@ export function Restaurants() {
             </div>
           </div>
         )}
-        {user && !nearbyLoading && nearbyPlaces.length === 0 && (
+        {user && nearbyError && (
+          <p
+            role="alert"
+            className="mt-6 text-sm text-center"
+            style={{ color: 'var(--color-danger)' }}
+          >
+            Couldn't load nearby suggestions from Google. Please try again later.
+          </p>
+        )}
+        {user && !nearbyError && !nearbyLoading && !loading && !fetchError && nearbyPlaces.length === 0 && (
           <p
             className="mt-6 text-center text-xs py-3"
             style={{ color: 'var(--color-text-tertiary)' }}
           >
-            {nearbyError?.message || 'No additional restaurants found nearby from Google'}
+            No additional restaurants found nearby from Google
           </p>
         )}
         {user && nearbyLoading && (
-          <div className="mt-8 flex justify-center py-4">
-            <div className="animate-spin w-5 h-5 border-2 rounded-full" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-accent-gold)' }} />
+          <div role="status" className="mt-8 flex justify-center py-4">
+            <div
+              className="spinner"
+            />
+            <span className="sr-only">Loading nearby restaurants</span>
           </div>
         )}
       </div>
@@ -499,17 +541,21 @@ export function Restaurants() {
 
       {/* Floating Add Restaurant button */}
       <button
-        onClick={function () { setAddModalOpen(true) }}
+        type="button"
+        onClick={function () {
+          setAddQuery('')
+          setAddModalOpen(true)
+        }}
         className="fixed right-4 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
         style={{
           bottom: 'calc(72px + env(safe-area-inset-bottom))',
           zIndex: 40,
-          background: 'var(--color-accent-gold)',
-          color: 'white',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          background: 'var(--color-primary)',
+          color: 'var(--color-text-on-primary)',
+          boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
         }}
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         Add Restaurant
@@ -518,6 +564,7 @@ export function Restaurants() {
       <AddRestaurantModal
         isOpen={addModalOpen}
         onClose={function () { setAddModalOpen(false) }}
+        initialQuery={addQuery}
       />
 
     </div>
@@ -526,28 +573,21 @@ export function Restaurants() {
 
 // Card for a discovered Google Place
 function NearbyPlaceCard({ place }) {
-  var _details = useState(null)
-  var details = _details[0]
-  var setDetails = _details[1]
-  var fetchedRef = useRef(false)
-
-  var fetchDetails = useCallback(function () {
-    if (fetchedRef.current || !place.placeId) return
-    fetchedRef.current = true
-    placesApi.getDetails(place.placeId)
-      .then(function (d) { setDetails(d) })
-      .catch(function (err) { logger.error('Place details error:', err) })
-  }, [place.placeId])
-
-  useEffect(function () {
-    fetchDetails()
-  }, [fetchDetails])
+  // React Query caches Place Details (billed per call) across visits; placesApi logs errors
+  var detailsQuery = useQuery({
+    queryKey: ['placeDetails', place.placeId],
+    queryFn: function () { return placesApi.getDetails(place.placeId) },
+    enabled: !!place.placeId,
+    staleTime: 1000 * 60 * 60,
+    retry: false,
+  })
+  var details = detailsQuery.data
 
   return (
     <div
       className="rounded-xl p-4"
       style={{
-        background: 'var(--color-surface)',
+        background: 'var(--color-card)',
         border: '1px solid var(--color-divider)',
       }}
     >
@@ -571,13 +611,13 @@ function NearbyPlaceCard({ place }) {
       </div>
 
       {(details?.googleMapsUrl || details?.websiteUrl) && (
-        <div className="flex gap-4 mt-2">
+        <div className="flex gap-4 mt-1">
           {details.googleMapsUrl && (
             <a
               href={details.googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs font-medium"
+              className="inline-flex items-center gap-1 min-h-[44px] text-sm font-semibold"
               style={{ color: 'var(--color-accent-gold)' }}
             >
               Google Maps
@@ -588,7 +628,7 @@ function NearbyPlaceCard({ place }) {
               href={details.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs font-medium"
+              className="inline-flex items-center gap-1 min-h-[44px] text-sm font-semibold"
               style={{ color: 'var(--color-accent-gold)' }}
             >
               Website

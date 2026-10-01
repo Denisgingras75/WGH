@@ -1,85 +1,126 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useMyLocalList } from '../hooks/useMyLocalList'
 import { useDishSearch } from '../hooks/useDishSearch'
 import { useUserVotes } from '../hooks/useUserVotes'
-import { getCategoryEmoji } from '../constants/categories'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import { ReviewFlow } from '../components/ReviewFlow'
+import { EmptyState } from '../components/EmptyState'
+import { DishRowSkeleton, DishAddRowSkeleton } from '../components/Skeleton'
+import { DishListItem } from '../components/DishListItem'
+import { DishAddRow } from '../components/DishAddRow'
+import { getUserMessage, getUserFacingMessage } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+import { AMATIC_TITLE, INPUT_CLASS, LABEL_CLASS, LABEL_STYLE, PAGE_INPUT_STYLE, PRIMARY_BUTTON_CLASS, PRIMARY_BUTTON_STYLE } from '../constants/styles'
+
+var ICON_BUTTON = 'w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95'
+
+// Editable list entry: the fields DishListItem renders, plus the curator's note.
+// No restaurant_id on purpose: DishListItem would turn the restaurant name into a
+// link that navigates away without the unsaved-changes guard below.
+function toListItem(dish, note) {
+  return {
+    dish_id: dish.dish_id || dish.id,
+    dish_name: dish.dish_name || dish.name,
+    restaurant_name: dish.restaurant_name,
+    avg_rating: dish.avg_rating,
+    total_votes: dish.total_votes,
+    category: dish.category,
+    note: note || '',
+  }
+}
 
 export function MyList() {
   var navigate = useNavigate()
   var { user } = useAuth()
-  var { listMeta, dishes, loading, saveList, saving } = useMyLocalList()
+  // refetch: useMyLocalList returns it once the hook exposes React Query's refetch.
+  var { listMeta, dishes, loading, error, refetch, saveList, saving } = useMyLocalList()
 
   // Rated-dish lookup — a curator can only put dishes they've given a number to
   // on their Top 10. Tapping an unrated dish opens an inline rate sheet first.
-  var { votes, refetch: refetchVotes } = useUserVotes(user && user.id)
+  var { votes, loading: votesLoading, refetch: refetchVotes } = useUserVotes(user && user.id)
   var ratedSet = {}
   votes.forEach(function (v) {
     if (v.rating_10 != null && v.dishes) ratedSet[v.dishes.id] = true
   })
   var [pendingRateDish, setPendingRateDish] = useState(null)
+  var rateSheetRef = useFocusTrap(!!pendingRateDish, function () { setPendingRateDish(null) })
 
   // Local state for editing
   var [tagline, setTagline] = useState('')
   var [items, setItems] = useState([])
   var [searchQuery, setSearchQuery] = useState('')
   var [showSearch, setShowSearch] = useState(false)
-  var [saveMessage, setSaveMessage] = useState(null)
   var [initialized, setInitialized] = useState(false)
 
-  var { results: searchResults } = useDishSearch(searchQuery, 20)
+  var { results: searchResults, loading: searchLoading, error: searchError } = useDishSearch(searchQuery, 20)
 
-  // Initialize from server data (once)
+  // Initialize from server data (once). Runs for empty lists too, so a saved
+  // tagline is seeded exactly once and never overwrites the curator's edits.
   useEffect(function () {
-    if (initialized) return
-    if (dishes.length > 0) {
-      setItems(dishes.map(function (d) {
-        return {
-          dish_id: d.dish_id,
-          dish_name: d.dish_name,
-          restaurant_name: d.restaurant_name,
-          category: d.category,
-          note: d.note || '',
-        }
-      }))
-      setInitialized(true)
-    }
-    if (listMeta && listMeta.curatorTagline) {
-      setTagline(listMeta.curatorTagline)
-    }
-  }, [dishes, listMeta, initialized])
+    if (initialized || loading || !listMeta) return
+    setItems(dishes.map(function (d) { return toListItem(d, d.note) }))
+    setTagline(listMeta.curatorTagline || '')
+    setInitialized(true)
+  }, [initialized, loading, listMeta, dishes])
+
+  if (!loading && error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-4" style={{ background: 'var(--color-bg)' }}>
+        <h1 className="sr-only">My Top 10</h1>
+        <p role="alert" className="text-sm text-center" style={{ color: 'var(--color-danger)' }}>
+          {error.message}
+        </p>
+        {refetch && (
+          <button
+            onClick={function () { refetch() }}
+            className={PRIMARY_BUTTON_CLASS}
+            style={PRIMARY_BUTTON_STYLE}
+          >
+            Try again
+          </button>
+        )}
+      </div>
+    )
+  }
 
   // Not a curator — no list found
   if (!loading && !listMeta) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
-        <div className="text-center px-6">
-          <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔒</div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-            Local Curators Only
-          </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-            You need an invite link to become a local curator.
-          </p>
-          <button
-            onClick={function () { navigate('/') }}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
-          >
-            Go Home
-          </button>
-        </div>
+      <div className="min-h-screen px-4" style={{ background: 'var(--color-bg)' }}>
+        <h1 className="sr-only">My Top 10</h1>
+        <EmptyState
+          emoji="🔒"
+          title="Local curators only"
+          subtitle="You need an invite link to become a local curator."
+          action={
+            <button
+              onClick={function () { navigate('/') }}
+              className={PRIMARY_BUTTON_CLASS}
+              style={PRIMARY_BUTTON_STYLE}
+            >
+              Go home
+            </button>
+          }
+        />
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
+      <div
+        className="min-h-screen px-4 pt-5 animate-pulse"
+        role="status"
+        aria-label="Loading your list"
+        style={{ background: 'var(--color-bg)' }}
+      >
+        <div className="rounded mb-2" style={{ width: 160, height: 32, background: 'var(--color-divider)' }} />
+        <div className="rounded mb-6" style={{ width: 220, height: 13, background: 'var(--color-divider)' }} />
+        {[0, 1, 2].map(function (i) { return <DishRowSkeleton key={i} /> })}
       </div>
     )
   }
@@ -89,19 +130,15 @@ export function MyList() {
     setItems(function (prev) {
       if (prev.length >= 10) return prev
       if (prev.some(function (item) { return item.dish_id === dishId })) return prev
-      return prev.concat([{
-        dish_id: dishId,
-        dish_name: dish.dish_name || dish.name,
-        restaurant_name: dish.restaurant_name,
-        category: dish.category,
-        note: '',
-      }])
+      return prev.concat([toListItem(dish, '')])
     })
     setSearchQuery('')
     setShowSearch(false)
   }
 
   function handleAddDish(dish) {
+    // Votes still loading — the rated check would be wrong, so wait.
+    if (votesLoading) return
     if (items.length >= 10) return
     var dishId = dish.dish_id || dish.id
     if (items.some(function (item) { return item.dish_id === dishId })) return
@@ -158,7 +195,6 @@ export function MyList() {
   }
 
   async function handleSave() {
-    setSaveMessage(null)
     try {
       var payload = {
         tagline: tagline || null,
@@ -171,15 +207,33 @@ export function MyList() {
         }),
       }
       var result = await saveList(payload)
-      if (result.success) {
-        setSaveMessage('Saved! ' + (items.length > 0 ? 'Your list is live.' : 'List unpublished.'))
+      if (result && result.success) {
+        toast.success(items.length > 0 ? 'Saved — your list is live' : 'Saved — list unpublished')
       } else {
-        setSaveMessage('Error: ' + (result.error || 'Failed to save'))
+        // The RPC returns readable strings in result.error
+        toast.error((result && result.error) || 'Couldn’t save your list')
       }
     } catch (err) {
       logger.error('Save list error:', err)
-      setSaveMessage('Error: ' + (err.message || 'Failed to save'))
+      toast.error(getUserFacingMessage(err, 'saving your list'))
     }
+  }
+
+  // Unsaved edits live only in local state, so opening a dish would drop them
+  var isDirty = initialized && (
+    (tagline || '') !== ((listMeta && listMeta.curatorTagline) || '') ||
+    items.length !== dishes.length ||
+    items.some(function (item, i) {
+      return item.dish_id !== dishes[i].dish_id || (item.note || '') !== (dishes[i].note || '')
+    })
+  )
+
+  function handleOpenDish(dishId) {
+    if (isDirty) {
+      toast('Save your list first so your changes aren’t lost')
+      return
+    }
+    navigate('/dish/' + dishId)
   }
 
   // Filter search results to exclude already-added dishes
@@ -190,15 +244,10 @@ export function MyList() {
   })
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: '100px' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-2">
-        <h1 style={{
-          fontSize: '22px',
-          fontWeight: 800,
-          color: 'var(--color-text-primary)',
-          letterSpacing: '-0.02em',
-        }}>
+      <div className="px-4 pt-5 pb-2">
+        <h1 style={{ ...AMATIC_TITLE, fontSize: '32px' }}>
           My Top 10
         </h1>
         <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
@@ -208,25 +257,22 @@ export function MyList() {
 
       {/* Tagline */}
       <div className="px-4 mb-4">
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>
+        <label htmlFor="mylist-tagline" className={LABEL_CLASS} style={LABEL_STYLE}>
           Your tagline
         </label>
         <input
+          id="mylist-tagline"
           type="text"
           value={tagline}
           onChange={function (e) { setTagline(e.target.value) }}
           placeholder="e.g. Manager at Nancy's, lifelong islander"
           maxLength={80}
-          className="w-full rounded-lg"
-          style={{
-            padding: '10px 12px',
-            fontSize: '14px',
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
-            color: 'var(--color-text-primary)',
-            outline: 'none',
-          }}
+          className={INPUT_CLASS}
+          style={PAGE_INPUT_STYLE}
         />
+        <p className="text-xs text-right mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+          {tagline.length}/80
+        </p>
       </div>
 
       {/* Current items */}
@@ -245,101 +291,33 @@ export function MyList() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col" style={{ gap: '8px' }}>
+          <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {items.map(function (item, i) {
-              var emoji = getCategoryEmoji(item.category) || '🍽️'
+              var isFirst = i === 0
+              var isLastItem = i >= items.length - 1
               return (
-                <div
+                <li
                   key={item.dish_id}
-                  className="rounded-xl"
-                  style={{
-                    background: 'var(--color-surface-elevated)',
-                    border: '1px solid var(--color-divider)',
-                    padding: '12px',
-                  }}
+                  style={{ borderBottom: isLastItem ? 'none' : '1px solid var(--color-divider)' }}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Rank number */}
-                    <span style={{
-                      fontSize: '16px',
-                      fontWeight: 800,
-                      color: 'var(--color-text-tertiary)',
-                      width: '24px',
-                      textAlign: 'center',
-                    }}>
-                      {i + 1}
-                    </span>
+                  <DishListItem
+                    dish={item}
+                    rank={i + 1}
+                    hideVotes
+                    isLast
+                    onClick={function () { handleOpenDish(item.dish_id) }}
+                  />
 
-                    {/* Emoji */}
-                    <span style={{ fontSize: '20px' }}>{emoji}</span>
-
-                    {/* Name + restaurant */}
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                        {item.dish_name}
-                      </p>
-                      <p className="truncate" style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                        {item.restaurant_name}
-                      </p>
-                    </div>
-
-                    {/* Reorder buttons */}
-                    <div className="flex flex-col" style={{ gap: '2px' }}>
-                      <button
-                        onClick={function () { handleMoveUp(i) }}
-                        disabled={i === 0}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '2px 6px',
-                          fontSize: '14px',
-                          color: i === 0 ? 'var(--color-divider)' : 'var(--color-text-secondary)',
-                          cursor: i === 0 ? 'default' : 'pointer',
-                        }}
-                      >
-                        ▲
-                      </button>
-                      <button
-                        onClick={function () { handleMoveDown(i) }}
-                        disabled={i >= items.length - 1}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '2px 6px',
-                          fontSize: '14px',
-                          color: i >= items.length - 1 ? 'var(--color-divider)' : 'var(--color-text-secondary)',
-                          cursor: i >= items.length - 1 ? 'default' : 'pointer',
-                        }}
-                      >
-                        ▼
-                      </button>
-                    </div>
-
-                    {/* Remove */}
-                    <button
-                      onClick={function () { handleRemoveDish(item.dish_id) }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: '4px 8px',
-                        fontSize: '16px',
-                        color: 'var(--color-text-tertiary)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Note */}
-                  <div style={{ marginTop: '8px', marginLeft: '56px' }}>
+                  {/* Note + reorder / remove controls under the row */}
+                  <div className="flex items-center gap-1" style={{ padding: '0 0 6px 10px' }}>
                     <input
                       type="text"
                       value={item.note}
                       onChange={function (e) { handleNoteChange(i, e.target.value) }}
                       placeholder="Add a quick note (optional)"
+                      aria-label={'Note for ' + item.dish_name}
                       maxLength={120}
-                      className="w-full"
+                      className="flex-1 min-w-0"
                       style={{
                         padding: '6px 8px',
                         fontSize: '12px',
@@ -348,14 +326,48 @@ export function MyList() {
                         border: 'none',
                         borderBottom: '1px solid var(--color-divider)',
                         color: 'var(--color-text-secondary)',
-                        outline: 'none',
                       }}
                     />
+                    <button
+                      type="button"
+                      onClick={function () { handleMoveUp(i) }}
+                      disabled={isFirst}
+                      aria-label={'Move ' + item.dish_name + ' up'}
+                      className={ICON_BUTTON}
+                      style={{ color: isFirst ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)' }}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={function () { handleMoveDown(i) }}
+                      disabled={isLastItem}
+                      aria-label={'Move ' + item.dish_name + ' down'}
+                      className={ICON_BUTTON}
+                      style={{ color: isLastItem ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)' }}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={function () { handleRemoveDish(item.dish_id) }}
+                      aria-label={'Remove ' + item.dish_name}
+                      className={ICON_BUTTON}
+                      style={{ color: 'var(--color-text-tertiary)' }}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ol>
         )}
       </div>
 
@@ -365,15 +377,11 @@ export function MyList() {
           {!showSearch ? (
             <button
               onClick={function () { setShowSearch(true) }}
-              className="w-full rounded-xl"
+              className="w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
               style={{
-                padding: '12px',
-                background: 'none',
-                border: '1.5px dashed var(--color-primary)',
-                color: 'var(--color-primary)',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
+                background: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-divider)',
+                color: 'var(--color-text-primary)',
               }}
             >
               + Add a dish ({10 - items.length} remaining)
@@ -386,73 +394,68 @@ export function MyList() {
                 border: '1px solid var(--color-divider)',
               }}
             >
-              <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--color-divider)' }}>
-                <span style={{ fontSize: '16px', marginRight: '8px', color: 'var(--color-text-tertiary)' }}>🔍</span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={function (e) { setSearchQuery(e.target.value) }}
-                  placeholder="Search dishes..."
-                  autoFocus
-                  className="flex-1"
-                  style={{
-                    padding: '4px 0',
-                    fontSize: '14px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--color-text-primary)',
-                    outline: 'none',
-                  }}
-                />
+              <div className="flex items-center gap-2" style={{ padding: '4px 4px 4px 0', borderBottom: '1px solid var(--color-divider)' }}>
+                <div className="relative flex-1">
+                  <svg
+                    className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                    aria-hidden="true"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={function (e) { setSearchQuery(e.target.value) }}
+                    placeholder="Search dishes…"
+                    aria-label="Search dishes"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    autoFocus
+                    className="w-full pl-10 pr-2 py-2.5 text-sm"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  />
+                </div>
                 <button
+                  type="button"
                   onClick={function () { setShowSearch(false); setSearchQuery('') }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '13px',
-                    color: 'var(--color-text-tertiary)',
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                  }}
+                  className="inline-flex items-center min-h-[44px] px-3 text-sm font-semibold"
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)' }}
                 >
                   Cancel
                 </button>
               </div>
 
               {/* Search results */}
-              {searchQuery.length >= 2 && (
+              {searchQuery.trim().length >= 2 && (
                 <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                  {filteredResults.length === 0 ? (
+                  {searchLoading ? (
+                    <DishAddRowSkeleton />
+                  ) : searchError ? (
+                    <p role="alert" className="text-sm px-4 py-3" style={{ color: 'var(--color-danger)' }}>
+                      {getUserMessage(searchError, 'searching dishes')}
+                    </p>
+                  ) : filteredResults.length === 0 ? (
                     <p style={{ padding: '12px', fontSize: '13px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
                       No dishes found
                     </p>
                   ) : (
                     filteredResults.slice(0, 8).map(function (dish) {
-                      var emoji = getCategoryEmoji(dish.category) || '🍽️'
                       return (
-                        <button
+                        <DishAddRow
                           key={dish.dish_id || dish.id}
-                          onClick={function () { handleAddDish(dish) }}
-                          className="w-full text-left flex items-center gap-3"
-                          style={{
-                            padding: '10px 12px',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: '1px solid var(--color-divider)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontSize: '18px' }}>{emoji}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="truncate" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                              {dish.dish_name || dish.name}
-                            </p>
-                            <p className="truncate" style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                              {dish.restaurant_name}
-                            </p>
-                          </div>
-                          <span style={{ fontSize: '18px', color: 'var(--color-primary)' }}>+</span>
-                        </button>
+                          dish={dish}
+                          disabled={votesLoading}
+                          onAdd={function () { handleAddDish(dish) }}
+                        />
                       )
                     })
                   )}
@@ -463,83 +466,75 @@ export function MyList() {
         </div>
       )}
 
-      {/* Save button (fixed bottom) */}
+      {/* Save bar — floats above BottomNav like the Dish page action bar */}
       <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '12px 16px',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-          background: 'var(--color-bg)',
-          borderTop: '1px solid var(--color-divider)',
-          zIndex: 50,
-        }}
+        className="fixed left-0 right-0 px-3"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))', zIndex: 40 }}
       >
-        {saveMessage && (
-          <p style={{
-            fontSize: '12px',
-            color: saveMessage.startsWith('Error') ? 'var(--color-danger)' : 'var(--color-success)',
-            marginBottom: '8px',
-            textAlign: 'center',
-          }}>
-            {saveMessage}
-          </p>
-        )}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full rounded-xl font-semibold transition-all disabled:opacity-50"
+        <div
+          className="flex gap-2 p-2 rounded-2xl"
           style={{
-            padding: '14px',
-            fontSize: '16px',
-            background: 'var(--color-primary)',
-            color: '#fff',
-            border: 'none',
-            cursor: saving ? 'default' : 'pointer',
+            background: 'var(--color-card)',
+            boxShadow: '0 -4px 24px rgba(0,0,0,0.15), 0 0 0 1px var(--color-divider)',
           }}
         >
-          {saving ? 'Saving...' : items.length > 0 ? 'Save & Publish' : 'Save (Unpublished)'}
-        </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={'flex-1 ' + PRIMARY_BUTTON_CLASS}
+            style={{ ...PRIMARY_BUTTON_STYLE, opacity: saving ? 0.7 : 1 }}
+          >
+            {saving ? 'Saving…' : items.length > 0 ? 'Save & Publish' : 'Save (Unpublished)'}
+          </button>
+        </div>
       </div>
 
       {/* Rate-first sheet — a curator must give a dish a number before it can
-          go on their Top 10. Once rated, it's added automatically. */}
-      {pendingRateDish && (
-        <div
-          className="fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
-          onClick={function (e) { if (e.target === e.currentTarget) setPendingRateDish(null) }}
-        >
+          go on their Top 10. Once rated, it's added automatically. Portaled to
+          body so it stacks above BottomNav. */}
+      {pendingRateDish && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div
+            className="absolute inset-0 backdrop-blur-sm"
+            style={{ background: 'rgba(0,0,0,0.5)' }}
+            aria-hidden="true"
+            onClick={function () { setPendingRateDish(null) }}
+          />
+          <div
+            ref={rateSheetRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Rate this dish to add it"
-            className="w-full rounded-t-2xl"
+            aria-labelledby="rate-sheet-title"
+            className="relative w-full max-w-lg rounded-t-3xl overflow-y-auto overscroll-contain"
             style={{
-              background: 'var(--color-surface)',
-              padding: '8px 16px 24px',
+              background: 'var(--color-surface-elevated)',
               maxHeight: '85vh',
-              overflowY: 'auto',
+              paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
             }}
           >
-            <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 16px' }} />
-            <div style={{ marginBottom: '4px', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
-              Rate it to add it
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full" style={{ background: 'var(--color-divider)' }} />
             </div>
-            <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
-              {(pendingRateDish.dish_name || pendingRateDish.name)} &middot; {pendingRateDish.restaurant_name}
+            <div className="px-6 pb-4 border-b" style={{ borderColor: 'var(--color-divider)' }}>
+              <h2 id="rate-sheet-title" className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                Rate it to add it
+              </h2>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {(pendingRateDish.dish_name || pendingRateDish.name)} &middot; {pendingRateDish.restaurant_name}
+              </p>
             </div>
-            <ReviewFlow
-              dishId={pendingRateDish.dish_id || pendingRateDish.id}
-              dishName={pendingRateDish.dish_name || pendingRateDish.name}
-              category={pendingRateDish.category}
-              onVote={handleRated}
-              onLoginRequired={function () { navigate('/login') }}
-            />
+            <div className="px-6 pt-4">
+              <ReviewFlow
+                dishId={pendingRateDish.dish_id || pendingRateDish.id}
+                dishName={pendingRateDish.dish_name || pendingRateDish.name}
+                category={pendingRateDish.category}
+                onVote={handleRated}
+                onLoginRequired={function () { navigate('/login') }}
+              />
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

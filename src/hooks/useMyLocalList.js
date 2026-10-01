@@ -5,7 +5,7 @@ import { getUserMessage } from '../utils/errorHandler'
 export function useMyLocalList() {
   var queryClient = useQueryClient()
 
-  var { data, isLoading, error } = useQuery({
+  var { data, isLoading, error, refetch } = useQuery({
     queryKey: ['myLocalList'],
     queryFn: function () { return localListsApi.getMyList() },
     staleTime: 1000 * 60 * 2,
@@ -40,6 +40,7 @@ export function useMyLocalList() {
     dishes: dishes,
     loading: isLoading,
     error: error ? { message: getUserMessage(error, 'loading your list') } : null,
+    refetch: refetch,
     saveList: saveMutation.mutateAsync,
     saving: saveMutation.isPending,
     saveError: saveMutation.error

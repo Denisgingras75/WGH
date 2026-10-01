@@ -9,24 +9,27 @@
  */
 export function EmptyState({ emoji, title, subtitle, action }) {
   return (
-    <div className="py-12 text-center">
+    <div className="py-12 px-4 text-center">
       {emoji && (
-        <div style={{ fontSize: '40px', marginBottom: '12px' }}>{emoji}</div>
+        <div aria-hidden="true" style={{ fontSize: '40px', marginBottom: '12px' }}>{emoji}</div>
       )}
-      <p
-        className="font-semibold"
-        style={{
-          fontSize: '16px',
-          color: 'var(--color-text-primary)',
-        }}
-      >
-        {title}
-      </p>
+      {title && (
+        <p
+          className="font-semibold break-words"
+          style={{
+            fontSize: '16px',
+            color: 'var(--color-text-primary)',
+          }}
+        >
+          {title}
+        </p>
+      )}
       {subtitle && (
         <p
+          className="leading-relaxed"
           style={{
             fontSize: '14px',
-            color: 'var(--color-text-tertiary)',
+            color: 'var(--color-text-secondary)',
             marginTop: '4px',
           }}
         >

@@ -281,13 +281,17 @@ const DISH_NAME_ICON_RULES = [
   { keyword: 'cookie', icon: '/categories/icons/dessert.webp' },
 ]
 
+// Cache-busting query for /categories/icons/*.webp — bump when the icon set changes.
+// preloadCategoryImages must warm the same URLs the app requests.
+export const ICON_VERSION_QUERY = '?v=4'
+
 // Match a dish name to an icon based on keywords
 export function getDishNameIcon(dishName) {
   if (!dishName) return null
   const lower = dishName.toLowerCase()
   for (var i = 0; i < DISH_NAME_ICON_RULES.length; i++) {
     if (lower.includes(DISH_NAME_ICON_RULES[i].keyword)) {
-      return DISH_NAME_ICON_RULES[i].icon + '?v=4'
+      return DISH_NAME_ICON_RULES[i].icon + ICON_VERSION_QUERY
     }
   }
   return null
@@ -297,14 +301,14 @@ export function getDishNameIcon(dishName) {
 export function getCategoryNeonImage(id) {
   if (!id) return null
   var src = CATEGORY_IMAGES[id.toLowerCase()] || null
-  return src ? src + '?v=4' : null
+  return src ? src + ICON_VERSION_QUERY : null
 }
 
 // Preload category images for smooth Browse page loading
 export function preloadCategoryImages() {
   Object.values(CATEGORY_IMAGES).forEach(src => {
     const img = new Image()
-    img.src = src
+    img.src = src + ICON_VERSION_QUERY
   })
 }
 

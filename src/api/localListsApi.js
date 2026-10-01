@@ -1,11 +1,11 @@
 import { supabase } from '../lib/supabase'
 import { logger } from '../utils/logger'
-import { createClassifiedError } from '../utils/errorHandler'
+import { createClassifiedError, createUserFacingError } from '../utils/errorHandler'
 import { validateUserContent } from '../lib/reviewBlocklist'
 
 function validateContentField(value, label) {
   const contentError = validateUserContent(value, label)
-  if (contentError) throw new Error(contentError)
+  if (contentError) throw createUserFacingError(contentError)
 }
 
 export const localListsApi = {

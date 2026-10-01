@@ -1,5 +1,10 @@
 import { useEffect, useRef, useCallback } from 'react'
 
+// Open traps, innermost last. Only the innermost one handles keys, so Escape in
+// a nested dialog (e.g. ReviewFlow's discard prompt inside DishModal) closes
+// that dialog alone instead of every dialog underneath it.
+const openTraps = []
+
 /**
  * Custom hook for trapping focus within a modal/dialog
  * Also handles Escape key to close
@@ -11,6 +16,20 @@ import { useEffect, useRef, useCallback } from 'react'
 export function useFocusTrap(isOpen, onClose) {
   const containerRef = useRef(null)
   const previousActiveElement = useRef(null)
+  const trapToken = useRef(null)
+
+  // Register on the open-trap stack (keyed on isOpen only, so a new onClose
+  // identity never reorders the stack)
+  useEffect(() => {
+    if (!isOpen) return
+    const token = {}
+    trapToken.current = token
+    openTraps.push(token)
+    return () => {
+      const i = openTraps.indexOf(token)
+      if (i !== -1) openTraps.splice(i, 1)
+    }
+  }, [isOpen])
 
   // Store the previously focused element when modal opens
   useEffect(() => {
@@ -43,6 +62,8 @@ export function useFocusTrap(isOpen, onClose) {
   // Handle keyboard events
   const handleKeyDown = useCallback((e) => {
     if (!isOpen) return
+    // A dialog opened on top of this one owns the keyboard
+    if (openTraps[openTraps.length - 1] !== trapToken.current) return
 
     // Close on Escape
     if (e.key === 'Escape') {

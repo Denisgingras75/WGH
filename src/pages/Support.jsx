@@ -1,32 +1,21 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { WghSeal } from '../components/WghSeal'
+import { AMATIC_TITLE } from '../constants/styles'
+
+const sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 export function Support() {
-  const navigate = useNavigate()
-
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+    >
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Support
-          </h1>
-        </div>
-      </header>
+      <PageHeader title="Support" standalone contained />
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
@@ -53,7 +42,7 @@ export function Support() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Email us
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -61,8 +50,8 @@ export function Support() {
             </p>
             <a
               href="mailto:hello@whatsgoodhere.app"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '14px' }}
+              className="inline-flex items-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               hello@whatsgoodhere.app
             </a>
@@ -72,7 +61,7 @@ export function Support() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Common questions
             </h2>
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -97,13 +86,13 @@ export function Support() {
                 <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>I own a restaurant on the app. Can I manage it?</h3>
                 <p>
                   Yes. See{' '}
-                  <a
-                    href="/for-restaurants"
+                  <Link
+                    to="/for-restaurants"
                     className="font-medium"
                     style={{ color: 'var(--color-primary)' }}
                   >
                     whatsgoodhere.app/for-restaurants
-                  </a>
+                  </Link>
                   {' '}or email us to claim your restaurant and get access to the manager portal.
                 </p>
               </div>
@@ -126,13 +115,13 @@ export function Support() {
                 <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>How do ratings work?</h3>
                 <p>
                   See{' '}
-                  <a
-                    href="/how-reviews-work"
+                  <Link
+                    to="/how-reviews-work"
                     className="font-medium"
                     style={{ color: 'var(--color-primary)' }}
                   >
                     whatsgoodhere.app/how-reviews-work
-                  </a>
+                  </Link>
                   {' '}for the full breakdown.
                 </p>
               </div>
@@ -140,24 +129,24 @@ export function Support() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Privacy and Terms
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               Read our{' '}
-              <a href="/privacy" className="font-medium" style={{ color: 'var(--color-primary)' }}>
+              <Link to="/privacy" className="font-medium" style={{ color: 'var(--color-primary)' }}>
                 Privacy Policy
-              </a>
+              </Link>
               {' '}and{' '}
-              <a href="/terms" className="font-medium" style={{ color: 'var(--color-primary)' }}>
+              <Link to="/terms" className="font-medium" style={{ color: 'var(--color-primary)' }}>
                 Terms of Service
-              </a>
+              </Link>
               .
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Who runs this
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -170,7 +159,7 @@ export function Support() {
             </p>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

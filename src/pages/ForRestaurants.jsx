@@ -1,4 +1,8 @@
 import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
+import { AMATIC_TITLE } from '../constants/styles'
+
+var sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 /**
  * ForRestaurants — pitch page for door-knocking.
@@ -9,9 +13,15 @@ export function ForRestaurants() {
   var navigate = useNavigate()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+    >
+      {/* Header */}
+      <PageHeader title="For Restaurants" titleAs="p" standalone contained />
+
       {/* Hero */}
-      <div className="px-6 pt-12 pb-8 text-center">
+      <div className="px-4 pt-8 pb-8 text-center">
         <div
           className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-6"
           style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}
@@ -19,11 +29,16 @@ export function ForRestaurants() {
           FREE FOR RESTAURANTS
         </div>
         <h1
-          className="font-bold leading-tight"
-          style={{ fontSize: '32px', color: 'var(--color-text-primary)' }}
+          style={{
+            fontFamily: "'Amatic SC', cursive",
+            fontSize: '32px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            lineHeight: 1.1,
+            color: 'var(--color-text-primary)',
+          }}
         >
-          Your best dishes,{' '}
-          <span style={{ color: 'var(--color-primary)' }}>ranked by locals</span>
+          Your best dishes, ranked by locals
         </h1>
         <p
           className="mt-4 mx-auto"
@@ -40,11 +55,8 @@ export function ForRestaurants() {
       </div>
 
       {/* How it works */}
-      <div className="px-6 pb-8">
-        <h2
-          className="font-bold text-center mb-5"
-          style={{ fontSize: '13px', letterSpacing: '0.1em', color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}
-        >
+      <div className="px-4 pb-8">
+        <h2 className="text-center mb-3" style={sectionTitleStyle}>
           How It Works
         </h2>
         <ol className="space-y-3 list-none p-0 m-0">
@@ -69,7 +81,7 @@ export function ForRestaurants() {
               <li
                 key={step.num}
                 className="flex items-start gap-4 p-4 rounded-xl"
-                style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
               >
                 <span
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold"
@@ -93,11 +105,8 @@ export function ForRestaurants() {
       </div>
 
       {/* Value props */}
-      <div className="px-6 pb-8">
-        <h2
-          className="font-bold text-center mb-5"
-          style={{ fontSize: '13px', letterSpacing: '0.1em', color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}
-        >
+      <div className="px-4 pb-8">
+        <h2 className="text-center mb-3" style={sectionTitleStyle}>
           Why Restaurants Love It
         </h2>
         <div className="grid grid-cols-2 gap-3">
@@ -111,9 +120,17 @@ export function ForRestaurants() {
               <div
                 key={prop.label}
                 className="p-4 rounded-xl text-center"
-                style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
               >
-                <p className="font-bold" style={{ fontSize: '24px', color: 'var(--color-primary)' }}>
+                <p
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--color-text-primary)',
+                  }}
+                >
                   {prop.icon}
                 </p>
                 <p className="font-bold mt-1" style={{ fontSize: '13px', color: 'var(--color-text-primary)' }}>
@@ -129,12 +146,12 @@ export function ForRestaurants() {
       </div>
 
       {/* What you get */}
-      <div className="px-6 pb-8">
+      <div className="px-4 pb-8">
         <div
-          className="rounded-xl p-5"
-          style={{ background: 'var(--color-card)', border: '2px solid var(--color-card-border)' }}
+          className="rounded-xl p-4"
+          style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
         >
-          <h3 className="font-bold mb-3" style={{ fontSize: '16px', color: 'var(--color-text-primary)' }}>
+          <h3 className="mb-3" style={sectionTitleStyle}>
             Your restaurant gets:
           </h3>
           <ul className="space-y-2.5">
@@ -164,20 +181,17 @@ export function ForRestaurants() {
       </div>
 
       {/* CTA */}
-      <div className="px-6 pb-12 text-center">
+      <div className="px-4 pb-12 text-center">
         <button
+          type="button"
           onClick={function () { navigate('/restaurants') }}
-          className="w-full py-4 rounded-xl font-bold text-base transition-all active:scale-[0.98]"
-          style={{
-            background: 'var(--color-primary)',
-            color: 'var(--color-text-on-primary)',
-            border: '2px solid var(--color-primary)',
-          }}
+          className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           See Restaurants on WGH
         </button>
         <p className="mt-4" style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
-          Questions? Reach out — <a href="mailto:denisgingras75@gmail.com" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>denisgingras75@gmail.com</a>
+          Questions? Reach out — <a href="mailto:denisgingras75@gmail.com" className="font-medium" style={{ color: 'var(--color-primary)' }}>denisgingras75@gmail.com</a>
         </p>
       </div>
     </div>

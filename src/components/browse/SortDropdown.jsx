@@ -1,17 +1,15 @@
-import { useRef, useEffect } from 'react'
-
-const SORT_OPTIONS = [
-  { id: 'top_rated', label: 'Top Rated', icon: '⭐' },
-  { id: 'best_value', label: 'Best Value', icon: '💰' },
-  { id: 'most_voted', label: 'Most Voted', icon: '💬' },
-  { id: 'closest', label: 'Closest', icon: '📍' },
-]
+import { useRef, useEffect, useId } from 'react'
+import { BROWSE_SORT_OPTIONS as SORT_OPTIONS } from '../../constants/app'
 
 export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
   const dropdownRef = useRef(null)
+  const triggerRef = useRef(null)
+  const listboxId = useId()
+  const current = SORT_OPTIONS.find(o => o.id === sortBy) || SORT_OPTIONS[0]
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!isOpen) return
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         onToggle(false)
@@ -19,7 +17,20 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
     }
     document.addEventListener('mousedown', handleClickOutside, { passive: true })
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onToggle])
+  }, [isOpen, onToggle])
+
+  // Close on Escape and return focus to the trigger
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onToggle(false)
+        triggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onToggle])
 
   const handleSortChange = (sortId) => {
     onSortChange(sortId)
@@ -29,19 +40,29 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={triggerRef}
+        type="button"
         onClick={() => onToggle(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-        style={{ color: 'var(--color-text-secondary)' }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? listboxId : undefined}
+        aria-label={'Sort by ' + current.label}
+        className="flex items-center gap-1 px-3 py-2 rounded-full text-xs font-semibold min-h-[36px] whitespace-nowrap transition-all"
+        style={{
+          background: 'var(--color-surface)',
+          border: '1.5px solid var(--color-divider)',
+          color: 'var(--color-text-secondary)',
+        }}
       >
-        <span>{SORT_OPTIONS.find(o => o.id === sortBy)?.icon}</span>
-        <span>{SORT_OPTIONS.find(o => o.id === sortBy)?.label}</span>
+        <span aria-hidden="true">{current.icon}</span>
+        <span>{current.label}</span>
         <svg
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          style={{ color: 'var(--color-text-tertiary)' }}
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -49,27 +70,39 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-40 rounded-xl shadow-lg border py-1 z-50" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => handleSortChange(option.id)}
-              className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors ${
-                sortBy === option.id ? 'font-medium' : ''
-              }`}
-              style={{ color: sortBy === option.id ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <span>{option.icon}</span>
-              <span>{option.label}</span>
-              {sortBy === option.id && (
-                <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          ))}
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="Sort by"
+          className="absolute left-0 mt-1 w-40 rounded-xl shadow-lg py-1 z-50"
+          style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}
+        >
+          {SORT_OPTIONS.map((option) => {
+            const isSelected = sortBy === option.id
+            return (
+              <button
+                key={option.id}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => handleSortChange(option.id)}
+                className={`w-full min-h-[44px] px-3 text-sm text-left flex items-center gap-2 transition-colors ${
+                  isSelected ? 'font-semibold' : ''
+                }`}
+                style={{ color: isSelected ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <span aria-hidden="true">{option.icon}</span>
+                <span>{option.label}</span>
+                {isSelected && (
+                  <svg aria-hidden="true" className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { authApi } from '../api/authApi'
 import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
+import { getAuthErrorMessage } from '../utils/errorHandler'
 import { CameraIcon } from '../components/CameraIcon'
 import { SmileyPin } from '../components/SmileyPin'
 import { FEATURES } from '../constants/features'
+import { PageHeader } from '../components/PageHeader'
+import { AMATIC_TITLE, INPUT_FOCUS_CLASS, PAGE_INPUT_STYLE } from '../constants/styles'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
+
+const sectionHeadingStyle = { ...AMATIC_TITLE, fontSize: '24px' }
+
 
 export function Login() {
   const navigate = useNavigate()
@@ -19,11 +25,16 @@ export function Login() {
   const [username, setUsername] = useState('')
   // If user arrives with confirmation hash params, go straight to sign-in
   const isPostConfirmation = window.location.hash.includes('type=signup') || window.location.hash.includes('type=email')
+  // Arrived with somewhere to return to (ProtectedRoute, invite "Sign In to Accept"):
+  // skip the marketing splash so the destination isn't thrown away.
+  const hasReturnTarget = !!location.state?.from
+  // Arrived from an expired reset link: open straight on the reset form.
+  const isForgotEntry = location.state?.mode === 'forgot'
   const [message, setMessage] = useState(
     isPostConfirmation ? { type: 'success', text: 'Email verified! Sign in to get started.' } : null
   )
-  const [showLogin, setShowLogin] = useState(isPostConfirmation) // Controls welcome vs login view
-  const [mode, setMode] = useState(isPostConfirmation ? 'signin' : 'options') // 'options' | 'signin' | 'signup' | 'forgot'
+  const [showLogin, setShowLogin] = useState(isPostConfirmation || hasReturnTarget || isForgotEntry) // Controls welcome vs login view
+  const [mode, setMode] = useState(isPostConfirmation ? 'signin' : isForgotEntry ? 'forgot' : 'options') // 'options' | 'signin' | 'signup' | 'forgot'
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken'
 
   // Redirect authenticated users to home (or where they came from)
@@ -48,6 +59,14 @@ export function Login() {
     }
   }, [showLogin])
 
+  // Safari restores this page from bfcache if the user backs out of Google's
+  // consent screen — clear the stuck loading state so they can retry.
+  useEffect(() => {
+    const onShow = (e) => { if (e.persisted) setLoading(false) }
+    window.addEventListener('pageshow', onShow)
+    return () => window.removeEventListener('pageshow', onShow)
+  }, [])
+
   // Check username availability with debounce
   useEffect(() => {
     if (mode !== 'signup' || !username || username.length < 2) {
@@ -55,19 +74,41 @@ export function Login() {
       return
     }
 
+    let cancelled = false
     setUsernameStatus('checking')
     const timer = setTimeout(async () => {
       try {
         const available = await authApi.isUsernameAvailable(username)
-        setUsernameStatus(available ? 'available' : 'taken')
+        if (!cancelled) setUsernameStatus(available ? 'available' : 'taken')
       } catch (error) {
         logger.error('Failed to check username availability:', error)
-        setUsernameStatus(null)
+        if (!cancelled) setUsernameStatus(null)
       }
     }, 500)
 
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [username, mode])
+
+  // Switching forms clears any stale error/success banner
+  const switchMode = (next) => {
+    setMode(next)
+    setMessage(null)
+  }
+
+  const handleBack = () => {
+    if (showLogin && mode !== 'options') {
+      switchMode('options')
+    } else if (showLogin && !hasReturnTarget) {
+      setShowLogin(false)
+    } else if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
 
   const buildOAuthRedirect = () => {
     const fromLocation = location.state?.from
@@ -84,7 +125,7 @@ export function Login() {
       setLoading(true)
       await authApi.signInWithGoogle(buildOAuthRedirect())
     } catch (error) {
-      setMessage({ type: 'error', text: error.message })
+      setMessage({ type: 'error', text: getAuthErrorMessage(error, 'signing in with Google') })
       setLoading(false)
     }
   }
@@ -98,7 +139,7 @@ export function Login() {
       setLoading(true)
       await authApi.signInWithApple(buildOAuthRedirect())
     } catch (error) {
-      setMessage({ type: 'error', text: error.message })
+      setMessage({ type: 'error', text: getAuthErrorMessage(error, 'signing in with Apple') })
       setLoading(false)
     }
   }
@@ -113,9 +154,9 @@ export function Login() {
       const from = fromLocation
         ? fromLocation.pathname + (fromLocation.search || '') + (fromLocation.hash || '')
         : '/'
-      navigate(from)
+      navigate(from, { replace: true })
     } catch (error) {
-      setMessage({ type: 'error', text: error.message })
+      setMessage({ type: 'error', text: getAuthErrorMessage(error, 'signing in') })
     } finally {
       setLoading(false)
     }
@@ -154,7 +195,7 @@ export function Login() {
         setPassword('')
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error.message })
+      setMessage({ type: 'error', text: getAuthErrorMessage(error, 'creating your account') })
     } finally {
       setLoading(false)
     }
@@ -179,42 +220,25 @@ export function Login() {
         text: 'Password reset link sent! Check your email.'
       })
     } catch (error) {
-      setMessage({ type: 'error', text: error.message })
+      setMessage({ type: 'error', text: getAuthErrorMessage(error, 'sending the reset link') })
     } finally {
       setLoading(false)
     }
   }
 
+  const signupBlocked = usernameStatus === 'taken' || usernameStatus === 'checking'
+
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: 'var(--color-surface)' }}
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
     >
         {/* Header */}
-        <header className="px-4 pt-6 pb-4">
-          <button
-            onClick={() => {
-              if (showLogin && mode !== 'options') {
-                setMode('options')
-              } else if (showLogin) {
-                setShowLogin(false)
-              } else {
-                navigate('/')
-              }
-            }}
-            className="flex items-center gap-2 text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-        </header>
+        <PageHeader onBack={handleBack} standalone />
 
         {!showLogin ? (
           /* ========== WELCOME / SPLASH PAGE ========== */
-          <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-12">
             {/* Logo + Brand */}
             <div className="flex flex-col items-center mb-8">
               <div style={{ marginBottom: '-14px', position: 'relative', zIndex: 2 }}>
@@ -237,7 +261,6 @@ export function Login() {
               <p
                 style={{
                   color: 'var(--color-text-secondary)',
-                  opacity: 0.7,
                   fontSize: '11px',
                   fontWeight: 500,
                   letterSpacing: '0.14em',
@@ -251,7 +274,7 @@ export function Login() {
 
             {/* Goals Section */}
             <div className="w-full max-w-sm mb-8">
-              <h2 className="text-xl font-bold text-center mb-6" style={{ color: 'var(--color-text-primary)' }}>
+              <h2 className="text-center mb-6" style={sectionHeadingStyle}>
                 Our Goals
               </h2>
               <div className="space-y-4">
@@ -281,17 +304,21 @@ export function Login() {
             </div>
 
             {/* How It Works Section */}
-            <div className="w-full max-w-sm mb-8 p-4 rounded-2xl" style={{ background: 'var(--color-bg)' }}>
-              <h3 className="font-semibold text-center mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <div
+              className="w-full max-w-sm mb-8 p-4 rounded-xl"
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
+            >
+              <h3 className="text-center mb-4" style={sectionHeadingStyle}>
                 How We Rate
               </h3>
               <div className="space-y-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg">⭐</span>
+                  {/* Fixed icon column so both rows' text lines up */}
+                  <span className="text-lg flex-shrink-0 w-7 flex justify-center" aria-hidden="true">⭐</span>
                   <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)' }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CameraIcon size={20} />
+                  <span className="flex-shrink-0 w-7 flex justify-center"><CameraIcon size={20} /></span>
                   <p><strong style={{ color: 'var(--color-text-primary)' }}>Snap a photo</strong> — it'll show in the community gallery for that dish.</p>
                 </div>
               </div>
@@ -300,7 +327,7 @@ export function Login() {
             {/* Get Started Button - goes to homepage */}
             <button
               onClick={() => navigate('/')}
-              className="w-full max-w-sm px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
+              className="w-full max-w-sm py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Get Started
@@ -310,10 +337,10 @@ export function Login() {
             <button
               onClick={() => {
                 setShowLogin(true)
-                setMode('signup')
+                switchMode('signup')
               }}
-              className="w-full max-w-sm mt-3 px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+              className="w-full max-w-sm mt-3 py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '1px solid var(--color-divider)' }}
             >
               Create Account
             </button>
@@ -321,22 +348,22 @@ export function Login() {
             {/* Sign in option */}
             <button
               onClick={() => setShowLogin(true)}
-              className="mt-4 text-sm font-medium"
+              className="mt-4 inline-flex items-center min-h-[44px] px-2 text-sm font-medium"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
-              Already have an account? <span style={{ color: 'var(--color-accent-gold)' }}>Sign in</span>
+              Already have an account? <span className="ml-1" style={{ color: 'var(--color-accent-gold)' }}>Sign in</span>
             </button>
           </div>
         ) : (
           /* ========== LOGIN PAGE ========== */
-          <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-12">
             {/* Logo */}
             <div className="flex justify-center mb-6">
               <SmileyPin size={48} />
             </div>
 
             {/* Heading */}
-            <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-center mb-2" style={{ ...sectionHeadingStyle, fontSize: '32px' }}>
               {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : 'Sign in to vote'}
             </h1>
             <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
@@ -353,6 +380,7 @@ export function Login() {
             {/* Messages */}
             {message && (
               <div
+                role={message.type === 'error' ? 'alert' : 'status'}
                 className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
                 style={message.type === 'error'
                   ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(var(--color-danger-rgb), 0.3)' }
@@ -390,16 +418,21 @@ export function Login() {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+                  style={{
+                    background: 'var(--color-surface-elevated)',
+                    color: 'var(--color-text-primary)',
+                    border: '1px solid var(--color-divider)',
+                    opacity: loading ? 0.7 : 1,
+                  }}
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
-                  Continue with Google
+                  {loading ? 'Connecting…' : 'Continue with Google'}
                 </button>
 
                 {/* Divider */}
@@ -411,8 +444,8 @@ export function Login() {
 
                 {/* Email Sign In */}
                 <button
-                  onClick={() => setMode('signin')}
-                  className="w-full px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all"
+                  onClick={() => switchMode('signin')}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
                 >
                   Sign in with Email
@@ -422,7 +455,7 @@ export function Login() {
                 <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   Don't have an account?{' '}
                   <button
-                    onClick={() => setMode('signup')}
+                    onClick={() => switchMode('signup')}
                     className="font-semibold underline"
                     style={{ color: 'var(--color-primary)' }}
                   >
@@ -442,13 +475,14 @@ export function Login() {
                   <input
                     id="login-email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS}
+                    style={PAGE_INPUT_STYLE}
                   />
                 </div>
 
@@ -459,36 +493,38 @@ export function Login() {
                   <input
                     id="login-password"
                     type="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS}
+                    style={PAGE_INPUT_STYLE}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', opacity: loading ? 0.7 : 1 }}
                 >
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? 'Signing in…' : 'Sign In'}
                 </button>
 
                 <div className="flex items-center justify-between text-sm">
                   <button
                     type="button"
-                    onClick={() => setMode('options')}
+                    onClick={() => switchMode('options')}
+                    className="inline-flex items-center min-h-[44px] px-2"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
                     Back
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMode('forgot')}
-                    className="font-medium"
+                    onClick={() => switchMode('forgot')}
+                    className="inline-flex items-center min-h-[44px] px-2 font-medium"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     Forgot password?
@@ -499,7 +535,7 @@ export function Login() {
                   Don't have an account?{' '}
                   <button
                     type="button"
-                    onClick={() => setMode('signup')}
+                    onClick={() => switchMode('signup')}
                     className="font-semibold underline"
                     style={{ color: 'var(--color-primary)' }}
                   >
@@ -519,29 +555,30 @@ export function Login() {
                   <input
                     id="forgot-email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS}
+                    style={PAGE_INPUT_STYLE}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', opacity: loading ? 0.7 : 1 }}
                 >
-                  {loading ? 'Sending...' : 'Send Reset Link'}
+                  {loading ? 'Sending…' : 'Send Reset Link'}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setMode('signin')}
-                  className="w-full text-center text-sm"
+                  onClick={() => switchMode('signin')}
+                  className="w-full min-h-[44px] text-center text-sm"
                   style={{ color: 'var(--color-text-tertiary)' }}
                 >
                   Back to sign in
@@ -560,6 +597,10 @@ export function Login() {
                     <input
                       id="signup-username"
                       type="text"
+                      autoComplete="nickname"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={username}
                       onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
                       placeholder="Choose a unique username"
@@ -567,15 +608,17 @@ export function Login() {
                       autoFocus
                       minLength={2}
                       maxLength={30}
-                      className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors pr-10"
+                      aria-describedby={usernameStatus === 'taken' || usernameStatus === 'available' ? 'username-status' : undefined}
+                      aria-invalid={usernameStatus === 'taken'}
+                      className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS + ' pr-10'}
                       style={{
-                        background: 'var(--color-bg)',
-                        border: `2px solid ${usernameStatus === 'taken' ? 'var(--color-danger)' : usernameStatus === 'available' ? 'var(--color-success)' : 'var(--color-divider)'}`,
-                        color: 'var(--color-text-primary)'
+                        ...PAGE_INPUT_STYLE,
+                        // Status color overrides the focus border; idle falls back to INPUT_FOCUS_CLASS
+                        ...(usernameStatus === 'taken' ? { borderColor: 'var(--color-danger)' } : usernameStatus === 'available' ? { borderColor: 'var(--color-success)' } : null),
                       }}
                     />
                     {usernameStatus && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg" aria-hidden="true">
                         {usernameStatus === 'checking' && '⏳'}
                         {usernameStatus === 'available' && '✓'}
                         {usernameStatus === 'taken' && '✗'}
@@ -583,10 +626,10 @@ export function Login() {
                     )}
                   </div>
                   {usernameStatus === 'taken' && (
-                    <p className="text-xs mt-1" style={{ color: 'var(--color-danger)' }}>This username is taken</p>
+                    <p id="username-status" role="alert" className="text-xs mt-1" style={{ color: 'var(--color-danger)' }}>This username is taken</p>
                   )}
                   {usernameStatus === 'available' && (
-                    <p className="text-xs mt-1" style={{ color: 'var(--color-success)' }}>Username available!</p>
+                    <p id="username-status" className="text-xs mt-1" style={{ color: 'var(--color-success)' }}>Username available!</p>
                   )}
                 </div>
 
@@ -597,12 +640,13 @@ export function Login() {
                   <input
                     id="signup-email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS}
+                    style={PAGE_INPUT_STYLE}
                   />
                 </div>
 
@@ -613,37 +657,42 @@ export function Login() {
                   <input
                     id="signup-password"
                     type="password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 6 characters"
                     required
                     minLength={6}
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className={'w-full px-4 py-3 rounded-xl ' + INPUT_FOCUS_CLASS}
+                    style={PAGE_INPUT_STYLE}
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  disabled={loading || signupBlocked}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                  style={!loading && signupBlocked
+                    ? { background: 'var(--color-surface)', color: 'var(--color-text-tertiary)' }
+                    : { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', opacity: loading ? 0.7 : 1 }
+                  }
                 >
-                  {loading ? 'Creating account...' : 'Create Account'}
+                  {loading ? 'Creating account…' : 'Create Account'}
                 </button>
 
                 <div className="flex items-center justify-between text-sm">
                   <button
                     type="button"
-                    onClick={() => setMode('options')}
+                    onClick={() => switchMode('options')}
+                    className="inline-flex items-center min-h-[44px] px-2"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
                     Back
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMode('signin')}
-                    className="font-medium"
+                    onClick={() => switchMode('signin')}
+                    className="inline-flex items-center min-h-[44px] px-2 font-medium"
                     style={{ color: 'var(--color-primary)' }}
                   >
                     Already have an account?
@@ -655,9 +704,9 @@ export function Login() {
             {/* Footer */}
             <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
               By continuing, you agree to our{' '}
-              <a href="/terms" className="underline">Terms</a>
+              <Link to="/terms" className="underline">Terms</Link>
               {' '}and{' '}
-              <a href="/privacy" className="underline">Privacy Policy</a>
+              <Link to="/privacy" className="underline">Privacy Policy</Link>
             </p>
           </div>
         )}

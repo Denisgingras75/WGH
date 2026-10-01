@@ -1,8 +1,17 @@
 import { forwardRef } from 'react'
 import { PoweredByGoogle } from '../PoweredByGoogle'
 
-// Autocomplete dropdown for search suggestions
+const BADGES = {
+  dish: { label: 'Dish', color: 'var(--color-primary)', background: 'var(--color-primary-muted)' },
+  restaurant: { label: 'Spot', color: 'var(--color-text-secondary)', background: 'var(--color-surface)' },
+  // Google Places result — selecting it opens AddRestaurantModal
+  place: { label: '+ Add', color: 'var(--color-accent-gold)', background: 'var(--color-accent-gold-muted)' },
+}
+
+// Autocomplete listbox for the Browse search combobox.
+// `id` is the listbox id; options get `${id}-option-${index}` for aria-activedescendant.
 export const SearchAutocomplete = forwardRef(function SearchAutocomplete({
+  id,
   suggestions,
   isOpen,
   activeIndex,
@@ -17,54 +26,62 @@ export const SearchAutocomplete = forwardRef(function SearchAutocomplete({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 right-0 mb-1 rounded-lg shadow-lg border overflow-hidden z-50"
-      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}
+      className="absolute bottom-full left-0 right-0 mb-1 rounded-xl shadow-lg overflow-hidden z-50"
+      style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}
     >
-      {suggestions.map((suggestion, index) => (
-        <button
-          key={`${suggestion.type}-${suggestion.id}`}
-          onClick={() => onSelect(suggestion)}
-          className="w-full px-3 py-2.5 text-left flex items-center gap-2 transition-colors"
-          style={{
-            background: index === activeIndex ? 'var(--color-primary-muted)' : 'transparent'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = index === activeIndex ? 'var(--color-primary-muted)' : 'transparent'}
-        >
-          {/* Text */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
-              {suggestion.name}
-            </p>
-            <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
-              {suggestion.type === 'dish' ? `at ${suggestion.subtitle}` : suggestion.subtitle}
-            </p>
-          </div>
+      <div
+        id={id}
+        role="listbox"
+        aria-label="Search suggestions"
+        className="max-h-[40vh] overflow-y-auto overscroll-contain"
+      >
+        {suggestions.map((suggestion, index) => {
+          const isActive = index === activeIndex
+          const badge = BADGES[suggestion.type] || BADGES.restaurant
+          const subtitle = suggestion.type === 'dish'
+            ? (suggestion.subtitle ? 'at ' + suggestion.subtitle : '')
+            : suggestion.subtitle
 
-          {/* Type badge */}
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              background:
-                suggestion.type === 'dish' ? 'var(--color-primary-muted)'
-                : suggestion.type === 'place' ? 'rgba(100, 116, 139, 0.15)'
-                : 'rgba(59, 130, 246, 0.15)',
-              color:
-                suggestion.type === 'dish' ? 'var(--color-primary)'
-                : suggestion.type === 'place' ? 'var(--color-text-tertiary)'
-                : 'var(--color-blue-light)'
-            }}
-          >
-            {suggestion.type === 'dish' ? 'Dish' : suggestion.type === 'place' ? 'Google Maps' : 'Spot'}
-          </span>
-        </button>
-      ))}
+          return (
+            <button
+              key={`${suggestion.type}-${suggestion.id}`}
+              type="button"
+              id={`${id}-option-${index}`}
+              role="option"
+              aria-selected={isActive}
+              tabIndex={-1}
+              onClick={() => onSelect(suggestion)}
+              className="w-full min-h-[44px] px-3 py-2.5 text-left flex items-center gap-2 transition-colors"
+              style={{ background: isActive ? 'var(--color-primary-muted)' : 'transparent' }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = isActive ? 'var(--color-primary-muted)' : 'transparent'}
+            >
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                  {suggestion.name}
+                </p>
+                {subtitle && (
+                  <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+
+              {/* Type badge */}
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                style={{ color: badge.color, background: badge.background }}
+              >
+                {badge.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
       {showGoogleAttribution && (
-        <div
-          className="px-3 py-2 border-t"
-          style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface-elevated)' }}
-        >
+        <div className="px-3 py-2" style={{ borderTop: '1px solid var(--color-divider)' }}>
           <PoweredByGoogle align="right" />
         </div>
       )}

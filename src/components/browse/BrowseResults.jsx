@@ -1,11 +1,15 @@
-import { memo } from 'react'
-import { BROWSE_CATEGORIES } from '../../constants/categories'
+import { memo, useState } from 'react'
+import { BROWSE_CATEGORIES, ALL_CATEGORIES } from '../../constants/categories'
+import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
 import { getRelatedSuggestions } from '../../constants/searchSuggestions'
 import { DishListItem } from '../DishListItem'
+import { DishRowSkeleton } from '../Skeleton'
+import { EmptyState } from '../EmptyState'
 import { SortDropdown } from './SortDropdown'
 import { LocationBanner } from '../LocationBanner'
-
-const CATEGORIES = BROWSE_CATEGORIES
+import { PageHeader } from '../PageHeader'
+import { RadiusChip } from '../home/RadiusChip'
+import { PRIMARY_BUTTON_CLASS, PRIMARY_BUTTON_STYLE } from '../../constants/styles'
 
 // Cuisine types that should have "food" appended for natural language
 const CUISINE_TYPES = new Set([
@@ -26,6 +30,13 @@ function formatSearchQuery(query) {
   return query
 }
 
+// Browse shortcuts carry plural labels ("Burgers"), so try them first
+function getCategoryLabel(categoryId) {
+  if (!categoryId) return 'Dishes'
+  const match = BROWSE_CATEGORIES.find(c => c.id === categoryId) || ALL_CATEGORIES.find(c => c.id === categoryId)
+  return match?.label || categoryId.charAt(0).toUpperCase() + categoryId.slice(1)
+}
+
 export const BrowseResults = memo(function BrowseResults({
   filteredDishes,
   loading,
@@ -43,52 +54,32 @@ export const BrowseResults = memo(function BrowseResults({
   onShowRadiusSheet,
   onSearchSuggestionClick,
   onBackToCategories,
+  onBack,
+  onRetry,
 }) {
+  const [showAll, setShowAll] = useState(false)
+  const isLoading = loading || searchLoading
+  const relatedSuggestions = debouncedSearchQuery ? getRelatedSuggestions(debouncedSearchQuery) : []
+  const rankedCount = filteredDishes.filter(d => (d.total_votes || 0) >= MIN_VOTES_FOR_RANKING).length
+  const dishCount = filteredDishes.length
+
   return (
     <>
-      {/* Category Header */}
-      <div className="px-4 py-4 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold" style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}>
-              {debouncedSearchQuery
-                ? `Best ${formatSearchQuery(debouncedSearchQuery)} Nearby`
-                : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'} Nearby`
-              }
-            </h2>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
-              {(loading || searchLoading) ? (
-                'Loading rankings...'
-              ) : (
-                `${Math.min(filteredDishes.length, 10)} top ranked${filteredDishes.length > 10 ? ` · ${filteredDishes.length} total` : ''}`
-              )}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
+      {/* Detail header — back, title, meta, then radius + sort controls */}
+      <PageHeader
+        title={debouncedSearchQuery
+          ? `Best ${formatSearchQuery(debouncedSearchQuery)} Nearby`
+          : `The Best ${getCategoryLabel(selectedCategory)} Nearby`}
+        meta={isLoading
+          ? 'Loading rankings…'
+          : error
+            ? null
+            : `${dishCount} ${dishCount === 1 ? 'dish' : 'dishes'}${rankedCount ? ` · ${rankedCount} ranked` : ''}`}
+        onBack={onBack}
+        below={
+          <div className="flex gap-2 mt-2">
             {/* Radius chip */}
-            <button
-              onClick={onShowRadiusSheet}
-              aria-label={`Search radius: ${radius} miles. Tap to change`}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all"
-              style={{
-                background: 'var(--color-surface-elevated)',
-                borderColor: 'var(--color-divider)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <span>{radius} mi</span>
-              <svg
-                aria-hidden="true"
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            <RadiusChip radius={radius} onOpen={onShowRadiusSheet} />
 
             {/* Sort dropdown */}
             <SortDropdown
@@ -98,91 +89,71 @@ export const BrowseResults = memo(function BrowseResults({
               onToggle={onSortDropdownToggle}
             />
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Dish Grid */}
+      {/* Dish list */}
       <div className="px-4 py-4">
         <LocationBanner
           permissionState={permissionState}
           requestLocation={requestLocation}
         />
-        {(loading || searchLoading) ? (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 rounded-xl animate-pulse"
-                style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)' }}
-              >
-                <div className="w-7 h-7 rounded-full" style={{ background: 'var(--color-surface)' }} />
-                <div className="w-12 h-12 rounded-lg" style={{ background: 'var(--color-surface)' }} />
-                <div className="flex-1">
-                  <div className="h-4 w-32 rounded mb-1" style={{ background: 'var(--color-surface)' }} />
-                  <div className="h-3 w-24 rounded" style={{ background: 'var(--color-surface)' }} />
-                </div>
-                <div className="h-6 w-10 rounded" style={{ background: 'var(--color-surface)' }} />
-              </div>
-            ))}
-          </div>
+        {isLoading ? (
+          <DishRowSkeleton count={5} />
         ) : error ? (
           <div className="py-16 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.15)' }}>
-              <span className="text-2xl">⚠️</span>
+              <span className="text-2xl" aria-hidden="true">⚠️</span>
             </div>
-            <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger, var(--color-primary))' }}>{error?.message || 'Something went wrong'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: 'var(--color-danger, var(--color-primary))', color: 'var(--color-text-primary)' }}
-            >
-              Retry
-            </button>
-          </div>
-        ) : filteredDishes.length === 0 ? (
-          <div className="py-12 text-center">
-            <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
-            <p className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
-              {debouncedSearchQuery
-                ? `No dishes found for "${debouncedSearchQuery}"`
-                : 'No dishes in this category yet'
-              }
-            </p>
-            {debouncedSearchQuery && (
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
-                Explore similar:
-              </p>
+            <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>{error?.message || 'Something went wrong'}</p>
+            {onRetry ? (
+              <button type="button" onClick={() => onRetry()} className={PRIMARY_BUTTON_CLASS} style={PRIMARY_BUTTON_STYLE}>
+                Try again
+              </button>
+            ) : (
+              <button type="button" onClick={onBackToCategories} className={PRIMARY_BUTTON_CLASS} style={PRIMARY_BUTTON_STYLE}>
+                Browse Categories
+              </button>
             )}
-
-            {/* Contextual suggestions */}
-            {debouncedSearchQuery && (
-              <div className="flex flex-wrap justify-center gap-2 mb-6">
-                {getRelatedSuggestions(debouncedSearchQuery).map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => onSearchSuggestionClick(suggestion)}
-                    className="px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: 'var(--color-surface-elevated)',
-                      color: 'var(--color-text-primary)',
-                      border: '1px solid var(--color-divider)',
-                    }}
-                  >
-                    {suggestion.charAt(0).toUpperCase() + suggestion.slice(1)}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Browse categories button */}
-            <button
-              onClick={onBackToCategories}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-            >
-              Browse Categories
-            </button>
           </div>
+        ) : dishCount === 0 ? (
+          <EmptyState
+            emoji={<img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto rounded-full object-cover" />}
+            title={debouncedSearchQuery
+              ? `No dishes found for "${debouncedSearchQuery}"`
+              : 'No dishes in this category yet'
+            }
+            subtitle={debouncedSearchQuery
+              ? (relatedSuggestions.length > 0 ? 'Explore similar:' : null)
+              : (radius ? 'Try a wider search radius.' : null)
+            }
+            action={
+              <>
+                {relatedSuggestions.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mb-4">
+                    {relatedSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => onSearchSuggestionClick(suggestion)}
+                        className="px-3 py-2 rounded-full text-xs font-semibold min-h-[36px] transition-all active:scale-95"
+                        style={{
+                          background: 'var(--color-surface)',
+                          border: '1.5px solid var(--color-divider)',
+                          color: 'var(--color-text-secondary)',
+                        }}
+                      >
+                        {suggestion.charAt(0).toUpperCase() + suggestion.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button type="button" onClick={onBackToCategories} className={PRIMARY_BUTTON_CLASS} style={PRIMARY_BUTTON_STYLE}>
+                  Browse Categories
+                </button>
+              </>
+            }
+          />
         ) : (
           /* Ranked List View — matches Top 10 style */
           <div>
@@ -199,10 +170,8 @@ export const BrowseResults = memo(function BrowseResults({
             ))}
 
             {/* Finalists 4-10 — grouped Apple-style list */}
-            {filteredDishes.length > 3 && (
-              <div
-                className="mt-3 rounded-xl overflow-hidden"
-              >
+            {dishCount > 3 && (
+              <div className="mt-3 rounded-xl overflow-hidden">
                 {filteredDishes.slice(3, 10).map((dish, index) => (
                   <DishListItem
                     key={dish.dish_id}
@@ -210,50 +179,44 @@ export const BrowseResults = memo(function BrowseResults({
                     rank={index + 4}
                     sortBy={sortBy}
                     showDistance
-                    isLast={index === Math.min(filteredDishes.length - 4, 6)}
+                    isLast={index === Math.min(dishCount - 4, 6)}
                   />
                 ))}
               </div>
             )}
 
-            {/* Show more if there are more than 10 */}
-            {filteredDishes.length > 10 && (
-              <details className="mt-4">
-                <summary
-                  className="cursor-pointer py-3 text-center text-sm font-medium rounded-xl transition-colors"
+            {/* 11+ behind a toggle */}
+            {dishCount > 10 && (
+              <>
+                {showAll && (
+                  <div className="mt-3 rounded-xl overflow-hidden">
+                    {filteredDishes.slice(10).map((dish, index) => (
+                      <DishListItem
+                        key={dish.dish_id}
+                        dish={dish}
+                        rank={index + 11}
+                        sortBy={sortBy}
+                        showDistance
+                        isLast={index === dishCount - 11}
+                      />
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowAll(v => !v)}
+                  aria-expanded={showAll}
+                  className="mt-4 w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
                   style={{
-                    background: 'var(--color-bg)',
-                    color: 'var(--color-text-secondary)',
-                    border: '1.5px solid var(--color-divider)'
+                    background: 'var(--color-surface-elevated)',
+                    border: '1px solid var(--color-divider)',
+                    color: 'var(--color-text-primary)',
                   }}
                 >
-                  Show {filteredDishes.length - 10} more dishes
-                </summary>
-                <div
-                  className="mt-3 rounded-xl overflow-hidden"
-                >
-                  {filteredDishes.slice(10).map((dish, index) => (
-                    <DishListItem
-                      key={dish.dish_id}
-                      dish={dish}
-                      rank={index + 11}
-                      sortBy={sortBy}
-                      showDistance
-                      isLast={index === filteredDishes.length - 11}
-                    />
-                  ))}
-                </div>
-              </details>
+                  {showAll ? 'Show fewer' : `Show ${dishCount - 10} more dishes`}
+                </button>
+              </>
             )}
-          </div>
-        )}
-
-        {/* Footer */}
-        {!loading && filteredDishes.length > 0 && (
-          <div className="mt-8 pt-6 border-t text-center" style={{ borderColor: 'var(--color-divider)' }}>
-            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-              {filteredDishes.length} {filteredDishes.length === 1 ? 'dish' : 'dishes'} found
-            </p>
           </div>
         )}
       </div>

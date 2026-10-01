@@ -19,7 +19,7 @@ test.describe('Business — Manager Portal', () => {
     await page.waitForTimeout(3000)
 
     // Specials tab should be active by default or click it
-    const specialsTab = page.getByRole('button', { name: /Specials/i }).first()
+    const specialsTab = page.getByRole('tab', { name: /Specials/i }).first()
     if (await specialsTab.isVisible({ timeout: 5000 }).catch(() => false)) {
       await specialsTab.click()
       await page.waitForTimeout(1000)
@@ -32,7 +32,7 @@ test.describe('Business — Manager Portal', () => {
     await page.goto('/manage')
     await page.waitForTimeout(3000)
 
-    const menuTab = page.getByRole('button', { name: /Menu/i }).first()
+    const menuTab = page.getByRole('tab', { name: /Menu/i }).first()
     await expect(menuTab).toBeVisible({ timeout: 10_000 })
     await menuTab.click()
     await page.waitForTimeout(1000)
@@ -45,7 +45,7 @@ test.describe('Business — Manager Portal', () => {
     await page.goto('/manage')
     await page.waitForTimeout(3000)
 
-    const eventsTab = page.getByRole('button', { name: /Events/i }).first()
+    const eventsTab = page.getByRole('tab', { name: /Events/i }).first()
     await expect(eventsTab).toBeVisible({ timeout: 10_000 })
     await eventsTab.click()
     await page.waitForTimeout(1000)
@@ -57,7 +57,7 @@ test.describe('Business — Manager Portal', () => {
     await page.goto('/manage')
     await page.waitForTimeout(3000)
 
-    const infoTab = page.getByRole('button', { name: /Info/i }).first()
+    const infoTab = page.getByRole('tab', { name: /Info/i }).first()
     await expect(infoTab).toBeVisible({ timeout: 10_000 })
     await infoTab.click()
     await page.waitForTimeout(1000)

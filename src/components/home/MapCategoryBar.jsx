@@ -8,14 +8,15 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
   // Scroll active icon into view when category changes
   useEffect(function () {
     if (activeRef.current && scrollRef.current) {
-      activeRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      activeRef.current.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', inline: 'center', block: 'nearest' })
     }
   }, [activeCategory])
 
   return (
     <div
       style={{
-        background: 'rgba(240, 236, 232, 0.75)',
+        background: 'rgba(var(--color-bg-rgb), 0.75)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderRadius: 16,
@@ -24,26 +25,27 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
     >
       <div
         ref={scrollRef}
-        className="flex gap-1 overflow-x-auto"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex gap-1 overflow-x-auto scrollbar-hide"
       >
         {/* Near You — no category filter */}
         <button
+          type="button"
           ref={activeCategory === null ? activeRef : null}
           onClick={function () { onCategoryChange(null) }}
           className="flex-shrink-0 flex items-center justify-center"
           style={{
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             borderRadius: 12,
             border: activeCategory === null ? '2px solid var(--color-primary)' : '2px solid transparent',
-            background: activeCategory === null ? 'rgba(228, 68, 10, 0.12)' : 'transparent',
+            background: activeCategory === null ? 'var(--color-primary-muted)' : 'transparent',
             transition: 'border-color 0.2s, background 0.2s',
           }}
           aria-label="Near You — all categories"
+          aria-pressed={activeCategory === null}
           title="Near You"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-primary)' : 'var(--color-text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-primary)' : 'var(--color-text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
@@ -55,25 +57,27 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
 
           return (
             <button
+              type="button"
               key={cat.id}
               ref={isActive ? activeRef : null}
               onClick={function () { onCategoryChange(cat.id) }}
               className="flex-shrink-0 flex items-center justify-center"
               style={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 borderRadius: 12,
                 border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-                background: isActive ? 'rgba(228, 68, 10, 0.12)' : 'transparent',
+                background: isActive ? 'var(--color-primary-muted)' : 'transparent',
                 transition: 'border-color 0.2s, background 0.2s',
               }}
               aria-label={cat.label}
+              aria-pressed={isActive}
               title={cat.label}
             >
               {iconSrc ? (
                 <img src={iconSrc} alt="" width={28} height={28} loading="lazy" />
               ) : (
-                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span aria-hidden="true" style={{ fontSize: 20 }}>{cat.emoji}</span>
               )}
             </button>
           )

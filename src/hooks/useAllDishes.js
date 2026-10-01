@@ -8,10 +8,10 @@ import { logger } from '../utils/logger'
  * ~300 rows, ~50KB. Fetched once, refreshed on window focus and every 5 minutes.
  * @param {Object} [options]
  * @param {boolean} [options.enabled=true] - Pass false to defer fetching until needed (e.g. until user starts searching)
- * @returns {Object} { dishes, loading, error }
+ * @returns {Object} { dishes, loading, error, refetch }
  */
 export function useAllDishes({ enabled = true } = {}) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['allDishes'],
     queryFn: () => dishesApi.getAllSearchable(),
     staleTime: 1000 * 60 * 5,
@@ -27,5 +27,6 @@ export function useAllDishes({ enabled = true } = {}) {
     dishes: data || [],
     loading: isLoading,
     error,
+    refetch,
   }
 }

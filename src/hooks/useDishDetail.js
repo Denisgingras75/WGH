@@ -31,6 +31,7 @@ function transformDish(data) {
     order_url: data.restaurants?.order_url,
     toast_slug: data.restaurants?.toast_slug,
     restaurant_phone: data.restaurants?.phone,
+    created_by: data.created_by,
   }
 }
 
@@ -42,6 +43,8 @@ export function useDishDetail(dishId, user) {
   const [dish, setDish] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // Bumped by refetch() to re-run the dish fetch after a retryable error
+  const [reloadKey, setReloadKey] = useState(0)
 
   // Variant state
   const [variants, setVariants] = useState([])
@@ -69,6 +72,8 @@ export function useDishDetail(dishId, user) {
 
   const observerCallback = useCallback(function (entries) {
     if (entries[0].isIntersecting) {
+      // Flip loading in the same frame so the evidence section never flashes "no reviews"
+      setReviewsLoading(true)
       setShouldLoadEvidence(true)
     }
   }, [])
@@ -89,6 +94,7 @@ export function useDishDetail(dishId, user) {
     let cancelled = false
 
     // Reset state between dish navigations
+    setPhotoUploaded(null)
     setFriendsVotes([])
     setFriendsCompat({})
     setReviews([])
@@ -125,7 +131,8 @@ export function useDishDetail(dishId, user) {
       } catch (err) {
         if (cancelled) return
         logger.error('Error fetching dish:', err)
-        setError('Dish not found')
+        // Keep the Error so the page can tell a retryable failure from a missing dish
+        setError(err)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -133,7 +140,7 @@ export function useDishDetail(dishId, user) {
 
     fetchDish()
     return () => { cancelled = true }
-  }, [dishId])
+  }, [dishId, reloadKey])
 
   // Fetch variant data
   useEffect(() => {
@@ -243,7 +250,6 @@ export function useDishDetail(dishId, user) {
 
     fetchSecondaryData()
     return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dishId, user, shouldLoadEvidence])
 
   // Fetch taste compatibility for each friend who voted
@@ -310,11 +316,14 @@ export function useDishDetail(dishId, user) {
 
   const clearPhotoUploaded = () => setPhotoUploaded(null)
 
+  const refetch = useCallback(() => setReloadKey(k => k + 1), [])
+
   return {
     // Core data
     dish,
     loading,
     error,
+    refetch,
 
     // Variants
     variants,

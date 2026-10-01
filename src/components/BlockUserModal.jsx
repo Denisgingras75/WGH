@@ -72,7 +72,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
               style={{
                 background: 'transparent',
                 border: '1px solid var(--color-divider)',
@@ -86,10 +86,10 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleConfirm}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
               style={{
                 background: 'var(--color-danger)',
-                color: '#FFFFFF',
+                color: 'var(--color-text-on-primary)',
                 fontSize: '15px',
                 opacity: loading ? 0.7 : 1,
               }}

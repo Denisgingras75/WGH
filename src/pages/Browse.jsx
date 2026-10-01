@@ -1,58 +1,56 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { logger } from '../utils/logger'
+import { useSearchParams, useNavigate, useNavigationType } from 'react-router-dom'
 import { useLocationContext } from '../context/LocationContext'
 import { useDishes } from '../hooks/useDishes'
-import { useUserVotes } from '../hooks/useUserVotes'
 import { useDishSearch } from '../hooks/useDishSearch'
-import { useFavorites } from '../hooks/useFavorites'
-
-import { getStorageItem, setStorageItem } from '../lib/storage'
-import { BROWSE_CATEGORIES } from '../constants/categories'
-import { MIN_VOTES_FOR_RANKING } from '../constants/app'
-import { getPendingVoteFromStorage } from '../lib/storage'
-import { LoginModal } from '../components/Auth/LoginModal'
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../lib/storage'
+import { MIN_VOTES_FOR_RANKING, BROWSE_SORT_OPTIONS } from '../constants/app'
 import { AddRestaurantModal } from '../components/AddRestaurantModal'
-import { ImpactFeedback, getImpactMessage } from '../components/ImpactFeedback'
 import { RadiusSheet } from '../components/LocationPicker'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
-import { BrowseSearchBar } from '../components/browse/BrowseSearchBar'
-import { BrowseResults } from '../components/browse/BrowseResults'
-
-const CATEGORIES = BROWSE_CATEGORIES
+import { BrowseSearchBar, BrowseResults } from '../components/browse'
+import { calculateDistance } from '../utils/distance'
+import { getUserMessage } from '../utils/errorHandler'
 
 export function Browse() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [addRestaurantQuery, setAddRestaurantQuery] = useState(null)
-  const [impactFeedback, setImpactFeedback] = useState(null)
-  const [pendingVoteData, setPendingVoteData] = useState(null)
-  const [sortBy, setSortBy] = useState('top_rated')
+  // Persisted sort choice; an unknown saved value falls back to Top Rated
+  const [sortBy, setSortBy] = useState(() => {
+    const saved = getStorageItem(STORAGE_KEYS.BROWSE_SORT)
+    return BROWSE_SORT_OPTIONS.some(o => o.id === saved) ? saved : 'top_rated'
+  })
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
 
   // Autocomplete state
   const [autocompleteOpen, setAutocompleteOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1)
-  // restaurantSuggestions derived from useRestaurantSearch below
 
   const { location, radius, setRadius, permissionState, requestLocation, isUsingDefault } = useLocationContext()
   const [showRadiusSheet, setShowRadiusSheet] = useState(false)
-  const { stats: userStats } = useUserVotes(user?.id)
 
-  // Search results from API using React Query hook
-  const { results: searchResults, loading: searchLoading } = useDishSearch(debouncedSearchQuery, 50, {
+  const searchGeo = {
     lat: location ? location.lat : null,
     lng: location ? location.lng : null,
     radiusMiles: radius,
     isUsingDefault: isUsingDefault,
-  })
+  }
+
+  // Full results for a submitted text search (client-side over the cached ['allDishes'] query)
+  const {
+    results: searchResults,
+    loading: searchLoading,
+    error: searchError,
+    refetch: refetchSearch,
+  } = useDishSearch(debouncedSearchQuery, 50, searchGeo)
+
+  // Live dish suggestions while typing — same cache, no extra network call
+  const { results: dishSuggestions } = useDishSearch(searchQuery, 5, searchGeo)
 
   // Google Places restaurant search — don't bias by default MV location or Browse radius
   const placesLat = isUsingDefault ? null : location?.lat
@@ -61,10 +59,8 @@ export function Browse() {
     searchQuery, placesLat, placesLng, searchQuery.trim().length >= 2, null
   )
 
-  const beforeVoteRef = useRef(null)
   const searchInputRef = useRef(null)
   const autocompleteRef = useRef(null)
-  const votingDishId = new URLSearchParams(window.location.search).get('votingDish')
 
   // Handle category and search query from URL params (when coming from home page)
   useEffect(() => {
@@ -86,29 +82,22 @@ export function Browse() {
     }
   }, [searchParams, navigate])
 
-  // Debounce search query by 300ms - only when already showing dishes
+  // Switching category or submitting a search swaps the whole view (grid →
+  // results) without a path change, so ScrollToTop doesn't fire. Start the new
+  // view at the top so the sticky results header never covers the first rows.
+  // Back/forward (POP) keeps the browser's restored position.
+  const navigationType = useNavigationType()
+  const activeCategoryParam = searchParams.get('category')
+  const activeQueryParam = searchParams.get('q')
   useEffect(() => {
-    if (!selectedCategory && !debouncedSearchQuery) {
-      return
-    }
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery, selectedCategory, debouncedSearchQuery])
+    if (navigationType !== 'POP') window.scrollTo(0, 0)
+  }, [activeCategoryParam, activeQueryParam, navigationType])
 
-  // Handle sort change
+  // Handle sort change (SortDropdown closes itself)
   const handleSortChange = (sortId) => {
     setSortBy(sortId)
-    setStorageItem('browse_sort', sortId)
-    setSortDropdownOpen(false)
+    setStorageItem(STORAGE_KEYS.BROWSE_SORT, sortId)
   }
-
-  // Dish suggestions from client-side search
-  const dishSuggestions = useMemo(() => {
-    if (!searchQuery?.trim() || searchQuery.trim().length < 2) return []
-    return searchResults.slice(0, 5)
-  }, [searchResults]) // searchQuery guard is inline, not a dep
 
   // Restaurant suggestions derived from useRestaurantSearch (no duplicate fetch)
   const restaurantSuggestions = useMemo(
@@ -132,7 +121,8 @@ export function Browse() {
   }, [])
 
   // Only fetch from useDishes when browsing by category (NOT when text searching)
-  const shouldFetchFromUseDishes = selectedCategory && !debouncedSearchQuery.trim()
+  const isTextSearch = !!debouncedSearchQuery.trim()
+  const shouldFetchFromUseDishes = selectedCategory && !isTextSearch
 
   const { dishes, loading, error, refetch } = useDishes(
     shouldFetchFromUseDishes ? location : null,
@@ -140,74 +130,11 @@ export function Browse() {
     selectedCategory,
     null
   )
-  const { isFavorite, toggleFavorite } = useFavorites(user?.id)
-
-  // Helper to find dish rank in current list
-  const getDishRank = useCallback((dishId, dishList) => {
-    const ranked = dishList?.filter(d => (d.total_votes || 0) >= MIN_VOTES_FOR_RANKING) || []
-    const index = ranked.findIndex(d => d.dish_id === dishId)
-    return index === -1 ? 999 : index + 1
-  }, [])
 
   // Navigate to full dish page
   const openDishPage = useCallback((dish) => {
     navigate(`/dish/${dish.dish_id}`)
   }, [navigate])
-
-  // Auto-navigate to dish page after OAuth/magic link login if there's a pending vote
-  useEffect(() => {
-    if (!user || !dishes?.length) return
-
-    const pending = getPendingVoteFromStorage()
-    const dishIdToOpen = votingDishId || pending?.dishId
-
-    if (!dishIdToOpen) return
-
-    const dish = dishes.find(d => d.dish_id === dishIdToOpen)
-    if (!dish) return
-
-    if (votingDishId) {
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('votingDish')
-      window.history.replaceState({}, '', newUrl.pathname + newUrl.search)
-    }
-
-    openDishPage(dish)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dishes, openDishPage])
-
-  // Calculate impact when dishes update after voting
-  useEffect(() => {
-    if (!pendingVoteData || !dishes?.length) return
-
-    const after = dishes.find(d => d.dish_id === pendingVoteData.dish_id)
-    if (!after) return
-
-    if (after.total_votes > pendingVoteData.total_votes) {
-      const afterRank = getDishRank(pendingVoteData.dish_id, dishes)
-      const impact = getImpactMessage(
-        pendingVoteData, after, pendingVoteData.rank, afterRank
-      )
-      setImpactFeedback(impact)
-      setPendingVoteData(null)
-    }
-  }, [dishes, pendingVoteData, setImpactFeedback, getDishRank])
-
-  const handleLoginRequired = () => {
-    setLoginModalOpen(true)
-  }
-
-  const handleToggleFavorite = async (dishId) => {
-    if (!user) {
-      setLoginModalOpen(true)
-      return
-    }
-    try {
-      await toggleFavorite(dishId)
-    } catch (error) {
-      logger.error('Failed to toggle favorite:', error)
-    }
-  }
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId)
@@ -220,14 +147,26 @@ export function Browse() {
     }
   }
 
-  // Go back to Home page
-  const handleBackToCategories = () => {
-    navigate('/')
-  }
+  // Back to the Browse category grid
+  const handleBackToCategories = () => handleCategoryChange(null)
+
+  // Results header back button: history back, or the grid on a deep link
+  const handleResultsBack = () => (window.history.length > 1 ? navigate(-1) : handleCategoryChange(null))
+
+  // Text-search rows carry restaurant coords but no distance — add it so
+  // "Closest" sorts and DishListItem can show distance
+  const searchResultsWithDistance = useMemo(() => {
+    if (!location) return searchResults
+    return searchResults.map(d => (
+      d.restaurant_lat != null && d.restaurant_lng != null
+        ? { ...d, distance_miles: calculateDistance(location.lat, location.lng, d.restaurant_lat, d.restaurant_lng) }
+        : d
+    ))
+  }, [searchResults, location])
 
   // Filter and sort dishes
   const filteredDishes = useMemo(() => {
-    const source = debouncedSearchQuery.trim() ? searchResults : dishes
+    const source = debouncedSearchQuery.trim() ? searchResultsWithDistance : dishes
     let result = (Array.isArray(source) ? source : []).filter(d => d && d.dish_id)
 
     switch (sortBy) {
@@ -269,7 +208,7 @@ export function Browse() {
     }
 
     return result
-  }, [dishes, debouncedSearchQuery, sortBy, searchResults])
+  }, [dishes, debouncedSearchQuery, sortBy, searchResultsWithDistance])
 
   // Clear search
   const clearSearch = () => {
@@ -372,6 +311,7 @@ export function Browse() {
         }
         break
       case 'Escape':
+      case 'Tab':
         setAutocompleteOpen(false)
         setAutocompleteIndex(-1)
         break
@@ -413,48 +353,15 @@ export function Browse() {
   }, [setSearchParams])
 
   // Are we showing dishes or the category grid?
-  const showingDishes = selectedCategory || debouncedSearchQuery.trim()
+  const showingDishes = selectedCategory || isTextSearch
+
+  // Text search reads the dish cache; category browse reads useDishes (already { message })
+  const resultsError = isTextSearch
+    ? (searchError ? { message: getUserMessage(searchError, 'searching dishes') } : null)
+    : error
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
-      <h1 className="sr-only">Browse Dishes</h1>
-      {/* Header - only shows when viewing dishes */}
-      {showingDishes && (
-        <header style={{ background: 'var(--color-bg)' }}>
-          <div className="px-4 py-3 flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="p-1 -ml-1 rounded-lg transition-opacity hover:opacity-70"
-              aria-label="Back to home"
-            >
-              <svg className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            {selectedCategory && !debouncedSearchQuery.trim() && (
-              <>
-                <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                  {CATEGORIES.find(c => c.id === selectedCategory)?.label}
-                </span>
-                <button
-                  onClick={handleBackToCategories}
-                  className="text-xs font-medium px-2 py-1 rounded-lg transition-colors"
-                  style={{ color: 'var(--color-primary)', background: 'var(--color-primary-muted)' }}
-                >
-                  Clear
-                </button>
-              </>
-            )}
-            {debouncedSearchQuery.trim() && (
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                Results for "{debouncedSearchQuery.trim()}"
-              </span>
-            )}
-          </div>
-        </header>
-      )}
-
-      {/* Main Content */}
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
       {!showingDishes ? (
         <BrowseSearchBar
           searchQuery={searchQuery}
@@ -478,7 +385,7 @@ export function Browse() {
           filteredDishes={filteredDishes}
           loading={loading}
           searchLoading={searchLoading}
-          error={error}
+          error={resultsError}
           selectedCategory={selectedCategory}
           debouncedSearchQuery={debouncedSearchQuery}
           sortBy={sortBy}
@@ -491,6 +398,8 @@ export function Browse() {
           onShowRadiusSheet={() => setShowRadiusSheet(true)}
           onSearchSuggestionClick={handleSearchSuggestionClick}
           onBackToCategories={handleBackToCategories}
+          onBack={handleResultsBack}
+          onRetry={isTextSearch ? refetchSearch : refetch}
         />
       )}
 
@@ -501,21 +410,10 @@ export function Browse() {
         onRadiusChange={setRadius}
       />
 
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-      />
-
       <AddRestaurantModal
         isOpen={addRestaurantQuery !== null}
         onClose={() => setAddRestaurantQuery(null)}
         initialQuery={addRestaurantQuery || ''}
-      />
-
-      {/* Impact feedback toast */}
-      <ImpactFeedback
-        impact={impactFeedback}
-        onClose={() => setImpactFeedback(null)}
       />
     </div>
   )

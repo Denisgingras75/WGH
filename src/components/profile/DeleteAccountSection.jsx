@@ -9,64 +9,10 @@ import { logger } from '../../utils/logger'
 
 const CONFIRM_WORD = 'DELETE'
 
-export function DeleteAccountSection() {
-  const [modalOpen, setModalOpen] = useState(false)
-
-  return (
-    <>
-      <section
-        className="mt-16 pt-8 px-4 pb-10"
-        style={{ borderTop: '1px solid var(--color-divider)' }}
-      >
-        <h2
-          style={{
-            fontFamily: "'Amatic SC', cursive",
-            color: 'var(--color-text-primary)',
-            fontSize: '28px',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-            marginBottom: '10px',
-          }}
-        >
-          Delete Account
-        </h2>
-        <p
-          className="leading-relaxed"
-          style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: '16px' }}
-        >
-          This permanently removes your votes, reviews, photos, favorites, and profile.
-          This can't be undone.
-        </p>
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="px-5 py-3 rounded-xl font-semibold transition-colors"
-          style={{
-            background: 'transparent',
-            border: '2px solid var(--color-danger)',
-            color: 'var(--color-danger)',
-            fontSize: '15px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-danger)'
-            e.currentTarget.style.color = '#FFFFFF'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = 'var(--color-danger)'
-          }}
-        >
-          Delete My Account
-        </button>
-      </section>
-      {modalOpen && <DeleteAccountModal onClose={() => setModalOpen(false)} />}
-    </>
-  )
-}
-
 export function DeleteAccountModal({ onClose }) {
   const [confirmText, setConfirmText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmFocused, setConfirmFocused] = useState(false)
   const { signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -77,7 +23,8 @@ export function DeleteAccountModal({ onClose }) {
 
   const modalRef = useFocusTrap(true, handleClose)
   // Trim + uppercase: mobile keyboards auto-add whitespace and capitalize inconsistently
-  const canConfirm = confirmText.trim().toUpperCase() === CONFIRM_WORD && !loading
+  const wordMatches = confirmText.trim().toUpperCase() === CONFIRM_WORD
+  const canConfirm = wordMatches && !loading
 
   const handleConfirm = async () => {
     if (!canConfirm) return
@@ -144,6 +91,8 @@ export function DeleteAccountModal({ onClose }) {
             type="text"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
+            onFocus={() => setConfirmFocused(true)}
+            onBlur={() => setConfirmFocused(false)}
             placeholder="DELETE"
             autoFocus
             autoComplete="off"
@@ -151,12 +100,11 @@ export function DeleteAccountModal({ onClose }) {
             autoCapitalize="characters"
             spellCheck={false}
             disabled={loading}
-            className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)] transition-colors"
+            className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
             style={{
               background: 'var(--color-bg)',
-              border: '2px solid var(--color-divider)',
+              border: '2px solid ' + (confirmFocused ? 'var(--color-primary)' : 'var(--color-divider)'),
               color: 'var(--color-text-primary)',
-              fontFamily: "'SF Mono', 'Fira Code', monospace",
               letterSpacing: '0.05em',
             }}
           />
@@ -166,11 +114,12 @@ export function DeleteAccountModal({ onClose }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
               style={{
-                background: 'var(--color-bg)',
-                border: '2px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
+                background: 'transparent',
+                border: '1px solid var(--color-divider)',
+                color: loading ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)',
+                fontSize: '15px',
               }}
             >
               Cancel
@@ -179,13 +128,15 @@ export function DeleteAccountModal({ onClose }) {
               type="button"
               onClick={handleConfirm}
               disabled={!canConfirm}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
               style={{
-                background: 'var(--color-danger)',
-                color: '#FFFFFF',
+                background: wordMatches ? 'var(--color-danger)' : 'var(--color-surface)',
+                color: wordMatches ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+                fontSize: '15px',
+                opacity: loading ? 0.7 : 1,
               }}
             >
-              {loading ? 'Deleting...' : 'Delete Account'}
+              {loading ? 'Deleting\u2026' : 'Delete Account'}
             </button>
           </div>
         </div>

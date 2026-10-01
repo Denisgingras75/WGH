@@ -27,6 +27,7 @@ export const restaurantsApi = {
           is_open,
           town,
           cuisine,
+          google_place_id,
           dishes (id, name, avg_rating, total_votes)
         `)
         .order('name')
@@ -325,12 +326,13 @@ export const restaurantsApi = {
         .from('restaurants')
         .select('*')
         .eq('id', restaurantId)
-        .single()
+        .maybeSingle()
 
       if (error) {
         throw createClassifiedError(error)
       }
 
+      // null = no such restaurant; callers render a "Restaurant not found" state
       return data
     } catch (error) {
       logger.error('Error fetching restaurant:', error)

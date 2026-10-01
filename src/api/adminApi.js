@@ -54,8 +54,10 @@ export const adminApi = {
           name,
           category,
           price,
+          photo_url,
+          restaurant_id,
           created_at,
-          restaurants (name)
+          restaurants (id, name)
         `)
         .order('created_at', { ascending: false })
         .limit(limit)

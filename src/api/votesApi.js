@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase'
 import { capture } from '../lib/analytics'
 import { checkVoteRateLimit } from '../lib/rateLimiter'
 import { containsBlockedContent } from '../lib/reviewBlocklist'
-import { MAX_REVIEW_LENGTH } from '../constants/app'
+import { MAX_REVIEW_LENGTH, MIN_VOTES_FOR_RANKING } from '../constants/app'
 import { createClassifiedError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 import { jitterApi } from './jitterApi'
@@ -97,7 +97,8 @@ async function upsertVoteRecord({ userId, dishId, rating10, reviewText, purityDa
         sampleRow.flags = jitterScore.flags
       }
 
-      await supabase.from('jitter_samples').insert(sampleRow)
+      var { error: sampleError } = await supabase.from('jitter_samples').insert(sampleRow)
+      if (sampleError) logger.warn('Jitter sample submission failed:', sampleError)
     } catch (jitterErr) {
       logger.warn('Jitter sample submission failed:', jitterErr)
     }
@@ -173,7 +174,7 @@ export const votesApi = {
           })
           submittedDishIds.push(normalizedVotes[i].dishId)
         } catch (error) {
-          var classifiedError = error.type ? error : createClassifiedError(error)
+          const classifiedError = error.type ? error : createClassifiedError(error)
           classifiedError.submittedCount = submittedDishIds.length
           classifiedError.submittedDishIds = submittedDishIds.slice()
           throw classifiedError
@@ -187,17 +188,7 @@ export const votesApi = {
       }
     } catch (error) {
       logger.error('Error submitting batch votes:', error)
-
-      if (error.type) {
-        throw error
-      }
-
-      var classifiedError = createClassifiedError(error)
-      if (error.submittedCount != null) {
-        classifiedError.submittedCount = error.submittedCount
-        classifiedError.submittedDishIds = error.submittedDishIds
-      }
-      throw classifiedError
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 
@@ -311,7 +302,7 @@ export const votesApi = {
   },
 
   /**
-   * Get count of ranked dishes (5+ votes) that a user has voted on
+   * Get count of ranked dishes (MIN_VOTES_FOR_RANKING+ votes) that a user has voted on
    * Uses dishes.total_votes instead of counting votes table (O(1) vs O(n))
    * @param {string} userId - User ID
    * @returns {Promise<number>} Count of dishes helped rank
@@ -331,8 +322,8 @@ export const votesApi = {
       if (error) throw createClassifiedError(error)
       if (!data?.length) return 0
 
-      // Count dishes with 5+ votes (using pre-computed total_votes)
-      const rankedCount = data.filter(v => (v.dishes?.total_votes || 0) >= 5).length
+      // Count ranked dishes (using pre-computed total_votes)
+      const rankedCount = data.filter(v => (v.dishes?.total_votes || 0) >= MIN_VOTES_FOR_RANKING).length
       return rankedCount
     } catch (error) {
       logger.error('Error getting dishes helped rank:', error)
@@ -421,6 +412,7 @@ export const votesApi = {
       const { data, error } = await supabase
         .from('public_votes')
         .select(`
+          id,
           review_text,
           rating_10,
           review_created_at,
@@ -499,12 +491,6 @@ export const votesApi = {
   },
 
   /**
-   * Get all reviews written by a user with dish info
-   * @param {string} userId - User ID
-   * @param {Object} options - Pagination options
-   * @returns {Promise<Array>} Array of reviews with dish info
-   */
-  /**
    * Get current user's ratings for specific dishes (for comparison on other profiles)
    * @param {string[]} dishIds - Array of dish IDs
    * @returns {Promise<Object>} Map of dish ID to rating_10
@@ -529,6 +515,42 @@ export const votesApi = {
       return ratingsMap
     } catch (error) {
       logger.error('Error fetching my ratings for dishes:', error)
+      throw error.type ? error : createClassifiedError(error)
+    }
+  },
+
+  /**
+   * Get current user's full votes (rating + review) for specific dishes.
+   * Used by Rate Your Meal to prefill prior votes so a batch submit never
+   * silently erases a review the user already wrote.
+   * @param {string[]} dishIds - Array of dish IDs
+   * @returns {Promise<Object>} Map of dish ID to { rating10, reviewText }
+   */
+  async getMyVotesForDishes(dishIds) {
+    try {
+      if (!dishIds || dishIds.length === 0) return {}
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return {}
+
+      const { data, error } = await supabase
+        .from('votes')
+        .select('dish_id, rating_10, review_text')
+        .eq('user_id', user.id)
+        .in('dish_id', dishIds)
+
+      if (error) throw createClassifiedError(error)
+
+      const votesMap = {}
+      ;(data || []).forEach(v => {
+        votesMap[v.dish_id] = {
+          rating10: v.rating_10,
+          reviewText: v.review_text,
+        }
+      })
+      return votesMap
+    } catch (error) {
+      logger.error('Error fetching my votes for dishes:', error)
       throw error.type ? error : createClassifiedError(error)
     }
   },
@@ -604,6 +626,12 @@ export const votesApi = {
     }
   },
 
+  /**
+   * Get all reviews written by a user with dish info
+   * @param {string} userId - User ID
+   * @param {Object} options - Pagination options
+   * @returns {Promise<Array>} Array of reviews with dish info
+   */
   async getReviewsForUser(userId, { limit = 20, offset = 0 } = {}) {
     try {
       if (!userId) {

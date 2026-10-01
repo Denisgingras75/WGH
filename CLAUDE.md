@@ -152,10 +152,10 @@ src/
 │   └── index.js      # Barrel export for all API modules
 ├── components/       # Shared + feature-grouped components
 │   ├── Auth/         # LoginModal, WelcomeModal
-│   ├── browse/       # CategoryGrid, SearchAutocomplete, SortDropdown
+│   ├── browse/       # BrowseResults, BrowseSearchBar, SearchAutocomplete, SortDropdown
 │   ├── home/         # CategoryIcons
-│   ├── jitter/       # SessionCard, SessionBadge, TrustBadge
-│   ├── profile/      # JournalCard, JournalFeed, ShelfFilter, HeroIdentityCard, FoodMap
+│   ├── jitter/       # JitterBadge, JitterExplainer, JitterInput, SessionBadge
+│   ├── profile/      # JournalCard, JournalFeed, HeroIdentityCard, FoodMap
 │   ├── restaurant-admin/ # DishesManager, EventsManager, MenuImportWizard, SpecialsManager
 │   └── restaurants/  # RestaurantMap, RestaurantDishes, RestaurantMenu
 ├── constants/        # App-wide constants (10 files)
@@ -197,7 +197,9 @@ scripts/              # Node utility scripts (review harvesting, menu import, ba
 
 **Category test:** "Would a user say 'I want [category]'?" — "I want wings" passes, "I want an appetizer" fails. Use this test for all category additions.
 
-**RestaurantMap:** Dual-mode Leaflet map. Dish mode shows emoji pins for top dishes. Restaurant mode shows restaurant markers + Google Places discovery for unclaimed restaurants.
+**RestaurantMap:** Full-screen Leaflet map for homepage map mode. Shows emoji pins for top dishes. Google Places discovery of unclaimed restaurants lives on the Restaurants page (`useNearbyPlaces`).
+
+**Shared UI building blocks:** `PageHeader` / `BackButton` (`src/components/PageHeader.jsx`) for every sticky page header, `SectionHeader` for Amatic section titles, `EmptyState` and `Skeleton` for states, and `src/constants/styles.js` for the shared button, card, input and title styles. Reuse these instead of hand-rolling headers or buttons.
 
 ### 4.3 API Layer Pattern
 Every API file follows this structure:
@@ -304,7 +306,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 - **Event types** — `src/constants/eventTypes.js` — live_music, trivia, comedy, karaoke, open_mic, other
 - **Photo quality** — `src/constants/photoQuality.js` — validation thresholds, tiers (featured/community/hidden)
 - **Feature flags** — `src/constants/features.js` — `FEATURES.RATING_IDENTITY_ENABLED` (env var)
-- **Jitter tiers** — `src/constants/jitter.js` — `JITTER_TIERS`, `getConsumerTier()`
+- **Jitter badges** — `src/constants/jitter.js` — `TRUST_BADGE_LEGEND`
 - **Search suggestions** — `src/constants/searchSuggestions.js` — curated search prompts
 
 ### 4.9 localStorage Keys

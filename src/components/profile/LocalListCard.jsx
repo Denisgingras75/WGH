@@ -1,9 +1,12 @@
-import { useNavigate } from 'react-router-dom'
 import { DishListItem } from '../DishListItem'
+import { SectionHeader } from '../SectionHeader'
+
+// Curator-note indent = DishListItem's name column (padding + rank + icon + gap)
+var NOTE_INDENT_PODIUM = '126px'
+var NOTE_INDENT_RANKED = '112px'
+var NOTE_INDENT_UNRANKED = '84px'
 
 export function LocalListCard({ items }) {
-  var navigate = useNavigate()
-
   if (!items || items.length === 0) return null
 
   var listTitle = items[0].title
@@ -20,23 +23,7 @@ export function LocalListCard({ items }) {
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3">
-          <h3 style={{
-            fontSize: '17px',
-            fontWeight: 800,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
-          }}>
-            {listTitle}
-          </h3>
-          {listDescription && (
-            <p style={{
-              fontSize: '13px',
-              color: 'var(--color-text-tertiary)',
-              marginTop: '4px',
-            }}>
-              {listDescription}
-            </p>
-          )}
+          <SectionHeader level="h3" title={listTitle} subtitle={listDescription} />
         </div>
 
         {/* Dish list */}
@@ -51,22 +38,28 @@ export function LocalListCard({ items }) {
             total_votes: item.total_votes,
             category: item.category,
           }
+          var hasRank = item.position != null
+          var isPodiumRow = hasRank && item.position <= 3
+          // The row owns the divider so the curator note sits above it, with its dish
+          var showDivider = !isPodiumRow && i !== items.length - 1
 
           return (
-            <div key={item.dish_id}>
+            <div
+              key={item.dish_id}
+              style={{ borderBottom: showDivider ? '1px solid var(--color-divider)' : 'none' }}
+            >
               <DishListItem
                 dish={dish}
                 rank={item.position}
                 hideVotes
-                onClick={function () { navigate('/dish/' + item.dish_id) }}
-                isLast={i === items.length - 1}
+                isLast
               />
               {item.note && (
                 <div
-                  className="px-4 pb-2"
+                  className="pb-2"
                   style={{
-                    marginTop: '-4px',
-                    paddingLeft: '56px',
+                    paddingLeft: isPodiumRow ? NOTE_INDENT_PODIUM : hasRank ? NOTE_INDENT_RANKED : NOTE_INDENT_UNRANKED,
+                    paddingRight: '16px',
                   }}
                 >
                   <p style={{

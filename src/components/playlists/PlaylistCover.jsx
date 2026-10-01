@@ -16,9 +16,10 @@ var BG_COLORS = [
  *
  * @param {string[]} coverCategories - Category IDs for first 4 dishes
  * @param {string[]} coverPhotos - Photo URLs for first 4 dishes (optional)
- * @param {number} size - Grid size in px
+ * @param {number|'fill'} size - Grid size in px, or 'fill' to fill the parent's width as a square
  */
 export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 120 }) {
+  var fill = size === 'fill'
 
   var tiles = [0, 1, 2, 3].map(function (i) {
     var photo = coverPhotos[i] || null
@@ -29,11 +30,14 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
 
   return (
     <div
+      aria-hidden="true"
       style={{
-        width: size,
-        height: size,
+        width: fill ? '100%' : size,
+        height: fill ? 'auto' : size,
+        aspectRatio: fill ? '1' : undefined,
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
+        gridTemplateRows: '1fr 1fr',
         gap: 2,
         borderRadius: 8,
         overflow: 'hidden',
@@ -64,12 +68,12 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: Math.round(size / 12),
+                padding: fill ? '8%' : Math.round(size / 12),
               }}
             >
               <img
                 src={tile.iconSrc}
-                alt={tile.category || ''}
+                alt=""
                 style={{
                   width: '70%',
                   height: '70%',
@@ -89,7 +93,7 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: Math.round(size / 3.5),
+              fontSize: fill ? 'clamp(20px, 10vw, 44px)' : Math.round(size / 3.5),
             }}
           >
             {categoryEmojiFor(tile.category)}

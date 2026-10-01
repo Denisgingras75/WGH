@@ -1,7 +1,6 @@
 import { BottomNav } from './BottomNav'
 import { WelcomeSplash } from './WelcomeSplash'
 import { TopBar } from './TopBar'
-import { OfflineIndicator } from './OfflineIndicator'
 
 export function Layout({ children }) {
   return (
@@ -21,7 +20,6 @@ export function Layout({ children }) {
       >
         Skip to main content
       </a>
-      <OfflineIndicator />
       <WelcomeSplash />
       <TopBar />
       <main id="main-content">

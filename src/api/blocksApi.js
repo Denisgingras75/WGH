@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { createClassifiedError } from '../utils/errorHandler'
+import { createClassifiedError, createUserFacingError } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 export const blocksApi = {
@@ -18,7 +18,7 @@ export const blocksApi = {
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Could not block this user')
+        throw createUserFacingError(data?.error || 'Could not block this user')
       }
 
       return { success: true }
@@ -43,7 +43,7 @@ export const blocksApi = {
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Could not unblock this user')
+        throw createUserFacingError(data?.error || 'Could not unblock this user')
       }
 
       return { success: true }

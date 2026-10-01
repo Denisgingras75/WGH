@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { getRatingColor } from '../../utils/ranking'
+import { getRatingColor, formatScore10 } from '../../utils/ranking'
 import { CategoryIcon } from '../home/CategoryIcons'
 
 /**
@@ -21,13 +21,10 @@ export function JournalCard({ dish }) {
     <Link
       to={'/dish/' + dishId}
       data-testid="journal-card"
-      className="flex items-start gap-3 no-underline"
+      className="flex items-start gap-3 no-underline rounded-xl p-4 card-press"
       style={{
         background: 'var(--color-card)',
-        borderRadius: '14px',
-        padding: '14px',
-        marginBottom: '8px',
-        display: 'flex',
+        border: '1px solid var(--color-divider)',
         textDecoration: 'none',
       }}
     >
@@ -57,13 +54,13 @@ export function JournalCard({ dish }) {
       <div className="flex-1 min-w-0">
         <div
           className="font-bold truncate"
-          style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}
+          style={{ color: 'var(--color-text-primary)', fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em' }}
         >
           {dishName}
         </div>
         <div
           className="truncate"
-          style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', marginTop: '1px' }}
+          style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 500, marginTop: '1px' }}
         >
           {restaurantName}
         </div>
@@ -95,14 +92,16 @@ export function JournalCard({ dish }) {
               fontSize: '28px',
               fontWeight: '800',
               lineHeight: '1',
+              letterSpacing: '-0.02em',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {rating}
+            {formatScore10(rating)}
           </span>
           <span
             style={{
               color: 'var(--color-text-tertiary)',
-              fontSize: '10px',
+              fontSize: '11px',
               lineHeight: '1',
               marginTop: '2px',
             }}

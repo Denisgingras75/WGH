@@ -355,105 +355,119 @@ export const followsApi = {
    * @returns {Promise<Object|null>}
    */
   async getUserProfile(userId) {
-    // Run all independent queries in parallel for faster loading
-    const [
-      profileResult,
-      followerResult,
-      followingResult,
-      votesResult,
-      badgesResult,
-    ] = await Promise.all([
-      // 1. Get basic profile info
-      supabase
-        .from('profiles')
-        .select('id, display_name, created_at')
-        .eq('id', userId)
-        .single(),
-      // 2. Get follower count
-      supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('followed_id', userId),
-      // 3. Get following count
-      supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('follower_id', userId),
-      // 4. Get votes with dish info (includes data for stats calculation)
-      supabase
-        .from('votes')
-        .select(`
-          rating_10,
-          created_at,
-          dishes (
-            id,
-            name,
-            photo_url,
-            category,
-            avg_rating,
-            restaurants (
+    try {
+      // Run all independent queries in parallel for faster loading
+      const [
+        profileResult,
+        followerResult,
+        followingResult,
+        votesResult,
+        badgesResult,
+        voteCountResult,
+      ] = await Promise.all([
+        // 1. Get basic profile info
+        supabase
+          .from('profiles')
+          .select('id, display_name, created_at')
+          .eq('id', userId)
+          .maybeSingle(),
+        // 2. Get follower count
+        supabase
+          .from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('followed_id', userId),
+        // 3. Get following count
+        supabase
+          .from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('follower_id', userId),
+        // 4. Get votes with dish info (includes data for stats calculation)
+        supabase
+          .from('votes')
+          .select(`
+            rating_10,
+            created_at,
+            dishes (
               id,
-              name
+              name,
+              photo_url,
+              category,
+              avg_rating,
+              restaurants (
+                id,
+                name
+              )
             )
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50),
-      // 5. Get badges
-      supabase.rpc('get_user_badges', { p_user_id: userId, p_public_only: false }),
-    ])
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        // 5. Get badges
+        supabase.rpc('get_user_badges', { p_user_id: userId, p_public_only: false }),
+        // 6. True vote count (the votes query above is capped at 50)
+        supabase
+          .from('votes')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId),
+      ])
 
-    // Check for profile error (required)
-    if (profileResult.error) {
-      return null
-    }
+      // Profile is required: a failed lookup is an error, a missing row is "not found" (null)
+      if (profileResult.error) {
+        throw createClassifiedError(profileResult.error)
+      }
+      if (!profileResult.data) {
+        return null
+      }
 
-    const profile = profileResult.data
-    profile.follower_count = followerResult.count || 0
-    profile.following_count = followingResult.count || 0
+      const profile = profileResult.data
+      profile.follower_count = followerResult.count || 0
+      profile.following_count = followingResult.count || 0
 
-    // Calculate stats from votes (no separate query needed).
-    // Rating-only display — the Worth-It/Avoid split retired with the binary vote.
-    const voteList = votesResult.data || []
-    const totalVotes = voteList.length
-    const ratedVotes = voteList.filter(v => v.rating_10 != null)
-    const avgRating = ratedVotes.length > 0
-      ? Math.round((ratedVotes.reduce((sum, v) => sum + v.rating_10, 0) / ratedVotes.length) * 10) / 10
-      : null
+      // Calculate stats from votes (no separate query needed).
+      // Rating-only display — the Worth-It/Avoid split retired with the binary vote.
+      const voteList = votesResult.data || []
+      const totalVotes = voteCountResult.count ?? voteList.length
+      const ratedVotes = voteList.filter(v => v.rating_10 != null)
+      const avgRating = ratedVotes.length > 0
+        ? Math.round((ratedVotes.reduce((sum, v) => sum + v.rating_10, 0) / ratedVotes.length) * 10) / 10
+        : null
 
-    const badges = badgesResult.data || []
+      const badges = badgesResult.data || []
 
-    // Map badge_key to key for consistency with UI
-    const mappedBadges = badges.map(b => ({
-      key: b.badge_key,
-      name: b.name,
-      subtitle: b.subtitle,
-      description: b.description,
-      icon: b.icon,
-      unlocked_at: b.unlocked_at,
-    }))
+      // Map badge_key to key for consistency with UI
+      const mappedBadges = badges.map(b => ({
+        key: b.badge_key,
+        name: b.name,
+        subtitle: b.subtitle,
+        description: b.description,
+        icon: b.icon,
+        unlocked_at: b.unlocked_at,
+      }))
 
-    return {
-      ...profile,
-      stats: {
-        total_votes: totalVotes,
-        avg_rating: avgRating,
-      },
-      recent_votes: voteList.map(v => ({
-        rating: v.rating_10,
-        voted_at: v.created_at,
-        dish: v.dishes ? {
-          id: v.dishes.id,
-          name: v.dishes.name,
-          photo_url: v.dishes.photo_url,
-          category: v.dishes.category,
-          avg_rating: v.dishes.avg_rating,
-          restaurant_name: v.dishes.restaurants?.name,
-          restaurant_id: v.dishes.restaurants?.id,
-        } : null,
-      })),
-      badges: mappedBadges,
+      return {
+        ...profile,
+        stats: {
+          total_votes: totalVotes,
+          avg_rating: avgRating,
+        },
+        recent_votes: voteList.map(v => ({
+          rating: v.rating_10,
+          voted_at: v.created_at,
+          dish: v.dishes ? {
+            id: v.dishes.id,
+            name: v.dishes.name,
+            photo_url: v.dishes.photo_url,
+            category: v.dishes.category,
+            avg_rating: v.dishes.avg_rating,
+            restaurant_name: v.dishes.restaurants?.name,
+            restaurant_id: v.dishes.restaurants?.id,
+          } : null,
+        })),
+        badges: mappedBadges,
+      }
+    } catch (error) {
+      logger.error('Error fetching user profile:', error)
+      throw error.type ? error : createClassifiedError(error)
     }
   },
 }

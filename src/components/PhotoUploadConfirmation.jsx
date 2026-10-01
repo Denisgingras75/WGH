@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { PHOTO_TIERS } from '../constants/photoQuality'
 
 export function PhotoUploadConfirmation({
@@ -9,16 +9,19 @@ export function PhotoUploadConfirmation({
   onLater,
 }) {
   const [showInfo, setShowInfo] = useState(false)
+  const infoId = useId()
   const tier = PHOTO_TIERS[status] || PHOTO_TIERS.community
 
   return (
     <div className="photo-upload-confirmation">
       <div className="photo-preview">
         <img src={photoUrl} alt={dishName} />
-        <div className="checkmark">✓</div>
+        <div className="checkmark" aria-hidden="true">✓</div>
       </div>
 
-      <h3>Photo Added!</h3>
+      <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        Photo Added!
+      </h2>
 
       {/* Tier badge */}
       <div
@@ -37,16 +40,19 @@ export function PhotoUploadConfirmation({
         <p className="tier-tip">{tier.tip}</p>
       )}
 
-      {/* How photos work link */}
+      {/* How photos work disclosure */}
       <button
-        className="photo-info-link"
+        type="button"
+        className="photo-info-link inline-flex items-center min-h-[44px]"
         onClick={() => setShowInfo(!showInfo)}
+        aria-expanded={showInfo}
+        aria-controls={infoId}
       >
-        How photos work {showInfo ? '▲' : '▼'}
+        How photos work&nbsp;<span aria-hidden="true">{showInfo ? '▲' : '▼'}</span>
       </button>
 
       {showInfo && (
-        <div className="photo-info-content">
+        <div id={infoId} className="photo-info-content">
           <ul>
             <li>Photos are scored by clarity and shown in the community gallery.</li>
             <li>Everyone can contribute — not all photos are shown the same way.</li>
@@ -57,18 +63,29 @@ export function PhotoUploadConfirmation({
 
       <p className="rate-prompt">Would you like to rate this dish now?</p>
 
-      <div className="confirmation-buttons">
+      <div className="flex gap-3 mb-3">
         <button
-          onClick={onRateNow}
-          className="btn-primary"
-        >
-          Rate Now
-        </button>
-        <button
+          type="button"
           onClick={onLater}
-          className="btn-secondary"
+          className="flex-1 py-3 px-5 rounded-xl text-[15px] font-semibold transition-all active:scale-[0.98]"
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--color-divider)',
+            color: 'var(--color-text-primary)',
+          }}
         >
           Later
+        </button>
+        <button
+          type="button"
+          onClick={onRateNow}
+          className="flex-1 py-3 px-5 rounded-xl text-[15px] font-semibold transition-all active:scale-[0.98]"
+          style={{
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+          }}
+        >
+          Rate Now
         </button>
       </div>
 

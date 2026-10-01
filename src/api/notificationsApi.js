@@ -95,12 +95,14 @@ export const notificationsApi = {
   },
 
   /**
-   * Delete all notifications for current user
+   * Delete specific notifications for current user (e.g. the ones just shown)
+   * @param {string[]} ids - Notification IDs
    * @returns {Promise<void>}
    * @throws {Error} Not authenticated or API error
    */
-  async deleteAll() {
+  async deleteByIds(ids) {
     try {
+      if (!ids || ids.length === 0) return
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         throw new Error('Not authenticated')
@@ -109,6 +111,7 @@ export const notificationsApi = {
       const { error } = await supabase
         .from('notifications')
         .delete()
+        .in('id', ids)
         .eq('user_id', user.id)
 
       if (error) {

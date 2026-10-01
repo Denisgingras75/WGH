@@ -1,19 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useLocationContext } from '../context/LocationContext'
 import { restaurantsApi } from '../api/restaurantsApi'
 import { dishesApi } from '../api/dishesApi'
 import { votesApi } from '../api/votesApi'
-import { createClassifiedError } from '../utils/errorHandler'
+import { createClassifiedError, getUserMessage } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
+import { buildDishSections } from '../utils/menuSections'
+import { setBackButtonInterceptor, clearBackButtonInterceptor } from '../utils/backButtonInterceptor'
+import { validateUserContent } from '../lib/reviewBlocklist'
 import { useDishes } from '../hooks/useDishes'
 import { useDishPhotos } from '../hooks/useDishPhotos'
 import { LoginModal } from '../components/Auth/LoginModal'
-import { DishSelector, buildDishSections } from '../components/rate-meal/DishSelector'
+import { EmptyState } from '../components/EmptyState'
+import { DishSelector } from '../components/rate-meal/DishSelector'
 import { BatchRatingCard } from '../components/rate-meal/BatchRatingCard'
 import { BatchSummary } from '../components/rate-meal/BatchSummary'
+import { RateMealSignIn, RateMealNoMenu, RateMealSuccess } from '../components/rate-meal/RateMealStates'
 
 function getDishClientId(dishId) {
   return 'dish-' + dishId
@@ -23,10 +29,12 @@ function getSpecialClientId(specialDishName) {
   return 'special-' + specialDishName.trim().toLowerCase().replace(/\s+/g, '-')
 }
 
-function createInitialRatingState(previousValue) {
+// rating10 = null means "unrated" (0.0 is a real rating). Prefill from the
+// user's existing vote so a batch submit never silently erases their review.
+function createInitialRatingState(previousValue, prior) {
   return previousValue || {
-    rating10: 0,
-    reviewText: '',
+    rating10: prior?.rating10 ?? null,
+    reviewText: prior?.reviewText || '',
     photoFile: null,
   }
 }
@@ -35,17 +43,20 @@ export function RateYourMeal() {
   var { restaurantId } = useParams()
   var navigate = useNavigate()
   var queryClient = useQueryClient()
-  var { user } = useAuth()
+  var { user, loading: authLoading } = useAuth()
   var { location, radius } = useLocationContext()
   var { uploadPhoto, uploading, analyzing } = useDishPhotos()
 
   var [step, setStep] = useState('select')
   var [currentIndex, setCurrentIndex] = useState(0)
+  var [editingFromSummary, setEditingFromSummary] = useState(false)
   var [searchQuery, setSearchQuery] = useState('')
   var [loginModalOpen, setLoginModalOpen] = useState(false)
   var [selectedDishIds, setSelectedDishIds] = useState({})
   var [specialDishEnabled, setSpecialDishEnabled] = useState(false)
   var [specialDishName, setSpecialDishName] = useState('')
+  var [specialDishError, setSpecialDishError] = useState(null)
+  var [loadingPriorVotes, setLoadingPriorVotes] = useState(false)
   var [selectedDishes, setSelectedDishes] = useState([])
   var [ratingsById, setRatingsById] = useState({})
   var [submitError, setSubmitError] = useState(null)
@@ -62,15 +73,41 @@ export function RateYourMeal() {
 
   var { dishes, loading: dishesLoading, error: dishesError } = useDishes(location, radius, null, restaurantId)
 
+  // Wait for the session to restore before deciding the user is signed out.
   useEffect(function () {
-    if (!user) {
-      setLoginModalOpen(true)
-    }
-  }, [user])
+    if (authLoading) return
+    setLoginModalOpen(!user)
+  }, [user, authLoading])
+
+  // Each card / step starts at the top (name + slider in view).
+  useEffect(function () {
+    window.scrollTo(0, 0)
+  }, [step, currentIndex])
+
+  function markPhotoUploaded(clientId) {
+    setRatingsById(function (previous) {
+      return {
+        ...previous,
+        [clientId]: { ...previous[clientId], photoUploaded: true },
+      }
+    })
+  }
 
   var submitMutation = useMutation({
     mutationFn: async function () {
       var resolvedDishes = selectedDishes.slice()
+      var photoWarnings = []
+
+      // Check every note before creating a special dish or uploading a photo.
+      for (var j = 0; j < resolvedDishes.length; j += 1) {
+        var noteRating = ratingsById[resolvedDishes[j].clientId]
+        var noteError = validateUserContent(noteRating && noteRating.reviewText, 'Note')
+        if (noteError) {
+          var validationError = new Error(resolvedDishes[j].name + ': ' + noteError)
+          validationError.userMessage = validationError.message
+          throw validationError
+        }
+      }
 
       try {
         var votes = []
@@ -96,9 +133,15 @@ export function RateYourMeal() {
             resolvedDishes[i] = resolvedDish
           }
 
-          if (rating.photoFile) {
+          // Skip photos already uploaded by an earlier (failed) attempt.
+          if (rating.photoFile && !rating.photoUploaded) {
             setUploadStatus('Uploading photo for ' + resolvedDish.name)
-            await uploadPhoto(resolvedDish.dishId, rating.photoFile)
+            var upload = await uploadPhoto(resolvedDish.dishId, rating.photoFile)
+            if (upload && upload.rejected) {
+              photoWarnings.push(resolvedDish.name + ': ' + upload.reason)
+            } else {
+              markPhotoUploaded(dish.clientId)
+            }
           }
 
           votes.push({
@@ -114,6 +157,7 @@ export function RateYourMeal() {
         return {
           result: result,
           resolvedDishes: resolvedDishes,
+          photoWarnings: photoWarnings,
         }
       } catch (error) {
         logger.error('Error submitting rate-your-meal batch:', error)
@@ -129,8 +173,18 @@ export function RateYourMeal() {
       setSuccessCount(data.result.submittedCount || data.result.submittedDishIds.length)
       setStep('success')
 
+      data.photoWarnings.forEach(function (warning) {
+        toast.error('Photo not saved for ' + warning)
+      })
+
       queryClient.invalidateQueries({ queryKey: ['dishes'] })
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] })
+      queryClient.invalidateQueries({ queryKey: ['userVotes'] })
+      queryClient.invalidateQueries({ queryKey: ['userVote'] })
+      queryClient.invalidateQueries({ queryKey: ['allDishes'] })
+      queryClient.invalidateQueries({ queryKey: ['unratedDishes'] })
+      queryClient.invalidateQueries({ queryKey: ['dish'] })
+      queryClient.invalidateQueries({ queryKey: ['myVotesForDishes'] })
     },
     onError: function (error) {
       setUploadStatus('')
@@ -174,9 +228,12 @@ export function RateYourMeal() {
     })
 
     if (specialDishEnabled && specialDishName.trim()) {
+      var specialClientId = getSpecialClientId(specialDishName)
+      // Reuse a special already created by an earlier (failed) submit.
+      var priorSpecial = selectedDishes.find(function (d) { return d.clientId === specialClientId })
       nextSelectedDishes.push({
-        clientId: getSpecialClientId(specialDishName),
-        dishId: null,
+        clientId: specialClientId,
+        dishId: priorSpecial ? priorSpecial.dishId : null,
         name: specialDishName.trim(),
         category: 'Special',
         menuSection: 'Special',
@@ -187,23 +244,65 @@ export function RateYourMeal() {
     return nextSelectedDishes
   }
 
-  function handleContinueFromSelector() {
+  async function handleContinueFromSelector() {
+    if (specialDishEnabled && specialDishName.trim()) {
+      var nameError = validateUserContent(specialDishName, 'Dish name')
+      if (nameError) {
+        setSpecialDishError(nameError)
+        return
+      }
+    }
+
     var nextSelectedDishes = buildSelectedDishes()
     if (nextSelectedDishes.length === 0) {
       return
+    }
+
+    // Load existing votes first: submitting without them would overwrite a
+    // review the user already wrote with an empty note.
+    var dishIds = nextSelectedDishes
+      .filter(function (dish) { return !dish.isSpecial })
+      .map(function (dish) { return dish.dishId })
+    var priorVotes = {}
+    if (dishIds.length > 0) {
+      setLoadingPriorVotes(true)
+      try {
+        priorVotes = await queryClient.fetchQuery({
+          queryKey: ['myVotesForDishes', user.id, dishIds],
+          queryFn: function () { return votesApi.getMyVotesForDishes(dishIds) },
+          staleTime: 0,
+        })
+      } catch (error) {
+        logger.error('Error loading prior votes for rate-your-meal:', error)
+        toast.error(getUserMessage(error, 'loading your past ratings'))
+        return
+      } finally {
+        setLoadingPriorVotes(false)
+      }
     }
 
     setSelectedDishes(nextSelectedDishes)
     setRatingsById(function (previous) {
       var next = {}
       nextSelectedDishes.forEach(function (dish) {
-        next[dish.clientId] = createInitialRatingState(previous[dish.clientId])
+        next[dish.clientId] = createInitialRatingState(previous[dish.clientId], dish.dishId ? priorVotes[dish.dishId] : null)
       })
       return next
     })
     setSubmitError(null)
+    setEditingFromSummary(false)
     setCurrentIndex(0)
     setStep('rate')
+  }
+
+  function handleSpecialDishNameChange(nextName) {
+    if (specialDishError) setSpecialDishError(null)
+    setSpecialDishName(nextName)
+  }
+
+  function handleSpecialToggle() {
+    if (specialDishError) setSpecialDishError(null)
+    setSpecialDishEnabled(!specialDishEnabled)
   }
 
   function handleRatingChange(clientId, nextValue) {
@@ -215,13 +314,29 @@ export function RateYourMeal() {
     })
   }
 
+  // Return to wherever the user came from (restaurant or dish page) without
+  // stacking a second restaurant entry on top of this flow.
+  function goBackToRestaurant() {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/restaurants/' + restaurantId)
+    }
+  }
+
   function handleBack() {
     if (step === 'select') {
-      navigate('/restaurants/' + restaurantId)
+      goBackToRestaurant()
       return
     }
 
     if (step === 'rate') {
+      if (editingFromSummary) {
+        setEditingFromSummary(false)
+        setStep('summary')
+        return
+      }
+
       if (currentIndex > 0) {
         setCurrentIndex(currentIndex - 1)
         return
@@ -237,10 +352,16 @@ export function RateYourMeal() {
       return
     }
 
-    navigate('/restaurants/' + restaurantId)
+    goBackToRestaurant()
   }
 
   function handleNextCard() {
+    if (editingFromSummary) {
+      setEditingFromSummary(false)
+      setStep('summary')
+      return
+    }
+
     if (currentIndex >= selectedDishes.length - 1) {
       setSubmitError(null)
       setStep('summary')
@@ -251,6 +372,7 @@ export function RateYourMeal() {
   }
 
   function handleEditDish(index) {
+    setEditingFromSummary(true)
     setCurrentIndex(index)
     setStep('rate')
   }
@@ -260,29 +382,57 @@ export function RateYourMeal() {
     submitMutation.mutate()
   }
 
-  if (restaurantLoading || dishesLoading) {
+  // System back (Android back, iOS edge swipe) steps through the flow instead
+  // of unmounting the page and dropping every rating, note and staged photo.
+  var handleBackRef = useRef(handleBack)
+  useEffect(function () {
+    handleBackRef.current = handleBack
+  })
+
+  var isSubmitting = submitMutation.isPending
+  useEffect(function () {
+    if (step !== 'rate' && step !== 'summary') {
+      clearBackButtonInterceptor()
+      return
+    }
+    var url = window.location.href
+    var state = window.history.state
+    setBackButtonInterceptor(function () {
+      window.history.pushState(state, '', url)
+      if (isSubmitting) return
+      handleBackRef.current()
+    })
+    return function () { clearBackButtonInterceptor() }
+  }, [step, isSubmitting])
+
+  if (authLoading || restaurantLoading || dishesLoading) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
-        <div className="px-4 py-6 space-y-4 animate-pulse">
-          <div className="h-10 w-40 rounded" style={{ background: 'var(--color-surface-elevated)' }} />
-          <div className="h-64 rounded-3xl" style={{ background: 'var(--color-card)' }} />
-          <div className="h-16 rounded-2xl" style={{ background: 'var(--color-card)' }} />
+        <div className="px-4 py-6 space-y-4 animate-pulse" role="status" aria-label="Loading menu">
+          <div className="h-7 w-40 rounded" style={{ background: 'var(--color-divider)' }} />
+          <div className="h-11 rounded-xl" style={{ background: 'var(--color-divider)' }} />
+          {[0, 1, 2, 3, 4].map(function (i) {
+            return <div key={i} className="h-12 rounded-lg" style={{ background: 'var(--color-divider)' }} />
+          })}
         </div>
       </div>
     )
   }
 
   if (restaurantError || dishesError) {
-    var errorMessage = restaurantError?.message || dishesError?.message || 'Failed to load this restaurant'
+    var errorMessage = restaurantError
+      ? getUserMessage(restaurantError, 'loading this restaurant')
+      : dishesError.message
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center">
-          <p className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+          <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
             {errorMessage}
           </p>
           <button
-            onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            type="button"
+            onClick={goBackToRestaurant}
+            className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Back to Restaurant
@@ -293,90 +443,49 @@ export function RateYourMeal() {
   }
 
   if (!restaurant) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
+        <h1 className="sr-only">Restaurant not found</h1>
+        <EmptyState
+          emoji="🍽️"
+          title="Restaurant not found"
+          subtitle="It may have closed or been removed."
+          action={
+            <button
+              type="button"
+              onClick={function () { navigate('/restaurants') }}
+              className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              Back to Restaurants
+            </button>
+          }
+        />
+      </div>
+    )
   }
+
+  var loginModal = (
+    <LoginModal
+      isOpen={loginModalOpen}
+      onClose={function () { setLoginModalOpen(false) }}
+    />
+  )
 
   if (!user) {
     return (
       <>
-        <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
-          <div
-            className="rounded-3xl px-5 py-6 text-center"
-            style={{
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-divider)',
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '34px',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              Sign in to Rate Your Meal
-            </h1>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-              This flow saves a vote for each dish you ate.
-            </p>
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={function () { navigate('/restaurants/' + restaurantId) }}
-                className="flex-1 rounded-2xl py-3 font-semibold"
-                style={{ background: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-divider)' }}
-              >
-                Back
-              </button>
-              <button
-                onClick={function () { setLoginModalOpen(true) }}
-                className="flex-1 rounded-2xl py-3 font-semibold"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
-        </div>
-        <LoginModal
-          isOpen={loginModalOpen}
-          onClose={function () { setLoginModalOpen(false) }}
+        <RateMealSignIn
+          onBack={goBackToRestaurant}
+          onSignIn={function () { setLoginModalOpen(true) }}
         />
+        {loginModal}
       </>
     )
   }
 
   if ((dishes || []).length === 0 && step === 'select') {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
-        <div
-          className="rounded-3xl px-5 py-6 text-center"
-          style={{
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
-          }}
-        >
-          <h1
-            style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '34px',
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            No Menu Yet
-          </h1>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-            This restaurant needs dishes before the batch flow can start.
-          </p>
-          <button
-            onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="mt-5 rounded-2xl px-5 py-3 font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            Back to Restaurant
-          </button>
-        </div>
-      </div>
-    )
+    return <RateMealNoMenu onBack={goBackToRestaurant} />
   }
 
   if (step === 'select') {
@@ -384,46 +493,46 @@ export function RateYourMeal() {
       <>
         <DishSelector
           dishes={dishes}
-          loading={dishesLoading}
-          error={dishesError}
           menuSectionOrder={restaurant.menu_section_order || []}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           selectedDishIds={selectedDishIds}
           specialDishEnabled={specialDishEnabled}
           specialDishName={specialDishName}
+          specialDishError={specialDishError}
           onToggleDish={handleToggleDish}
-          onSpecialToggle={function () { setSpecialDishEnabled(!specialDishEnabled) }}
-          onSpecialDishNameChange={setSpecialDishName}
+          onSpecialToggle={handleSpecialToggle}
+          onSpecialDishNameChange={handleSpecialDishNameChange}
           onBack={handleBack}
           onContinue={handleContinueFromSelector}
+          continuing={loadingPriorVotes}
         />
-        <LoginModal
-          isOpen={loginModalOpen}
-          onClose={function () { setLoginModalOpen(false) }}
-        />
+        {loginModal}
       </>
     )
   }
 
   if (step === 'rate') {
     var currentDish = selectedDishes[currentIndex]
+    var photosUsed = selectedDishes.filter(function (dish) {
+      return dish.clientId !== currentDish.clientId && ratingsById[dish.clientId]?.photoFile
+    }).length
 
     return (
       <>
         <BatchRatingCard
+          key={currentDish.clientId}
           dish={currentDish}
           value={ratingsById[currentDish.clientId]}
           index={currentIndex}
           total={selectedDishes.length}
+          isEditing={editingFromSummary}
+          photosUsed={photosUsed}
           onBack={handleBack}
           onNext={handleNextCard}
           onChange={function (nextValue) { handleRatingChange(currentDish.clientId, nextValue) }}
         />
-        <LoginModal
-          isOpen={loginModalOpen}
-          onClose={function () { setLoginModalOpen(false) }}
-        />
+        {loginModal}
       </>
     )
   }
@@ -440,63 +549,21 @@ export function RateYourMeal() {
           onSubmit={handleSubmitAll}
           submitting={submitMutation.isPending}
           submitError={submitError}
-          uploadStatus={uploading || analyzing ? uploadStatus || 'Uploading photo...' : ''}
+          uploadStatus={uploading || analyzing ? uploadStatus || 'Uploading photo…' : ''}
         />
-        <LoginModal
-          isOpen={loginModalOpen}
-          onClose={function () { setLoginModalOpen(false) }}
-        />
+        {loginModal}
       </>
     )
   }
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
-        <div
-          className="rounded-[32px] px-6 py-8 text-center"
-          style={{
-            background: 'linear-gradient(180deg, var(--color-primary-muted), var(--color-card))',
-            border: '1px solid var(--color-divider)',
-          }}
-        >
-          <div
-            className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          </div>
-          <h1
-            className="mt-5"
-            style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '40px',
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            Meal Rated
-          </h1>
-          <p className="text-base font-semibold mt-2" style={{ color: 'var(--color-text-primary)' }}>
-            Rated {successCount} dish{successCount === 1 ? '' : 'es'} at {restaurant.name}
-          </p>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
-            Every dish was saved as its own vote.
-          </p>
-          <button
-            onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="mt-6 w-full rounded-2xl py-3.5 font-bold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            Back to Restaurant
-          </button>
-        </div>
-      </div>
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={function () { setLoginModalOpen(false) }}
+      <RateMealSuccess
+        successCount={successCount}
+        restaurantName={restaurant.name}
+        onDone={function () { navigate('/restaurants/' + restaurantId, { replace: true }) }}
       />
+      {loginModal}
     </>
   )
 }

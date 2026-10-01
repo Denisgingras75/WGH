@@ -1,7 +1,13 @@
-import { useState } from 'react'
-import { JITTER_TIERS } from '../constants/jitter'
+import { useState, useId } from 'react'
+import { TRUST_BADGE_LEGEND } from '../constants/jitter'
+import { TrustBadge } from '../components/TrustBadge'
 import { jitterApi } from '../api/jitterApi'
 import { logger } from '../utils/logger'
+import { getUserMessage } from '../utils/errorHandler'
+import { AMATIC_TITLE, INPUT_FOCUS_CLASS } from '../constants/styles'
+import { PageHeader } from '../components/PageHeader'
+
+var sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 /**
  * JitterLanding — standalone explainer page.
@@ -10,11 +16,18 @@ import { logger } from '../utils/logger'
  */
 export default function JitterLanding() {
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+      {/* Back header; the hero below keeps the page's single h1 */}
+      <PageHeader title="Jitter" titleAs="p" backTo="/" />
       <HookSection />
       <ExplainerSection />
       <ProtocolSection />
-      <WaitlistSection position="bottom" />
+      <section className="px-4 pb-12" style={{ maxWidth: '640px', margin: '0 auto' }}>
+        <h2 className="mb-3 text-center" style={sectionTitleStyle}>
+          Developer early access
+        </h2>
+        <WaitlistSection position="bottom" />
+      </section>
       <Footer />
     </div>
   )
@@ -24,14 +37,11 @@ export default function JitterLanding() {
 
 function HookSection() {
   return (
-    <section className="px-6 pt-16 pb-12 text-center" style={{ maxWidth: '640px', margin: '0 auto' }}>
+    <section className="px-4 pt-10 pb-12 text-center" style={{ maxWidth: '640px', margin: '0 auto' }}>
       <div className="mb-6">
         <JitterWordmark />
       </div>
-      <h1
-        className="text-3xl font-bold mb-4"
-        style={{ color: 'var(--color-text-primary)', lineHeight: 1.2, letterSpacing: '-0.02em' }}
-      >
+      <h1 className="mb-4" style={{ ...AMATIC_TITLE, fontSize: '32px' }}>
         Every review is verified human.
       </h1>
       <p className="text-base mb-8" style={{ color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
@@ -47,9 +57,9 @@ function HookSection() {
 
 function ExplainerSection() {
   return (
-    <section className="px-6 py-12" style={{ maxWidth: '640px', margin: '0 auto' }}>
+    <section className="px-4 py-12" style={{ maxWidth: '640px', margin: '0 auto' }}>
       {/* How it works */}
-      <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
+      <h2 className="mb-6" style={sectionTitleStyle}>
         How it works
       </h2>
       <div className="flex flex-col gap-4 mb-10">
@@ -59,40 +69,46 @@ function ExplainerSection() {
       </div>
 
       {/* What the tiers mean */}
-      <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+      <h2 className="mb-4" style={sectionTitleStyle}>
         What the badges mean
       </h2>
       <div className="flex flex-col gap-3 mb-10">
-        {Object.keys(JITTER_TIERS).map(function (key) {
-          var tier = JITTER_TIERS[key]
+        {TRUST_BADGE_LEGEND.map(function (badge) {
           return (
-            <div key={key} className="rounded-xl p-4" style={{ background: tier.bg }}>
-              <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                {tier.label}
-              </p>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                {tier.description}
-              </p>
+            <div
+              key={badge.type}
+              className="flex items-center gap-3 rounded-xl p-4"
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
+            >
+              <TrustBadge type={badge.type} size="md" />
+              <div>
+                <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  {badge.label}
+                </p>
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                  {badge.description}
+                </p>
+              </div>
             </div>
           )
         })}
       </div>
 
       {/* What we don't do */}
-      <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+      <h2 className="mb-4" style={sectionTitleStyle}>
         What we don't do
       </h2>
       <div className="flex flex-col gap-3 mb-10">
         <PrivacyPoint text="We never see your words. Only timing metadata." />
         <PrivacyPoint text="We never track you across sites." />
-        <PrivacyPoint text="Everything stays on your device by default." />
-        <PrivacyPoint text="No account required. No personal data collected." />
+        <PrivacyPoint text="Your typing profile is stored with your account — never sold or shared with advertisers." />
+        <PrivacyPoint text="We never use it to identify you outside What's Good Here." />
       </div>
 
       {/* Why time matters */}
       <div
-        className="rounded-xl p-5"
-        style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+        className="rounded-xl p-4"
+        style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
       >
         <h3 className="font-bold text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Why time is the defense
@@ -111,8 +127,8 @@ function ExplainerSection() {
 
 function ProtocolSection() {
   return (
-    <section className="px-6 py-12" style={{ maxWidth: '640px', margin: '0 auto', borderTop: '1.5px solid var(--color-divider)' }}>
-      <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
+    <section className="px-4 py-12" style={{ maxWidth: '640px', margin: '0 auto', borderTop: '1px solid var(--color-divider)' }}>
+      <h2 className="mb-6" style={sectionTitleStyle}>
         The protocol
       </h2>
 
@@ -157,8 +173,8 @@ function ProtocolSection() {
 
       {/* For developers */}
       <div
-        className="rounded-xl p-5 mt-6"
-        style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+        className="rounded-xl p-4 mt-6"
+        style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
       >
         <h3 className="font-bold text-sm mb-2" style={{ color: 'var(--color-text-primary)' }}>
           For developers
@@ -185,10 +201,13 @@ function ProtocolSection() {
 function WaitlistSection({ position }) {
   var [email, setEmail] = useState('')
   var [status, setStatus] = useState(null) // null | 'sending' | 'done' | 'error'
+  var [error, setError] = useState(null)
+  var inputId = useId()
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!email || status === 'sending') return
+    setError(null)
     setStatus('sending')
 
     jitterApi.joinWaitlist(email, position === 'bottom' ? 'developer' : 'general')
@@ -198,47 +217,58 @@ function WaitlistSection({ position }) {
       })
       .catch(function (err) {
         logger.error('Waitlist failed:', err)
+        setError(err)
         setStatus('error')
       })
   }
 
   if (status === 'done') {
     return (
-      <p className="text-sm text-center py-3" style={{ color: 'var(--color-rating)' }}>
-        You're on the list. We'll be in touch.
+      <p role="status" className="text-sm text-center py-3 font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        <span aria-hidden="true" style={{ color: 'var(--color-success)' }}>✓ </span>You're on the list. We'll be in touch.
       </p>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 max-w-sm mx-auto">
-      <input
-        type="email"
-        value={email}
-        onChange={function (e) { setEmail(e.target.value) }}
-        placeholder="your@email.com"
-        required
-        className="flex-1 rounded-xl px-4 py-2.5 text-sm"
-        style={{
-          background: 'var(--color-surface)',
-          border: '1.5px solid var(--color-divider)',
-          color: 'var(--color-text-primary)',
-          outline: 'none',
-        }}
-      />
-      <button
-        type="submit"
-        disabled={status === 'sending'}
-        className="rounded-xl px-5 py-2.5 text-sm font-semibold"
-        style={{
-          background: 'var(--color-primary)',
-          color: 'white',
-          opacity: status === 'sending' ? 0.6 : 1,
-        }}
-      >
-        {status === 'sending' ? '...' : 'Join'}
-      </button>
-    </form>
+    <div className="max-w-sm mx-auto">
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <label htmlFor={inputId} className="sr-only">Email address</label>
+        <input
+          id={inputId}
+          type="email"
+          value={email}
+          onChange={function (e) { setEmail(e.target.value) }}
+          placeholder="your@email.com"
+          required
+          autoComplete="email"
+          inputMode="email"
+          autoCapitalize="none"
+          className={'flex-1 min-w-0 px-4 py-3 rounded-xl text-sm ' + INPUT_FOCUS_CLASS}
+          style={{
+            background: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
+          }}
+        />
+        <button
+          type="submit"
+          disabled={status === 'sending'}
+          className="flex-shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition-all active:scale-[0.98]"
+          style={{
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+            opacity: status === 'sending' ? 0.7 : 1,
+          }}
+        >
+          {status === 'sending' ? 'Joining…' : 'Join'}
+        </button>
+      </form>
+      {status === 'error' && (
+        <p role="alert" className="text-sm mt-2 text-center" style={{ color: 'var(--color-danger)' }}>
+          {getUserMessage(error, 'joining the waitlist')}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -266,7 +296,7 @@ function StepCard({ number, title, description }) {
     <div className="flex gap-4 items-start">
       <span
         className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-        style={{ background: 'var(--color-primary)', color: 'white' }}
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {number}
       </span>
@@ -281,7 +311,7 @@ function StepCard({ number, title, description }) {
 function PrivacyPoint({ text }) {
   return (
     <div className="flex gap-2 items-start">
-      <span className="flex-shrink-0 mt-0.5" style={{ color: 'var(--color-rating)' }}>&#10003;</span>
+      <span aria-hidden="true" className="flex-shrink-0 mt-0.5" style={{ color: 'var(--color-success)' }}>&#10003;</span>
       <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{text}</p>
     </div>
   )
@@ -301,7 +331,7 @@ function SignalRow({ name, weight, description }) {
 
 function Footer() {
   return (
-    <footer className="px-6 py-8 text-center" style={{ borderTop: '1.5px solid var(--color-divider)' }}>
+    <footer className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--color-divider)' }}>
       <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.6 }}>
         Jitter Integrity Tracking &amp; Typing Entropy Recognition<br />
         Patent pending &middot; Built on Martha's Vineyard

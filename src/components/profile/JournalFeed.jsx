@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { JournalCard } from './JournalCard'
+import { EmptyState } from '../EmptyState'
 
 var PAGE_SIZE = 5
 
@@ -7,13 +8,16 @@ function getDateLabel(timestamp) {
   if (!timestamp) return ''
   var date = new Date(timestamp)
   var now = new Date()
-  var diffMs = now - date
-  var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return 'Today'
+  // Calendar-day buckets (not rolling 24h windows); Math.round absorbs DST 23/25h days
+  var startOf = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()) }
+  var diffDays = Math.round((startOf(now) - startOf(date)) / 86400000)
+  if (diffDays <= 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7) return diffDays + ' days ago'
   if (diffDays < 14) return 'Last week'
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  var opts = { month: 'short', day: 'numeric' }
+  if (date.getFullYear() !== now.getFullYear()) opts.year = 'numeric'
+  return date.toLocaleDateString('en-US', opts)
 }
 
 /**
@@ -23,10 +27,21 @@ function getDateLabel(timestamp) {
  * Date group headers separate entries by recency.
  *
  * Props:
- *   ratings - array of rated dish entries (pre-sorted most-recent-first preferred)
- *   loading - show loading skeletons
+ *   ratings       - array of rated dish entries (pre-sorted most-recent-first preferred)
+ *   loading       - show loading skeletons
+ *   error         - optional { message } — shows an error state instead of a false empty state
+ *   onRetry       - optional retry callback for the error state
+ *   emptySubtitle - empty-state subtitle (defaults to neutral copy for other people's profiles)
+ *   emptyAction   - optional empty-state CTA element
  */
-export function JournalFeed({ ratings = [], loading }) {
+export function JournalFeed({
+  ratings = [],
+  loading,
+  error,
+  onRetry,
+  emptySubtitle = 'No rated dishes yet',
+  emptyAction,
+}) {
   var [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Reset to first page when the ratings source changes substantially.
@@ -36,17 +51,44 @@ export function JournalFeed({ ratings = [], loading }) {
 
   if (loading) {
     return (
-      <div className="space-y-3 p-4">
+      <div role="status" aria-label="Loading your journal" className="space-y-3 p-4 animate-pulse">
         {[0, 1, 2].map(function (i) {
           return (
             <div
               key={i}
               data-testid="journal-skeleton"
-              className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-surface-elevated)' }}
-            />
+              className="rounded-xl p-4 flex gap-3"
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-divider)' }}
+            >
+              <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ background: 'var(--color-divider)' }} />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-3/4 rounded" style={{ background: 'var(--color-divider)' }} />
+                <div className="h-3 w-1/2 rounded" style={{ background: 'var(--color-divider)' }} />
+              </div>
+              <div className="h-7 w-8 rounded flex-shrink-0" style={{ background: 'var(--color-divider)' }} />
+            </div>
           )
         })}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center">
+        <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>
+          {error.message}
+        </p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={function () { onRetry() }}
+            className="mt-3 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+          >
+            Try again
+          </button>
+        )}
       </div>
     )
   }
@@ -58,27 +100,13 @@ export function JournalFeed({ ratings = [], loading }) {
 
   if (entries.length === 0) {
     return (
-      <div className="p-4">
-        <div
-          className="rounded-2xl border p-8 text-center"
-          style={{
-            background: 'var(--color-card)',
-            borderColor: 'var(--color-divider)',
-          }}
-        >
-          <p
-            className="font-semibold"
-            style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}
-          >
-            No dishes here yet
-          </p>
-          <p
-            className="mt-1"
-            style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}
-          >
-            Start rating dishes to build your food journal
-          </p>
-        </div>
+      <div className="px-4">
+        <EmptyState
+          emoji="🍽️"
+          title="No dishes here yet"
+          subtitle={emptySubtitle}
+          action={emptyAction}
+        />
       </div>
     )
   }
@@ -109,9 +137,9 @@ export function JournalFeed({ ratings = [], loading }) {
               <div
                 key={item.key}
                 style={{
-                  color: 'var(--color-accent-gold)',
-                  fontSize: '10px',
-                  fontWeight: 700,
+                  color: 'var(--color-text-tertiary)',
+                  fontSize: '11px',
+                  fontWeight: 600,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   paddingTop: '4px',
@@ -132,13 +160,13 @@ export function JournalFeed({ ratings = [], loading }) {
       </div>
       {hasMore && (
         <button
+          type="button"
           onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
-          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98] mt-3"
+          className="w-full mt-3 py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
           style={{
-            fontSize: '14px',
-            color: 'var(--color-accent-gold)',
+            color: 'var(--color-text-primary)',
             background: 'var(--color-card)',
-            border: '1.5px solid var(--color-divider)',
+            border: '1px solid var(--color-divider)',
           }}
         >
           Show More ({remaining > PAGE_SIZE ? PAGE_SIZE : remaining} more)

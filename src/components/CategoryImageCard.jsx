@@ -20,17 +20,19 @@ export function CategoryImageCard({
 }) {
   const imageSrc = getCategoryNeonImage(category.id)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
 
   return (
     <button
       onClick={onClick}
+      aria-pressed={isActive}
       className="group flex flex-col items-center transition-all duration-200 active:scale-[0.97]"
       style={{ gap: '18px' }}
     >
       {/* Plate with food icon */}
       <div className="transition-all duration-200" style={{ filter: 'drop-shadow(0 0 0px transparent)' }} onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08))'} onMouseLeave={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 0px transparent)'}>
         <PlateIcon size={size}>
-          {imageSrc ? (
+          {imageSrc && !imageFailed ? (
             <div
               className="w-full h-full rounded-full overflow-hidden"
               style={{
@@ -42,7 +44,7 @@ export function CategoryImageCard({
             >
             <img
               src={imageSrc}
-              alt={category.label}
+              alt=""
               // No lazy loading - these are above the fold
               className="w-full h-full object-cover transition-opacity duration-300"
               style={{
@@ -50,9 +52,7 @@ export function CategoryImageCard({
                 transform: category.id === 'breakfast' ? 'scale(1.3)' : 'none',
               }}
               onLoad={() => setImageLoaded(true)}
-              onError={(e) => {
-                e.target.style.display = 'none'
-              }}
+              onError={() => setImageFailed(true)}
             />
           </div>
         ) : (

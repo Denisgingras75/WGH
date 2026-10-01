@@ -1,32 +1,20 @@
-import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { WghSeal } from '../components/WghSeal'
+import { AMATIC_TITLE } from '../constants/styles'
+
+const sectionTitleStyle = { ...AMATIC_TITLE, fontSize: '24px' }
 
 export function Terms() {
-  const navigate = useNavigate()
-
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--color-bg)', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+    >
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Terms of Service
-          </h1>
-        </div>
-      </header>
+      <PageHeader title="Terms of Service" standalone contained />
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
@@ -34,7 +22,7 @@ export function Terms() {
           <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Last updated: April 18, 2026</p>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Welcome to What's Good Here
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -45,7 +33,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               What We Do
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -56,7 +44,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Your Account
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -76,13 +64,13 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Voting Guidelines
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               When rating dishes, please:
             </p>
-            <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <li>Only rate dishes you've actually tried</li>
               <li>Be honest — your votes help others make decisions</li>
               <li>Don't create fake votes to promote or demote specific dishes</li>
@@ -94,7 +82,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Restaurant Information
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -105,13 +93,13 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Acceptable Use
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               Don't use the Service to:
             </p>
-            <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <ul className="list-disc pl-5 space-y-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <li>Harass, abuse, or harm others</li>
               <li>Post spam, hate speech, or misleading content</li>
               <li>Post sexually explicit or violent content</li>
@@ -122,7 +110,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Moderation, Reporting, and Blocking
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -145,7 +133,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Your Content
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -159,7 +147,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Intellectual Property
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -170,7 +158,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Disclaimer
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -182,7 +170,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Limitation of Liability
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -194,14 +182,14 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               App Store Terms (iOS)
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <p>
                 If you downloaded the iOS app from the Apple App Store, you acknowledge:
               </p>
-              <ul className="list-disc list-inside space-y-2">
+              <ul className="list-disc pl-5 space-y-2">
                 <li>These Terms are between you and Daniel Walsh, not Apple. Apple is not responsible for the app or its content.</li>
                 <li>You are granted a limited, non-transferable, non-exclusive license to install and use the app only on Apple-branded devices that you own or control, and as permitted by the App Store Terms of Service.</li>
                 <li>Apple has no obligation to provide maintenance or support for the app.</li>
@@ -226,7 +214,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Governing Law
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -237,7 +225,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Changes to These Terms
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -248,7 +236,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Termination
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -260,7 +248,7 @@ export function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-3" style={sectionTitleStyle}>
               Contact Us
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -275,7 +263,7 @@ export function Terms() {
             </p>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

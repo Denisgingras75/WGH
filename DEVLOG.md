@@ -5,6 +5,45 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-10-01 — Denis + Claude
+
+### Site-wide design-system consistency pass
+
+Every page and component was audited against the design system (Appetite tokens, Amatic SC section titles, Outfit body text, DishListItem for dish lists). The 13 surface groups yielded 766 findings; 704 survived a second review and 688 were applied.
+
+**New shared building blocks (reuse these):**
+- `PageHeader` / `BackButton` (`src/components/PageHeader.jsx`) replace about 25 hand-rolled sticky headers.
+- `src/constants/styles.js` holds the shared title, button, card, input and label styles.
+- `RadiusChip`, `DishAddRow`, `InviteShell`, `ErrorFallback`, `ScrollToTop`, and a `.spinner` class in `index.css`.
+- `createUserFacingError` / `getUserFacingMessage` in `errorHandler.js` replace four separate user-facing error patterns.
+
+**Usability fixes:**
+- Fixed elements (FAB, radius sheet, action bars, list padding) clear BottomNav and the iOS safe area.
+- Loading, empty and error states (with retry) on every list.
+- Tap targets are 44px.
+- Scroll resets on navigation.
+- Closing the dish modal with an unsaved rating asks before discarding it.
+- Dish shows "not found" only when the dish really doesn't exist.
+- Tabs follow the full ARIA pattern; dialogs use `useFocusTrap`.
+
+**Cleanup:**
+- All 18 ESLint errors fixed.
+- Removed dead components (ImpactFeedback, ShelfFilter, SessionCard, PlaylistStripCard, Top10Scroll, ChampionCard, CategoryExpand, CategoryGrid, the old CategoryIcon.jsx).
+- RestaurantMap's unused restaurant mode and Nominatim search are gone, and `vercel.json` no longer lists nominatim.
+- `tailwind.config.js` no longer names DM Sans.
+- E2E specs updated for the tab roles and taller rows.
+
+**Needs Dan:**
+- Icon WebP exports for the chalkboard cards.
+- Notecard tap targets in LocalListsSection.
+- Whether the map mini-card should use DishListItem compact.
+- Food Story chalkboard contrast.
+- A Profile link to /my-list.
+
+**Needs Denis:** the menu import is now capped at 20 dishes per batch to match the server's `check_dish_create_rate_limit` (20/hr). Real menus are 30 to 80 items, so the server limit needs a batch-aware version.
+
+---
+
 ## 2026-06-02 — Dan + Claude
 
 ### Review bar always-on + rate-first gate for lists

@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { SmileyPin } from '../SmileyPin'
 import { capture } from '../../lib/analytics'
 import { getUserMessage } from '../../utils/errorHandler'
+import { getRatingColor } from '../../utils/ranking'
+import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
+import { INPUT_FOCUS_CLASS } from '../../constants/styles'
 
 const STEPS = [
   {
@@ -28,12 +32,14 @@ const STEPS = [
   },
   {
     id: 'name',
-    emoji: '\uD83D\uDC4B',
+    emoji: '👋',
     title: 'Enter your name',
     subtitle: 'Join the community',
     description: 'Friends can find you by your name',
   },
 ]
+
+const NAME_STEP_INDEX = STEPS.findIndex(s => s.id === 'name')
 
 export function WelcomeModal() {
   const { user } = useAuth()
@@ -44,25 +50,49 @@ export function WelcomeModal() {
   const [saveError, setSaveError] = useState(null)
   const [isOpen, setIsOpen] = useState(false)
   const [phase, setPhase] = useState('onboarding') // 'onboarding' | 'celebration' | 'fade-out'
+  // Which user this session already opened onboarding for — so a later
+  // profile cache write can't re-open it (and a new sign-in starts fresh).
+  const openedForRef = useRef(null)
+  const timersRef = useRef([])
 
   // Skip name step if user already set one during signup
   const hasName = profile?.display_name && profile.display_name.trim().length > 0
   const activeSteps = hasName ? STEPS.filter(s => s.id !== 'name') : STEPS
+  // Clamp in case activeSteps shrinks (name set elsewhere) while open
+  const stepIndex = Math.min(step, activeSteps.length - 1)
 
   useEffect(() => {
-    if (user && !loading && profile) {
-      // Open for net-new users, and also for anyone whose display_name is
-      // still missing — covers Apple users who declined name share on first
-      // sign-in, Google users whose provider didn't supply a name, and any
-      // past user who got into a weird data state. display_name is required
-      // to vote, so we can't let onboarded-but-nameless users slip through.
-      // Use trim() to match the hasName semantics elsewhere in the component.
-      if (!profile.has_onboarded || !profile.display_name?.trim()) {
-        setIsOpen(true)
-        capture('onboarding_started')
-      }
+    if (!user) {
+      openedForRef.current = null
+      setIsOpen(false)
+      return
+    }
+    // Open for net-new users, and also for anyone whose display_name is
+    // still missing — covers Apple users who declined name share on first
+    // sign-in, Google users whose provider didn't supply a name, and any
+    // past user who got into a weird data state. display_name is required
+    // to vote, so we can't let onboarded-but-nameless users slip through.
+    // Use trim() to match the hasName semantics elsewhere in the component.
+    if (
+      !loading &&
+      profile &&
+      openedForRef.current !== user.id &&
+      (!profile.has_onboarded || !profile.display_name?.trim())
+    ) {
+      openedForRef.current = user.id
+      timersRef.current.forEach(clearTimeout)
+      timersRef.current = []
+      setPhase('onboarding')
+      // Already-onboarded users who skipped their name go straight to the name step
+      setStep(profile.has_onboarded ? NAME_STEP_INDEX : 0)
+      setName('')
+      setSaveError(null)
+      setIsOpen(true)
+      capture('onboarding_started')
     }
   }, [user, profile, loading])
+
+  const panelRef = useFocusTrap(isOpen && phase === 'onboarding')
 
   const displayName = name.trim() || profile?.display_name || ''
 
@@ -78,8 +108,16 @@ export function WelcomeModal() {
     setSaving(false)
 
     if (error) {
-      // Surface the error so the user can correct it (most likely: duplicate display_name)
-      setSaveError(getUserMessage(error, 'saving your name'))
+      // Surface the error so the user can correct it (most likely: duplicate
+      // display_name — profiles_display_name_unique — or a blocklisted word)
+      const code = error?.originalError?.code
+      setSaveError(
+        code === '23505'
+          ? 'That name is already taken. Try another.'
+          : /inappropriate/i.test(error?.message || '')
+            ? error.message
+            : getUserMessage(error, 'saving your name')
+      )
       capture('onboarding_failed', { name_set: nameSet, error: error.message })
       return
     }
@@ -90,21 +128,23 @@ export function WelcomeModal() {
     setPhase('celebration')
 
     // Auto-dismiss after 2.5s
-    setTimeout(() => setPhase('fade-out'), 2500)
-    setTimeout(() => setIsOpen(false), 2800)
+    timersRef.current.push(
+      setTimeout(() => setPhase('fade-out'), 2500),
+      setTimeout(() => setIsOpen(false), 2800)
+    )
   }
 
   const handleNext = async () => {
-    if (step < activeSteps.length - 1) {
-      setStep(step + 1)
+    if (stepIndex < activeSteps.length - 1) {
+      setStep(stepIndex + 1)
     } else {
       await completeOnboarding(hasName)
     }
   }
 
   const handleBack = () => {
-    if (step > 0) {
-      setStep(step - 1)
+    if (stepIndex > 0) {
+      setStep(stepIndex - 1)
     }
   }
 
@@ -124,7 +164,9 @@ export function WelcomeModal() {
   if (phase === 'celebration' || phase === 'fade-out') {
     return (
       <div
-        className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
+        role="status"
+        aria-live="polite"
+        className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
         style={{
           opacity: phase === 'fade-out' ? 0 : 1,
           transition: 'opacity 300ms ease-out',
@@ -141,8 +183,8 @@ export function WelcomeModal() {
             <SmileyPin size={72} />
           </div>
 
-          {/* Brand name */}
-          <h1
+          {/* Brand name (not a heading — the page underneath owns the h1) */}
+          <p
             style={{
               fontFamily: "'Amatic SC', cursive",
               fontSize: '42px',
@@ -155,7 +197,7 @@ export function WelcomeModal() {
             }}
           >
             What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-          </h1>
+          </p>
 
           {/* Welcome line */}
           <p
@@ -174,7 +216,6 @@ export function WelcomeModal() {
           <p
             style={{
               color: 'var(--color-text-secondary)',
-              opacity: 0.7,
               fontSize: '13px',
               fontWeight: 500,
               letterSpacing: '0.14em',
@@ -190,50 +231,53 @@ export function WelcomeModal() {
   }
 
   // ==================== ONBOARDING STEPS ====================
-  const currentStep = activeSteps[step]
+  const currentStep = activeSteps[stepIndex]
   const isNameStep = currentStep.id === 'name'
+  const isLastStep = stepIndex === activeSteps.length - 1
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm pointer-events-none" />
-
-      {/* Modal */}
       <div
+        className="absolute inset-0 backdrop-blur-sm pointer-events-none"
+        style={{ background: 'rgba(0, 0, 0, 0.6)' }}
+        aria-hidden="true"
+      />
+
+      {/* Modal — capped to the viewport; the body scrolls so the primary
+          button stays reachable on short phones / with the keyboard open */}
+      <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Welcome"
-        className="relative z-10 rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
-        style={{ animationDelay: '0.1s', background: 'var(--color-text-on-primary)' }}
+        aria-labelledby="welcome-step-title"
+        className="relative z-10 rounded-3xl max-w-md w-full shadow-xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]"
+        style={{ background: 'var(--color-surface-elevated)' }}
       >
         {/* Decorative gradient header */}
-        <div className="h-2" style={{ background: 'var(--color-primary)' }} />
+        <div className="h-2 flex-shrink-0" style={{ background: 'var(--color-primary)' }} />
 
-        <div className="p-8">
-          {/* Progress dots */}
+        <div className="p-8 overflow-y-auto overscroll-contain min-h-0">
+          {/* Progress dots (decorative — Back handles navigation) */}
           <div className="flex justify-center gap-2 mb-6">
             {activeSteps.map((_, i) => (
-              <button
+              <span
                 key={i}
-                onClick={() => i < step && setStep(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i === step
-                    ? 'w-6'
-                    : i < step
-                      ? 'cursor-pointer'
-                      : ''
-                }`}
+                aria-hidden="true"
+                className={`${i === stepIndex ? 'w-6' : 'w-2'} h-2 rounded-full transition-all`}
                 style={{
-                  background: i === step
+                  background: i === stepIndex
                     ? 'var(--color-primary)'
-                    : i < step
-                      ? 'var(--color-primary-muted, rgba(244, 122, 31, 0.5))'
+                    : i < stepIndex
+                      ? 'var(--color-primary-muted)'
                       : 'var(--color-divider)'
                 }}
-                disabled={i > step}
               />
             ))}
           </div>
+          <p className="sr-only" aria-live="polite">
+            Step {stepIndex + 1} of {activeSteps.length}
+          </p>
 
           {/* Step icon */}
           {currentStep.id === 'welcome' ? (
@@ -242,12 +286,13 @@ export function WelcomeModal() {
             </div>
           ) : (
             <div
-              className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all"
-              style={{ background: 'var(--color-primary)' }}
+              className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center transition-all"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              aria-hidden="true"
             >
               {currentStep.icon === 'star' ? <span className="text-4xl">⭐</span>
                 : currentStep.icon === 'camera' ? (
-                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
+                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
@@ -257,7 +302,7 @@ export function WelcomeModal() {
 
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 id="welcome-step-title" className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {currentStep.title}
             </h2>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -270,7 +315,7 @@ export function WelcomeModal() {
             )}
           </div>
 
-          {/* How it works visual — rating-first rail */}
+          {/* How it works visual — rating-first rail, same colour scale as every dish row */}
           {currentStep.id === 'how-it-works' && (
             <div className="flex justify-center items-center gap-2 mb-6">
               {[3, 5, 7, 9, 10].map((n) => (
@@ -280,17 +325,12 @@ export function WelcomeModal() {
                   style={{
                     width: 44,
                     height: 44,
-                    background: n >= 8
-                      ? 'rgba(22, 163, 74, 0.15)'
-                      : n >= 6
-                        ? 'rgba(245, 158, 11, 0.15)'
-                        : 'rgba(220, 38, 38, 0.08)',
-                    color: n >= 8
-                      ? 'var(--color-rating)'
-                      : n >= 6
-                        ? 'var(--color-accent-gold)'
-                        : 'var(--color-text-secondary)',
-                    fontWeight: 700,
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-divider)',
+                    color: getRatingColor(n),
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 >
                   {n}
@@ -303,15 +343,15 @@ export function WelcomeModal() {
           {currentStep.id === 'photos' && (
             <div className="flex justify-center gap-3 mb-6">
               <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
-                <span className="text-2xl mb-1">📸</span>
+                <span className="text-2xl mb-1" aria-hidden="true">📸</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Snap</span>
               </div>
               <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
-                <span className="text-2xl mb-1">⬆️</span>
+                <span className="text-2xl mb-1" aria-hidden="true">⬆️</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Upload</span>
               </div>
               <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
-                <span className="text-2xl mb-1">🍽️</span>
+                <span className="text-2xl mb-1" aria-hidden="true">🍽️</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Help others</span>
               </div>
             </div>
@@ -320,9 +360,9 @@ export function WelcomeModal() {
           {/* Name input step */}
           {isNameStep ? (
             <form onSubmit={handleNameSubmit} className="space-y-4">
+              <label htmlFor="welcome-name" className="sr-only">Your name</label>
               <input
                 id="welcome-name"
-                aria-label="Your name"
                 type="text"
                 value={name}
                 onChange={(e) => {
@@ -331,13 +371,16 @@ export function WelcomeModal() {
                 }}
                 placeholder="Your name"
                 autoFocus
-                maxLength={50}
+                autoComplete="nickname"
+                autoCapitalize="words"
+                enterKeyHint="go"
+                maxLength={30}
                 disabled={saving}
-                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors disabled:opacity-60"
+                className={'w-full px-4 py-4 rounded-xl text-lg text-center ' + INPUT_FOCUS_CLASS + ' disabled:opacity-60'}
                 style={{
                   background: 'var(--color-bg)',
-                  borderColor: saveError ? 'var(--color-danger)' : 'var(--color-divider)',
                   color: 'var(--color-text-primary)',
+                  ...(saveError ? { borderColor: 'var(--color-danger)' } : null),
                 }}
               />
               {saveError && (
@@ -352,16 +395,19 @@ export function WelcomeModal() {
               <button
                 type="submit"
                 disabled={!name.trim() || saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="w-full px-5 py-3 rounded-xl font-semibold active:scale-[0.98] transition-all"
+                style={!name.trim() && !saving
+                  ? { background: 'var(--color-surface)', color: 'var(--color-text-tertiary)', fontSize: '15px' }
+                  : { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '15px', opacity: saving ? 0.7 : 1 }
+                }
               >
-                {saving ? 'Saving...' : "Let's go!"}
+                {saving ? 'Saving…' : "Let's go!"}
               </button>
               <button
                 type="button"
                 onClick={handleSkipName}
                 disabled={saving}
-                className="w-full py-2 text-sm transition-colors"
+                className="w-full min-h-[44px] text-sm font-semibold transition-colors"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
                 Skip for now
@@ -381,15 +427,15 @@ export function WelcomeModal() {
               <button
                 onClick={handleNext}
                 disabled={saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="w-full px-5 py-3 rounded-xl font-semibold active:scale-[0.98] transition-all"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '15px', opacity: saving ? 0.7 : 1 }}
               >
-                {saving ? 'Saving...' : step === activeSteps.length - 1 ? "Let's go!" : 'Next'}
+                {saving ? 'Saving…' : isLastStep ? "Let's go!" : 'Next'}
               </button>
-              {step > 0 && (
+              {stepIndex > 0 && (
                 <button
                   onClick={handleBack}
-                  className="w-full py-2 text-sm transition-colors"
+                  className="w-full min-h-[44px] text-sm font-semibold transition-colors"
                   style={{ color: 'var(--color-text-tertiary)' }}
                 >
                   Back
@@ -401,9 +447,9 @@ export function WelcomeModal() {
           {/* Fun footer text */}
           {!isNameStep && (
             <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
-              {step === 0 && "Trusted by island food lovers"}
-              {step === 1 && "Dishes need 5+ votes to get ranked"}
-              {step === 2 && "Your photos help everyone eat better"}
+              {stepIndex === 0 && "Trusted by island food lovers"}
+              {stepIndex === 1 && `Dishes need ${MIN_VOTES_FOR_RANKING}+ votes to get ranked`}
+              {stepIndex === 2 && "Your photos help everyone eat better"}
             </p>
           )}
         </div>

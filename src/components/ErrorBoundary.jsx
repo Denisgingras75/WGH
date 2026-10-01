@@ -1,49 +1,7 @@
 import { Component } from 'react'
 import { getSessionItem, setSessionItem } from '../lib/storage'
-
-function ErrorFallback({ error, resetError }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-bg)' }}>
-      <div className="text-center max-w-md">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
-          <span className="text-2xl">😵</span>
-        </div>
-        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-          Something went wrong
-        </h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-          We've been notified and are working on it. Try refreshing the page.
-        </p>
-        <div className="space-y-3">
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full px-4 py-3 font-semibold rounded-xl"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
-          >
-            Refresh Page
-          </button>
-          <button
-            onClick={resetError}
-            className="w-full px-4 py-3 font-medium rounded-xl"
-            style={{ color: 'var(--color-text-primary)', border: '1px solid var(--color-divider)' }}
-          >
-            Try Again
-          </button>
-        </div>
-        {import.meta.env.DEV && (
-          <details className="mt-6 text-left">
-            <summary className="text-xs cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
-              Error details (dev only)
-            </summary>
-            <pre className="mt-2 p-3 rounded-lg text-xs overflow-auto" style={{ background: 'var(--color-surface)', color: 'var(--color-danger)' }}>
-              {error?.message}
-            </pre>
-          </details>
-        )}
-      </div>
-    </div>
-  )
-}
+import { CHUNK_RELOAD_KEY, isChunkLoadError } from '../utils/chunkErrors'
+import { ErrorFallback } from './ErrorFallback'
 
 // Custom error boundary that lazy-loads Sentry for error reporting
 export class ErrorBoundary extends Component {
@@ -58,16 +16,8 @@ export class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     // Auto-reload on chunk load errors (fallback if lazyWithRetry misses it)
-    const msg = error?.message || ''
-    const isChunkError = (
-      msg.includes('Failed to fetch dynamically imported module') ||
-      msg.includes('error loading dynamically imported module') ||
-      msg.includes('Importing a module script failed') ||
-      msg.includes('Loading chunk') ||
-      msg.includes('Failed to fetch')
-    )
-    if (isChunkError && !getSessionItem('wgh_chunk_reload')) {
-      setSessionItem('wgh_chunk_reload', '1')
+    if (isChunkLoadError(error) && !getSessionItem(CHUNK_RELOAD_KEY)) {
+      setSessionItem(CHUNK_RELOAD_KEY, '1')
       window.location.reload()
       return
     }
@@ -86,18 +36,9 @@ export class ErrorBoundary extends Component {
     }
   }
 
-  resetError = () => {
-    this.setState({ hasError: false, error: null })
-  }
-
   render() {
     if (this.state.hasError) {
-      return (
-        <ErrorFallback
-          error={this.state.error}
-          resetError={this.resetError}
-        />
-      )
+      return <ErrorFallback error={this.state.error} />
     }
 
     return this.props.children

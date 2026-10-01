@@ -12,3 +12,11 @@ export const MIN_VOTES_FOR_VALUE = 8
 
 // Value percentile threshold for "GREAT VALUE" badge (top 10%)
 export const VALUE_BADGE_THRESHOLD = 90
+
+// Browse page sort options (SortDropdown + persisted STORAGE_KEYS.BROWSE_SORT)
+export const BROWSE_SORT_OPTIONS = [
+  { id: 'top_rated', label: 'Top Rated', icon: '⭐' },
+  { id: 'best_value', label: 'Best Value', icon: '💰' },
+  { id: 'most_voted', label: 'Most Voted', icon: '💬' },
+  { id: 'closest', label: 'Closest', icon: '📍' },
+]

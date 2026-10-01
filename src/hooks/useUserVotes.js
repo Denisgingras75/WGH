@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { votesApi } from '../api/votesApi'
 import { logger } from '../utils/logger'
+import { getUserMessage } from '../utils/errorHandler'
 
 /**
  * Transform raw vote data to dish format
@@ -24,9 +25,10 @@ function transformVote(vote) {
 }
 
 /**
- * Compute rating style from avgRating and ratingVariance
+ * Compute rating style from avgRating and ratingVariance.
+ * Shared with UserProfile (public profiles compute it from recent votes).
  */
-function computeRatingStyle(avgRating, ratingVariance) {
+export function computeRatingStyle(avgRating, ratingVariance) {
   if (avgRating === null) return null
 
   // Level based on average rating
@@ -285,7 +287,7 @@ export function useUserVotes(userId) {
     if (primaryError) logger.error('Error fetching user votes:', primaryError)
   }, [primaryError])
 
-  const votes = primaryData?.votes || []
+  const votes = useMemo(() => primaryData?.votes || [], [primaryData])
   const helpedCount = primaryData?.helpedCount || 0
 
   // Single "My Ratings" feed, sorted most-recent-first.
@@ -342,6 +344,7 @@ export function useUserVotes(userId) {
     ratedDishes,
     stats,
     loading: userId ? primaryLoading : false,
+    error: primaryError ? { message: getUserMessage(primaryError, 'loading your ratings') } : null,
     refetch,
   }
 }

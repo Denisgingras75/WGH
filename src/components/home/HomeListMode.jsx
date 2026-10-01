@@ -1,21 +1,27 @@
 import { memo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishSearch } from '../DishSearch'
 import { DishListItem } from '../DishListItem'
 import { EmptyState } from '../EmptyState'
+import { DishRowSkeleton } from '../Skeleton'
 import { LocationBanner } from '../LocationBanner'
-import { LocalListsSection, Top10Carousel } from './'
+import { LocalListsSection } from './LocalListsSection'
+import { Top10Carousel } from './Top10Carousel'
+import { RadiusChip } from './RadiusChip'
 import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
+import { getUserMessage } from '../../utils/errorHandler'
 
 export const HomeListMode = memo(function HomeListMode({
   listScrollRef,
   searchQuery,
   searchLoading,
+  searchError,
   rankedLoading,
+  rankedErrorMessage,
+  onRetry,
   activeDishes,
   allRankedDishes,
-  expandedCategory,
+  initialCategory,
   topRestaurant,
   mostVotedDish,
   bestValueMeal,
@@ -25,29 +31,27 @@ export const HomeListMode = memo(function HomeListMode({
   requestLocation,
   onSearchChange,
   onRadiusSheetOpen,
-  onExpandedCategoryChange,
   onCategoryChange,
-  onLocalListExpanded,
 }) {
-  var navigate = useNavigate()
   var carouselRef = useRef(null)
   var localsAggregateData = useLocalsAggregate()
   var localsAggregate = localsAggregateData.aggregate
 
+  // Chalkboard tap → switch the carousel to that category, then bring it into view.
+  // The list scrolls inside listScrollRef (not the window), so scroll that element.
   var handleCategorySelect = useCallback(function (cat) {
-    onExpandedCategoryChange(cat)
     if (carouselRef.current) {
       carouselRef.current.scrollToCategory(cat)
     }
     setTimeout(function () {
+      var scroller = listScrollRef.current
       var el = document.getElementById('top10-carousel')
-      if (el) {
-        var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        var offset = el.getBoundingClientRect().top + window.scrollY - 8
-        window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
-      }
+      if (!scroller || !el) return
+      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      var top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8
+      scroller.scrollTo({ top: top, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
     }, 100)
-  }, [onExpandedCategoryChange])
+  }, [listScrollRef])
 
   return (
     <div
@@ -57,11 +61,11 @@ export const HomeListMode = memo(function HomeListMode({
         zIndex: 1,
       }}
     >
-      {/* Fixed header: brand + search + chips */}
-      <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
-        {/* Brand header */}
+      {/* Fixed header: brand + search */}
+      <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10, paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        {/* Brand header — decorative; Map.jsx renders the page's sr-only h1 */}
         <div className="text-center pt-4 pb-1">
-          <h2 style={{
+          <p aria-hidden="true" style={{
             fontFamily: "'Amatic SC', cursive",
             fontSize: '42px',
             fontWeight: 700,
@@ -71,11 +75,11 @@ export const HomeListMode = memo(function HomeListMode({
             margin: 0,
           }}>
             What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-          </h2>
+          </p>
           <p style={{
-            fontSize: '10px',
+            fontSize: '11px',
             fontWeight: 600,
-            color: '#999',
+            color: 'var(--color-text-tertiary)',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
             margin: '5px 0 0',
@@ -84,48 +88,14 @@ export const HomeListMode = memo(function HomeListMode({
           </p>
         </div>
         {/* Search bar */}
-        <div className="px-5 pt-2 pb-2">
-          <div style={{
-            borderRadius: '14px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-          }}>
-            <DishSearch
-              loading={false}
-              placeholder="What are you craving?"
-              onSearchChange={onSearchChange}
-              initialQuery={searchQuery}
-              rightSlot={
-                <button
-                  onClick={function (e) { e.stopPropagation(); onRadiusSheetOpen() }}
-                  aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
-                  style={{
-                    fontSize: '12px',
-                    background: 'var(--color-bg)',
-                    color: 'var(--color-text-secondary)',
-                    border: '1px solid var(--color-divider)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {radius === 0 ? 'All' : radius + ' mi'}
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              }
-            />
-          </div>
-        </div>
-
-        {/* Location banner */}
-        <div className="px-4">
-          <LocationBanner
-            permissionState={permissionState}
-            requestLocation={requestLocation}
-            message="Enable location to find the best food near you"
+        <div className="px-4 pt-2 pb-2">
+          <DishSearch
+            placeholder="What are you craving?"
+            onSearchChange={onSearchChange}
+            initialQuery={searchQuery}
+            rightSlot={<RadiusChip radius={radius} onOpen={onRadiusSheetOpen} inSearchBar />}
           />
         </div>
-
       </div>
 
       {/* Scrollable content */}
@@ -133,28 +103,39 @@ export const HomeListMode = memo(function HomeListMode({
         ref={listScrollRef}
         className="flex-1 overflow-y-auto"
         style={{
-          paddingBottom: '80px',
+          paddingBottom: 'calc(128px + env(safe-area-inset-bottom))',
           WebkitOverflowScrolling: 'touch',
           overscrollBehaviorY: 'contain',
         }}
       >
+        {/* Location banner — scrolls away with the list */}
+        {permissionState === 'prompt' && (
+          <div className="px-4 pt-2">
+            <LocationBanner
+              permissionState={permissionState}
+              requestLocation={requestLocation}
+              message="Enable location to find the best food near you"
+            />
+          </div>
+        )}
+
         {(searchQuery && searchLoading) || (!searchQuery && rankedLoading) ? (
-          <div className="px-4 pt-4"><ListSkeleton /></div>
+          <div className="px-4 pt-4"><DishRowSkeleton count={6} /></div>
         ) : searchQuery ? (
           /* Search results — flat list */
           <div className="px-4 pt-2 pb-4">
-            <h2 style={{
+            <h2 className="mb-3" style={{
               fontFamily: "'Amatic SC', cursive",
-              fontSize: '28px',
+              fontSize: '24px',
               fontWeight: 700,
               color: 'var(--color-text-primary)',
               letterSpacing: '0.02em',
-              marginBottom: '8px',
+              lineHeight: 1.1,
             }}>
               Results
             </h2>
             {activeDishes && activeDishes.length > 0 ? (
-              <div className="flex flex-col" style={{ gap: '2px' }}>
+              <div>
                 {activeDishes.map(function (dish, i) {
                   return (
                     <DishListItem
@@ -162,17 +143,21 @@ export const HomeListMode = memo(function HomeListMode({
                       dish={dish}
                       rank={i + 1}
                       showDistance
-                      onClick={function () { navigate('/dish/' + dish.dish_id) }}
+                      isLast={i === activeDishes.length - 1}
                     />
                   )
                 })}
               </div>
+            ) : searchError ? (
+              <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>
+                {getUserMessage(searchError, 'searching dishes')}
+              </p>
             ) : (
-              <EmptyState emoji="🔍" title={'No dishes found for \u201c' + searchQuery + '\u201d'} />
+              <EmptyState emoji="🔍" title={'No dishes found for “' + searchQuery + '”'} />
             )}
           </div>
         ) : activeDishes && activeDishes.length > 0 ? (
-          /* Homepage v4 layout — category chips up top, vertical list */
+          /* Homepage v4 layout — chalkboards, local lists, top 10 carousel */
           <>
             {/* Editorial stories — A-frame chalkboard horizontal scroll */}
             <ChalkboardSection
@@ -181,33 +166,54 @@ export const HomeListMode = memo(function HomeListMode({
               bestValueMeal={bestValueMeal}
               bestIceCream={bestIceCream}
               localsAggregate={localsAggregate}
-              onExpandCategory={function (cat) {
-                onExpandedCategoryChange(cat)
-                if (carouselRef.current) {
-                  carouselRef.current.scrollToCategory(cat)
-                }
-                setTimeout(function () {
-                  var el = document.getElementById('top10-carousel')
-                  if (el) {
-                    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                    var offset = el.getBoundingClientRect().top + window.scrollY - 8
-                    window.scrollTo({ top: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
-                  }
-                }, 100)
-              }}
+              onExpandCategory={handleCategorySelect}
             />
 
             {/* Local Lists — horizontal scroll above the food icon tabs */}
-            <LocalListsSection onListExpanded={onLocalListExpanded} />
+            <LocalListsSection />
 
             {/* Top 10 carousel — swipe between Near You, Pizza, Burgers, etc. */}
             <div id="top10-carousel">
-              <Top10Carousel ref={carouselRef} dishes={allRankedDishes} onCategoryChange={onCategoryChange} />
+              <Top10Carousel
+                ref={carouselRef}
+                dishes={allRankedDishes}
+                initialCategory={initialCategory}
+                onCategoryChange={onCategoryChange}
+              />
             </div>
           </>
+        ) : rankedErrorMessage ? (
+          /* Load failed and nothing cached — offer a retry instead of "no dishes" */
+          <div className="px-4 py-6 text-center">
+            <p role="alert" className="text-sm" style={{ color: 'var(--color-danger)' }}>
+              {rankedErrorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={function () { onRetry() }}
+              className="mt-3 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            >
+              Try again
+            </button>
+          </div>
         ) : (
           <div className="px-4 pt-4">
-            <EmptyState emoji="🍽️" title="No dishes found nearby" />
+            <EmptyState
+              emoji="🍽️"
+              title="No dishes found nearby"
+              subtitle={radius !== 0 ? 'Try a wider search radius' : undefined}
+              action={radius !== 0 ? (
+                <button
+                  type="button"
+                  onClick={onRadiusSheetOpen}
+                  className="py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                >
+                  Change radius
+                </button>
+              ) : undefined}
+            />
           </div>
         )}
       </div>
@@ -218,7 +224,7 @@ export const HomeListMode = memo(function HomeListMode({
 // Chalkboard styles — module-level constants (no re-creation per render)
 var BOARD_OUTER = { flexShrink: 0, width: '175px' }
 var BOARD_OUTER_WIDE = { flexShrink: 0, width: '185px' }
-var COUNT_BADGE = { fontFamily: "'Outfit', sans-serif", display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(196, 138, 18, 0.2)', color: 'var(--color-accent-gold)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', marginTop: '4px' }
+var COUNT_BADGE = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(196, 138, 18, 0.2)', color: 'var(--color-accent-gold)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', marginTop: '4px' }
 var BOARD_SURFACE = { position: 'relative', background: '#363B3F', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
 var BOARD_FRAME = { position: 'absolute', inset: '3px', border: '2.5px solid #1A1D1F', borderRadius: '2px', pointerEvents: 'none', zIndex: 2 }
 var BOARD_DUST = { position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.03) 0%, transparent 60%)', pointerEvents: 'none' }
@@ -229,9 +235,6 @@ var CHALK_FAINT = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255
 var CHALK_BIG = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
 var CHALK_CTA = { fontFamily: "'Amatic SC', cursive", color: 'var(--color-primary)' }
 var CHALK_LINE = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
-var LEG_STYLE = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
-var LEG_LEFT = Object.assign({}, LEG_STYLE, { transform: 'rotate(6deg)', transformOrigin: 'top center' })
-var LEG_RIGHT = Object.assign({}, LEG_STYLE, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })
 
 var BOARD_ICON_STYLE = { display: 'inline-block', verticalAlign: 'middle', width: '20px', height: '20px', objectFit: 'contain', marginRight: '3px' }
 
@@ -247,7 +250,7 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick, icon, 
         <div style={BOARD_DUST} />
         <div style={BOARD_CONTENT}>
           <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>
-            {icon && <img src={icon} alt="" style={BOARD_ICON_STYLE} />}
+            {icon && <img src={icon} alt="" loading="lazy" decoding="async" style={BOARD_ICON_STYLE} />}
             <span>{tag}</span>
           </p>
           <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
@@ -256,7 +259,7 @@ function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick, icon, 
           {stat && <p style={Object.assign({}, CHALK_BRIGHT, { fontSize: '16px', margin: 0 })}>{stat}</p>}
           {stat && <div style={CHALK_LINE} />}
           <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
-          {bottomIcon && <img src={bottomIcon} alt="" style={ICE_CREAM_MELTING_STYLE} />}
+          {bottomIcon && <img src={bottomIcon} alt="" loading="lazy" decoding="async" style={ICE_CREAM_MELTING_STYLE} />}
         </div>
       </div>
     </button>
@@ -289,6 +292,12 @@ function LocalsChalkboardCard({ tag, title, titleSize, sub, countText, cta, onCl
   )
 }
 
+// "$14.50" stays "$14.50" (not rounded up to "$15" under a "<$15" claim); whole dollars drop the cents
+function formatPrice(price) {
+  var p = Number(price)
+  return '$' + (p % 1 === 0 ? p.toFixed(0) : p.toFixed(2))
+}
+
 function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
   var navigate = useNavigate()
 
@@ -301,11 +310,10 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   return (
     <div
-      className="flex gap-3 overflow-x-auto mt-2"
+      className="flex gap-3 overflow-x-auto mt-2 scrollbar-hide"
       style={{
         padding: '0 16px 0',
         WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'none',
         touchAction: 'pan-x pan-y',
       }}
     >
@@ -364,7 +372,7 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
           title={bestValueMeal.dish_name || bestValueMeal.name}
           titleSize="28px"
           sub={bestValueMeal.restaurant_name}
-          stat={'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + Number(bestValueMeal.avg_rating || 0).toFixed(1)}
+          stat={formatPrice(bestValueMeal.price) + ' \u00B7 rated ' + Number(bestValueMeal.avg_rating || 0).toFixed(1)}
           cta={'best meal under $15 \u2192'}
           onClick={function () { navigate('/dish/' + bestValueMeal.dish_id) }}
         />
@@ -408,26 +416,6 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
           onClick={function () { navigate('/restaurants/' + localsAggregate.top_restaurant_id) }}
         />
       )}
-    </div>
-  )
-}
-
-function ListSkeleton() {
-  return (
-    <div className="animate-pulse">
-      {[0, 1, 2, 3].map(function (i) {
-        return (
-          <div key={i} className="flex items-center gap-3 py-3 px-3">
-            <div className="w-7 h-5 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="w-6 h-6 rounded" style={{ background: 'var(--color-divider)' }} />
-            <div className="flex-1">
-              <div className="h-4 w-28 rounded mb-1" style={{ background: 'var(--color-divider)' }} />
-              <div className="h-3 w-20 rounded" style={{ background: 'var(--color-divider)' }} />
-            </div>
-            <div className="h-5 w-8 rounded" style={{ background: 'var(--color-divider)' }} />
-          </div>
-        )
-      })}
     </div>
   )
 }

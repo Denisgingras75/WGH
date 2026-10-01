@@ -4,6 +4,7 @@ import { capture } from '../lib/analytics'
 import { dishPhotosApi } from '../api/dishPhotosApi'
 import { analyzeImage } from '../utils/imageAnalysis'
 import { logger } from '../utils/logger'
+import { getUserMessage } from '../utils/errorHandler'
 
 /**
  * Hook for managing photo uploads for dishes
@@ -99,7 +100,10 @@ export function useDishPhotos() {
       setUploadProgress(100)
       return { ...result, analysisResults: analysis }
     } catch (err) {
-      setError(err.message || 'Failed to upload photo')
+      // Validation messages (file too large, too dark…) are readable as-is;
+      // network/server failures get the classified, human message.
+      const generic = ['NETWORK_ERROR', 'TIMEOUT', 'SERVER_ERROR'].includes(err.type)
+      setError(generic ? getUserMessage(err, 'uploading your photo') : (err.message || 'Failed to upload photo'))
       throw err
     } finally {
       setAnalyzing(false)
@@ -123,7 +127,7 @@ export function useDishPhotos() {
       await deleteMutation.mutateAsync(photoId)
       return { success: true }
     } catch (err) {
-      setError(err.message || 'Failed to delete photo')
+      setError(getUserMessage(err, 'deleting your photo'))
       throw err
     }
   }, [deleteMutation])

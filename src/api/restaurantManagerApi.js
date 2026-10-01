@@ -1,13 +1,13 @@
 import { supabase } from '../lib/supabase'
-import { checkDishCreateRateLimit } from '../lib/rateLimiter'
+import { checkDishCreateRateLimit, RATE_LIMITS } from '../lib/rateLimiter'
 import { validateUserContent } from '../lib/reviewBlocklist'
-import { createClassifiedError, ErrorTypes } from '../utils/errorHandler'
+import { createClassifiedError, createUserFacingError, ErrorTypes } from '../utils/errorHandler'
 import { logger } from '../utils/logger'
 
 async function checkDishCreateRateLimitOnce() {
   const clientRateLimit = checkDishCreateRateLimit()
   if (!clientRateLimit.allowed) {
-    throw new Error(clientRateLimit.message)
+    throw createUserFacingError(clientRateLimit.message)
   }
 
   const { data: rateCheck, error: rateError } = await supabase.rpc('check_dish_create_rate_limit')
@@ -15,15 +15,15 @@ async function checkDishCreateRateLimitOnce() {
     throw createClassifiedError(rateError)
   }
   if (rateCheck && !rateCheck.allowed) {
-    const err = new Error(rateCheck.message || 'Too many dishes created. Please wait.')
-    err.type = 'RATE_LIMIT'
+    const err = createUserFacingError(rateCheck.message || 'Too many dishes created. Please wait.')
+    err.type = ErrorTypes.RATE_LIMIT
     throw err
   }
 }
 
 function validateContentField(value, label) {
   const contentError = validateUserContent(value, label)
-  if (contentError) throw new Error(contentError)
+  if (contentError) throw createUserFacingError(contentError)
 }
 
 export const restaurantManagerApi = {
@@ -627,9 +627,18 @@ export const restaurantManagerApi = {
    */
   async bulkAddDishes(restaurantId, dishes) {
     try {
+      // Validate every dish before recording any rate-limit attempt
       for (const dish of dishes) {
         validateContentField(dish.name, 'Dish name')
         validateContentField(dish.description, 'Dish description')
+      }
+      // Each dish counts against the hourly dish-create limit, so a batch over it can never succeed
+      if (dishes.length > RATE_LIMITS.dishCreate.maxAttempts) {
+        throw createUserFacingError(
+          `You can import up to ${RATE_LIMITS.dishCreate.maxAttempts} dishes at a time. Deselect some and import the rest later.`
+        )
+      }
+      for (let i = 0; i < dishes.length; i++) {
         await checkDishCreateRateLimitOnce()
       }
 
@@ -684,6 +693,7 @@ export const restaurantManagerApi = {
           "This dish has community ratings and can't be removed. Contact support if it needs to be taken down."
         )
         err.type = ErrorTypes.UNAUTHORIZED
+        err.userFacing = true
         throw err
       }
     } catch (error) {

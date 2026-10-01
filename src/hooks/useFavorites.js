@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { capture } from '../lib/analytics'
@@ -15,7 +15,7 @@ export function useFavorites(userId) {
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 
-  const favoriteIds = data?.favoriteIds || []
+  const favoriteIds = useMemo(() => data?.favoriteIds || [], [data])
   const favorites = data?.favorites || []
 
   const isFavorite = useCallback(
