@@ -2,7 +2,7 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-10-01
 
 ---
 
@@ -12,11 +12,11 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** _(Dan's terminal | Dan's other Claude | Denis's Claude | scheduled agent name)_
-- **Branch:** _(e.g., audit/supabase-2026-04-16 — or `main` if directly committing)_
-- **Files / modules claimed:** _(e.g., `src/api/votesApi.js`, `supabase/schema.sql §votes`, `src/pages/Profile.jsx`)_
-- **Safe for others to continue:** _(what parts of the repo are NOT touched and open for parallel work)_
-- **Do not duplicate:** _(specific tasks already in-flight — PR numbers, migration filenames, feature names)_
+- **Owner / session:** Denis's Claude (cloud session)
+- **Branch:** `ccr-ccdae7af-0e0kmr`
+- **Files / modules claimed:** All of `src/pages/`, `src/components/`, `src/index.css`, `src/App.jsx`, plus lint-error fixes in `src/api/votesApi.js` and `src/hooks/useRestaurantManager.js`
+- **Safe for others to continue:** `supabase/`, `api/`, `scripts/`, `e2e/`, docs other than this file and DEVLOG.md
+- **Do not duplicate:** Site-wide pass to bring every page in line with the design system, plus usability and lint fixes
 
 ---
 
@@ -25,7 +25,7 @@
 <!-- One paragraph. What are we actually shipping this session?
      Skip the long context — CLAUDE.md + SPEC.md provide that. -->
 
-_(stub)_
+Site-wide consistency pass: bring every page and component in line with the documented design system (Appetite tokens, Amatic SC headings, Outfit body text, DishListItem for dish lists), fix usability bugs found in a full audit, and clear the 18 ESLint errors. Ships as one PR for Dan's review.
 
 ## Blockers / waiting on
 
