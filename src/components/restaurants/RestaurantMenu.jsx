@@ -271,9 +271,9 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                     : 'none',
                 }}
               >
-                {/* Row: Name · dotted leader · Price */}
-                <div className="flex items-baseline gap-1.5">
-                  <span className="min-w-0" style={{ flex: '0 1 auto' }}>
+                {/* Row: Name · dotted leader · Price (leader + price sit on the last line, like a printed menu) */}
+                <div className="flex items-end gap-1.5" style={{ lineHeight: 1.3 }}>
+                  <span className="min-w-0" style={{ flex: '0 1 auto', fontSize: '14px' }}>
                     <span
                       style={{
                         color: 'var(--color-text-primary)',
@@ -330,7 +330,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                       flex: '1 1 12px',
                       minWidth: '12px',
                       borderBottom: '2px dotted var(--color-divider)',
-                      alignSelf: 'baseline',
+                      marginBottom: '5px',
                     }}
                   />
                   {dish.price ? (
