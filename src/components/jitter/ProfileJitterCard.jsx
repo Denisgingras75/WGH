@@ -43,7 +43,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
           {/* Right side — title, tier, description */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
                 Review Fingerprint
               </span>
               <span
@@ -84,7 +84,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
             <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.current} of {nextTier.target}</span>
           </div>
           <div className="w-full overflow-hidden" style={{ height: '4px', borderRadius: '2px', background: 'var(--color-surface)' }}>
-            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', borderRadius: '2px', background: 'var(--color-accent-gold)' }} />
+            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', borderRadius: '2px', background: 'var(--color-accent)' }} />
           </div>
         </div>
       )}
@@ -94,7 +94,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full text-xs text-center py-2"
-          style={{ color: 'var(--color-accent-gold)', borderTop: '1px solid var(--color-divider)' }}
+          style={{ color: 'var(--color-accent)', borderTop: '1px solid var(--color-divider)' }}
         >
           {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
         </button>
@@ -162,7 +162,7 @@ function KeyBar({ letter, ms, max }) {
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
       <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
-        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent-gold)' }} />
+        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
     </div>

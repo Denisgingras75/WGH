@@ -109,7 +109,7 @@ export function JournalFeed({ ratings = [], loading }) {
               <div
                 key={item.key}
                 style={{
-                  color: 'var(--color-accent-gold)',
+                  color: 'var(--color-accent)',
                   fontSize: '10px',
                   fontWeight: 700,
                   letterSpacing: '0.08em',
@@ -136,7 +136,7 @@ export function JournalFeed({ ratings = [], loading }) {
           className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98] mt-3"
           style={{
             fontSize: '14px',
-            color: 'var(--color-accent-gold)',
+            color: 'var(--color-accent)',
             background: 'var(--color-card)',
             border: '1.5px solid var(--color-divider)',
           }}

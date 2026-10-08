@@ -244,11 +244,11 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
           <h3
             className="font-bold"
             style={{
-              fontFamily: "'Amatic SC', cursive",
+              fontFamily: 'var(--font-display)',
               color: 'var(--color-text-primary)',
-              fontSize: '22px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
+              fontSize: '16px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
             }}
           >
             {activeSection}
@@ -295,8 +295,8 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                           className="flex-shrink-0 px-1 py-0.5 rounded font-bold"
                           style={{
                             fontSize: '9px',
-                            background: 'var(--color-accent-gold-muted, rgba(232, 102, 60, 0.1))',
-                            color: 'var(--color-accent-gold)',
+                            background: 'var(--color-accent-muted, rgba(var(--color-primary-rgb), 0.1))',
+                            color: 'var(--color-accent)',
                             lineHeight: '1',
                           }}
                         >

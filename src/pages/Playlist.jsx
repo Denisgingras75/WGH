@@ -43,13 +43,13 @@ export function Playlist() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
         <div style={{ fontSize: 64 }}>⚠️</div>
-        <h1 style={{ fontFamily: "'Amatic SC', cursive", fontSize: 32, marginTop: 12, color: 'var(--color-text-primary)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 23, marginTop: 12, color: 'var(--color-text-primary)' }}>
           Something went wrong
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', marginTop: 8, textAlign: 'center' }}>
           {error.message || 'Could not load this playlist. Please try again.'}
         </p>
-        <button onClick={function () { window.location.reload() }} style={{ color: 'var(--color-accent-gold)', marginTop: 16, background: 'none', border: 'none', fontWeight: 700 }}>
+        <button onClick={function () { window.location.reload() }} style={{ color: 'var(--color-accent)', marginTop: 16, background: 'none', border: 'none', fontWeight: 700 }}>
           Retry
         </button>
       </div>
@@ -60,13 +60,13 @@ export function Playlist() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
         <div style={{ fontSize: 64 }}>🔒</div>
-        <h1 style={{ fontFamily: "'Amatic SC', cursive", fontSize: 32, marginTop: 12, color: 'var(--color-text-primary)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 23, marginTop: 12, color: 'var(--color-text-primary)' }}>
           Playlist not found
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', marginTop: 8, textAlign: 'center' }}>
           This playlist may be private or no longer exists.
         </p>
-        <Link to="/" style={{ color: 'var(--color-accent-gold)', marginTop: 16 }}>Go home</Link>
+        <Link to="/" style={{ color: 'var(--color-accent)', marginTop: 16 }}>Go home</Link>
       </div>
     )
   }
@@ -102,8 +102,8 @@ export function Playlist() {
         </div>
         <h1
           style={{
-            fontFamily: "'Amatic SC', cursive",
-            fontSize: 42,
+            fontFamily: 'var(--font-display)',
+            fontSize: 30,
             lineHeight: 1,
             marginTop: 16,
             color: 'var(--color-text-primary)',
@@ -133,7 +133,7 @@ export function Playlist() {
               style={{
                 padding: '10px 24px',
                 background: playlist.is_followed ? 'transparent' : 'var(--color-text-primary)',
-                color: playlist.is_followed ? 'var(--color-text-primary)' : '#fff',
+                color: playlist.is_followed ? 'var(--color-text-primary)' : 'var(--color-text-on-primary)',
                 border: playlist.is_followed ? '1.5px solid var(--color-text-primary)' : 'none',
                 borderRadius: 999,
                 fontWeight: 700,
@@ -186,7 +186,7 @@ export function Playlist() {
           {playlist.is_owner && (
             <button
               onClick={function () { setSearchSheetOpen(true) }}
-              style={{ color: 'var(--color-accent-gold)', marginTop: 8, background: 'none', border: 'none', fontWeight: 700 }}
+              style={{ color: 'var(--color-accent)', marginTop: 8, background: 'none', border: 'none', fontWeight: 700 }}
             >
               Search for dishes to add
             </button>

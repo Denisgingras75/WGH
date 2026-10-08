@@ -20,11 +20,11 @@ export function DeleteAccountSection() {
       >
         <h2
           style={{
-            fontFamily: "'Amatic SC', cursive",
+            fontFamily: 'var(--font-display)',
             color: 'var(--color-text-primary)',
-            fontSize: '28px',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
+            fontSize: '20px',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
             marginBottom: '10px',
           }}
         >
@@ -156,7 +156,7 @@ export function DeleteAccountModal({ onClose }) {
               background: 'var(--color-bg)',
               border: '2px solid var(--color-divider)',
               color: 'var(--color-text-primary)',
-              fontFamily: "'SF Mono', 'Fira Code', monospace",
+              fontFamily: 'var(--font-mono)',
               letterSpacing: '0.05em',
             }}
           />
@@ -182,7 +182,7 @@ export function DeleteAccountModal({ onClose }) {
               className="flex-1 px-5 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: 'var(--color-danger)',
-                color: '#FFFFFF',
+                color: 'var(--color-text-on-primary)',
               }}
             >
               {loading ? 'Deleting...' : 'Delete Account'}

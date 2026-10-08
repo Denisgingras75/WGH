@@ -234,7 +234,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
                       </span>
                     )}
                     {event.recurring_pattern && (
-                      <span className="text-xs" style={{ color: 'var(--color-accent-gold)' }}>
+                      <span className="text-xs" style={{ color: 'var(--color-accent)' }}>
                         {event.recurring_pattern}
                       </span>
                     )}

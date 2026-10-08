@@ -24,22 +24,14 @@ export function CategoryImageCard({
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center transition-all duration-200 active:scale-[0.97]"
-      style={{ gap: '18px' }}
+      className="group flex flex-col items-center transition-transform duration-100 active:translate-x-[2px] active:translate-y-[2px]"
+      style={{ gap: '12px' }}
     >
       {/* Plate with food icon */}
-      <div className="transition-all duration-200" style={{ filter: 'drop-shadow(0 0 0px transparent)' }} onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08))'} onMouseLeave={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 0px transparent)'}>
-        <PlateIcon size={size}>
+      <div>
+        <PlateIcon size={size} active={isActive}>
           {imageSrc ? (
-            <div
-              className="w-full h-full rounded-full overflow-hidden"
-              style={{
-                // Food glow - warm gold glow for appetite appeal
-                boxShadow: isActive
-                  ? '0 0 14px rgba(232, 102, 60, 0.15), 0 0 6px rgba(232, 102, 60, 0.1)'
-                  : '0 0 8px rgba(0, 0, 0, 0.06)',
-              }}
-            >
+            <div className="w-full h-full rounded-full overflow-hidden">
             <img
               src={imageSrc}
               alt={category.label}
@@ -70,9 +62,10 @@ export function CategoryImageCard({
 
       {/* Label - secondary to plate */}
       <span
-        className="text-[12px] font-medium text-center leading-none transition-all duration-200 group-hover:brightness-125"
+        className="text-[13px] text-center leading-none"
         style={{
-          color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+          fontWeight: 700,
+          color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
         }}
       >
         {category.label}

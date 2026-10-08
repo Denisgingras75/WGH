@@ -67,7 +67,7 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
               marginLeft: 6,
               fontSize: 9,
               background: 'var(--color-text-primary)',
-              color: '#fff',
+              color: 'var(--color-text-on-primary)',
               padding: '1px 5px',
               borderRadius: 3,
               letterSpacing: 0.5,

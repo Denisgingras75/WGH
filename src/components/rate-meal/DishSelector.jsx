@@ -137,11 +137,11 @@ export function DishSelector({
             <h1
               className="font-bold"
               style={{
-                fontFamily: "'Amatic SC', cursive",
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '30px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '22px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
               }}
             >
               Rate Your Meal
@@ -281,11 +281,11 @@ export function DishSelector({
               <h2
                 className="font-bold"
                 style={{
-                  fontFamily: "'Amatic SC', cursive",
+                  fontFamily: 'var(--font-display)',
                   color: 'var(--color-text-primary)',
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
                 }}
               >
                 {activeSectionData?.name}

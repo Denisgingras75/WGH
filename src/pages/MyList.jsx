@@ -67,7 +67,7 @@ export function MyList() {
           <button
             onClick={function () { navigate('/') }}
             className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', cursor: 'pointer' }}
           >
             Go Home
           </button>
@@ -495,7 +495,7 @@ export function MyList() {
             padding: '14px',
             fontSize: '16px',
             background: 'var(--color-primary)',
-            color: '#fff',
+            color: 'var(--color-text-on-primary)',
             border: 'none',
             cursor: saving ? 'default' : 'pointer',
           }}

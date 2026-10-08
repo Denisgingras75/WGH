@@ -116,11 +116,11 @@ export function RestaurantReviews() {
             <h1
               className="font-bold truncate"
               style={{
-                fontFamily: "'Amatic SC', cursive",
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '28px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '20px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
               }}
             >
               Reviews
@@ -149,7 +149,7 @@ export function RestaurantReviews() {
                 className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
                 style={{
                   background: isActive ? 'var(--color-primary)' : 'var(--color-surface)',
-                  color: isActive ? 'white' : 'var(--color-text-secondary)',
+                  color: isActive ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
                   border: isActive ? 'none' : '1.5px solid var(--color-divider)',
                 }}
               >
@@ -169,7 +169,7 @@ export function RestaurantReviews() {
           <button
             onClick={function () { window.location.reload() }}
             className="px-5 py-2.5 text-sm font-bold rounded-lg"
-            style={{ background: 'var(--color-primary)', color: 'white' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Try Again
           </button>

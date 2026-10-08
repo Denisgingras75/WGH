@@ -35,11 +35,11 @@ export function Support() {
             <h2
               className="mb-3"
               style={{
-                fontFamily: "'Amatic SC', cursive",
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '23px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
                 lineHeight: 1.1,
               }}
             >

@@ -351,7 +351,7 @@ export function Map() {
                     className="w-8 h-8 rounded-full animate-spin"
                     style={{
                       border: '3px solid var(--color-divider)',
-                      borderTopColor: 'var(--color-accent-gold)',
+                      borderTopColor: 'var(--color-accent)',
                     }}
                   />
                   <span className="sr-only">Loading map</span>

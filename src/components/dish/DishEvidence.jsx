@@ -63,10 +63,10 @@ export function DishEvidence({
           return (
           <div className="mb-4">
             <h3 style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '24px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
+              fontFamily: 'var(--font-display)',
+              fontSize: '17px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
               color: 'var(--color-text-primary)',
               marginBottom: '12px',
             }}>
@@ -77,7 +77,7 @@ export function DishEvidence({
               style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
             >
               {friendsVotes.map(function (vote) {
-                var avatarColors = ['#E4440A', '#3B82F6', '#9333EA', '#16A34A', '#F59E0B', '#EC4899', '#06B6D4']
+                var avatarColors = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
                 var colorIndex = (vote.display_name || '').charCodeAt(0) % avatarColors.length
                 return (
                   <Link
@@ -92,7 +92,9 @@ export function DishEvidence({
                         width: avatarSize + 'px',
                         height: avatarSize + 'px',
                         background: avatarColors[colorIndex],
-                        color: 'white',
+                        color: 'var(--color-text-on-primary)',
+                        border: 'var(--border-ink)',
+                        fontFamily: 'var(--font-display)',
                         fontSize: avatarFont + 'px',
                       }}
                     >
@@ -112,6 +114,7 @@ export function DishEvidence({
                       {vote.display_name || 'Anon'}
                     </span>
                     <span style={{
+                      fontFamily: 'var(--font-display)',
                       fontSize: scoreSize + 'px',
                       fontWeight: 800,
                       letterSpacing: '-0.02em',
@@ -131,14 +134,16 @@ export function DishEvidence({
         {/* Smart Snippet */}
         {smartSnippet && smartSnippet.review_text && (
           <div
-            className="mb-4 p-4 rounded-xl"
+            className="mb-5 p-4"
             style={{
-              background: 'var(--color-surface)',
-              borderLeft: '3px solid var(--color-accent-gold)',
+              background: 'var(--color-butter)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-hard)',
             }}
           >
             <div className="flex items-start gap-2">
-              <p className="text-sm italic flex-1" style={{ color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
+              <p className="flex-1" style={{ color: 'var(--color-ink)', fontSize: '16px', fontWeight: 600, lineHeight: 1.45 }}>
                 &ldquo;{smartSnippet.review_text}&rdquo;
               </p>
               {user && smartSnippet.id && smartSnippet.user_id && smartSnippet.user_id !== user.id && (
@@ -158,11 +163,11 @@ export function DishEvidence({
               )}
             </div>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>
                 — @{smartSnippet.profiles?.display_name || 'Anonymous'}
               </span>
               {smartSnippet.rating_10 && (
-                <span className="text-xs font-bold" style={{ color: getRatingColor(smartSnippet.rating_10) }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-ink)' }}>
                   {formatScore10(smartSnippet.rating_10)}
                 </span>
               )}
@@ -173,7 +178,7 @@ export function DishEvidence({
         {/* Photos grid */}
         {displayPhotos.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-xs font-bold mb-3" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <h3 className="eyebrow mb-3">
               Photos ({displayPhotos.length})
             </h3>
             <div className="grid grid-cols-4 gap-2">
@@ -182,8 +187,8 @@ export function DishEvidence({
                   key={photo.id}
                   onClick={() => setLightboxPhoto(photo)}
                   aria-label={'View photo of ' + dish.dish_name}
-                  className="aspect-square rounded-lg overflow-hidden active:scale-95 transition-transform"
-                  style={{ border: '1.5px solid var(--color-divider)' }}
+                  className="aspect-square overflow-hidden active:scale-95 transition-transform"
+                  style={{ border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}
                 >
                   <img
                     src={photo.photo_url}
@@ -220,7 +225,7 @@ export function DishEvidence({
           return filteredReviews.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold" style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <h3 className="eyebrow">
                 Reviews ({filteredReviews.length})
               </h3>
               <TrustSummary
@@ -230,21 +235,20 @@ export function DishEvidence({
             </div>
             <div
               className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', scrollPaddingInline: '4px', paddingLeft: '2px', paddingRight: '6px' }}
             >
               {filteredReviews.map(function (review) {
-                var borderColor = review.rating_10 >= 8 ? 'var(--color-success, #22c55e)' : review.rating_10 >= 6 ? 'var(--color-accent-gold)' : 'var(--color-primary)';
                 return (
                   <div
                     key={review.id}
-                    className="p-4 rounded-xl flex-shrink-0 snap-start"
-                    style={{ width: '280px', background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', borderLeft: '3px solid ' + borderColor }}
+                    className="p-4 flex-shrink-0 snap-start"
+                    style={{ width: '280px', background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }}
                   >
                     <div className="flex items-start gap-2 mb-2.5">
                       <Link to={'/user/' + review.user_id} className="flex items-center gap-3 min-w-0 flex-1">
                         <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                          className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink)', fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800 }}
                         >
                           {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
                         </div>
@@ -295,8 +299,8 @@ export function DishEvidence({
                     {review.rating_10 ? (
                       <div className="flex items-center gap-2 mb-2.5">
                         <span
-                          className="rounded-full px-2.5 py-0.5 font-bold text-sm"
-                          style={{ background: getRatingColor(review.rating_10) + '26', color: getRatingColor(review.rating_10) }}
+                          className="rounded-full px-2.5 py-0.5"
+                          style={{ background: 'var(--color-surface-elevated)', border: '2px solid currentColor', color: getRatingColor(review.rating_10), fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800 }}
                         >
                           {formatScore10(review.rating_10)}
                         </span>
@@ -304,7 +308,7 @@ export function DishEvidence({
                     ) : null}
 
                     {review.review_text && (
-                      <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.7 }}>
+                      <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', lineHeight: 1.55 }}>
                         {review.review_text}
                       </p>
                     )}
@@ -319,8 +323,8 @@ export function DishEvidence({
         {/* No reviews message */}
         {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
           <div
-            className="mb-4 p-4 rounded-xl text-center"
-            style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+            className="mb-4 p-4 text-center"
+            style={{ background: 'var(--color-surface)', border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)' }}
           >
             <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
               No written reviews yet — be the first to share your thoughts!
@@ -355,7 +359,7 @@ export function DishEvidence({
         >
           <button
             className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-2xl"
-            style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
+            style={{ background: 'rgba(255, 255, 255, 0.2)', color: 'var(--color-text-on-primary)' }}
             onClick={() => setLightboxPhoto(null)}
             aria-label="Close lightbox"
           >
@@ -364,7 +368,7 @@ export function DishEvidence({
           {user && lightboxPhoto.id && lightboxPhoto.user_id && lightboxPhoto.user_id !== user.id && (
             <button
               className="absolute top-4 left-4 px-3 py-2 rounded-full text-xs font-semibold"
-              style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
+              style={{ background: 'rgba(255, 255, 255, 0.2)', color: 'var(--color-text-on-primary)' }}
               onClick={(e) => {
                 e.stopPropagation()
                 setReportTarget({ type: 'photo', id: lightboxPhoto.id })

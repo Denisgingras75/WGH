@@ -525,7 +525,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   className="font-medium"
                   style={{ color: 'var(--color-primary)' }}
                 >
-                  Already have an account? <span style={{ color: 'var(--color-accent-gold)' }}>Sign in</span>
+                  Already have an account? <span style={{ color: 'var(--color-accent)' }}>Sign in</span>
                 </button>
               </div>
             </form>

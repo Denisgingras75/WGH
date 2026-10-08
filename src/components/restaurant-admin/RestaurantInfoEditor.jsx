@@ -88,7 +88,7 @@ export function RestaurantInfoEditor({ restaurant, onUpdate }) {
         onClick={handleSave}
         disabled={saving}
         className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
-        style={{ background: 'var(--color-primary)', color: 'white' }}
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {saving ? 'Saving...' : 'Save Changes'}
       </button>

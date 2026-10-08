@@ -108,10 +108,12 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
       {/* Friends banner */}
       {uniqueFriends > 0 && (
         <div
-          className="mb-4 px-3.5 py-3 rounded-xl flex items-center gap-3"
+          className="mb-4 px-3.5 py-3 flex items-center gap-3"
           style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1.5px solid var(--color-primary)',
+            background: 'var(--color-butter)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard-sm)',
           }}
         >
           {/* Stacked avatars */}
@@ -131,11 +133,11 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
                 <Link
                   key={friend.user_id}
                   to={`/user/${friend.user_id}`}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ring-2"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
                   style={{
                     background: 'var(--color-primary)',
                     color: 'var(--color-text-on-primary)',
-                    ringColor: 'var(--color-surface-elevated)',
+                    border: 'var(--border-ink)',
                     zIndex: 3 - i,
                   }}
                 >
@@ -165,10 +167,11 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
         </div>
       ) : (
         <div
-          className="py-10 text-center rounded-xl"
+          className="py-10 text-center"
           style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-surface)',
+            border: '2px dashed var(--color-text-tertiary)',
+            borderRadius: 'var(--radius-lg)',
           }}
         >
           <p className="font-bold" style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
@@ -194,12 +197,11 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
         <div className="mt-6">
           <button
             onClick={() => setShowAllDishes(!showAllDishes)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold card-press"
+            className="btn-ink w-full py-3"
             style={{
-              background: 'var(--color-surface-elevated)',
-              color: 'var(--color-primary)',
-              border: '1px solid var(--color-card-border)',
-              fontSize: '13px',
+              background: 'var(--color-card)',
+              color: 'var(--color-ink)',
+              fontSize: '14px',
             }}
           >
             {showAllDishes ? 'Show less' : `See ${sortedDishes.rest.length} more dishes`}

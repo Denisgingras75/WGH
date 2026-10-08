@@ -23,7 +23,7 @@ export function SessionCard({ sessionStats, profileStats, onDismiss }) {
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent-gold)' }}>
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
           Session Stats
         </span>
         {onDismiss && (
@@ -52,7 +52,7 @@ export function SessionCard({ sessionStats, profileStats, onDismiss }) {
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full text-xs text-center py-1"
-        style={{ color: 'var(--color-accent-gold)' }}
+        style={{ color: 'var(--color-accent)' }}
       >
         {expanded ? 'Hide details \u25B2' : 'Show details \u25BC'}
       </button>

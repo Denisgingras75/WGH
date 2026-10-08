@@ -6,27 +6,26 @@ import { useLocalListDetail } from '../../hooks/useLocalListDetail'
 
 // Menu card styles — module-level constants
 var MENU_CARD = {
-  flexShrink: 0, width: '270px', scrollSnapAlign: 'start',
-  background: '#FFFDF8', borderRadius: '3px', padding: '20px 16px 14px',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.07)',
-  border: '1px solid rgba(0,0,0,0.04)', position: 'relative',
+  flexShrink: 0, width: '272px', scrollSnapAlign: 'start',
+  background: 'var(--color-card)', borderRadius: 'var(--radius-lg)', padding: '16px 16px 12px',
+  border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard)', position: 'relative',
 }
 var CURATOR_AVATAR = {
-  width: '32px', height: '32px', borderRadius: '50%',
+  width: '36px', height: '36px', borderRadius: '50%',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontWeight: 700, fontSize: '13px', color: '#fff', flexShrink: 0,
-  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '16px', color: 'var(--color-text-on-primary)', flexShrink: 0,
+  border: 'var(--border-ink)',
 }
-var CURATOR_NAME = { fontFamily: "'Amatic SC', cursive", fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }
-var CURATOR_TAGLINE = { fontSize: '10px', color: 'var(--color-text-tertiary)', marginTop: '1px', fontStyle: 'italic' }
-var RESTAURANT_HEADER = { fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-accent-gold)', letterSpacing: '0.02em', marginBottom: '3px' }
-var DISH_NAME_STYLE = { fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }
-var DISH_DOTS = { flex: 1, borderBottom: '1px dotted var(--color-divider)', minWidth: '12px', alignSelf: 'baseline', marginBottom: '3px' }
-var DISH_RATING_STYLE = { fontSize: '13px', fontWeight: 700, color: 'var(--color-rating)', flexShrink: 0 }
-var MENU_FOOTER = { borderTop: '1px solid var(--color-divider)', paddingTop: '10px', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+var CURATOR_NAME = { fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.02em', lineHeight: 1.05 }
+var CURATOR_TAGLINE = { fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: '2px' }
+var RESTAURANT_HEADER = { fontSize: '10.5px', fontWeight: 800, color: 'var(--color-accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2px', textAlign: 'left' }
+var DISH_NAME_STYLE = { fontSize: '13.5px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+var DISH_DOTS = { flex: 1, borderBottom: '2px dotted var(--color-divider)', minWidth: '12px', alignSelf: 'baseline', marginBottom: '3px' }
+var DISH_RATING_STYLE = { fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 800, color: 'var(--color-rating)', flexShrink: 0 }
+var MENU_FOOTER = { borderTop: '2px solid var(--color-ink)', paddingTop: '10px', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
 
-// Rotating avatar colors for curators
-var AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent-gold)', 'var(--color-rating)', '#3B82F6', '#9333EA']
+// Rotating avatar inks for curators
+var AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
 
 function MenuCard({ list, index }) {
   var navigate = useNavigate()
@@ -53,11 +52,11 @@ function MenuCard({ list, index }) {
   var dishCount = items ? items.length : (list.item_count || 0)
 
   return (
-    <div style={MENU_CARD} className="active:scale-[0.98] transition-transform">
+    <div style={MENU_CARD}>
       {/* Curator header */}
       <div className="flex items-center gap-2.5" style={{ marginBottom: '10px' }}>
         {list.avatar_url ? (
-          <img src={list.avatar_url} alt="" className="rounded-full" style={{ width: '32px', height: '32px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} />
+          <img src={list.avatar_url} alt="" className="rounded-full" style={{ width: '36px', height: '36px', objectFit: 'cover', flexShrink: 0, border: 'var(--border-ink)' }} />
         ) : (
           <div style={Object.assign({}, CURATOR_AVATAR, { background: avatarColor })}>{initial}</div>
         )}
@@ -68,7 +67,7 @@ function MenuCard({ list, index }) {
       </div>
 
       {/* Divider */}
-      <div style={{ height: '1px', background: 'var(--color-divider)', marginBottom: '10px' }} />
+      <div style={{ height: '2px', background: 'var(--color-ink)', marginBottom: '10px' }} />
 
       {/* Restaurant-grouped dishes */}
       {loading ? (
@@ -104,12 +103,12 @@ function MenuCard({ list, index }) {
 
       {/* Footer */}
       <div style={MENU_FOOTER}>
-        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
           {restaurantCount > 0 ? restaurantCount + ' restaurant' + (restaurantCount === 1 ? '' : 's') + ' \u00B7 ' : ''}{dishCount} dish{dishCount === 1 ? '' : 'es'}
         </span>
         <button
           onClick={function () { navigate('/user/' + list.user_id) }}
-          style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary)' }}
+          style={{ fontSize: '13px', fontWeight: 800, color: 'var(--color-primary)' }}
         >
           {'See full list \u2192'}
         </button>
@@ -125,30 +124,22 @@ export function LocalListsSection({ onListExpanded }) {
   if (loading || lists.length === 0) return null
 
   return (
-    <div style={{ padding: '8px 0 24px' }}>
-      {/* Section header — centered with flanking lines */}
-      <div className="flex items-center gap-4" style={{ padding: '0 20px', marginBottom: '4px' }}>
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <p style={{
-            fontFamily: "'Amatic SC', cursive", fontSize: '26px', fontWeight: 700,
-            color: 'var(--color-text-primary)', whiteSpace: 'nowrap', lineHeight: 1.1,
-          }}>
-            A Local's Guide to <span style={{ color: 'var(--color-primary)' }}>Martha's Vineyard</span>
-          </p>
-        </div>
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-divider)' }} />
+    <div style={{ padding: '20px 0 16px' }}>
+      {/* Section header — eyebrow + display heading */}
+      <div style={{ padding: '0 16px', marginBottom: '12px' }}>
+        <p className="eyebrow">Curated by people who live here</p>
+        <h2 style={{ fontSize: '24px', lineHeight: 1.05, marginTop: '4px', color: 'var(--color-text-primary)' }}>
+          A Local{'\u2019'}s Guide to <span style={{ color: 'var(--color-primary)' }}>the Vineyard</span>
+        </h2>
       </div>
-      <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 500, color: 'var(--color-text-tertiary)', padding: '2px 20px 14px' }}>
-        Curated by people who live here
-      </p>
 
       {/* Horizontal scroll of menu cards */}
       <div
         className="flex overflow-x-auto"
         style={{
-          gap: '14px', padding: '0 20px 8px',
+          gap: '14px', padding: '2px 16px 10px',
           scrollSnapType: 'x mandatory',
+          scrollPaddingInline: '16px',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}

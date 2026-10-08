@@ -79,7 +79,7 @@ export function PlaylistOwnerMenu({ playlist }) {
             onClick={save}
             disabled={saving}
             className="flex-1 py-2 rounded-lg font-semibold text-sm"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none' }}
           >
             {saving ? 'Saving\u2026' : 'Save'}
           </button>

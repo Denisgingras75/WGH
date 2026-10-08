@@ -13,7 +13,7 @@ export function CameraIcon({ size = 20, className = '', active = false }) {
         width: scaledSize,
         height: scaledSize,
         margin: -Math.round(size * 0.3),
-        filter: active ? 'brightness(1.15) drop-shadow(0 0 4px rgba(232, 102, 60, 0.4))' : 'none',
+        filter: active ? 'brightness(1.15) drop-shadow(0 0 4px rgba(var(--color-primary-rgb), 0.4))' : 'none',
       }}
     />
   )

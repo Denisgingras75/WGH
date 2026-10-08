@@ -232,7 +232,7 @@ function WaitlistSection({ position }) {
         className="rounded-xl px-5 py-2.5 text-sm font-semibold"
         style={{
           background: 'var(--color-primary)',
-          color: 'white',
+          color: 'var(--color-text-on-primary)',
           opacity: status === 'sending' ? 0.6 : 1,
         }}
       >
@@ -248,7 +248,7 @@ function JitterWordmark() {
   return (
     <span
       style={{
-        fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+        fontFamily: 'var(--font-mono)',
         fontWeight: 700,
         fontSize: '14px',
         letterSpacing: '0.08em',
@@ -266,7 +266,7 @@ function StepCard({ number, title, description }) {
     <div className="flex gap-4 items-start">
       <span
         className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-        style={{ background: 'var(--color-primary)', color: 'white' }}
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {number}
       </span>

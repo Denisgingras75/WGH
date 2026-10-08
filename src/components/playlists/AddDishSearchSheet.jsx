@@ -196,7 +196,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           width: 28, height: 28, borderRadius: '50%',
           border: '2px solid ' + (isAdded ? 'var(--color-rating)' : 'var(--color-primary)'),
           background: isAdded ? 'var(--color-rating)' : 'transparent',
-          color: isAdded ? '#fff' : 'var(--color-primary)',
+          color: isAdded ? 'var(--color-text-on-primary)' : 'var(--color-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 14, fontWeight: 700, flexShrink: 0,
         }}>
@@ -236,7 +236,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                   className="flex-1 py-2 rounded-lg text-xs font-semibold"
                   style={{
                     background: active ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
-                    color: active ? '#fff' : 'var(--color-text-secondary)',
+                    color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
                     border: active ? 'none' : '1px solid var(--color-divider)',
                   }}
                 >
@@ -364,7 +364,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
-                      background: 'var(--color-primary)', color: '#fff',
+                      background: 'var(--color-primary)', color: 'var(--color-text-on-primary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 16, fontWeight: 700, flexShrink: 0,
                     }}>
@@ -393,7 +393,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           <button
             onClick={onClose}
             className="w-full py-3 rounded-xl font-semibold text-sm"
-            style={{ background: 'var(--color-primary)', color: '#fff' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Done
           </button>

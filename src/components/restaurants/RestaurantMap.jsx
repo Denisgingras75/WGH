@@ -126,7 +126,7 @@ function MapSearchBar({ onSearch }) {
           borderRadius: '8px',
           border: 'none',
           background: '#6BB384',
-          color: 'white',
+          color: 'var(--color-text-on-primary)',
           fontSize: '13px',
           fontWeight: 600,
           cursor: searching ? 'wait' : 'pointer',
@@ -160,7 +160,7 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
     : medalBg
       ? 'box-shadow:0 0 10px 4px rgba(0,0,0,0.15);border:2.5px solid ' + medalBg + ';'
       : hasHighRating
-        ? 'box-shadow:0 0 8px 3px rgba(217,167,101,0.5);'
+        ? 'box-shadow:0 0 8px 3px rgba(var(--color-accent-rgb), 0.5);'
         : ''
 
   var bg = medalBg || 'var(--color-surface-elevated)'
@@ -438,7 +438,7 @@ export function RestaurantMap({
               center={[userLocation.lat, userLocation.lng]}
               radius={7}
               pathOptions={{
-                color: '#fff',
+                color: 'var(--color-text-on-primary)',
                 fillColor: '#4A90D9',
                 fillOpacity: 1,
                 weight: 2,
@@ -537,7 +537,7 @@ export function RestaurantMap({
                           Closed for Season
                         </div>
                       )}
-                      <div style={{ fontSize: '11px', color: 'var(--color-accent-gold)', marginTop: '4px', fontWeight: 500 }}>
+                      <div style={{ fontSize: '11px', color: 'var(--color-accent)', marginTop: '4px', fontWeight: 500 }}>
                         View dishes &rarr;
                       </div>
                     </button>
@@ -564,7 +564,7 @@ export function RestaurantMap({
             padding: '10px 14px',
             borderRadius: '10px',
             background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-accent-gold)',
+            border: '1px solid var(--color-accent)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
           }}
         >
@@ -584,7 +584,7 @@ export function RestaurantMap({
                 padding: 0,
                 fontSize: '12px',
                 fontWeight: 600,
-                color: 'var(--color-accent-gold)',
+                color: 'var(--color-accent)',
                 cursor: 'pointer',
                 marginTop: '2px',
               }}
@@ -657,7 +657,7 @@ export function RestaurantMap({
               style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--color-accent-gold)',
+                color: 'var(--color-accent)',
                 cursor: 'pointer',
                 marginBottom: '2px',
                 background: 'none',
@@ -799,7 +799,7 @@ export function RestaurantMap({
                 width: '16px',
                 height: '16px',
                 borderRadius: '8px',
-                background: 'var(--color-accent-gold)',
+                background: 'var(--color-accent)',
                 color: 'var(--color-bg)',
                 fontSize: '9px',
                 fontWeight: 700,
@@ -812,7 +812,7 @@ export function RestaurantMap({
                 width: '14px',
                 height: '14px',
                 borderRadius: '50%',
-                boxShadow: '0 0 6px 2px rgba(217,167,101,0.5)',
+                boxShadow: '0 0 6px 2px rgba(var(--color-accent-rgb), 0.5)',
                 border: '2px solid var(--color-divider)',
               }} />
               <span style={{ color: 'var(--color-text-secondary)' }}>Rated 9+</span>

@@ -8,15 +8,15 @@ export var JITTER_TIERS = {
   trusted: {
     label: 'Trusted Reviewer',
     minWar: 0.80,
-    color: 'var(--color-accent-gold)',
-    bg: 'rgba(196, 138, 18, 0.12)',
+    color: 'var(--color-accent)',
+    bg: 'rgba(var(--color-accent-rgb), 0.12)',
     description: 'Months of consistent, verified human typing patterns.',
   },
   verified: {
     label: 'Verified',
     minWar: 0.40,
     color: 'var(--color-rating)',
-    bg: 'rgba(22, 163, 74, 0.10)',
+    bg: 'rgba(var(--color-success-rgb), 0.10)',
     description: 'Typing patterns confirmed as authentically human.',
   },
   new_reviewer: {

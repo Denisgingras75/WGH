@@ -50,7 +50,7 @@ export const BrowseResults = memo(function BrowseResults({
       <div className="px-4 py-4 border-b" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold" style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}>
+            <h2 className="text-lg font-bold" style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
               {debouncedSearchQuery
                 ? `Best ${formatSearchQuery(debouncedSearchQuery)} Nearby`
                 : `The Best ${CATEGORIES.find(c => c.id === selectedCategory)?.label || 'Dishes'} Nearby`

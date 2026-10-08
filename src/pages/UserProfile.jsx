@@ -539,11 +539,11 @@ export function UserProfile() {
               <h2
                 className="font-bold"
                 style={{
-                  fontFamily: "'Amatic SC', cursive",
+                  fontFamily: 'var(--font-display)',
                   color: 'var(--color-text-primary)',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
+                  fontSize: '20px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
                   lineHeight: '1.2',
                 }}
               >
@@ -777,7 +777,7 @@ export function UserProfile() {
                 borderColor: 'var(--color-divider)',
               }}
             >
-              <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-accent-gold)' }}>
+              <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
                 {'\u2B50'}
               </span>
               <div className="flex-1 min-w-0">
@@ -893,11 +893,11 @@ export function UserProfile() {
           <div className="px-4 pt-5 pb-1">
             <h2
               style={{
-                fontFamily: "'Amatic SC', cursive",
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '23px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
               }}
             >
               {profile.display_name}'s Ratings

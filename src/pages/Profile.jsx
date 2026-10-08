@@ -193,9 +193,9 @@ export function Profile() {
                 }}
               >
                 <h3 style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '22px',
-                  fontWeight: 700,
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '16px',
+                  fontWeight: 800,
                   color: 'rgba(255,255,255,0.88)',
                   marginBottom: '10px',
                 }}>
@@ -205,7 +205,7 @@ export function Profile() {
                 {stats.ratingStyle && (
                   <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Rating style</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'var(--color-primary)' }}>
                       {stats.ratingStyle.label}
                     </span>
                   </div>
@@ -214,7 +214,7 @@ export function Profile() {
                 {stats.favoriteRestaurant && (
                   <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Most loyal</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.88)' }}>
                       {stats.favoriteRestaurant} &middot; {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'}
                     </span>
                   </div>
@@ -223,7 +223,7 @@ export function Profile() {
                 {stats.standoutPicks && stats.standoutPicks.bestFind && (
                   <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Best find</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'var(--color-accent-gold)' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'var(--color-accent)' }}>
                       {stats.standoutPicks.bestFind.dish_name} &middot; {stats.standoutPicks.bestFind.userRating}
                     </span>
                   </div>
@@ -232,7 +232,7 @@ export function Profile() {
                 {stats.standoutPicks && stats.standoutPicks.harshestTake && (
                   <div className="flex justify-between items-baseline" style={{ padding: '5px 0' }}>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Hot take</span>
-                    <span style={{ fontFamily: "'Amatic SC', cursive", fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.88)' }}>
                       {stats.standoutPicks.harshestTake.dish_name} &middot; You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
                     </span>
                   </div>
@@ -313,11 +313,11 @@ export function Profile() {
               <div className="px-4 pt-5 pb-1">
                 <h2
                   style={{
-                    fontFamily: "'Amatic SC', cursive",
+                    fontFamily: 'var(--font-display)',
                     color: 'var(--color-text-primary)',
-                    fontSize: '32px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
+                    fontSize: '23px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
                   }}
                 >
                   Your Journal
@@ -347,14 +347,14 @@ export function Profile() {
                   style={{
                     width: '100%',
                     aspectRatio: '1',
-                    border: '1.5px dashed var(--color-accent-gold)',
+                    border: '1.5px dashed var(--color-accent)',
                     borderRadius: 8,
                     background: 'var(--color-surface)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 32,
-                    color: 'var(--color-accent-gold)',
+                    color: 'var(--color-accent)',
                   }}
                 >
                   +

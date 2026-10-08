@@ -1,5 +1,6 @@
 import { NotificationBell } from './NotificationBell'
 import { SettingsDropdown } from './SettingsDropdown'
+import { Wordmark } from './Wordmark'
 
 /**
  * TopBar - Brand anchor with WGH wordmark, settings gear, and notification bell
@@ -11,20 +12,7 @@ export function TopBar() {
         {/* Spacer for symmetry */}
         <div style={{ width: '60px' }} />
 
-        {/* WGH wordmark — centered, Amatic SC */}
-        <span
-          style={{
-            fontFamily: "'Amatic SC', cursive",
-            fontSize: '24px',
-            fontWeight: 700,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '0.04em',
-            lineHeight: 1,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-        </span>
+        <Wordmark size={21} />
 
         {/* Settings + Notifications grouped right */}
         <div className="flex items-center">

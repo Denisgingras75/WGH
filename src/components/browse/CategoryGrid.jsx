@@ -44,23 +44,15 @@ export function CategoryGrid({
     <div
       className="px-6 pt-5 pb-6 relative"
       style={{
-        background: 'linear-gradient(180deg, var(--color-card) 0%, var(--color-surface) 50%, var(--color-bg) 100%)',
+        background: 'var(--color-bg)',
         minHeight: 'calc(100vh - 80px)',
       }}
     >
-      {/* Table edge - top bevel/rim catching light */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{
-          background: 'linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.03) 20%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.03) 80%, transparent 100%)',
-        }}
-      />
 
       {/* Section title - anchors the grid */}
       <div className="flex justify-center pt-4 pb-10">
         <span
-          className="text-[11px] font-semibold tracking-[0.2em] uppercase"
-          style={{ color: 'var(--color-text-tertiary)' }}
+          className="eyebrow"
         >
           Categories
         </span>
@@ -83,11 +75,12 @@ export function CategoryGrid({
       <div className="mt-auto pt-10">
         <div className="relative">
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 transition-all duration-150"
             style={{
-              background: 'var(--color-bg)',
-              border: `2px solid ${searchFocused ? 'var(--color-accent-gold)' : 'var(--color-divider)'}`,
-              boxShadow: searchFocused ? '0 0 20px rgba(232, 102, 60, 0.08)' : 'none',
+              background: 'var(--color-surface-elevated)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: searchFocused ? '4px 4px 0 var(--color-primary)' : 'var(--shadow-hard)',
             }}
           >
             <svg

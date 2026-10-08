@@ -264,7 +264,7 @@ export function ReviewFlow({
 
       {/* Review — always visible, optional. Rating is the required signal; words are a bonus. */}
       <div className="relative">
-        <label htmlFor="review-text" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+        <label htmlFor="review-text" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
           Add a review <span style={{ color: 'var(--color-text-tertiary)' }}>(optional)</span>
         </label>
         <textarea
@@ -280,10 +280,12 @@ export function ReviewFlow({
           aria-invalid={!!reviewError}
           maxLength={MAX_REVIEW_LENGTH + 50}
           rows={3}
-          className="w-full p-4 rounded-xl text-sm resize-none focus:outline-none focus-ring"
+          className="w-full p-4 resize-none focus:outline-none"
           style={{
             background: 'var(--color-surface-elevated)',
-            border: reviewError ? '2px solid var(--color-primary)' : '1px solid var(--color-divider)',
+            border: reviewError ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '16px',
             color: 'var(--color-text-primary)',
           }}
         />
@@ -364,8 +366,8 @@ export function ReviewFlow({
         <button
           type="button"
           onClick={() => setPhotoExpanded(true)}
-          className="w-full py-3 text-sm rounded-xl transition-colors"
-          style={{ color: 'var(--color-text-secondary)', border: '1px dashed var(--color-divider)' }}
+          className="w-full py-3 text-sm transition-colors"
+          style={{ color: 'var(--color-text-secondary)', fontWeight: 700, border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-md)' }}
         >
           + Add a photo (optional)
         </button>
@@ -400,8 +402,8 @@ export function ReviewFlow({
       <button
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`w-full py-4 px-6 rounded-xl font-semibold shadow-lg transition-all duration-200 ease-out focus-ring ${canSubmit ? 'active:scale-98 hover:shadow-xl' : 'opacity-50 cursor-not-allowed'}`}
-        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+        className={`btn-ink w-full py-4 px-6 focus-ring ${canSubmit ? '' : 'cursor-not-allowed'}`}
+        style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
       >
         {submitLabel}
       </button>

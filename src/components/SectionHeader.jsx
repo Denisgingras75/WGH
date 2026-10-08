@@ -14,12 +14,13 @@ export function SectionHeader({ title, subtitle, action, level = 'h2' }) {
     <div className="flex items-center justify-between">
       <div>
         <Tag
-          className="font-bold"
           style={{
-            fontSize: '18px',
+            fontFamily: 'var(--font-display)',
+            fontSize: '24px',
+            fontWeight: 800,
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.01em',
-            lineHeight: 1.3,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1,
           }}
         >
           {title}
@@ -28,9 +29,9 @@ export function SectionHeader({ title, subtitle, action, level = 'h2' }) {
           <p
             style={{
               fontSize: '13px',
-              fontWeight: 400,
+              fontWeight: 600,
               color: 'var(--color-text-tertiary)',
-              marginTop: '2px',
+              marginTop: '4px',
             }}
           >
             {subtitle}

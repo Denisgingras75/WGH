@@ -2,7 +2,7 @@ import { getCategoryNeonImage, categoryEmojiFor } from '../../constants/categori
 
 // Brand tile background colors — used behind icons when no photo is available.
 var BG_COLORS = [
-  'var(--color-accent-gold)',
+  'var(--color-accent)',
   'var(--color-primary)',
   'var(--color-medal-bronze)',
   'var(--color-success)',

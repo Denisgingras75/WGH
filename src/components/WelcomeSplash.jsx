@@ -63,9 +63,9 @@ export function WelcomeSplash() {
     }
   }
 
-  const whats = useMemo(() => makeLine(['w', 'h', 'a', 't', '\u2019', 's'], 0.65), [])
-  const good = useMemo(() => makeLine(['g', 'o', 'o', 'd'], 0.85), [])
-  const here = useMemo(() => makeLine(['h', 'e', 'r', 'e'], 1.05), [])
+  const whats = useMemo(() => makeLine(['W', 'h', 'a', 't', '\u2019', 's'], 0.65), [])
+  const good = useMemo(() => makeLine(['G', 'o', 'o', 'd'], 0.85), [])
+  const here = useMemo(() => makeLine(['H', 'e', 'r', 'e'], 1.05), [])
 
   if (!shouldShow) return null
 
@@ -85,7 +85,7 @@ export function WelcomeSplash() {
         <div className="wgh-splash__text">
           <span className="wgh-splash__b1" style={{ display: 'inline-block' }}>
             <span className="wgh-splash__line">{whats}</span>
-            <span className="wgh-splash__line">{good}</span>
+            <span className="wgh-splash__line"><span className="wgh-splash__line--mark">{good}</span></span>
             <span className="wgh-splash__line">
               {here}
               <span className="wgh-splash__period">.</span>

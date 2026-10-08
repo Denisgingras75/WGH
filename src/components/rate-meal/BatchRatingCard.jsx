@@ -76,15 +76,15 @@ export function BatchRatingCard({
         >
           <div className="text-center mb-5">
             {dish.isSpecial && (
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--color-accent-gold)' }}>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--color-accent)' }}>
                 Special
               </p>
             )}
             <h1
               className="mt-1"
               style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontSize: '38px',
+                fontFamily: 'var(--font-display)',
+                fontSize: '27px',
                 lineHeight: 1,
                 color: 'var(--color-text-primary)',
               }}

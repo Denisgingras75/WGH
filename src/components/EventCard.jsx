@@ -59,7 +59,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
       style={{
         background: 'var(--color-card)',
         border: '1px solid var(--color-divider)',
-        borderLeft: promoted ? '3px solid var(--color-accent-gold)' : '1px solid var(--color-divider)',
+        borderLeft: promoted ? '3px solid var(--color-accent)' : '1px solid var(--color-divider)',
       }}
     >
       <div className="flex gap-3">
@@ -86,7 +86,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
             {promoted && (
               <span
                 className="text-xs font-medium"
-                style={{ color: 'var(--color-accent-gold)' }}
+                style={{ color: 'var(--color-accent)' }}
               >
                 Featured
               </span>
@@ -99,7 +99,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           </h3>
 
           {/* Restaurant Name */}
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent-gold)' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent)' }}>
             {restaurant?.name}
             {restaurant?.town && ` \u00b7 ${restaurant.town}`}
           </p>
@@ -138,7 +138,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
                 </span>
               )
               if (diffDays === 1) return (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--color-accent-gold-muted)', color: 'var(--color-accent-gold)' }}>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)' }}>
                   Tomorrow
                 </span>
               )

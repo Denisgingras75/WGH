@@ -53,8 +53,8 @@ export function getConfidenceIndicator(totalVotes) {
       level: 'low',
       text: `Not enough votes yet (${totalVotes} ${totalVotes === 1 ? 'vote' : 'votes'})`,
       icon: '📊',
-      color: 'var(--color-accent-gold)',
-      style: { color: 'var(--color-accent-gold)', borderColor: 'var(--color-accent-gold)', background: 'rgba(var(--color-accent-gold-rgb), 0.1)' },
+      color: 'var(--color-accent)',
+      style: { color: 'var(--color-accent)', borderColor: 'var(--color-accent)', background: 'rgba(var(--color-accent-rgb), 0.1)' },
     },
     medium: {
       level: 'medium',

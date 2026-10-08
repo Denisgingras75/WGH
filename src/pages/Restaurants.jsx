@@ -124,7 +124,7 @@ export function Restaurants() {
         className="px-4 pt-4 pb-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '2px solid var(--color-divider)',
+          borderBottom: 'var(--border-ink)',
         }}
       >
         {/* Search bar */}
@@ -134,10 +134,10 @@ export function Restaurants() {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={1.5}
+            strokeWidth={2.5}
             stroke="currentColor"
-            className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2"
-            style={{ color: 'var(--color-text-tertiary)' }}
+            className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--color-ink)' }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
@@ -150,12 +150,15 @@ export function Restaurants() {
             aria-label="Search restaurants"
             value={searchQuery}
             onChange={function (e) { setSearchQuery(e.target.value) }}
-            className="w-full pl-10 pr-4 py-3 rounded-xl"
+            className="w-full pl-11 pr-4 py-3 focus:outline-none"
             style={{
-              background: 'var(--color-surface)',
-              border: '1.5px solid var(--color-divider)',
+              background: 'var(--color-surface-elevated)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-hard)',
               color: 'var(--color-text-primary)',
-              fontSize: '14px',
+              fontSize: '16px',
+              fontWeight: 500,
             }}
           />
         </div>
@@ -167,11 +170,11 @@ export function Restaurants() {
           <h2
             className="font-bold"
             style={{
-              fontFamily: "'Amatic SC', cursive",
-              color: 'var(--color-primary)',
-              fontSize: '32px',
-              fontWeight: 700,
-              letterSpacing: '0.02em',
+              fontFamily: 'var(--font-display)',
+              color: 'var(--color-text-primary)',
+              fontSize: '30px',
+              fontWeight: 800,
+              letterSpacing: '-0.025em',
             }}
           >
             Restaurants
@@ -181,12 +184,13 @@ export function Restaurants() {
           <button
             onClick={function () { setShowRadiusSheet(true) }}
             aria-label={'Search radius: ' + radius + ' miles'}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full"
             style={{
               fontSize: '13px',
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)',
-              border: '1.5px solid var(--color-divider)',
+              fontWeight: 800,
+              background: 'var(--color-butter)',
+              color: 'var(--color-ink)',
+              border: 'var(--border-ink-thin)',
             }}
           >
             {radius} mi
@@ -205,10 +209,12 @@ export function Restaurants() {
 
         {/* Open / Closed Tab Switcher */}
         <div
-          className="flex rounded-xl p-1 mb-5"
+          className="flex p-1 mb-4"
           style={{
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard-sm)',
           }}
           role="group"
           aria-label="Filter by status"
@@ -217,10 +223,12 @@ export function Restaurants() {
             role="button"
             aria-pressed={restaurantTab === 'open'}
             onClick={function () { setRestaurantTab('open') }}
-            className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm transition-all"
             style={{
-              background: restaurantTab === 'open' ? 'var(--color-primary)' : 'transparent',
-              color: restaurantTab === 'open' ? 'var(--color-surface-elevated)' : 'var(--color-text-tertiary)',
+              fontWeight: 800,
+              borderRadius: 'var(--radius-sm)',
+              background: restaurantTab === 'open' ? 'var(--color-ink)' : 'transparent',
+              color: restaurantTab === 'open' ? 'var(--color-bg)' : 'var(--color-text-secondary)',
             }}
           >
             Open
@@ -229,10 +237,12 @@ export function Restaurants() {
             role="button"
             aria-pressed={restaurantTab === 'closed'}
             onClick={function () { setRestaurantTab('closed') }}
-            className="flex-1 py-1.5 text-sm font-bold rounded-lg transition-all"
+            className="flex-1 py-2 text-sm transition-all"
             style={{
-              background: restaurantTab === 'closed' ? 'var(--color-primary)' : 'transparent',
-              color: restaurantTab === 'closed' ? 'var(--color-surface-elevated)' : 'var(--color-text-tertiary)',
+              fontWeight: 800,
+              borderRadius: 'var(--radius-sm)',
+              background: restaurantTab === 'closed' ? 'var(--color-ink)' : 'transparent',
+              color: restaurantTab === 'closed' ? 'var(--color-bg)' : 'var(--color-text-secondary)',
             }}
           >
             Closed
@@ -244,11 +254,12 @@ export function Restaurants() {
           <button
             onClick={function () { setSortBy('distance') }}
             aria-pressed={sortBy === 'distance'}
-            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            className="px-3 py-1.5 rounded-full text-xs transition-all"
             style={{
-              background: sortBy === 'distance' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: sortBy === 'distance' ? 'white' : 'var(--color-text-secondary)',
-              border: sortBy === 'distance' ? 'none' : '1.5px solid var(--color-divider)',
+              fontWeight: 800,
+              background: sortBy === 'distance' ? 'var(--color-butter)' : 'var(--color-card)',
+              color: sortBy === 'distance' ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+              border: sortBy === 'distance' ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
             }}
           >
             Distance
@@ -256,11 +267,12 @@ export function Restaurants() {
           <button
             onClick={function () { setSortBy('top-rated') }}
             aria-pressed={sortBy === 'top-rated'}
-            className="px-3 py-1.5 rounded-full font-semibold text-xs transition-all"
+            className="px-3 py-1.5 rounded-full text-xs transition-all"
             style={{
-              background: sortBy === 'top-rated' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: sortBy === 'top-rated' ? 'white' : 'var(--color-text-secondary)',
-              border: sortBy === 'top-rated' ? 'none' : '1.5px solid var(--color-divider)',
+              fontWeight: 800,
+              background: sortBy === 'top-rated' ? 'var(--color-butter)' : 'var(--color-card)',
+              color: sortBy === 'top-rated' ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+              border: sortBy === 'top-rated' ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
             }}
           >
             Top Rated
@@ -275,8 +287,8 @@ export function Restaurants() {
             </p>
             <button
               onClick={function () { window.location.reload() }}
-              className="px-5 py-2.5 text-sm font-bold rounded-lg"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-surface-elevated)' }}
+              className="btn-ink px-5 py-2.5 text-sm"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Try Again
             </button>
@@ -287,8 +299,8 @@ export function Restaurants() {
               return (
                 <div
                   key={i}
-                  className="h-24 rounded-xl animate-pulse"
-                  style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)' }}
+                  className="h-24 animate-pulse"
+                  style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
                 />
               )
             })}
@@ -299,13 +311,14 @@ export function Restaurants() {
               return (
                 <div
                   key={restaurant.id}
-                  className="w-full rounded-xl p-4 transition-all"
+                  className="w-full p-4 transition-all"
                   style={{
                     background: restaurant.is_open
-                      ? 'var(--color-surface-elevated)'
+                      ? 'var(--color-card)'
                       : 'var(--color-surface)',
-                    border: '1.5px solid var(--color-divider)',
-                    boxShadow: restaurant.is_open ? '0 2px 12px rgba(0, 0, 0, 0.06)' : 'none',
+                    border: restaurant.is_open ? 'var(--border-ink)' : '2px dashed var(--color-divider)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: restaurant.is_open ? 'var(--shadow-hard)' : 'none',
                   }}
                 >
                   <button
@@ -315,22 +328,22 @@ export function Restaurants() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <h3
-                          className="font-bold"
                           style={{
                             color: restaurant.is_open ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                            fontSize: restaurant.is_open ? '18px' : '14px',
-                            letterSpacing: '-0.01em',
+                            fontSize: restaurant.is_open ? '20px' : '15px',
+                            lineHeight: 1.1,
                           }}
                         >
                           {restaurant.name}
                         </h3>
                         {restaurant.is_open && restaurant.town && (
                           <p
-                            className="mt-0.5 font-medium"
+                            className="mt-1"
                             style={{
-                              fontSize: '12px',
+                              fontSize: '11px',
+                              fontWeight: 700,
                               color: 'var(--color-text-tertiary)',
-                              letterSpacing: '0.02em',
+                              letterSpacing: '0.1em',
                               textTransform: 'uppercase',
                             }}
                           >
@@ -345,7 +358,7 @@ export function Restaurants() {
                             className="inline-block mt-1 px-2 py-0.5 rounded font-bold"
                             style={{
                               fontSize: '10px',
-                              background: 'rgba(228, 68, 10, 0.08)',
+                              background: 'rgba(var(--color-primary-rgb), 0.08)',
                               color: 'var(--color-primary)',
                               border: '1px solid var(--color-primary)',
                             }}
@@ -388,20 +401,22 @@ export function Restaurants() {
                         navigate('/restaurants/' + restaurant.id + '/reviews')
                       }}
                       className="flex items-center gap-2 mt-2.5 pt-2.5 w-full text-left active:opacity-70 transition-opacity"
-                      style={{ borderTop: '1px solid var(--color-divider)' }}
+                      style={{ borderTop: '1.5px dashed var(--color-divider)' }}
                     >
                       <span
-                        className="font-bold"
                         style={{
-                          fontSize: '18px',
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '22px',
+                          fontWeight: 800,
+                          letterSpacing: '-0.03em',
+                          lineHeight: 1,
                           color: getRatingColor(restaurant.avg_rating),
                         }}
                       >
                         {restaurant.avg_rating}
                       </span>
                       <span
-                        className="font-medium"
-                        style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
+                        style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}
                       >
                         WGH Score · {restaurant.total_votes || 0} vote{(restaurant.total_votes || 0) === 1 ? '' : 's'}
                       </span>
@@ -416,11 +431,12 @@ export function Restaurants() {
 
             {filteredRestaurants.length === 0 && (
               <div
-                className="text-center py-12 rounded-xl"
+                className="text-center py-12"
                 style={{
                   color: 'var(--color-text-tertiary)',
                   background: 'var(--color-surface)',
-                  border: '1.5px solid var(--color-divider)',
+                  border: '2px dashed var(--color-text-tertiary)',
+                  borderRadius: 'var(--radius-lg)',
                 }}
               >
                 <p className="font-bold" style={{ fontSize: '14px' }}>
@@ -447,11 +463,11 @@ export function Restaurants() {
             <h2
               className="font-bold mb-3"
               style={{
-                fontFamily: "'Amatic SC', cursive",
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '28px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontSize: '20px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
               }}
             >
               Discover more restaurants
@@ -484,7 +500,7 @@ export function Restaurants() {
         )}
         {user && nearbyLoading && (
           <div className="mt-8 flex justify-center py-4">
-            <div className="animate-spin w-5 h-5 border-2 rounded-full" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-accent-gold)' }} />
+            <div className="animate-spin w-5 h-5 border-2 rounded-full" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-accent)' }} />
           </div>
         )}
       </div>
@@ -500,13 +516,13 @@ export function Restaurants() {
       {/* Floating Add Restaurant button */}
       <button
         onClick={function () { setAddModalOpen(true) }}
-        className="fixed right-4 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm active:scale-95 transition-all"
+        className="btn-ink fixed right-4 px-4 py-3 text-sm"
         style={{
-          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          bottom: 'calc(78px + env(safe-area-inset-bottom))',
           zIndex: 40,
-          background: 'var(--color-accent-gold)',
-          color: 'white',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          borderRadius: 'var(--radius-pill)',
+          background: 'var(--color-accent)',
+          color: 'var(--color-text-on-primary)',
         }}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -545,10 +561,11 @@ function NearbyPlaceCard({ place }) {
 
   return (
     <div
-      className="rounded-xl p-4"
+      className="p-4"
       style={{
         background: 'var(--color-surface)',
-        border: '1px solid var(--color-divider)',
+        border: '2px dashed var(--color-divider)',
+        borderRadius: 'var(--radius-lg)',
       }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -578,7 +595,7 @@ function NearbyPlaceCard({ place }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium"
-              style={{ color: 'var(--color-accent-gold)' }}
+              style={{ color: 'var(--color-accent)' }}
             >
               Google Maps
             </a>
@@ -589,7 +606,7 @@ function NearbyPlaceCard({ place }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium"
-              style={{ color: 'var(--color-accent-gold)' }}
+              style={{ color: 'var(--color-accent)' }}
             >
               Website
             </a>

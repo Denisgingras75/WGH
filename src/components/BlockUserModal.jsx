@@ -89,7 +89,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
               style={{
                 background: 'var(--color-danger)',
-                color: '#FFFFFF',
+                color: 'var(--color-text-on-primary)',
                 fontSize: '15px',
                 opacity: loading ? 0.7 : 1,
               }}

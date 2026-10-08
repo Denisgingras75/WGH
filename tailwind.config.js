@@ -16,8 +16,9 @@ export default {
         'xl': 'var(--shadow-xl)',
       },
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['Libre Baskerville', 'Georgia', 'serif'],
+        sans: ['var(--font-body)'],
+        display: ['var(--font-display)'],
+        mono: ['var(--font-mono)'],
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',

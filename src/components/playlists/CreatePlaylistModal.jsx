@@ -145,7 +145,7 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
           className="w-full py-3 rounded-xl font-semibold text-sm"
           style={{
             background: 'var(--color-primary)',
-            color: 'white',
+            color: 'var(--color-text-on-primary)',
             opacity: submitting ? 0.6 : 1,
           }}
         >

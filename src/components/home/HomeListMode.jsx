@@ -5,6 +5,7 @@ import { DishSearch } from '../DishSearch'
 import { DishListItem } from '../DishListItem'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
+import { Wordmark } from '../Wordmark'
 import { LocalListsSection, Top10Carousel } from './'
 import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
 
@@ -60,35 +61,15 @@ export const HomeListMode = memo(function HomeListMode({
       {/* Fixed header: brand + search + chips */}
       <div style={{ flexShrink: 0, background: 'var(--color-bg)', zIndex: 10 }}>
         {/* Brand header */}
-        <div className="text-center pt-4 pb-1">
-          <h2 style={{
-            fontFamily: "'Amatic SC', cursive",
-            fontSize: '42px',
-            fontWeight: 700,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '0.04em',
-            lineHeight: 1,
-            margin: 0,
-          }}>
-            What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-          </h2>
-          <p style={{
-            fontSize: '10px',
-            fontWeight: 600,
-            color: '#999',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            margin: '5px 0 0',
-          }}>
+        <div className="text-center pt-5 pb-1">
+          <Wordmark as="h1" size={38} />
+          <p className="eyebrow" style={{ margin: '10px 0 0' }}>
             Top-rated dishes near you
           </p>
         </div>
         {/* Search bar */}
-        <div className="px-5 pt-2 pb-2">
-          <div style={{
-            borderRadius: '14px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-          }}>
+        <div className="px-4 pt-3 pb-3">
+          <div>
             <DishSearch
               loading={false}
               placeholder="What are you craving?"
@@ -98,12 +79,14 @@ export const HomeListMode = memo(function HomeListMode({
                 <button
                   onClick={function (e) { e.stopPropagation(); onRadiusSheetOpen() }}
                   aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                  className="flex items-center gap-1 px-2.5 py-1 font-bold flex-shrink-0"
                   style={{
                     fontSize: '12px',
-                    background: 'var(--color-bg)',
-                    color: 'var(--color-text-secondary)',
-                    border: '1px solid var(--color-divider)',
+                    fontWeight: 800,
+                    background: 'var(--color-butter)',
+                    color: 'var(--color-ink)',
+                    border: 'var(--border-ink-thin)',
+                    borderRadius: 'var(--radius-pill)',
                     cursor: 'pointer',
                   }}
                 >
@@ -144,7 +127,7 @@ export const HomeListMode = memo(function HomeListMode({
           /* Search results — flat list */
           <div className="px-4 pt-2 pb-4">
             <h2 style={{
-              fontFamily: "'Amatic SC', cursive",
+              fontFamily: 'var(--font-display)',
               fontSize: '28px',
               fontWeight: 700,
               color: 'var(--color-text-primary)',
@@ -174,8 +157,8 @@ export const HomeListMode = memo(function HomeListMode({
         ) : activeDishes && activeDishes.length > 0 ? (
           /* Homepage v4 layout — category chips up top, vertical list */
           <>
-            {/* Editorial stories — A-frame chalkboard horizontal scroll */}
-            <ChalkboardSection
+            {/* Editorial stories — buoy cards, horizontal scroll */}
+            <BuoySection
               topRestaurant={topRestaurant}
               mostVotedDish={mostVotedDish}
               bestValueMeal={bestValueMeal}
@@ -215,81 +198,43 @@ export const HomeListMode = memo(function HomeListMode({
   )
 })
 
-// Chalkboard styles — module-level constants (no re-creation per render)
-var BOARD_OUTER = { flexShrink: 0, width: '175px' }
-var BOARD_OUTER_WIDE = { flexShrink: 0, width: '185px' }
-var COUNT_BADGE = { fontFamily: "'Outfit', sans-serif", display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(196, 138, 18, 0.2)', color: 'var(--color-accent-gold)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', marginTop: '4px' }
-var BOARD_SURFACE = { position: 'relative', background: '#363B3F', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
-var BOARD_FRAME = { position: 'absolute', inset: '3px', border: '2.5px solid #1A1D1F', borderRadius: '2px', pointerEvents: 'none', zIndex: 2 }
-var BOARD_DUST = { position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.03) 0%, transparent 60%)', pointerEvents: 'none' }
-var BOARD_CONTENT = { position: 'relative', zIndex: 1, padding: '8px 10px 9px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }
-var CHALK_BRIGHT = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)', fontWeight: 700 }
-var CHALK_MED = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.55)', fontWeight: 700 }
-var CHALK_FAINT = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.45)', fontWeight: 700 }
-var CHALK_BIG = { fontFamily: "'Amatic SC', cursive", color: 'rgba(255,255,255,0.88)' }
-var CHALK_CTA = { fontFamily: "'Amatic SC', cursive", color: 'var(--color-primary)' }
-var CHALK_LINE = { height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0', width: '36px' }
-var LEG_STYLE = { width: '2.5px', height: '10px', background: '#6B7280', borderRadius: '0 0 1.5px 1.5px' }
-var LEG_LEFT = Object.assign({}, LEG_STYLE, { transform: 'rotate(6deg)', transformOrigin: 'top center' })
-var LEG_RIGHT = Object.assign({}, LEG_STYLE, { transform: 'rotate(-6deg)', transformOrigin: 'top center' })
+// Buoy cards — editorial stories painted in the three inks, like the
+// lobster buoys hanging on Menemsha shacks. Module-level constants (no re-creation per render).
+var BUOY_INKS = [
+  { bg: 'var(--color-primary)', fg: 'var(--color-text-on-primary)' },
+  { bg: 'var(--color-butter)', fg: 'var(--color-ink)' },
+  { bg: 'var(--color-accent)', fg: 'var(--color-text-on-primary)' },
+  { bg: 'var(--color-surface-elevated)', fg: 'var(--color-ink)' },
+]
+var BUOY_CARD = { position: 'relative', flexShrink: 0, width: '164px', minHeight: '156px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', padding: '12px 12px 11px', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }
+var BUOY_ICON = { position: 'absolute', bottom: '6px', right: '6px', width: '58px', height: '58px', objectFit: 'contain', transform: 'rotate(8deg)', pointerEvents: 'none' }
+var BUOY_TAG = { fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.85, margin: 0, lineHeight: 1.25 }
+var BUOY_TITLE = { fontFamily: 'var(--font-display)', fontWeight: 800, fontStretch: '85%', letterSpacing: '-0.02em', lineHeight: 1.0, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
+var BUOY_SUB = { fontSize: '12px', fontWeight: 600, opacity: 0.85, margin: '4px 0 0', lineHeight: 1.3 }
+var BUOY_STAT = { display: 'inline-block', fontSize: '11px', fontWeight: 800, padding: '2px 8px', marginTop: '8px', borderRadius: 'var(--radius-pill)', border: '1.5px solid currentColor' }
+var BUOY_CTA = { marginTop: 'auto', paddingTop: '10px', paddingRight: '56px', fontSize: '13px', fontWeight: 800, lineHeight: 1.2 }
+var BUOY_BOTTOM_ICON = { display: 'block', margin: '6px 0 -2px', width: '40px', height: '40px', objectFit: 'contain' }
 
-var BOARD_ICON_STYLE = { display: 'inline-block', verticalAlign: 'middle', width: '20px', height: '20px', objectFit: 'contain', marginRight: '3px' }
-
-function ChalkboardCard({ tag, title, titleSize, sub, stat, cta, onClick, icon, bottomIcon }) {
+function BuoyCard({ ink, tag, title, titleSize, sub, stat, cta, onClick, icon, bottomIcon }) {
+  var colors = BUOY_INKS[ink % BUOY_INKS.length]
   return (
     <button
       onClick={onClick}
-      className="active:scale-[0.97] transition-transform"
-      style={BOARD_OUTER}
+      className="sticker-press"
+      style={Object.assign({}, BUOY_CARD, { background: colors.bg, color: colors.fg })}
     >
-      <div style={BOARD_SURFACE}>
-        <div style={BOARD_FRAME} />
-        <div style={BOARD_DUST} />
-        <div style={BOARD_CONTENT}>
-          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '14px', margin: 0 })}>
-            {icon && <img src={icon} alt="" style={BOARD_ICON_STYLE} />}
-            <span>{tag}</span>
-          </p>
-          <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
-          {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
-          <div style={CHALK_LINE} />
-          {stat && <p style={Object.assign({}, CHALK_BRIGHT, { fontSize: '16px', margin: 0 })}>{stat}</p>}
-          {stat && <div style={CHALK_LINE} />}
-          <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
-          {bottomIcon && <img src={bottomIcon} alt="" style={ICE_CREAM_MELTING_STYLE} />}
-        </div>
-      </div>
+      {icon && <img src={icon} alt="" style={BUOY_ICON} />}
+      <p style={BUOY_TAG}>{tag}</p>
+      <p style={Object.assign({}, BUOY_TITLE, { fontSize: titleSize || '26px' })}>{title}</p>
+      {sub && <p style={BUOY_SUB}>{sub}</p>}
+      {stat && <span style={BUOY_STAT}>{stat}</span>}
+      {bottomIcon && <img src={bottomIcon} alt="" style={BUOY_BOTTOM_ICON} />}
+      <span style={BUOY_CTA}>{cta}</span>
     </button>
   )
 }
 
-var ICE_CREAM_MELTING_STYLE = { display: 'block', margin: '4px auto -2px', width: '40px', height: '40px', objectFit: 'contain' }
-
-function LocalsChalkboardCard({ tag, title, titleSize, sub, countText, cta, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="active:scale-[0.97] transition-transform"
-      style={BOARD_OUTER_WIDE}
-    >
-      <div style={BOARD_SURFACE}>
-        <div style={BOARD_FRAME} />
-        <div style={BOARD_DUST} />
-        <div style={BOARD_CONTENT}>
-          <p style={Object.assign({}, CHALK_FAINT, { fontSize: '13px', margin: 0 })}>{tag}</p>
-          <p style={Object.assign({}, CHALK_BIG, { fontSize: titleSize || '30px', fontWeight: 700, lineHeight: 0.95, margin: '2px 0 0' })}>{title}</p>
-          {sub && <p style={Object.assign({}, CHALK_MED, { fontSize: '15px', margin: 0 })}>{sub}</p>}
-          <div style={CHALK_LINE} />
-          {countText && <span style={COUNT_BADGE}>{countText}</span>}
-          {countText && <div style={{ marginTop: '4px' }} />}
-          <p style={Object.assign({}, CHALK_CTA, { fontSize: '18px', fontWeight: 700, margin: 0 })}>{cta}</p>
-        </div>
-      </div>
-    </button>
-  )
-}
-
-function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
+function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
   var navigate = useNavigate()
 
   var hour = new Date().getHours()
@@ -301,16 +246,17 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
   return (
     <div
-      className="flex gap-3 overflow-x-auto mt-2"
+      className="flex gap-3 overflow-x-auto"
       style={{
-        padding: '0 16px 0',
+        padding: '14px 16px 8px',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'none',
         touchAction: 'pan-x pan-y',
       }}
     >
       {/* Board 1: Time of day */}
-      <ChalkboardCard
+      <BuoyCard
+        ink={0}
         icon={timeCallout.icon}
         tag={timeCallout.tag}
         title={timeCallout.title}
@@ -322,7 +268,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 2: Top Restaurant */}
       {topRestaurant && (
-        <ChalkboardCard
+        <BuoyCard
+          ink={1}
           icon="/categories/icons/star.png"
           tag={'highest rated restaurant'}
           title={topRestaurant.name}
@@ -333,7 +280,8 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
       )}
 
       {/* Board 3: Chowder */}
-      <ChalkboardCard
+      <BuoyCard
+          ink={2}
         icon="/categories/icons/chowder.webp"
         tag={'the great debate'}
         title="Chowder"
@@ -344,11 +292,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 4: Most Talked About */}
       {mostVotedDish && (
-        <ChalkboardCard
+        <BuoyCard
+          ink={3}
           icon="/categories/icons/speech-bubble.png"
           tag={'most talked about'}
           title={mostVotedDish.dish_name || mostVotedDish.name}
-          titleSize="28px"
+          titleSize="21px"
           sub={mostVotedDish.restaurant_name}
           stat={(mostVotedDish.total_votes || 0) + ' votes'}
           cta={'see why \u2192'}
@@ -358,11 +307,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 5: Best Meal Under $15 */}
       {bestValueMeal && (
-        <ChalkboardCard
+        <BuoyCard
+          ink={4}
           icon="/categories/icons/money-bag.png"
           tag={'best value'}
           title={bestValueMeal.dish_name || bestValueMeal.name}
-          titleSize="28px"
+          titleSize="21px"
           sub={bestValueMeal.restaurant_name}
           stat={'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + Number(bestValueMeal.avg_rating || 0).toFixed(1)}
           cta={'best meal under $15 \u2192'}
@@ -372,11 +322,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 6: Best Ice Cream — clean cone top, melting cone bottom */}
       {bestIceCream && (
-        <ChalkboardCard
+        <BuoyCard
+          ink={5}
           icon="/categories/icons/ice-cream-clean.png"
           tag={'island scoops'}
           title={bestIceCream.dish_name || bestIceCream.name}
-          titleSize="28px"
+          titleSize="21px"
           sub={bestIceCream.restaurant_name}
           stat={(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + Number(bestIceCream.avg_rating || 0).toFixed(1)}
           cta={'best ice cream \u2192'}
@@ -387,11 +338,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 7: Locals Agree — most-appearing dish */}
       {localsAggregate && localsAggregate.top_dish_id && localsAggregate.total_lists >= 2 && (
-        <LocalsChalkboardCard
+        <BuoyCard
+          ink={6}
           tag={'\uD83C\uDFC6 locals agree'}
           title={localsAggregate.top_dish_name}
           sub={localsAggregate.top_dish_restaurant_name}
-          countText={'On ' + localsAggregate.top_dish_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
+          stat={'On ' + localsAggregate.top_dish_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
           cta={'see why \u2192'}
           onClick={function () { navigate('/dish/' + localsAggregate.top_dish_id) }}
         />
@@ -399,11 +351,12 @@ function ChalkboardSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIc
 
       {/* Board 8: Island Favorite — most-appearing restaurant */}
       {localsAggregate && localsAggregate.top_restaurant_id && localsAggregate.total_lists >= 2 && (
-        <LocalsChalkboardCard
+        <BuoyCard
+          ink={7}
           tag={'\uD83D\uDCCD island favorite'}
           title={localsAggregate.top_restaurant_name}
           sub={localsAggregate.top_restaurant_town || ''}
-          countText={localsAggregate.top_restaurant_list_count >= localsAggregate.total_lists ? 'On every local list' : 'On ' + localsAggregate.top_restaurant_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
+          stat={localsAggregate.top_restaurant_list_count >= localsAggregate.total_lists ? 'On every local list' : 'On ' + localsAggregate.top_restaurant_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
           cta={'see the menu \u2192'}
           onClick={function () { navigate('/restaurants/' + localsAggregate.top_restaurant_id) }}
         />

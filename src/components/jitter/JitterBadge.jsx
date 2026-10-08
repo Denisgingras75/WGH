@@ -22,9 +22,9 @@ var STATES = {
     label: 'Verified',
     color: 'var(--color-rating, #16a34a)',
     // rgba needed for translucent backgrounds — CSS vars can't do opacity in inline styles
-    bg: 'rgba(22, 163, 74, 0.10)',
-    bgHover: 'rgba(22, 163, 74, 0.16)',
-    glow: '0 0 8px rgba(22, 163, 74, 0.25)',
+    bg: 'rgba(var(--color-success-rgb), 0.10)',
+    bgHover: 'rgba(var(--color-success-rgb), 0.16)',
+    glow: '0 0 8px rgba(var(--color-success-rgb), 0.25)',
     // Lively irregular peaks — human rhythm
     wave: [0.3, 0.7, 0.45, 0.9, 0.35, 0.75, 0.5, 0.85, 0.4, 0.65],
     dash: null,
@@ -42,9 +42,9 @@ var STATES = {
   bot: {
     label: 'Bot',
     color: 'var(--color-danger, #dc2626)',
-    bg: 'rgba(220, 38, 38, 0.08)',
-    bgHover: 'rgba(220, 38, 38, 0.14)',
-    glow: '0 0 8px rgba(220, 38, 38, 0.20)',
+    bg: 'rgba(var(--color-danger-rgb), 0.08)',
+    bgHover: 'rgba(var(--color-danger-rgb), 0.14)',
+    glow: '0 0 8px rgba(var(--color-danger-rgb), 0.20)',
     // Flatline — dead rhythm
     wave: [0.48, 0.5, 0.49, 0.5, 0.5, 0.49, 0.5, 0.48, 0.5, 0.49],
     dash: null,
@@ -164,7 +164,7 @@ function JitterPopover({ stats, state, warScore }) {
       {/* Mini waveform header */}
       <div className="flex items-center gap-2" style={{ marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--color-divider, #e5e0db)' }}>
         <Waveform points={cfg.wave} color={cfg.color} dash={cfg.dash} width={32} height={12} animate={false} stateKey={state} />
-        <span style={{ fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace", fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', color: cfg.color, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', color: cfg.color, textTransform: 'uppercase' }}>
           jitter
         </span>
       </div>
@@ -175,7 +175,7 @@ function JitterPopover({ stats, state, warScore }) {
           return (
             <div key={row.label} className="flex justify-between" style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
               <span style={{ color: 'var(--color-text-tertiary, #999)' }}>{row.label}</span>
-              <span style={{ color: 'var(--color-text-primary, #1a1a1a)', fontWeight: 600, fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: '11px' }}>{row.value}</span>
+              <span style={{ color: 'var(--color-text-primary, #1a1a1a)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{row.value}</span>
             </div>
           )
         })}
@@ -268,7 +268,7 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
       {sz.wordmark && (
         <span
           style={{
-            fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+            fontFamily: 'var(--font-mono)',
             fontWeight: 700,
             fontSize: sz.fontSize,
             letterSpacing: '0.05em',
@@ -284,7 +284,7 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
       {warScore != null && (
         <span
           style={{
-            fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+            fontFamily: 'var(--font-mono)',
             fontWeight: 600,
             fontSize: sz.scoreFontSize,
             color: cfg.color,
@@ -299,7 +299,7 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
       {warScore == null && (
         <span
           style={{
-            fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+            fontFamily: 'var(--font-mono)',
             fontWeight: 600,
             fontSize: sz.scoreFontSize,
             color: cfg.color,

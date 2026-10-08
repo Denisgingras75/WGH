@@ -24,26 +24,16 @@ export function BrowseSearchBar({
     <div
       className="px-6 pt-5 pb-6 relative"
       style={{
-        background: 'linear-gradient(180deg, var(--color-card) 0%, var(--color-surface) 50%, var(--color-bg) 100%)',
+        background: 'var(--color-bg)',
         minHeight: 'calc(100vh - 80px)',
       }}
     >
-      {/* Table edge */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{
-          background: 'linear-gradient(90deg, transparent 0%, var(--color-divider) 20%, var(--color-divider) 80%, transparent 100%)',
-        }}
-      />
 
       {/* Section title - anchors the grid */}
       <div className="flex justify-center pt-4 pb-10">
-        <span
-          className="text-[11px] font-semibold tracking-[0.2em] uppercase"
-          style={{ fontFamily: "'Amatic SC', cursive", fontSize: '28px', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}
-        >
+        <h2 style={{ fontSize: '30px', color: 'var(--color-text-primary)' }}>
           Categories
-        </span>
+        </h2>
       </div>
 
       {/* Category grid - 12 items, 4 rows of 3, shelf-like rhythm */}
@@ -63,10 +53,12 @@ export function BrowseSearchBar({
       <div className="mt-auto pt-10">
         <div className="relative">
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 transition-all duration-150"
             style={{
-              background: 'var(--color-bg)',
-              border: searchFocused ? '2px solid var(--color-primary)' : '2px solid var(--color-divider)',
+              background: 'var(--color-surface-elevated)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: searchFocused ? '4px 4px 0 var(--color-primary)' : 'var(--shadow-hard)',
             }}
           >
             <svg
@@ -152,12 +144,12 @@ export function BrowseSearchBar({
                       background: suggestion.type === 'dish'
                         ? 'var(--color-primary-muted)'
                         : suggestion.type === 'place'
-                        ? 'var(--color-accent-gold-muted)'
+                        ? 'var(--color-accent-muted)'
                         : 'var(--color-primary-muted)',
                       color: suggestion.type === 'dish'
                         ? 'var(--color-primary)'
                         : suggestion.type === 'place'
-                        ? 'var(--color-accent-gold)'
+                        ? 'var(--color-accent)'
                         : 'var(--color-blue-light)',
                     }}
                   >

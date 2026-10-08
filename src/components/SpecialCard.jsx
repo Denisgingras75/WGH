@@ -44,7 +44,7 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
           {promoted && (
             <span
               className="text-xs font-medium mb-1 inline-block"
-              style={{ color: 'var(--color-accent-gold)' }}
+              style={{ color: 'var(--color-accent)' }}
             >
               Featured
             </span>

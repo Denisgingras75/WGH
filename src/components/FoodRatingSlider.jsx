@@ -66,11 +66,11 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
         {/* Rating display overlaid */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
           {unrated ? (
-            <span className="text-lg font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Tap to rate</span>
+            <span style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-tertiary)' }}>Tap to rate</span>
           ) : (
             <>
-              <span className="text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
-              <span className="text-xl" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '46px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>/10</span>
             </>
           )}
         </div>
@@ -78,7 +78,7 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
 
       {/* Label based on rating */}
       <div className="text-center">
-        <span className="text-lg font-semibold" style={{ color: unrated ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '21px', fontWeight: 800, letterSpacing: '-0.02em', color: unrated ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
           {unrated ? 'Slide to rate' : getRatingLabel(value)}
         </span>
       </div>
@@ -99,22 +99,24 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
           aria-valuemax={max}
           aria-valuenow={value}
           aria-valuetext={unrated ? 'Not rated yet' : `${value.toFixed(1)} out of 10: ${getRatingLabel(value)}`}
-          className="rating-slider w-full h-3 rounded-full appearance-none cursor-pointer
+          className="rating-slider w-full appearance-none cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-9 [&::-webkit-slider-thumb]:h-9
-            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-xl
-            [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:cursor-pointer
-            [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
+            [&::-webkit-slider-thumb]:rounded-full
+            [&::-webkit-slider-thumb]:cursor-pointer
+            [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110
             [&::-webkit-slider-thumb]:active:scale-95
             [&::-moz-range-thumb]:w-9 [&::-moz-range-thumb]:h-9 [&::-moz-range-thumb]:rounded-full
-            [&::-moz-range-thumb]:shadow-xl [&::-moz-range-thumb]:border-4
             [&::-moz-range-thumb]:cursor-pointer"
           style={{
+            height: '16px',
+            borderRadius: 'var(--radius-pill)',
+            border: 'var(--border-ink)',
             background: unrated
-              ? 'var(--color-divider)'
-              : 'linear-gradient(90deg, var(--color-red-light), var(--color-yellow), var(--color-emerald-light))',
+              ? 'var(--color-surface)'
+              : 'linear-gradient(90deg, var(--color-red-light), var(--color-butter), var(--color-emerald-light))',
           }}
         />
-        <div className="flex justify-between text-xs mt-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>
+        <div className="flex justify-between text-xs mt-2 px-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 700 }}>
           <span>0</span>
           <span>5</span>
           <span>10</span>

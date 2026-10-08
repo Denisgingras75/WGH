@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHand
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { DishListItem } from '../DishListItem'
 import { CategoryIcon } from './CategoryIcons'
+import { SmileyPin } from '../SmileyPin'
 
 var CAROUSEL_TABS = [{ id: 'nearby', label: 'Near You' }].concat(
   BROWSE_CATEGORIES.map(function (c) { return { id: c.id, label: c.label } })
@@ -106,18 +107,11 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
   var visibleCount = Math.min(allActiveTabDishes.length, activeLimit)
 
   return (
-    <div className="pt-1">
-      {/* Divider */}
-      <div className="mx-4 mb-2" style={{
-        height: '2px',
-        background: 'linear-gradient(90deg, var(--color-text-primary), var(--color-text-primary) 30%, transparent)',
-        opacity: 0.12,
-      }} />
-
+    <div className="pt-2" style={{ borderTop: 'var(--border-ink)' }}>
       {/* Category icons — food icons as carousel navigation */}
       <div
         ref={tabsRef}
-        className="flex overflow-x-auto px-3 pb-1"
+        className="flex overflow-x-auto px-2 pt-2 pb-2"
         style={{
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
@@ -130,36 +124,40 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
             <button
               key={tab.id}
               onClick={function () { handleTabClick(i) }}
+              aria-pressed={isActive}
               className="flex-shrink-0 flex flex-col items-center justify-center active:scale-[0.94] transition-transform"
               style={{
                 padding: '0',
-                minWidth: '64px',
+                minWidth: '68px',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                opacity: isActive ? 1 : 0.45,
-                transition: 'opacity 0.15s',
               }}
             >
-              {tab.id === 'nearby' ? (
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '22px',
-                }}>
-                  📍
-                </div>
-              ) : (
-                <CategoryIcon categoryId={tab.id} size={56} />
-              )}
+              <div style={{
+                width: '58px',
+                height: '58px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                background: isActive ? 'var(--color-butter)' : 'transparent',
+                border: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                boxShadow: isActive ? 'var(--shadow-hard-sm)' : 'none',
+                opacity: isActive ? 1 : 0.6,
+                transition: 'opacity 0.15s, background 0.15s',
+              }}>
+                {tab.id === 'nearby' ? (
+                  <SmileyPin size={34} />
+                ) : (
+                  <CategoryIcon categoryId={tab.id} size={50} />
+                )}
+              </div>
               <span style={{
-                marginTop: '1px',
-                fontSize: '9px',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                marginTop: '4px',
+                fontSize: '11px',
+                fontWeight: isActive ? 800 : 600,
+                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                 lineHeight: 1.2,
               }}>
                 {tab.label}
@@ -170,24 +168,18 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
       </div>
 
       {/* Section header — updates with active tab */}
-      <div className="px-5 flex items-baseline justify-between mb-1">
+      <div className="px-4 flex items-baseline justify-between mb-2 mt-1">
         <h2 style={{
-          fontFamily: "'Amatic SC', cursive",
-          fontSize: '30px',
-          fontWeight: 700,
+          fontFamily: 'var(--font-display)',
+          fontSize: '26px',
+          fontWeight: 800,
           color: 'var(--color-text-primary)',
-          letterSpacing: '0.02em',
+          letterSpacing: '-0.02em',
           lineHeight: 1,
         }}>
           {activeTab.id === 'nearby' ? 'Top Rated Nearby' : 'Top ' + activeTab.label}
         </h2>
-        <span style={{
-          fontSize: '11px',
-          color: 'var(--color-text-tertiary)',
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-        }}>
+        <span className="eyebrow">
           {visibleCount}{allActiveTabDishes.length > activeLimit ? '+' : ''} {visibleCount === 1 ? 'dish' : 'dishes'}
         </span>
       </div>
@@ -244,13 +236,12 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                   {hasMore && (
                     <button
                       onClick={function () { handleShowMore(tab.id) }}
-                      className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98]"
+                      className="btn-ink w-full py-3"
                       style={{
                         fontSize: '14px',
-                        color: 'var(--color-accent-gold)',
+                        color: 'var(--color-ink)',
                         background: 'var(--color-card)',
-                        border: '1.5px solid var(--color-divider)',
-                        marginTop: '8px',
+                        marginTop: '12px',
                         cursor: 'pointer',
                       }}
                     >

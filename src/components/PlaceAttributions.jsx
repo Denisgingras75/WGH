@@ -25,7 +25,7 @@ export function PlaceAttributions({ attributions, className = '' }) {
               href={a.url}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: 'var(--color-accent-gold)' }}
+              style={{ color: 'var(--color-accent)' }}
             >
               {a.provider}
             </a>

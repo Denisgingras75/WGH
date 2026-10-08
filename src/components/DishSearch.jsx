@@ -138,20 +138,22 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
     <div className="relative w-full">
       {/* Search Input */}
       <div
-        className="relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+        className="relative flex items-center gap-3 px-4 py-3 transition-all duration-150"
         style={{
           background: 'var(--color-surface-elevated)',
-          border: isFocused ? '2px solid var(--color-primary)' : '1.5px solid var(--color-divider)',
-          minHeight: '48px',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: isFocused ? '4px 4px 0 var(--color-primary)' : 'var(--shadow-hard)',
+          minHeight: '50px',
         }}
       >
         <svg
           className="w-5 h-5 flex-shrink-0"
-          style={{ color: 'var(--color-text-tertiary)' }}
+          style={{ color: 'var(--color-ink)' }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -171,8 +173,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           aria-autocomplete="list"
           aria-expanded={showDropdown}
           aria-controls="dish-search-dropdown"
-          className="flex-1 bg-transparent outline-none border-none text-sm"
-          style={{ color: 'var(--color-text-primary)', outline: 'none', border: 'none', boxShadow: 'none' }}
+          className="flex-1 bg-transparent outline-none border-none"
+          style={{ color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500, outline: 'none', border: 'none', boxShadow: 'none' }}
         />
 
         {query && (
@@ -219,10 +221,12 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           id="dish-search-dropdown"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
+          className="absolute top-full left-0 right-0 mt-3 overflow-hidden z-50"
           style={{
-            background: 'var(--color-surface)',
-            border: '1.5px solid var(--color-divider)',
+            background: 'var(--color-surface-elevated)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
           {isLoading ? (
@@ -303,7 +307,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'white' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)' }}>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
@@ -323,14 +327,14 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-gold-muted)', color: 'var(--color-accent-gold)' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)' }}>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{p.name}</p>
-                        <p className="text-xs truncate" style={{ color: 'var(--color-accent-gold)' }}>Add to WGH</p>
+                        <p className="text-xs truncate" style={{ color: 'var(--color-accent)' }}>Add to WGH</p>
                       </div>
                     </button>
                   ))}

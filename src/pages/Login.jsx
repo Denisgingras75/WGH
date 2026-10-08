@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { logger } from '../utils/logger'
 import { CameraIcon } from '../components/CameraIcon'
 import { SmileyPin } from '../components/SmileyPin'
+import { Wordmark } from '../components/Wordmark'
 import { FEATURES } from '../constants/features'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
@@ -220,20 +221,7 @@ export function Login() {
               <div style={{ marginBottom: '-14px', position: 'relative', zIndex: 2 }}>
                 <SmileyPin size={56} />
               </div>
-              <h1
-                style={{
-                  fontFamily: "'Amatic SC', cursive",
-                  fontSize: '42px',
-                  fontWeight: 700,
-                  color: 'var(--color-text-primary)',
-                  lineHeight: 1,
-                  letterSpacing: '0.04em',
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              >
-                What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-              </h1>
+              <Wordmark as="h1" size={36} style={{ position: 'relative', zIndex: 1 }} />
               <p
                 style={{
                   color: 'var(--color-text-secondary)',
@@ -324,7 +312,7 @@ export function Login() {
               className="mt-4 text-sm font-medium"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
-              Already have an account? <span style={{ color: 'var(--color-accent-gold)' }}>Sign in</span>
+              Already have an account? <span style={{ color: 'var(--color-accent)' }}>Sign in</span>
             </button>
           </div>
         ) : (

@@ -201,7 +201,7 @@ export function HeroIdentityCard({
                 <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>reviews</div>
               </div>
               <div className="mt-1">
-                <div className="font-semibold" style={{ color: 'var(--color-accent-gold)', fontSize: '12px', lineHeight: 1 }}>
+                <div className="font-semibold" style={{ color: 'var(--color-accent)', fontSize: '12px', lineHeight: 1 }}>
                   {jitterProfile.consistency_score != null
                     ? getRhythmLabel(Number(jitterProfile.consistency_score))
                     : '\u2014'}
@@ -209,7 +209,7 @@ export function HeroIdentityCard({
                 <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>rhythm</div>
               </div>
               {hasJitterDetail && (
-                <div className="mt-1.5" style={{ color: 'var(--color-accent-gold)', fontSize: '10px' }}>
+                <div className="mt-1.5" style={{ color: 'var(--color-accent)', fontSize: '10px' }}>
                   {jitterExpanded ? '\u25B2 less' : '\u25BC detail'}
                 </div>
               )}
@@ -279,7 +279,7 @@ function KeyBar({ letter, ms, max }) {
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
       <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
-        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent-gold)' }} />
+        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
     </div>

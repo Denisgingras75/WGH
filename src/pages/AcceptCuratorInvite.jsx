@@ -88,7 +88,7 @@ export function AcceptCuratorInvite() {
           <button
             onClick={function () { navigate('/') }}
             className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', cursor: 'pointer' }}
           >
             Go Home
           </button>
@@ -119,7 +119,7 @@ export function AcceptCuratorInvite() {
             onClick={handleAccept}
             disabled={accepting}
             className="w-full px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: accepting ? 'default' : 'pointer' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', cursor: accepting ? 'default' : 'pointer' }}
           >
             {accepting ? 'Setting up...' : 'Accept & Build My Top 10'}
           </button>
@@ -127,7 +127,7 @@ export function AcceptCuratorInvite() {
           <button
             onClick={handleSignIn}
             className="w-full px-6 py-3 rounded-xl font-semibold transition-all"
-            style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', cursor: 'pointer' }}
           >
             Sign In to Accept
           </button>

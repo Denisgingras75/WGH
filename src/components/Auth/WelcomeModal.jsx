@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
 import { SmileyPin } from '../SmileyPin'
+import { Wordmark } from '../Wordmark'
 import { capture } from '../../lib/analytics'
 import { getUserMessage } from '../../utils/errorHandler'
 
@@ -142,20 +143,7 @@ export function WelcomeModal() {
           </div>
 
           {/* Brand name */}
-          <h1
-            style={{
-              fontFamily: "'Amatic SC', cursive",
-              fontSize: '42px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              lineHeight: 1,
-              letterSpacing: '0.04em',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            What's <span style={{ color: 'var(--color-primary)' }}>Good</span> Here
-          </h1>
+          <Wordmark as="h1" size={36} style={{ position: 'relative', zIndex: 1 }} />
 
           {/* Welcome line */}
           <p
@@ -227,7 +215,7 @@ export function WelcomeModal() {
                   background: i === step
                     ? 'var(--color-primary)'
                     : i < step
-                      ? 'var(--color-primary-muted, rgba(244, 122, 31, 0.5))'
+                      ? 'var(--color-primary-muted, rgba(var(--color-primary-rgb), 0.5))'
                       : 'var(--color-divider)'
                 }}
                 disabled={i > step}
@@ -281,14 +269,14 @@ export function WelcomeModal() {
                     width: 44,
                     height: 44,
                     background: n >= 8
-                      ? 'rgba(22, 163, 74, 0.15)'
+                      ? 'rgba(var(--color-success-rgb), 0.15)'
                       : n >= 6
                         ? 'rgba(245, 158, 11, 0.15)'
-                        : 'rgba(220, 38, 38, 0.08)',
+                        : 'rgba(var(--color-danger-rgb), 0.08)',
                     color: n >= 8
                       ? 'var(--color-rating)'
                       : n >= 6
-                        ? 'var(--color-accent-gold)'
+                        ? 'var(--color-accent)'
                         : 'var(--color-text-secondary)',
                     fontWeight: 700,
                   }}

@@ -78,7 +78,7 @@ export function EarIconTooltip({ visible, onDismiss }) {
             handleDismiss()
           }}
           className="mt-1.5 text-xs font-semibold"
-          style={{ color: 'var(--color-accent-gold)' }}
+          style={{ color: 'var(--color-accent)' }}
         >
           Got it
         </button>

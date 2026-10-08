@@ -85,48 +85,71 @@ export const DishListItem = memo(function DishListItem({
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
-      className={'w-full text-left active:scale-[0.98]' + (isPodium ? ' rounded-xl' : '')}
+      className={'w-full text-left' + (isPodium ? ' sticker-press' : ' active:scale-[0.99]')}
       style={{
         background: highlighted
-          ? 'var(--color-accent-gold-muted)'
+          ? 'var(--color-butter-muted)'
           : isPodium
-            ? 'var(--color-surface)'
+            ? 'var(--color-card)'
             : 'transparent',
-        padding: isPodium ? '10px 10px' : '8px 10px',
+        padding: isPodium ? '10px 12px 10px 10px' : '8px 10px',
+        marginBottom: isPodium ? '10px' : 0,
+        border: isPodium ? 'var(--border-ink)' : 'none',
+        borderRadius: isPodium ? 'var(--radius-lg)' : 0,
+        boxShadow: isPodium ? 'var(--shadow-hard)' : 'none',
         cursor: 'pointer',
         transition: 'background 1s ease-out',
-        borderBottom: !isPodium && !isLast ? '1px solid var(--color-divider)' : 'none',
+        borderBottom: !isPodium && !isLast ? '1.5px solid var(--color-divider)' : (isPodium ? 'var(--border-ink)' : 'none'),
       }}
     >
       <div className="flex items-center">
-      {/* Rank number */}
+      {/* Rank — medal sticker for the podium, plain numeral after */}
       {rank != null && (
-        <span
-          className="flex-shrink-0 font-bold"
-          style={{
-            width: isPodium ? '32px' : '28px',
-            textAlign: 'center',
-            fontSize: isPodium ? '22px' : '15px',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            color: rank === 1
-              ? 'var(--color-medal-gold)'
-              : rank === 2
-                ? 'var(--color-medal-silver)'
-                : rank === 3
-                  ? 'var(--color-medal-bronze)'
-                  : 'var(--color-text-tertiary)',
-          }}
-        >
-          {rank}
-        </span>
+        isPodium ? (
+          <span
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: 'var(--border-ink)',
+              background: rank === 1
+                ? 'var(--color-medal-gold)'
+                : rank === 2
+                  ? 'var(--color-medal-silver)'
+                  : 'var(--color-medal-bronze)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '17px',
+              fontWeight: 800,
+              color: 'var(--color-ink)',
+              lineHeight: 1,
+            }}
+          >
+            {rank}
+          </span>
+        ) : (
+          <span
+            className="flex-shrink-0"
+            style={{
+              width: '32px',
+              textAlign: 'center',
+              fontFamily: 'var(--font-display)',
+              fontSize: '17px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-text-tertiary)',
+            }}
+          >
+            {rank}
+          </span>
+        )
       )}
 
       {/* Category icon (when no photo thumbnail) */}
       {!showPhoto && (
         <div
           className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: isPodium ? '72px' : '64px', height: isPodium ? '72px' : '64px', marginLeft: '4px' }}
+          style={{ width: isPodium ? '64px' : '56px', height: isPodium ? '64px' : '56px', marginLeft: '6px' }}
         >
           {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
             <img
@@ -164,10 +187,10 @@ export const DishListItem = memo(function DishListItem({
         <p
           className="font-bold line-clamp-2"
           style={{
-            fontSize: isPodium ? '15px' : '14px',
-            fontWeight: isPodium ? 800 : 700,
+            fontSize: isPodium ? '16px' : '15px',
+            fontWeight: 700,
             color: 'var(--color-text-primary)',
-            lineHeight: 1.3,
+            lineHeight: 1.25,
             letterSpacing: '-0.01em',
           }}
         >
@@ -177,7 +200,7 @@ export const DishListItem = memo(function DishListItem({
           <p
             className="truncate"
             style={{
-              fontSize: isPodium ? '12px' : '11px',
+              fontSize: '12.5px',
               color: 'var(--color-text-tertiary)',
             }}
           >
@@ -192,7 +215,7 @@ export const DishListItem = memo(function DishListItem({
                     navigate('/restaurants/' + restaurantId)
                   }
                 }}
-                style={{ color: 'var(--color-accent-gold)', fontWeight: 600, cursor: 'pointer' }}
+                style={{ color: 'var(--color-accent)', fontWeight: 700, cursor: 'pointer' }}
               >
                 {restaurantName}
               </span>
@@ -204,14 +227,16 @@ export const DishListItem = memo(function DishListItem({
             <span
               style={{
                 fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                color: 'var(--color-medal-gold)',
-                background: 'rgba(232, 184, 32, 0.12)',
-                padding: '1px 5px',
-                borderRadius: '4px',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                color: 'var(--color-ink)',
+                background: 'var(--color-butter)',
+                border: '1.5px solid var(--color-ink)',
+                padding: '0 5px',
+                borderRadius: 'var(--radius-pill)',
                 marginTop: '2px',
                 display: 'inline-block',
+                flexShrink: 0,
               }}
             >
               GREAT VALUE
@@ -227,11 +252,13 @@ export const DishListItem = memo(function DishListItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
                 style={{
                   background: 'var(--color-primary)',
-                  color: 'white',
-                  fontSize: '10px',
+                  color: 'var(--color-text-on-primary)',
+                  border: '1.5px solid var(--color-ink)',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
                 }}
               >
                 Order Now
@@ -243,11 +270,12 @@ export const DishListItem = memo(function DishListItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
                 style={{
-                  border: '1px solid var(--color-divider)',
+                  border: '1.5px solid var(--color-divider)',
                   color: 'var(--color-text-secondary)',
-                  fontSize: '10px',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
                 }}
               >
                 Directions
@@ -263,11 +291,12 @@ export const DishListItem = memo(function DishListItem({
           <>
             <div className="flex items-baseline gap-1.5" style={{ justifyContent: 'flex-end' }}>
               <span
-                className="font-bold"
                 style={{
-                  fontSize: isPodium ? '20px' : '16px',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: isPodium ? '26px' : '21px',
                   fontWeight: 800,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1,
                   color: getRatingColor(avgRating),
                 }}
               >
@@ -276,10 +305,9 @@ export const DishListItem = memo(function DishListItem({
               {valueRating != null && (
                 <span
                   style={{
-                    fontSize: isPodium ? '13px' : '11px',
-                    fontWeight: 700,
-                    color: 'var(--color-medal-gold)',
-                    opacity: 0.85,
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: 'var(--color-text-secondary)',
                   }}
                   title="WGH Value Rating"
                 >
@@ -291,8 +319,8 @@ export const DishListItem = memo(function DishListItem({
               <div style={{
                 fontSize: '11px',
                 color: 'var(--color-text-tertiary)',
-                fontWeight: 500,
-                marginTop: '1px',
+                fontWeight: 600,
+                marginTop: '3px',
               }}>
                 {totalVotes} vote{totalVotes === 1 ? '' : 's'}
               </div>
@@ -331,17 +359,19 @@ export const DishListItem = memo(function DishListItem({
     return (
       <CardTag
         {...cardProps}
-        className={'rounded-xl border overflow-hidden' + (isOtherProfile ? ' w-full text-left hover:shadow-md transition-all active:scale-[0.99]' : ' transition-all')}
+        className={'overflow-hidden' + (isOtherProfile ? ' w-full text-left sticker-press' : '')}
         style={{
           background: 'var(--color-card)',
-          borderColor: 'var(--color-divider)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-hard)',
         }}
       >
         <div className="flex">
           {/* Image */}
           <div
-            className="relative w-24 h-24 rounded-l-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-            style={{ background: 'var(--color-surface-elevated)' }}
+            className="relative w-24 h-24 flex-shrink-0 overflow-hidden flex items-center justify-center"
+            style={{ background: 'var(--color-category-strip)', borderRight: 'var(--border-ink)' }}
           >
             {photoUrl ? (
               <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
@@ -361,18 +391,18 @@ export const DishListItem = memo(function DishListItem({
           {/* Info */}
           <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
             <div>
-              <h3 className="font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+              <h3 className="truncate" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 700, letterSpacing: 0 }}>
                 {restaurantId ? (
                   <span
                     role="link"
                     onClick={function (e) { e.stopPropagation(); navigate('/restaurants/' + restaurantId) }}
-                    style={{ color: 'var(--color-accent-gold)' }}
+                    style={{ color: 'var(--color-accent)' }}
                   >
                     {restaurantName}
                   </span>
                 ) : restaurantName}
               </h3>
-              <p className="text-sm truncate" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="truncate" style={{ color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 700 }}>
                 {dishName}
               </p>
             </div>
@@ -382,7 +412,7 @@ export const DishListItem = memo(function DishListItem({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {dish.rating_10 && (
-                    <span className="text-sm font-semibold" style={{ color: getRatingColor(dish.rating_10) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, lineHeight: 1, color: getRatingColor(dish.rating_10) }}>
                       {dish.rating_10 % 1 === 0 ? dish.rating_10 : dish.rating_10.toFixed(1)}
                     </span>
                   )}
@@ -413,7 +443,7 @@ export const DishListItem = memo(function DishListItem({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {theirRatingNum >= 1 && (
-                    <span className="text-sm font-semibold" style={{ color: getRatingColor(theirRatingNum) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, lineHeight: 1, color: getRatingColor(theirRatingNum) }}>
                       {theirRatingNum % 1 === 0 ? theirRatingNum : theirRatingNum.toFixed(1)}
                     </span>
                   )}
@@ -427,7 +457,7 @@ export const DishListItem = memo(function DishListItem({
                 </div>
                 {communityAvg ? (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-sm font-bold" style={{ color: getRatingColor(communityAvg) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 800, lineHeight: 1, color: getRatingColor(communityAvg) }}>
                       {communityAvg.toFixed(1)}
                     </span>
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>avg</span>

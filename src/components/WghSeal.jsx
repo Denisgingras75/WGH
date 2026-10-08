@@ -2,9 +2,9 @@ import { useId } from 'react'
 
 /**
  * WghSeal — The WGH editorial stamp mark.
- * Coral disc with "wgh" monogram baked as SVG paths (font-independent, renders
- * identically everywhere), optional ring text "WHAT'S GOOD HERE · RATED · EST. 2026"
- * and a thin coral outer border.
+ * Lobster disc (ink outline + hard offset shadow) with "wgh" monogram baked as SVG
+ * paths (font-independent, renders identically everywhere), optional ring text
+ * "WHAT'S GOOD HERE · RATED · EST. 2026" and a thin ink outer border.
  *
  * Pass `showRing={false}` for the small-size variant (disc + monogram only).
  * Below ~48px the ring text becomes illegible; use the small variant there.
@@ -39,15 +39,16 @@ export function WghSeal({ size = 160, showRing = true, className = '', style = {
               d="M 100,100 m -70,0 a 70,70 0 1,1 140,0 a 70,70 0 1,1 -140,0"
             />
           </defs>
-          <circle cx="100" cy="100" r="72" fill="none" stroke={CORAL} strokeWidth="1.5" />
-          <text fontFamily="'Amatic SC', cursive" fontSize="14" fontWeight="700" fill={INK} letterSpacing="4">
+          <circle cx="100" cy="100" r="72" fill="none" stroke={INK} strokeWidth="2" />
+          <text fontSize="12" fontWeight="800" fill={INK} letterSpacing="3" style={{ fontFamily: 'var(--font-display)', fontStretch: '75%' }}>
             <textPath href={`#${ringId}`} startOffset="0">
               WHAT&rsquo;S GOOD HERE &middot; RATED &middot; EST. 2026 &middot;&nbsp;
             </textPath>
           </text>
         </>
       )}
-      <circle cx="100" cy="100" r="50" fill={CORAL} />
+      <circle cx="104" cy="104" r="50" fill={INK} />
+      <circle cx="100" cy="100" r="50" fill={CORAL} stroke={INK} strokeWidth="3" />
       <path d={WGH_MONOGRAM_PATH} fill={CREAM} />
     </svg>
   )

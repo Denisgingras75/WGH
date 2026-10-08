@@ -33,15 +33,41 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
 
       {/* Verdict Card */}
       <div
-        className="mx-3 rounded-xl px-4 py-4"
+        className="mx-4 px-4 py-4"
         style={{
           background: 'var(--color-card)',
-          border: '1.5px solid var(--color-divider)',
-          marginTop: heroPhoto ? '-24px' : '8px',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-hard-lg)',
+          marginTop: heroPhoto ? '-28px' : '16px',
           position: 'relative',
           zIndex: 5,
         }}
       >
+        {/* Price tag sticker */}
+        {dish.price ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: '-14px',
+              right: '14px',
+              padding: '3px 10px',
+              background: 'var(--color-butter)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-hard-sm)',
+              transform: 'rotate(4deg)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '20px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              lineHeight: 1.1,
+            }}
+          >
+            ${Number(dish.price).toFixed(0)}
+          </span>
+        ) : null}
         {/* Variant breadcrumb */}
         {isVariant && parentDish && (
           <button
@@ -57,83 +83,83 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
         )}
 
         {/* Name + Icon + Price */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {!allPhotos.length && !dish.photo_url && (
             <div className="flex-shrink-0">
-              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={88} />
+              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={80} />
             </div>
           )}
           <div className="flex-1 min-w-0">
             <h1
               style={{
-                fontFamily: "'Amatic SC', cursive",
-                fontWeight: 700,
-                fontSize: '28px',
-                letterSpacing: '0.02em',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: '27px',
+                fontStretch: '90%',
+                letterSpacing: '-0.025em',
                 color: 'var(--color-text-primary)',
-                lineHeight: 1.1,
+                lineHeight: 1.0,
                 margin: 0,
+                paddingRight: dish.price ? '36px' : 0,
               }}
             >
               {dish.dish_name}
             </h1>
-            <div className="flex items-center justify-between" style={{ marginTop: '2px' }}>
-              <button
-                onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
-                className="flex items-center gap-1"
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: 'var(--color-accent-gold)',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                }}
-              >
-                {dish.restaurant_name}
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-                {dish.restaurant_town && (
-                  <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, marginLeft: '4px' }}>
-                    {dish.restaurant_town}
-                  </span>
-                )}
-              </button>
-              {dish.price ? (
-                <span className="flex-shrink-0" style={{ color: 'var(--color-text-primary)', fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em' }}>
-                  ${Number(dish.price).toFixed(0)}
-                </span>
-              ) : null}
-            </div>
+            <button
+              onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
+              className="flex items-center gap-1 text-left"
+              style={{
+                marginTop: '6px',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: 'var(--color-accent)',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              {dish.restaurant_name}
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            {dish.restaurant_town && (
+              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: '1px' }}>
+                {dish.restaurant_town}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Score Block */}
         {isRanked && dish.avg_rating ? (
-          <div className="flex items-end justify-between mt-4 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
-            <div className="flex items-baseline gap-2">
+          <div className="flex items-end justify-between mt-4 pt-3" style={{ borderTop: 'var(--border-ink)' }}>
+            <div className="flex items-baseline gap-1">
               <span
                 style={{
+                  fontFamily: 'var(--font-display)',
                   fontWeight: 800,
-                  fontSize: '44px',
-                  lineHeight: 1,
+                  fontSize: '60px',
+                  letterSpacing: '-0.04em',
+                  lineHeight: 0.9,
                   color: getRatingColor(dish.avg_rating),
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {formatScore10(dish.avg_rating)}
               </span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>/10</span>
             </div>
             <div className="text-right" style={{ minWidth: '120px' }}>
-              <p className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
                 {dish.total_votes} rating{dish.total_votes === 1 ? '' : 's'}
               </p>
+              <p className="eyebrow" style={{ fontSize: '9.5px', marginTop: '2px' }}>would order again?</p>
             </div>
           </div>
         ) : dish.total_votes > 0 ? (
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
+          <div className="mt-3 pt-3" style={{ borderTop: 'var(--border-ink)' }}>
             <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
               {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'} — needs {MIN_VOTES_FOR_RANKING - dish.total_votes} more to rank
             </p>
@@ -142,7 +168,7 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
 
         {/* Jitter trust line */}
         {dish.total_votes > 0 && (
-          <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
+          <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
             <div className="flex items-center gap-2">
               <TrustBadge type="human_verified" size="sm" />
               <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
@@ -152,9 +178,9 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
             <Link
               to="/jitter"
               style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: 'var(--color-primary)',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: 'var(--color-accent)',
               }}
             >
               What's this?

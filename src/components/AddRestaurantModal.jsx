@@ -417,7 +417,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'white', fontSize: '12px', fontWeight: 700 }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', fontSize: '12px', fontWeight: 700 }}>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
@@ -448,7 +448,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-accent-gold)', fontSize: '14px' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-accent)', fontSize: '14px' }}>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
@@ -470,11 +470,11 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                   <button
                     onClick={handleManualAdd}
                     className="w-full flex items-center gap-3 px-3 py-3 mt-2 rounded-lg text-left border border-dashed transition-colors"
-                    style={{ borderColor: 'var(--color-accent-gold)', color: 'var(--color-accent-gold)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-gold-muted)'}
+                    style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-muted)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-gold-muted)' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)' }}>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>
@@ -527,7 +527,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
               <button
                 onClick={handleDetailsNext}
                 className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
-                style={{ background: 'var(--color-primary)', color: 'white' }}
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Next
               </button>

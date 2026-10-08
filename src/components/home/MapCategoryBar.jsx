@@ -15,7 +15,7 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
   return (
     <div
       style={{
-        background: 'rgba(240, 236, 232, 0.75)',
+        background: 'rgba(var(--color-bg-rgb), 0.75)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderRadius: 16,
@@ -37,7 +37,7 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
             height: 40,
             borderRadius: 12,
             border: activeCategory === null ? '2px solid var(--color-primary)' : '2px solid transparent',
-            background: activeCategory === null ? 'rgba(228, 68, 10, 0.12)' : 'transparent',
+            background: activeCategory === null ? 'rgba(var(--color-primary-rgb), 0.12)' : 'transparent',
             transition: 'border-color 0.2s, background 0.2s',
           }}
           aria-label="Near You — all categories"
@@ -64,7 +64,7 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
                 height: 40,
                 borderRadius: 12,
                 border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-                background: isActive ? 'rgba(228, 68, 10, 0.12)' : 'transparent',
+                background: isActive ? 'rgba(var(--color-primary-rgb), 0.12)' : 'transparent',
                 transition: 'border-color 0.2s, background 0.2s',
               }}
               aria-label={cat.label}

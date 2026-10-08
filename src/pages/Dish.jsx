@@ -207,10 +207,10 @@ export function Dish() {
           </p>
           <button
             onClick={handleBack}
-            className="mt-4 px-5 py-2.5 text-sm font-bold rounded-lg card-press"
+            className="btn-ink mt-4 px-5 py-2.5 text-sm"
             style={{
               background: 'var(--color-primary)',
-              color: '#FFFFFF',
+              color: 'var(--color-text-on-primary)',
             }}
           >
             Go Back
@@ -229,7 +229,6 @@ export function Dish() {
         className="sticky top-0 z-30 px-3 py-2 flex items-center gap-2 top-bar"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1.5px solid var(--color-divider)',
         }}
       >
         <button
@@ -284,8 +283,8 @@ export function Dish() {
               setPlaylistSheetOpen(true)
             }}
             aria-label="Add to playlist"
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-95"
-            style={{ background: 'var(--color-surface-elevated)', border: '1.5px solid var(--color-divider)', fontSize: 18, color: 'var(--color-primary)', fontWeight: 700 }}
+            className="btn-ink w-9 h-9"
+            style={{ background: 'var(--color-butter)', boxShadow: 'var(--shadow-hard-sm)', borderRadius: 'var(--radius-sm)', fontSize: 20, color: 'var(--color-ink)', fontWeight: 800, lineHeight: 1 }}
           >
             +
           </button>
@@ -333,10 +332,12 @@ export function Dish() {
             <div
               id="rate-flow-panel"
               ref={rateFlowRef}
-              className="p-4 rounded-xl"
+              className="p-4"
               style={{
-                background: 'var(--color-surface-elevated)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-card)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-hard)',
               }}
             >
               <ReviewFlow
@@ -386,7 +387,7 @@ export function Dish() {
                   restaurant_id: dish.restaurant_id,
                   restaurant_name: dish.restaurant_name,
                 })}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95"
+                className="btn-ink w-full py-3 px-4 text-sm"
                 style={{
                   background: 'var(--color-primary)',
                   color: 'var(--color-text-on-primary)',
@@ -411,11 +412,12 @@ export function Dish() {
         }}
       >
         <div
-          className="flex gap-2 p-2 rounded-2xl"
+          className="flex gap-2 p-2"
           style={{
             background: 'var(--color-card)',
-            boxShadow: '0 -4px 24px rgba(0,0,0,0.15), 0 0 0 1px var(--color-divider)',
-            backdropFilter: 'blur(16px)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
           {(dish.toast_slug || sanitizeUrl(dish.order_url)) ? (
@@ -430,10 +432,12 @@ export function Dish() {
                 restaurant_name: dish.restaurant_name,
                 source: dish.toast_slug ? 'toast' : 'order_url',
               }) }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
               style={{
-                background: 'var(--color-accent-orange)',
-                color: 'white',
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -446,10 +450,12 @@ export function Dish() {
               href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
               style={{
                 background: 'var(--color-primary)',
-                color: 'white',
+                color: 'var(--color-text-on-primary)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -466,10 +472,12 @@ export function Dish() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
+            className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
             style={{
-              background: 'var(--color-accent-gold)',
-              color: 'var(--color-bg)',
+              background: 'var(--color-accent)',
+              color: 'var(--color-text-on-primary)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

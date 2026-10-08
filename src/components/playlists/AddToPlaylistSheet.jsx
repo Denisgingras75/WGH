@@ -152,7 +152,7 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
                     width: 22, height: 22, borderRadius: '50%',
                     border: '2px solid ' + (checked ? 'var(--color-primary)' : 'var(--color-divider)'),
                     background: checked ? 'var(--color-primary)' : 'transparent',
-                    color: '#fff',
+                    color: 'var(--color-text-on-primary)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 12, fontWeight: 700,
                   }}>

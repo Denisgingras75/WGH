@@ -1,15 +1,13 @@
 /**
- * PlateIcon - Simplified matte ceramic plate container
+ * PlateIcon - Sticker plate container
  *
- * Design: Single element with layered box-shadows
- * 1. Outer rim: 2px solid #232323
- * 2. Inner lip: inset box-shadow (subtle highlight)
- * 3. Concavity: inset shadow for depth
- * 4. Outer lift: drop shadow
+ * Design: Peach disc with an ink outline and hard offset shadow,
+ * matching the neo-brutalist food icons that sit on it.
  */
 
 export function PlateIcon({
   size = 96,
+  active = false,
   children,
   className = ''
 }) {
@@ -22,13 +20,9 @@ export function PlateIcon({
       style={{
         width: size,
         height: size,
-        background: 'var(--color-bg)',
-        border: '2px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: `
-          0 10px 20px rgba(0, 0, 0, 0.08),
-          inset 0 0 0 1px rgba(0, 0, 0, 0.03),
-          inset 0 6px 10px rgba(0, 0, 0, 0.06)
-        `,
+        background: active ? 'var(--color-butter)' : 'var(--color-category-strip)',
+        border: 'var(--border-ink)',
+        boxShadow: 'var(--shadow-hard)',
       }}
     >
       {/* Content container - centers children */}
