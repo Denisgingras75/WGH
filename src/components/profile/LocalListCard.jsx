@@ -10,28 +10,22 @@ export function LocalListCard({ items }) {
   var listDescription = items[0].description
 
   return (
-    <div className="px-4 pt-4">
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: 'var(--color-surface-elevated)',
-          border: '1px solid var(--color-divider)',
-        }}
-      >
-        {/* Header */}
-        <div className="px-4 pt-4 pb-3">
+    <div className="px-4 pt-6">
+      <div>
+        {/* Header — section heading on paper; ranked rows below match the home list */}
+        <div className="pb-3">
           <h3 style={{
-            fontSize: '17px',
-            fontWeight: 800,
+            fontSize: '24px',
+            lineHeight: 1.05,
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
           }}>
             {listTitle}
           </h3>
           {listDescription && (
             <p style={{
               fontSize: '13px',
-              color: 'var(--color-text-tertiary)',
+              fontWeight: 500,
+              color: 'var(--color-text-secondary)',
               marginTop: '4px',
             }}>
               {listDescription}
@@ -70,8 +64,8 @@ export function LocalListCard({ items }) {
                   }}
                 >
                   <p style={{
-                    fontSize: '12px',
-                    fontStyle: 'italic',
+                    fontSize: '13px',
+                    fontWeight: 500,
                     color: 'var(--color-text-secondary)',
                     lineHeight: '1.4',
                   }}>

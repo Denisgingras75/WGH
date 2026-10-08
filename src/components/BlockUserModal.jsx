@@ -31,8 +31,8 @@ export function BlockUserModal({ isOpen, onClose, user }) {
       role="presentation"
     >
       <div
-        className="absolute inset-0 backdrop-blur-sm"
-        style={{ background: 'rgba(0, 0, 0, 0.6)' }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
         aria-hidden="true"
       />
       <div
@@ -40,21 +40,21 @@ export function BlockUserModal({ isOpen, onClose, user }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="block-user-title"
-        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
+        className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-surface-elevated)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)' }}
       >
-        <div className="p-8">
+        <div className="p-7">
           <h2
             id="block-user-title"
-            className="text-2xl font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="mb-3"
+            style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}
           >
             Block {displayName}?
           </h2>
           <p
             className="text-sm leading-relaxed mb-5"
-            style={{ color: 'var(--color-text-secondary)' }}
+            style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}
           >
             You won't see their reviews, ratings, photos, or profile. They won't
             see yours either. You'll stop following each other, and neither of you
@@ -62,7 +62,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
           </p>
           <p
             className="text-sm leading-relaxed mb-6"
-            style={{ color: 'var(--color-text-tertiary)' }}
+            style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}
           >
             You can unblock anytime from Settings → Blocked users.
           </p>
@@ -72,11 +72,10 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="btn-ink flex-1 px-5 py-3"
               style={{
-                background: 'transparent',
-                border: '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
+                background: 'var(--color-card)',
+                color: 'var(--color-ink)',
                 fontSize: '15px',
               }}
             >
@@ -86,12 +85,11 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleConfirm}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="btn-ink flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-danger)',
                 color: 'var(--color-text-on-primary)',
                 fontSize: '15px',
-                opacity: loading ? 0.7 : 1,
               }}
             >
               {loading ? 'Blocking…' : 'Block'}

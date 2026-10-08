@@ -23,7 +23,7 @@ export var JITTER_TIERS = {
     label: 'New',
     minWar: 0,
     color: 'var(--color-text-tertiary)',
-    bg: 'rgba(156, 163, 175, 0.12)',
+    bg: 'rgba(115, 102, 90, 0.10)',
     description: 'New reviewer — building verification over time.',
   },
 }

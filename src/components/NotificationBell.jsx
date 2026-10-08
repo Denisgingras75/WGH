@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import { notificationsApi } from '../api/notificationsApi'
 import { logger } from '../utils/logger'
 
+// Rotating avatar inks for initials
+const AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
+
 /**
  * Notification bell icon with dropdown
  */
@@ -123,7 +126,7 @@ export function NotificationBell() {
       <button
         onClick={handleBellClick}
         className="relative p-2 rounded-full transition-all duration-150 active:scale-95 active:opacity-80"
-        style={{ color: 'var(--color-text-secondary)' }}
+        style={{ color: 'var(--color-ink)' }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         aria-expanded={showDropdown}
         aria-haspopup="true"
@@ -145,8 +148,8 @@ export function NotificationBell() {
         {/* Unread Badge */}
         {unreadCount > 0 && (
           <span
-            className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center text-xs font-bold rounded-full px-1 shadow-lg"
-            style={{ background: 'var(--color-red)', color: 'var(--color-text-on-primary)' }}
+            className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full px-1"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink-thin)', fontSize: '11px', fontWeight: 800, lineHeight: 1 }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -158,13 +161,13 @@ export function NotificationBell() {
         <div
           role="menu"
           aria-label="Notifications menu"
-          className="fixed top-14 right-4 w-80 max-h-96 overflow-y-auto rounded-xl shadow-xl border z-50"
-          style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-divider)' }}
+          className="fixed top-14 right-4 w-80 max-h-96 overflow-y-auto z-50"
+          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
         >
           {/* Header */}
           <div
-            className="px-4 py-3 border-b font-semibold"
-            style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-divider)' }}
+            className="px-4 py-3"
+            style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)', borderBottom: 'var(--border-ink)' }}
           >
             Notifications
           </div>
@@ -182,27 +185,34 @@ export function NotificationBell() {
           ) : notifications.length === 0 ? (
             <div className="py-8 text-center">
               <div className="text-3xl mb-2">🔔</div>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 No notifications yet
               </p>
             </div>
           ) : (
             <div>
-              {notifications.map((notification) => (
+              {notifications.map((notification, i) => (
                 <button
                   key={notification.id}
                   role="menuitem"
                   onClick={() => handleNotificationClick(notification)}
-                  className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-150 active:scale-[0.98] active:opacity-80 border-b last:border-b-0"
+                  className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-150 active:scale-[0.98] active:opacity-80"
                   style={{
-                    borderColor: 'var(--color-divider)',
-                    background: notification.read ? 'transparent' : 'var(--color-surface-elevated)',
+                    borderBottom: i < notifications.length - 1 ? '1.5px solid var(--color-divider)' : 'none',
+                    background: notification.read ? 'transparent' : 'var(--color-butter-muted)',
                   }}
                 >
                   {/* Icon */}
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                      color: 'var(--color-text-on-primary)',
+                      border: 'var(--border-ink)',
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '17px',
+                      fontWeight: 800,
+                    }}
                   >
                     {notification.type === 'follow'
                       ? notification.data?.follower_name?.charAt(0).toUpperCase() || '?'
@@ -211,17 +221,17 @@ export function NotificationBell() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                    <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
                       {notification.type === 'follow' ? (
                         <>
-                          <span className="font-semibold">{notification.data?.follower_name || 'Someone'}</span>
+                          <span style={{ fontWeight: 800 }}>{notification.data?.follower_name || 'Someone'}</span>
                           {' started following you'}
                         </>
                       ) : (
                         'New notification'
                       )}
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                       {timeAgo(notification.created_at)}
                     </p>
                   </div>
@@ -229,8 +239,8 @@ export function NotificationBell() {
                   {/* Unread dot */}
                   {!notification.read && (
                     <div
-                      className="w-2 h-2 rounded-full flex-shrink-0 mt-2"
-                      style={{ background: 'var(--color-primary)' }}
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-2"
+                      style={{ background: 'var(--color-primary)', border: '1px solid var(--color-ink)' }}
                     />
                   )}
                 </button>

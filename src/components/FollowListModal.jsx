@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { followsApi } from '../api/followsApi'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
+// Rotating avatar inks for initials
+const AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
+
 /**
  * Modal to display followers or following list with pagination
  */
@@ -79,7 +82,7 @@ export function FollowListModal({ userId, type, onClose }) {
       role="presentation"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} aria-hidden="true" />
+      <div className="absolute inset-0" style={{ background: 'rgba(27, 22, 17, 0.55)' }} aria-hidden="true" />
 
       {/* Modal */}
       <div
@@ -87,33 +90,34 @@ export function FollowListModal({ userId, type, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="follow-list-title"
-        className="relative w-full max-w-md rounded-2xl overflow-hidden flex flex-col border"
+        className="relative w-full max-w-md overflow-hidden flex flex-col"
         style={{
-          background: 'var(--color-surface-elevated)',
+          background: 'var(--color-card)',
           maxHeight: 'calc(100vh - 120px)',
-          borderColor: 'var(--color-divider)',
-          boxShadow: 'none'
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-hard-lg)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-4 py-4 border-b"
+          className="flex items-center justify-between px-5 py-4"
           style={{
-            borderColor: 'var(--color-divider)',
-            background: 'var(--color-primary-muted)'
+            borderBottom: 'var(--border-ink)',
+            background: 'var(--color-card)'
           }}
         >
-          <h2 id="follow-list-title" className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 id="follow-list-title" style={{ fontSize: '22px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 rounded-full"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95"
+            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             aria-label="Close"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -133,7 +137,7 @@ export function FollowListModal({ userId, type, onClose }) {
           ) : error ? (
             <div className="py-12 text-center">
               <div className="text-4xl mb-2">⚠️</div>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 {error}
               </p>
             </div>
@@ -142,30 +146,38 @@ export function FollowListModal({ userId, type, onClose }) {
               <div className="text-4xl mb-2">
                 {isFollowers ? '👥' : '🔍'}
               </div>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
               </p>
             </div>
           ) : (
             <div>
-              <div className="divide-y" style={{ borderColor: 'var(--color-divider)' }}>
-                {users.map((user) => (
+              <div>
+                {users.map((user, i) => (
                   <button
                     key={user.id}
                     onClick={() => handleUserClick(user)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 transition-all text-left hover:bg-black/5 active:scale-[0.99]"
+                    className="w-full flex items-center gap-3 px-5 py-3 transition-all text-left active:scale-[0.99]"
+                    style={{ borderBottom: i < users.length - 1 ? '1.5px solid var(--color-divider)' : 'none' }}
                   >
                     {/* Avatar */}
                     <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center font-bold flex-shrink-0"
-                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                        color: 'var(--color-text-on-primary)',
+                        border: 'var(--border-ink)',
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '18px',
+                        fontWeight: 800,
+                      }}
                     >
                       {user.display_name?.charAt(0).toUpperCase() || '?'}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                      <p className="truncate" style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                         {user.display_name || 'Anonymous'}
                       </p>
                     </div>
@@ -187,15 +199,14 @@ export function FollowListModal({ userId, type, onClose }) {
 
               {/* Load More Button */}
               {hasMore && (
-                <div className="p-4 border-t" style={{ borderColor: 'var(--color-divider)' }}>
+                <div className="p-4" style={{ borderTop: '1.5px solid var(--color-divider)' }}>
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="w-full py-2.5 rounded-xl font-medium text-sm transition-all"
+                    className="btn-ink w-full py-2.5 text-sm"
                     style={{
                       background: 'var(--color-primary)',
                       color: 'var(--color-text-on-primary)',
-                      opacity: loadingMore ? 0.7 : 1
                     }}
                   >
                     {loadingMore ? (

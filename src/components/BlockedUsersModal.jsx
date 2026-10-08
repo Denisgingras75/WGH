@@ -14,8 +14,8 @@ export function BlockedUsersModal({ isOpen, onClose }) {
       role="presentation"
     >
       <div
-        className="absolute inset-0 backdrop-blur-sm"
-        style={{ background: 'rgba(0, 0, 0, 0.6)' }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
         aria-hidden="true"
       />
       <div
@@ -23,26 +23,25 @@ export function BlockedUsersModal({ isOpen, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="blocked-users-title"
-        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden flex flex-col"
+        className="relative max-w-md w-full overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-surface-elevated)', maxHeight: '80vh' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)', maxHeight: '80vh' }}
       >
-        <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-divider)' }}>
+        <div className="px-6 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: 'var(--border-ink)' }}>
           <h2
             id="blocked-users-title"
-            className="text-xl font-bold"
-            style={{ color: 'var(--color-text-primary)' }}
+            style={{ fontSize: '22px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}
           >
             Blocked users
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-full"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95"
             aria-label="Close"
-            style={{ color: 'var(--color-text-secondary)' }}
+            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -50,33 +49,40 @@ export function BlockedUsersModal({ isOpen, onClose }) {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-8 text-center text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            <div className="p-8 text-center text-sm" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
               Loading…
             </div>
           ) : blocks.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            <div className="p-6">
+              <p
+                className="text-sm leading-relaxed text-center p-5"
+                style={{ color: 'var(--color-text-secondary)', fontWeight: 500, background: 'var(--color-surface)', border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)' }}
+              >
                 You haven't blocked anyone. When you block someone, you can manage them here.
               </p>
             </div>
           ) : (
-            <ul className="divide-y" style={{ borderColor: 'var(--color-divider)' }}>
-              {blocks.map((block) => (
-                <li key={block.blockedId} className="px-6 py-4 flex items-center gap-3">
+            <ul>
+              {blocks.map((block, i) => (
+                <li
+                  key={block.blockedId}
+                  className="px-6 py-3.5 flex items-center gap-3"
+                  style={{ borderBottom: i < blocks.length - 1 ? '1.5px solid var(--color-divider)' : 'none' }}
+                >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
-                    style={{ background: 'var(--color-surface)' }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                    style={{ background: 'var(--color-surface)', border: 'var(--border-ink)' }}
                   >
                     {block.avatarUrl ? (
                       <img src={block.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-sm font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>
                         {(block.displayName || '?').charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                    <div className="text-sm truncate" style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>
                       {block.displayName || 'Unknown user'}
                     </div>
                   </div>
@@ -84,12 +90,13 @@ export function BlockedUsersModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => unblockUser(block.blockedId)}
                     disabled={unblocking}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    className="px-4 py-1.5 text-sm transition-transform active:scale-95 disabled:opacity-60"
                     style={{
-                      background: 'transparent',
-                      border: '1px solid var(--color-primary)',
-                      color: 'var(--color-primary)',
-                      opacity: unblocking ? 0.6 : 1,
+                      background: 'var(--color-card)',
+                      border: 'var(--border-ink-thin)',
+                      borderRadius: 'var(--radius-pill)',
+                      color: 'var(--color-ink)',
+                      fontWeight: 700,
                     }}
                   >
                     Unblock

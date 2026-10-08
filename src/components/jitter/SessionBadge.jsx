@@ -8,24 +8,27 @@ export function SessionBadge({ stats }) {
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-1.5 mt-1 rounded-lg"
+      className="flex items-center gap-3 px-3 py-1.5 mt-1.5"
       style={{
         background: 'var(--color-surface)',
-        border: '1px solid var(--color-divider)',
+        border: '1.5px solid var(--color-divider)',
+        borderRadius: 'var(--radius-sm)',
+        fontFamily: 'var(--font-mono)',
         fontSize: '11px',
-        color: 'var(--color-text-tertiary)',
+        fontWeight: 700,
+        color: 'var(--color-text-secondary)',
       }}
     >
       <span>{stats.keystrokes} keystrokes</span>
       {stats.purity !== null && (
         <>
-          <span style={{ color: 'var(--color-divider)' }}>&middot;</span>
+          <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
           <span>{stats.purity}% human</span>
         </>
       )}
       {stats.wpm > 0 && (
         <>
-          <span style={{ color: 'var(--color-divider)' }}>&middot;</span>
+          <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
           <span>{stats.wpm} WPM</span>
         </>
       )}

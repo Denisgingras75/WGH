@@ -4,6 +4,8 @@ import { useState } from 'react'
  * Hero Identity Card for the Profile page
  * Centered layout: avatar, name, stats row
  */
+var STAT_NUM = { fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }
+
 function getRhythmLabel(score) {
   if (score >= 0.8) return 'Steady'
   if (score >= 0.5) return 'Forming'
@@ -11,9 +13,9 @@ function getRhythmLabel(score) {
 }
 
 function getTierInfo(confidence, consistency) {
-  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(34, 197, 94, 0.18)', color: 'var(--color-rating)' }
-  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-rating)' }
-  return { label: 'Building', bg: 'rgba(156, 163, 175, 0.1)', color: 'var(--color-text-tertiary)' }
+  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(var(--color-success-rgb), 0.16)', color: 'var(--color-rating)' }
+  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(var(--color-success-rgb), 0.10)', color: 'var(--color-rating)' }
+  return { label: 'Building', bg: 'var(--color-surface)', color: 'var(--color-text-secondary)' }
 }
 
 export function HeroIdentityCard({
@@ -37,28 +39,25 @@ export function HeroIdentityCard({
 
   return (
     <div
-      className="relative px-4 pt-8 pb-5 overflow-hidden"
+      className="relative px-4 pt-6 pb-5"
       style={{
         background: 'var(--color-bg)',
+        borderBottom: 'var(--border-ink)',
       }}
     >
-      {/* Bottom divider */}
-      <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-        style={{
-          width: '90%',
-          background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-        }}
-      />
-
       {/* Avatar + Name row */}
       <div className="flex items-center gap-4">
         <div
-          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
+          className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
-            boxShadow: '0 0 0 3px var(--color-primary-muted)',
+            border: 'var(--border-ink)',
+            boxShadow: 'var(--shadow-hard)',
+            fontFamily: 'var(--font-display)',
+            fontSize: '32px',
+            fontWeight: 800,
+            lineHeight: 1,
           }}
         >
           {profile?.display_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
@@ -73,10 +72,13 @@ export function HeroIdentityCard({
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value.replace(/\s/g, ''))}
-                  className="w-full px-3 py-1.5 border rounded-lg text-lg font-bold focus:outline-none pr-8"
+                  className="w-full px-3 py-1.5 focus:outline-none pr-8"
                   style={{
                     background: 'var(--color-surface-elevated)',
-                    borderColor: nameStatus === 'taken' ? 'var(--color-red)' : nameStatus === 'available' ? 'var(--color-emerald)' : 'var(--color-divider)',
+                    border: '2px solid ' + (nameStatus === 'taken' ? 'var(--color-danger)' : nameStatus === 'available' ? 'var(--color-success)' : 'var(--color-ink)'),
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '18px',
+                    fontWeight: 700,
                     color: 'var(--color-text-primary)'
                   }}
                   autoFocus
@@ -94,8 +96,8 @@ export function HeroIdentityCard({
                 <button
                   onClick={handleSaveName}
                   disabled={nameStatus === 'taken' || nameStatus === 'checking'}
-                  className="px-3 py-1 rounded-lg text-sm font-medium disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="btn-ink px-3 py-1 text-sm"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-hard-sm)' }}
                 >
                   Save
                 </button>
@@ -105,49 +107,51 @@ export function HeroIdentityCard({
                     setNewName(profile?.display_name || '')
                     setNameStatus(null)
                   }}
-                  className="px-3 py-1 rounded-lg text-sm font-medium"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="btn-ink px-3 py-1 text-sm"
+                  style={{ background: 'var(--color-card)', color: 'var(--color-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
                 >
                   Cancel
                 </button>
               </div>
               {nameStatus === 'taken' && (
-                <p className="text-xs" style={{ color: 'var(--color-red)' }}>Username taken</p>
+                <p className="text-xs" style={{ color: 'var(--color-danger)', fontWeight: 700 }}>Username taken</p>
               )}
               {nameStatus === 'available' && (
-                <p className="text-xs" style={{ color: 'var(--color-emerald)' }}>Available!</p>
+                <p className="text-xs" style={{ color: 'var(--color-success)', fontWeight: 700 }}>Available!</p>
               )}
             </div>
           ) : (
             <button
               onClick={() => setEditingName(true)}
-              className="font-bold transition-colors inline-flex items-center gap-1.5"
+              className="inline-flex items-center gap-1.5 text-left"
               style={{
+                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '22px',
+                fontSize: '27px',
+                fontWeight: 800,
                 letterSpacing: '-0.02em',
-                lineHeight: '1.2',
+                lineHeight: '1.1',
               }}
             >
               {profile?.display_name || 'Set your name'}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.25} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
               </svg>
             </button>
           )}
 
           {/* Stats row — dishes · restaurants · followers */}
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap" style={{ fontSize: '13px' }}>
+          <div className="flex items-baseline gap-x-2.5 gap-y-1 mt-1.5 flex-wrap" style={{ fontSize: '13px', fontWeight: 600 }}>
             {stats.totalVotes > 0 && (
               <>
                 <span style={{ color: 'var(--color-text-secondary)' }}>
-                  <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span> dishes
+                  <span style={STAT_NUM}>{stats.totalVotes}</span> dishes
                 </span>
                 {stats.uniqueRestaurants > 0 && (
                   <>
-                    <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
+                    <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 800 }}>&middot;</span>
                     <span style={{ color: 'var(--color-text-secondary)' }}>
-                      <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span> spots
+                      <span style={STAT_NUM}>{stats.uniqueRestaurants}</span> spots
                     </span>
                   </>
                 )}
@@ -155,19 +159,19 @@ export function HeroIdentityCard({
             )}
             <button
               onClick={() => setFollowListModal('followers')}
-              className="hover:underline transition-colors"
+              className="hover:underline"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              <span style={STAT_NUM}>
                 {followCounts.followers}
               </span> followers
             </button>
             <button
               onClick={() => setFollowListModal('following')}
-              className="hover:underline transition-colors"
+              className="hover:underline"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              <span style={STAT_NUM}>
                 {followCounts.following}
               </span> following
             </button>
@@ -180,36 +184,38 @@ export function HeroIdentityCard({
           return (
             <button
               onClick={hasJitterDetail ? () => setJitterExpanded(!jitterExpanded) : undefined}
-              className={'flex-shrink-0 rounded-xl px-3 py-2.5 text-center transition-all active:scale-95' + (hasJitterDetail ? '' : '')}
+              className={'flex-shrink-0 px-3 py-2.5 text-center' + (hasJitterDetail ? ' sticker-press' : '')}
               style={{
-                background: jitterExpanded ? tier.bg : 'var(--color-card)',
-                border: '1px solid ' + (jitterExpanded ? tier.color : 'var(--color-divider)'),
+                background: jitterExpanded ? 'var(--color-butter-muted)' : 'var(--color-card)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-hard-sm)',
                 minWidth: '90px',
                 cursor: hasJitterDetail ? 'pointer' : 'default',
               }}
             >
               <span
-                className="px-2 py-0.5 rounded-full font-medium inline-block"
-                style={{ background: tier.bg, color: tier.color, fontSize: '11px' }}
+                className="px-2 py-0.5 inline-block"
+                style={{ background: tier.bg, color: tier.color, border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-pill)', fontSize: '10px', fontWeight: 800, letterSpacing: '0.02em' }}
               >
                 {tier.label}
               </span>
               <div className="mt-1.5">
-                <div className="font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '18px', lineHeight: 1 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1 }}>
                   {jitterProfile.review_count || 0}
                 </div>
-                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>reviews</div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', fontWeight: 600, marginTop: '2px' }}>reviews</div>
               </div>
               <div className="mt-1">
-                <div className="font-semibold" style={{ color: 'var(--color-accent)', fontSize: '12px', lineHeight: 1 }}>
+                <div style={{ color: 'var(--color-accent)', fontSize: '12px', fontWeight: 800, lineHeight: 1 }}>
                   {jitterProfile.consistency_score != null
                     ? getRhythmLabel(Number(jitterProfile.consistency_score))
                     : '\u2014'}
                 </div>
-                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', marginTop: '2px' }}>rhythm</div>
+                <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', fontWeight: 600, marginTop: '2px' }}>rhythm</div>
               </div>
               {hasJitterDetail && (
-                <div className="mt-1.5" style={{ color: 'var(--color-accent)', fontSize: '10px' }}>
+                <div className="mt-1.5" style={{ color: 'var(--color-accent)', fontSize: '10px', fontWeight: 700 }}>
                   {jitterExpanded ? '\u25B2 less' : '\u25BC detail'}
                 </div>
               )}
@@ -221,10 +227,12 @@ export function HeroIdentityCard({
       {/* Expanded Jitter Detail Panel */}
       {jitterExpanded && hasJitterDetail && (
         <div
-          className="mx-4 mt-3 rounded-xl overflow-hidden"
+          className="mt-4 overflow-hidden"
           style={{
             background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
           <div className="px-4 py-3 space-y-2">
@@ -239,7 +247,7 @@ export function HeroIdentityCard({
           {/* Per-key fingerprint visual */}
           {jitterData.per_key_dwell && Object.keys(jitterData.per_key_dwell).length > 0 && (
             <div className="px-4 pb-3">
-              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 How long you hold each key
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -253,8 +261,8 @@ export function HeroIdentityCard({
             </div>
           )}
 
-          <div className="px-4 pb-3">
-            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+          <div className="px-4 py-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, lineHeight: 1.5 }}>
               Your typing rhythm builds over time as you write reviews. No two people type alike.
             </p>
           </div>
@@ -267,8 +275,8 @@ export function HeroIdentityCard({
 function DetailRow({ label, value }) {
   return (
     <div className="flex justify-between text-xs">
-      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}</span>
-      <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>{value}</span>
+      <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{label}</span>
+      <span className="font-mono" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{value}</span>
     </div>
   )
 }
@@ -278,8 +286,8 @@ function KeyBar({ letter, ms, max }) {
   return (
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
-      <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
-        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent)' }} />
+      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: '1px solid var(--color-ink)' }}>
+        <div style={{ width: width + '%', height: '100%', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
     </div>

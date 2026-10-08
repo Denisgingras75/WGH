@@ -20,41 +20,37 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 var STATES = {
   verified: {
     label: 'Verified',
-    color: 'var(--color-rating, #16a34a)',
+    color: 'var(--color-rating, #0E7A3D)',
     // rgba needed for translucent backgrounds — CSS vars can't do opacity in inline styles
     bg: 'rgba(var(--color-success-rgb), 0.10)',
     bgHover: 'rgba(var(--color-success-rgb), 0.16)',
-    glow: '0 0 8px rgba(var(--color-success-rgb), 0.25)',
     // Lively irregular peaks — human rhythm
     wave: [0.3, 0.7, 0.45, 0.9, 0.35, 0.75, 0.5, 0.85, 0.4, 0.65],
     dash: null,
   },
   suspicious: {
     label: 'Suspicious',
-    color: 'var(--color-amber, #d97706)',
-    bg: 'rgba(217, 119, 6, 0.08)',
-    bgHover: 'rgba(217, 119, 6, 0.14)',
-    glow: '0 0 8px rgba(217, 119, 6, 0.20)',
+    color: 'var(--color-amber, #A84E06)',
+    bg: 'rgba(168, 78, 6, 0.08)',
+    bgHover: 'rgba(168, 78, 6, 0.14)',
     // Flattening — losing human signature
     wave: [0.4, 0.55, 0.42, 0.6, 0.38, 0.52, 0.44, 0.56, 0.41, 0.5],
     dash: null,
   },
   bot: {
     label: 'Bot',
-    color: 'var(--color-danger, #dc2626)',
+    color: 'var(--color-danger, #C1271A)',
     bg: 'rgba(var(--color-danger-rgb), 0.08)',
     bgHover: 'rgba(var(--color-danger-rgb), 0.14)',
-    glow: '0 0 8px rgba(var(--color-danger-rgb), 0.20)',
     // Flatline — dead rhythm
     wave: [0.48, 0.5, 0.49, 0.5, 0.5, 0.49, 0.5, 0.48, 0.5, 0.49],
     dash: null,
   },
   ai_estimated: {
     label: 'AI Est.',
-    color: 'var(--color-blue, #2563eb)',
-    bg: 'rgba(37, 99, 235, 0.08)',
-    bgHover: 'rgba(37, 99, 235, 0.14)',
-    glow: '0 0 8px rgba(37, 99, 235, 0.20)',
+    color: 'var(--color-accent, #1F4FA3)',
+    bg: 'rgba(var(--color-accent-rgb), 0.08)',
+    bgHover: 'rgba(var(--color-accent-rgb), 0.14)',
     // Synthetic wave — too regular, dashed
     wave: [0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7],
     dash: '3,2',
@@ -108,22 +104,21 @@ function Waveform({ points, color, dash, width, height, animate, stateKey }) {
       style={{ display: 'block', flexShrink: 0 }}
       aria-hidden="true"
     >
-      {/* Glow layer */}
+      {/* Halo layer — crisp, no blur (screen-print, not neon) */}
       <path
         d={pathD}
         stroke={color}
-        strokeWidth={2.5}
+        strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={dash || 'none'}
-        opacity={0.3}
-        style={{ filter: 'blur(2px)' }}
+        opacity={0.18}
       />
       {/* Main stroke */}
       <path
         d={pathD}
         stroke={color}
-        strokeWidth={1.5}
+        strokeWidth={1.75}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={dash || 'none'}
@@ -148,13 +143,15 @@ function JitterPopover({ stats, state, warScore }) {
 
   return (
     <div
-      className="absolute z-50 rounded-lg shadow-lg"
+      className="absolute z-50"
       style={{
         left: 0,
         top: '100%',
         marginTop: '6px',
-        background: 'var(--color-card, #fff)',
-        border: '1px solid var(--color-divider, #e5e0db)',
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-hard)',
         padding: '10px 14px',
         minWidth: '170px',
         fontSize: '11px',
@@ -162,7 +159,7 @@ function JitterPopover({ stats, state, warScore }) {
       }}
     >
       {/* Mini waveform header */}
-      <div className="flex items-center gap-2" style={{ marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--color-divider, #e5e0db)' }}>
+      <div className="flex items-center gap-2" style={{ marginBottom: '8px', paddingBottom: '6px', borderBottom: '1.5px dashed var(--color-divider)' }}>
         <Waveform points={cfg.wave} color={cfg.color} dash={cfg.dash} width={32} height={12} animate={false} stateKey={state} />
         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', color: cfg.color, textTransform: 'uppercase' }}>
           jitter
@@ -174,8 +171,8 @@ function JitterPopover({ stats, state, warScore }) {
         {rows.map(function (row) {
           return (
             <div key={row.label} className="flex justify-between" style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-              <span style={{ color: 'var(--color-text-tertiary, #999)' }}>{row.label}</span>
-              <span style={{ color: 'var(--color-text-primary, #1a1a1a)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{row.value}</span>
+              <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{row.label}</span>
+              <span style={{ color: 'var(--color-text-primary)', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{row.value}</span>
             </div>
           )
         })}
@@ -237,10 +234,10 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
         alignItems: 'center',
         gap: sz.gap,
         padding: sz.pad,
-        borderRadius: '999px',
+        borderRadius: 'var(--radius-pill)',
         background: hovered ? cfg.bgHover : cfg.bg,
-        border: '1px solid ' + (hovered ? cfg.color + '33' : 'transparent'),
-        boxShadow: hovered ? cfg.glow : 'none',
+        border: 'var(--border-ink-thin)',
+        boxShadow: hovered ? 'var(--shadow-hard-sm)' : 'none',
         cursor: onProfileClick ? 'pointer' : hasPopover ? 'default' : 'default',
         transition: 'all 0.2s ease',
         userSelect: 'none',
@@ -285,10 +282,9 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
         <span
           style={{
             fontFamily: 'var(--font-mono)',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: sz.scoreFontSize,
             color: cfg.color,
-            opacity: 0.9,
           }}
         >
           {Number(warScore).toFixed(2)}
@@ -300,10 +296,9 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
         <span
           style={{
             fontFamily: 'var(--font-mono)',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: sz.scoreFontSize,
             color: cfg.color,
-            opacity: 0.85,
             letterSpacing: '0.02em',
           }}
         >

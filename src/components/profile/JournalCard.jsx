@@ -21,24 +21,27 @@ export function JournalCard({ dish }) {
     <Link
       to={'/dish/' + dishId}
       data-testid="journal-card"
-      className="flex items-start gap-3 no-underline"
+      className="sticker-press flex items-start gap-3 no-underline"
       style={{
         background: 'var(--color-card)',
-        borderRadius: '14px',
-        padding: '14px',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
+        padding: '12px 14px 12px 12px',
         marginBottom: '8px',
         display: 'flex',
         textDecoration: 'none',
       }}
     >
-      {/* Icon area: 56x56, 12px border-radius, category-strip bg */}
+      {/* Icon area: 56x56, peach tile with thin ink outline */}
       <div
         className="flex-shrink-0 flex items-center justify-center"
         style={{
           width: '56px',
           height: '56px',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-md)',
           background: 'var(--color-category-strip)',
+          border: 'var(--border-ink-thin)',
           overflow: 'hidden',
         }}
       >
@@ -56,14 +59,14 @@ export function JournalCard({ dish }) {
       {/* Middle: dish name + restaurant + review */}
       <div className="flex-1 min-w-0">
         <div
-          className="font-bold truncate"
-          style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}
+          className="truncate"
+          style={{ color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.25 }}
         >
           {dishName}
         </div>
         <div
           className="truncate"
-          style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', marginTop: '1px' }}
+          style={{ color: 'var(--color-accent)', fontSize: '12.5px', fontWeight: 700, marginTop: '2px' }}
         >
           {restaurantName}
         </div>
@@ -71,8 +74,9 @@ export function JournalCard({ dish }) {
           <div
             style={{
               color: 'var(--color-text-secondary)',
-              fontSize: '12px',
-              fontStyle: 'italic',
+              fontSize: '13px',
+              fontWeight: 500,
+              lineHeight: 1.4,
               marginTop: '6px',
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -87,14 +91,16 @@ export function JournalCard({ dish }) {
 
       {/* Right: big rating number */}
       {rating != null && (
-        <div className="flex-shrink-0 flex flex-col items-end justify-center" style={{ minWidth: '36px' }}>
+        <div className="flex-shrink-0 flex flex-col items-end justify-center" style={{ minWidth: '40px', paddingTop: '2px' }}>
           <span
             data-testid="journal-card-rating"
             style={{
               color: getRatingColor(rating),
-              fontSize: '28px',
-              fontWeight: '800',
-              lineHeight: '1',
+              fontFamily: 'var(--font-display)',
+              fontSize: '30px',
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
             }}
           >
             {rating}
@@ -103,8 +109,9 @@ export function JournalCard({ dish }) {
             style={{
               color: 'var(--color-text-tertiary)',
               fontSize: '10px',
+              fontWeight: 700,
               lineHeight: '1',
-              marginTop: '2px',
+              marginTop: '3px',
             }}
           >
             /10

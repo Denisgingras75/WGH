@@ -84,16 +84,16 @@
   --color-success-muted: rgba(14, 122, 61, 0.10);
   --color-success-border: rgba(14, 122, 61, 0.30);
 
-  /* Semantic status colors (rating scale + data viz) */
+  /* Semantic status colors (rating/compat scales) — all text-safe (>= 4.5:1) on cards */
   --color-emerald: #0E7A3D;
-  --color-emerald-light: #2E9E5B;
+  --color-emerald-light: #1A8045;
   --color-red: #C1271A;
   --color-red-light: #E2573F;
   --color-red-muted: rgba(193, 39, 26, 0.10);
   --color-amber: #A84E06;
-  --color-orange: #D9620F;
-  --color-lime: #6E9B12;
-  --color-yellow: #E0A800;
+  --color-orange: #B4500A;
+  --color-lime: #4F7A0E;
+  --color-yellow: #8A6A00;
   --color-green-deep: #0E7A3D;
   --color-green-dark: #0B6532;
   --color-blue: #1F4FA3;

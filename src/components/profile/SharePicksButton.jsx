@@ -38,11 +38,12 @@ export function SharePicksButton({ userId, userName, location }) {
   return (
     <button
       onClick={handleShare}
-      className="px-5 py-2 rounded-full font-semibold transition-all hover:opacity-90 active:scale-[0.97]"
+      className="btn-ink px-6 py-2.5"
       style={{
         background: 'var(--color-primary)',
         color: 'var(--color-text-on-primary)',
-        fontSize: '13px',
+        fontSize: '15px',
+        fontWeight: 800,
       }}
     >
       Share My Picks

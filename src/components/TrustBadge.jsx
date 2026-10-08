@@ -35,22 +35,22 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
     human_verified: {
       label: 'Verified Human',
       color: 'var(--color-rating)',
-      bg: 'rgba(34, 197, 94, 0.15)',
+      bg: 'rgba(var(--color-success-rgb), 0.14)',
     },
     trusted_reviewer: {
       label: 'Trusted Reviewer',
       color: 'var(--color-rating)',
-      bg: 'rgba(34, 197, 94, 0.22)',
+      bg: 'rgba(var(--color-success-rgb), 0.22)',
     },
     ai_estimated: {
       label: 'AI Estimated',
-      color: 'var(--color-blue, #3b82f6)',
-      bg: 'rgba(59, 130, 246, 0.12)',
+      color: 'var(--color-accent)',
+      bg: 'rgba(var(--color-accent-rgb), 0.12)',
     },
     building: {
       label: 'Building...',
       color: 'var(--color-text-tertiary)',
-      bg: 'rgba(156, 163, 175, 0.12)',
+      bg: 'var(--color-surface)',
     },
   }
 
@@ -68,6 +68,7 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
         width: dim,
         height: dim,
         background: isTrusted ? config.color : config.bg,
+        border: '1.5px solid var(--color-ink)',
         cursor: profileData ? 'pointer' : 'default',
       }}
       title={config.label}
@@ -100,10 +101,12 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
 
       {showPopover && profileData && (
         <span
-          className="absolute left-0 top-full mt-1 p-3 rounded-lg shadow-lg z-50"
+          className="absolute left-0 top-full mt-1.5 p-3 z-50"
           style={{
             background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard)',
             minWidth: '160px',
             fontSize: '11px',
             display: 'block',
@@ -130,8 +133,8 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
 function PopoverRow({ label, value }) {
   return (
     <span className="flex justify-between gap-3" style={{ display: 'flex' }}>
-      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}</span>
-      <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{value}</span>
+      <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{label}</span>
+      <span style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{value}</span>
     </span>
   )
 }
@@ -149,7 +152,7 @@ export function TrustSummary({ verifiedCount, aiCount }) {
   if (!verifiedCount && !aiCount) return null
 
   return (
-    <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '12px' }}>
+    <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '12px', fontWeight: 700 }}>
       {verifiedCount > 0 && (
         <span className="flex items-center gap-1" style={{ color: 'var(--color-rating)' }}>
           <span>{'\u2713'}</span>
@@ -157,7 +160,7 @@ export function TrustSummary({ verifiedCount, aiCount }) {
         </span>
       )}
       {aiCount > 0 && (
-        <span className="flex items-center gap-1" style={{ color: 'var(--color-blue)' }}>
+        <span className="flex items-center gap-1" style={{ color: 'var(--color-accent)' }}>
           <span>{'\u2139'}</span>
           <span>{aiCount} AI-estimated</span>
         </span>

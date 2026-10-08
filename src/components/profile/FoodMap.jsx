@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { BROWSE_CATEGORIES } from '../../constants/categories'
 import { restaurantsApi } from '../../api/restaurantsApi'
 
+var FOOD_MAP_NUM = { fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }
+
 /**
  * Food Map — exploration progress in a single rounded box
  */
@@ -18,59 +20,64 @@ export function FoodMap({ stats, title }) {
 
   return (
     <div
-      className="rounded-2xl px-4 py-4"
+      className="px-4 py-4"
       style={{
         background: 'var(--color-card)',
-        border: '1px solid var(--color-divider)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
       }}
     >
       <h2
-        className="font-bold mb-3"
+        className="mb-3"
         style={{
           color: 'var(--color-text-primary)',
-          fontSize: '15px',
-          letterSpacing: '-0.01em',
+          fontSize: '19px',
+          lineHeight: 1.1,
         }}
       >
         {title || 'Your Food Map'}
       </h2>
 
-      <div className="space-y-2">
+      <div className="space-y-2" style={{ fontWeight: 500 }}>
         <div className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           <span className="w-5 text-center">{'\uD83C\uDF7D\uFE0F'}</span>
           <span>
-            <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.totalVotes}</span> dishes rated
+            <span style={FOOD_MAP_NUM}>{stats.totalVotes}</span> dishes rated
           </span>
         </div>
         <div className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           <span className="w-5 text-center">{'\uD83C\uDFE0'}</span>
           <span>
-            <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{stats.uniqueRestaurants}</span>
+            <span style={FOOD_MAP_NUM}>{stats.uniqueRestaurants}</span>
             {totalRestaurants ? ` of ${totalRestaurants}` : ''} restaurants visited
           </span>
         </div>
         <div className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           <span className="w-5 text-center">{'\uD83D\uDCCB'}</span>
           <span>
-            <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{exploredCategories.length}</span> of {BROWSE_CATEGORIES.length} categories explored
+            <span style={FOOD_MAP_NUM}>{exploredCategories.length}</span> of {BROWSE_CATEGORIES.length} categories explored
           </span>
         </div>
       </div>
 
       {topCategories.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {topCategories.map(function (cat) {
+        <div className="flex flex-wrap gap-1.5 mt-3 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+          {topCategories.map(function (cat, i) {
             return (
               <span
                 key={cat.id}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                className="flex items-center gap-1 px-2.5 py-1 text-xs"
                 style={{
-                  background: 'var(--color-primary-muted)',
-                  color: 'var(--color-primary)',
+                  background: i === 0 ? 'var(--color-butter)' : 'var(--color-card)',
+                  border: 'var(--border-ink-thin)',
+                  borderRadius: 'var(--radius-pill)',
+                  color: 'var(--color-ink)',
+                  fontWeight: 700,
                 }}
               >
                 {cat.emoji} {cat.label}
-                <span style={{ opacity: 0.6 }}>{categoryCounts[cat.id]}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: i === 0 ? 'var(--color-ink)' : 'var(--color-text-tertiary)' }}>{categoryCounts[cat.id]}</span>
               </span>
             )
           })}

@@ -76,8 +76,8 @@ export function ReportModal({ isOpen, onClose, target }) {
       role="presentation"
     >
       <div
-        className="absolute inset-0 backdrop-blur-sm"
-        style={{ background: 'rgba(0, 0, 0, 0.6)' }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
         aria-hidden="true"
       />
       <div
@@ -85,21 +85,21 @@ export function ReportModal({ isOpen, onClose, target }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
+        className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-surface-elevated)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)' }}
       >
-        <div className="p-8">
+        <div className="p-6">
           <h2
             id="report-modal-title"
-            className="text-2xl font-bold mb-2"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="mb-2"
+            style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}
           >
             Report this {targetKind}
           </h2>
           <p
             className="text-sm leading-relaxed mb-5"
-            style={{ color: 'var(--color-text-secondary)' }}
+            style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}
           >
             Let us know what's wrong. Reports go to our moderation team and stay private.
           </p>
@@ -110,10 +110,11 @@ export function ReportModal({ isOpen, onClose, target }) {
               {REPORT_REASONS.map((value) => (
                 <label
                   key={value}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
                   style={{
-                    border: `1px solid ${reason === value ? 'var(--color-primary)' : 'var(--color-divider)'}`,
-                    background: reason === value ? 'var(--color-surface)' : 'transparent',
+                    border: reason === value ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+                    borderRadius: 'var(--radius-md)',
+                    background: reason === value ? 'var(--color-butter-muted)' : 'var(--color-card)',
                   }}
                 >
                   <input
@@ -123,9 +124,9 @@ export function ReportModal({ isOpen, onClose, target }) {
                     checked={reason === value}
                     onChange={(e) => setReason(e.target.value)}
                     className="w-4 h-4"
-                    style={{ accentColor: 'var(--color-primary)' }}
+                    style={{ accentColor: 'var(--color-ink)' }}
                   />
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  <span className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: reason === value ? 800 : 600 }}>
                     {REASON_LABELS[value]}
                   </span>
                 </label>
@@ -135,10 +136,10 @@ export function ReportModal({ isOpen, onClose, target }) {
 
           <label className="block mb-5">
             <span
-              className="text-sm font-medium mb-2 block"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="text-sm mb-2 block"
+              style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}
             >
-              Details <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 400 }}>(optional)</span>
+              Details <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>(optional)</span>
             </span>
             <textarea
               value={details}
@@ -146,16 +147,18 @@ export function ReportModal({ isOpen, onClose, target }) {
               placeholder="Anything else we should know?"
               rows={3}
               disabled={loading}
-              className="w-full px-3 py-2 rounded-xl text-sm resize-none"
+              className="w-full px-3 py-2 resize-none focus:outline-none"
               style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-surface-elevated)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '16px',
                 color: 'var(--color-text-primary)',
               }}
             />
             <div
               className="text-xs mt-1 text-right"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
             >
               {details.length} / {REPORT_DETAILS_MAX_LENGTH}
             </div>
@@ -166,11 +169,10 @@ export function ReportModal({ isOpen, onClose, target }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="btn-ink flex-1 px-5 py-3"
               style={{
-                background: 'transparent',
-                border: '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
+                background: 'var(--color-card)',
+                color: 'var(--color-ink)',
                 fontSize: '15px',
               }}
             >
@@ -180,12 +182,11 @@ export function ReportModal({ isOpen, onClose, target }) {
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex-1 px-5 py-3 rounded-xl font-semibold transition-colors"
+              className="btn-ink flex-1 px-5 py-3"
               style={{
-                background: canSubmit ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: canSubmit ? '#FFFFFF' : 'var(--color-text-tertiary)',
+                background: 'var(--color-primary)',
+                color: 'var(--color-text-on-primary)',
                 fontSize: '15px',
-                opacity: loading ? 0.7 : 1,
               }}
             >
               {loading ? 'Submitting…' : 'Submit report'}

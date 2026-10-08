@@ -26,6 +26,11 @@ import { jitterApi } from '../api/jitterApi'
 
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
 
+// Food Story card — ink panel, cream type, butter highlight
+const FOOD_STORY_ROW = { padding: '8px 0 7px', borderTop: '1.5px dashed rgba(var(--color-bg-rgb), 0.18)' }
+const FOOD_STORY_LABEL = { fontSize: '12px', color: 'rgba(var(--color-bg-rgb), 0.62)', fontWeight: 600, flexShrink: 0 }
+const FOOD_STORY_VALUE = { fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--color-bg)', textAlign: 'right' }
+
 export function Profile() {
   const { user, loading } = useAuth()
   const [editingName, setEditingName] = useState(false)
@@ -149,7 +154,7 @@ export function Profile() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">Your Profile</h1>
 
       {user && (
@@ -183,56 +188,69 @@ export function Profile() {
 
           {/* Food Story chalkboard — your food identity at a glance */}
           {stats.totalVotes > 0 && (
-            <div style={{ padding: '12px 16px 0' }}>
+            <div style={{ padding: '12px 16px 4px' }}>
               <div
                 style={{
-                  background: '#2C3033',
-                  borderRadius: '12px',
-                  padding: '18px',
-                  backgroundImage: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 60%)',
+                  background: 'var(--color-ink)',
+                  border: 'var(--border-ink)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-hard)',
+                  padding: '16px 18px 10px',
                 }}
               >
                 <h3 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: '16px',
+                  fontSize: '20px',
                   fontWeight: 800,
-                  color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '10px',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  color: 'var(--color-bg)',
+                  marginBottom: '8px',
                 }}>
                   Your Food Story
                 </h3>
                 {/* Rating style */}
                 {stats.ratingStyle && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Rating style</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'var(--color-primary)' }}>
+                  <div className="flex justify-between items-center gap-3" style={FOOD_STORY_ROW}>
+                    <span style={FOOD_STORY_LABEL}>Rating style</span>
+                    <span style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      color: 'var(--color-ink)',
+                      background: 'var(--color-butter)',
+                      border: 'var(--border-ink-thin)',
+                      borderRadius: 'var(--radius-pill)',
+                      padding: '2px 10px',
+                      whiteSpace: 'nowrap',
+                    }}>
                       {stats.ratingStyle.label}
                     </span>
                   </div>
                 )}
                 {/* Most loyal */}
                 {stats.favoriteRestaurant && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Most loyal</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.88)' }}>
+                  <div className="flex justify-between items-baseline gap-3" style={FOOD_STORY_ROW}>
+                    <span style={FOOD_STORY_LABEL}>Most loyal</span>
+                    <span style={FOOD_STORY_VALUE}>
                       {stats.favoriteRestaurant} &middot; {stats.favoriteRestaurantCount} {stats.favoriteRestaurantCount === 1 ? 'dish' : 'dishes'}
                     </span>
                   </div>
                 )}
                 {/* Best find */}
                 {stats.standoutPicks && stats.standoutPicks.bestFind && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Best find</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'var(--color-accent)' }}>
+                  <div className="flex justify-between items-baseline gap-3" style={FOOD_STORY_ROW}>
+                    <span style={FOOD_STORY_LABEL}>Best find</span>
+                    <span style={FOOD_STORY_VALUE}>
                       {stats.standoutPicks.bestFind.dish_name} &middot; {stats.standoutPicks.bestFind.userRating}
                     </span>
                   </div>
                 )}
                 {/* Hot take */}
                 {stats.standoutPicks && stats.standoutPicks.harshestTake && (
-                  <div className="flex justify-between items-baseline" style={{ padding: '5px 0' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Hot take</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.88)' }}>
+                  <div className="flex justify-between items-baseline gap-3" style={FOOD_STORY_ROW}>
+                    <span style={FOOD_STORY_LABEL}>Hot take</span>
+                    <span style={FOOD_STORY_VALUE}>
                       {stats.standoutPicks.harshestTake.dish_name} &middot; You: {stats.standoutPicks.harshestTake.userRating} &middot; Crowd: {(stats.standoutPicks.harshestTake.communityAvg ?? 0).toFixed(1)}
                     </span>
                   </div>
@@ -243,7 +261,7 @@ export function Profile() {
 
           {/* Unrated Photos Banner - shown when user has photos to rate */}
           {unratedCount > 0 && (
-            <div className="px-4 py-4" style={{ background: 'var(--color-surface)' }}>
+            <div className="px-4 pt-4 pb-2">
               <button
                 onClick={() => {
                   // Open the first unrated dish
@@ -251,25 +269,27 @@ export function Profile() {
                     handleUnratedDishClick(unratedDishes[0])
                   }
                 }}
-                className="w-full rounded-2xl p-4 flex items-center gap-4 transition-all hover:scale-[0.99] active:scale-[0.98]"
+                className="sticker-press w-full p-4 flex items-center gap-4"
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-orange) 100%)',
-                  boxShadow: 'none',
+                  background: 'var(--color-primary)',
+                  border: 'var(--border-ink)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-hard)',
                 }}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-ink)' }}>
                   <CameraIcon size={28} />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-bold" style={{ fontSize: '17px', letterSpacing: '-0.01em', color: 'var(--color-text-on-primary)' }}>
+                  <h3 style={{ fontSize: '19px', lineHeight: 1.1, color: 'var(--color-text-on-primary)' }}>
                     {unratedCount} photo{unratedCount === 1 ? '' : 's'} to rate
                   </h3>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-on-primary-muted, rgba(255, 255, 255, 0.7))' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, marginTop: '2px', color: 'var(--color-text-on-primary-muted)' }}>
                     Tap to rate your dishes
                   </p>
                 </div>
-                <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-on-primary-muted, rgba(255, 255, 255, 0.6))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-on-primary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
@@ -279,26 +299,28 @@ export function Profile() {
           <div
             className="flex"
             style={{
-              borderBottom: '1px solid var(--color-divider)',
-              background: 'var(--color-surface)',
+              borderBottom: 'var(--border-ink)',
+              background: 'var(--color-bg)',
               position: 'sticky',
               top: 0,
               zIndex: 10,
+              marginTop: '12px',
             }}
           >
             {['journal', 'playlists', 'saved'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-3 text-xs font-semibold text-center"
+                className="flex-1 text-center"
                 style={{
-                  color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                  borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  padding: '12px 0 10px',
+                  marginBottom: '-2px',
+                  fontSize: '15px',
+                  fontWeight: activeTab === tab ? 800 : 700,
+                  color: activeTab === tab ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                   background: 'transparent',
                   border: 'none',
-                  borderBottomWidth: 2,
-                  borderBottomStyle: 'solid',
-                  borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                  borderBottom: activeTab === tab ? '3px solid var(--color-ink)' : '3px solid transparent',
                 }}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -313,11 +335,9 @@ export function Profile() {
               <div className="px-4 pt-5 pb-1">
                 <h2
                   style={{
-                    fontFamily: 'var(--font-display)',
                     color: 'var(--color-text-primary)',
-                    fontSize: '23px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.02em',
+                    fontSize: '24px',
+                    lineHeight: 1.05,
                   }}
                 >
                   Your Journal
@@ -335,10 +355,7 @@ export function Profile() {
           {/* --- Playlists tab --- */}
           {activeTab === 'playlists' && (
             <div className="px-4 pt-4 pb-6">
-              <div
-                className="text-xs font-bold uppercase tracking-wider pb-3"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
+              <div className="eyebrow pb-3">
                 {myPlaylists.length} {myPlaylists.length === 1 ? 'playlist' : 'playlists'}
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -347,14 +364,16 @@ export function Profile() {
                   style={{
                     width: '100%',
                     aspectRatio: '1',
-                    border: '1.5px dashed var(--color-accent)',
-                    borderRadius: 8,
+                    border: '2px dashed var(--color-text-tertiary)',
+                    borderRadius: 'var(--radius-lg)',
                     background: 'var(--color-surface)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 32,
-                    color: 'var(--color-accent)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 36,
+                    fontWeight: 800,
+                    color: 'var(--color-text-secondary)',
                   }}
                 >
                   +
@@ -370,7 +389,17 @@ export function Profile() {
           {activeTab === 'saved' && (
             <div className="px-4 pt-4 pb-6">
               {savedPlaylists.length === 0 ? (
-                <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+                <div
+                  className="py-10 px-4 text-center"
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    background: 'var(--color-surface)',
+                    border: '2px dashed var(--color-text-tertiary)',
+                    borderRadius: 'var(--radius-lg)',
+                  }}
+                >
                   <div style={{ fontSize: 40, marginBottom: 12 }}>🎵</div>
                   Playlists you follow will appear here
                 </div>

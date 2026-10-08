@@ -22,6 +22,15 @@ import { ReportModal } from '../components/ReportModal'
 import { BlockUserModal } from '../components/BlockUserModal'
 import { useBlockedUsers } from '../hooks/useBlockedUsers'
 
+// Sticker styles — profile stat cards + header numerals
+var STAT_CARD = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: 'var(--shadow-hard)',
+}
+var STAT_NUM = { fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }
+
 // Known location display names for URL slugs
 var LOCATION_NAMES = {
   'marthas-vineyard': "Martha's Vineyard",
@@ -431,17 +440,17 @@ export function UserProfile() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--color-surface)' }}>
-        <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" />
-        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
+        <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" style={{ border: 'var(--border-ink)' }} />
+        <h1 className="mb-2" style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
           User not found
         </h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           This profile doesn't exist or may have been removed.
         </p>
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-2 rounded-lg text-sm font-medium"
+          className="btn-ink px-5 py-2.5 text-sm"
           style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Go Back
@@ -454,28 +463,27 @@ export function UserProfile() {
 
   if (viewerHasBlocked) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--color-bg)' }}>
         <div
-          className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold mb-5"
-          style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-tertiary)' }}
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+          style={{ background: 'var(--color-surface)', color: 'var(--color-text-tertiary)', border: '2px dashed var(--color-text-tertiary)', fontFamily: 'var(--font-display)', fontSize: '30px', fontWeight: 800 }}
         >
           {profile.display_name?.charAt(0).toUpperCase() || '?'}
         </div>
-        <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+        <h2 className="mb-2" style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
           You blocked {profile.display_name}
         </h2>
-        <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           You won't see their reviews, photos, or activity. Unblock to restore their profile.
         </p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            className="btn-ink px-5 py-2.5"
             style={{
-              background: 'transparent',
-              border: '1px solid var(--color-divider)',
-              color: 'var(--color-text-primary)',
+              background: 'var(--color-card)',
+              color: 'var(--color-ink)',
               fontSize: '14px',
             }}
           >
@@ -484,7 +492,7 @@ export function UserProfile() {
           <button
             type="button"
             onClick={() => unblockUser(userId)}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            className="btn-ink px-5 py-2.5"
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-on-primary)',
@@ -499,34 +507,32 @@ export function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">{profile.display_name}'s Profile</h1>
       {/* Header */}
       <div
-        className="relative px-4 pt-8 pb-6 overflow-hidden"
+        className="relative px-4 pt-6 pb-5"
         style={{
           background: 'var(--color-bg)',
+          borderBottom: 'var(--border-ink)',
         }}
       >
-        {/* Bottom divider */}
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px"
-          style={{
-            width: '90%',
-            background: 'linear-gradient(90deg, transparent, var(--color-divider), transparent)',
-          }}
-        />
 
         {/* Avatar + Name row */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
+              className="w-20 h-20 rounded-full flex items-center justify-center"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
-                boxShadow: '0 0 0 3px var(--color-primary-muted)',
+                border: 'var(--border-ink)',
+                boxShadow: 'var(--shadow-hard)',
+                fontFamily: 'var(--font-display)',
+                fontSize: '32px',
+                fontWeight: 800,
+                lineHeight: 1,
               }}
             >
               {profile.display_name?.charAt(0).toUpperCase() || '?'}
@@ -537,14 +543,10 @@ export function UserProfile() {
             {/* Display Name */}
             <div className="flex items-center gap-2">
               <h2
-                className="font-bold"
                 style={{
-                  fontFamily: 'var(--font-display)',
                   color: 'var(--color-text-primary)',
-                  fontSize: '20px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  lineHeight: '1.2',
+                  fontSize: '27px',
+                  lineHeight: '1.1',
                 }}
               >
                 {profile.display_name || 'Anonymous'}
@@ -553,23 +555,23 @@ export function UserProfile() {
             </div>
 
             {/* Follow Stats */}
-            <div className="flex items-center gap-2 mt-1.5" style={{ fontSize: '13px' }}>
+            <div className="flex items-baseline gap-2.5 mt-1.5" style={{ fontSize: '13px', fontWeight: 600 }}>
               <button
                 onClick={() => setFollowListModal('followers')}
-                className="hover:underline transition-colors"
+                className="hover:underline"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
-                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <span style={STAT_NUM}>
                   {profile.follower_count || 0}
                 </span> followers
               </button>
-              <span style={{ color: 'var(--color-text-tertiary)' }}>&middot;</span>
+              <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 800 }}>&middot;</span>
               <button
                 onClick={() => setFollowListModal('following')}
-                className="hover:underline transition-colors"
+                className="hover:underline"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
-                <span className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                <span style={STAT_NUM}>
                   {profile.following_count || 0}
                 </span> following
               </button>
@@ -580,32 +582,34 @@ export function UserProfile() {
         {/* Taste Compatibility */}
         {!isOwnProfile && tasteCompat && (
           <div
-            className="mt-4 px-3.5 py-3 rounded-xl"
-            style={{
-              background: tasteCompat.compatibility_pct != null
-                ? `linear-gradient(135deg, ${getCompatColor(tasteCompat.compatibility_pct)}14 0%, ${getCompatColor(tasteCompat.compatibility_pct)}0A 100%)`
-                : 'var(--color-surface-elevated)',
-              border: tasteCompat.compatibility_pct != null
-                ? `1px solid ${getCompatColor(tasteCompat.compatibility_pct)}26`
-                : '1px solid var(--color-divider)',
+            className="mt-4 px-4 py-3"
+            style={tasteCompat.compatibility_pct != null ? {
+              background: 'var(--color-card)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-hard)',
+            } : {
+              background: 'var(--color-surface)',
+              border: '2px dashed var(--color-text-tertiary)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             {tasteCompat.compatibility_pct != null ? (
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold" style={{ color: getCompatColor(tasteCompat.compatibility_pct) }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '36px', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, color: getCompatColor(tasteCompat.compatibility_pct) }}>
                   {tasteCompat.compatibility_pct}%
                 </span>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
                     taste match
                   </p>
-                  <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                     Based on {tasteCompat.shared_dishes} shared {tasteCompat.shared_dishes === 1 ? 'dish' : 'dishes'}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 {tasteCompat.shared_dishes > 0
                   ? `${tasteCompat.shared_dishes} shared ${tasteCompat.shared_dishes === 1 ? 'dish' : 'dishes'} — rate ${3 - tasteCompat.shared_dishes} more to see your taste match`
                   : 'Rate the same dishes to see your taste match'
@@ -620,16 +624,16 @@ export function UserProfile() {
           <div className="mt-4 flex gap-2.5">
             {ratingStyle && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
-                style={{
-                  background: 'var(--color-card)',
-                  borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
-                }}
+                className="flex-1 px-4 py-3"
+                style={STAT_CARD}
               >
                 <p
-                  className="text-sm font-bold"
                   style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.1,
                     color: ratingStyle.level === 'generous' || ratingStyle.level === 'easy'
                       ? 'var(--color-emerald)'
                       : ratingStyle.level === 'tough'
@@ -639,21 +643,22 @@ export function UserProfile() {
                 >
                   {ratingStyle.label}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                   avg {ratingStyle.avgRating.toFixed(1)}/10
                 </p>
               </div>
             )}
             {ratingBias && ratingBias.votesWithConsensus > 0 && (
               <div
-                className="flex-1 rounded-2xl border px-4 py-3.5"
-                style={{
-                  background: 'var(--color-card)',
-                  borderColor: 'var(--color-divider)',
-                  boxShadow: 'none',
-                }}
+                className="flex-1 px-4 py-3"
+                style={STAT_CARD}
               >
-                <p className="text-sm font-bold" style={{
+                <p style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '18px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
                   color: (() => {
                     const isAbove = ratingStyle?.level === 'generous' || ratingStyle?.level === 'easy'
                     if (isAbove) {
@@ -668,7 +673,7 @@ export function UserProfile() {
                 }}>
                   {ratingBias.biasLabel}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                   {ratingBias.ratingBias.toFixed(1)} pts from crowd
                 </p>
               </div>
@@ -681,8 +686,8 @@ export function UserProfile() {
           {isOwnProfile ? (
             <Link
               to="/profile"
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-center transition-colors"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+              className="btn-ink flex-1 py-2.5 text-sm text-center"
+              style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
             >
               Edit Profile
             </Link>
@@ -690,10 +695,12 @@ export function UserProfile() {
             <button
               onClick={handleFollowToggle}
               disabled={followLoading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="btn-ink flex-1 py-2.5"
               style={{
-                background: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-                color: isFollowing ? 'var(--color-text-primary)' : 'var(--color-text-on-primary)',
+                fontSize: '15px',
+                fontWeight: 800,
+                background: isFollowing ? 'var(--color-card)' : 'var(--color-accent)',
+                color: isFollowing ? 'var(--color-ink)' : 'var(--color-text-on-primary)',
               }}
             >
               {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
@@ -701,8 +708,8 @@ export function UserProfile() {
           )}
           <button
             onClick={handleShare}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            className="btn-ink px-4 py-2.5 text-sm"
+            style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
           >
             Share
           </button>
@@ -714,8 +721,8 @@ export function UserProfile() {
                 aria-label="More actions"
                 aria-expanded={showActionsMenu}
                 aria-haspopup="menu"
-                className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+                className="btn-ink px-3 py-2.5 text-sm"
+                style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="5" cy="12" r="2" />
@@ -727,22 +734,22 @@ export function UserProfile() {
                 <div
                   role="menu"
                   aria-label={`Actions for ${profile.display_name}`}
-                  className="absolute right-0 mt-2 w-48 rounded-xl shadow-xl border overflow-hidden z-40"
-                  style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-divider)' }}
+                  className="absolute right-0 mt-2 w-48 overflow-hidden z-40"
+                  style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
                 >
                   <button
                     role="menuitem"
                     onClick={() => { setShowActionsMenu(false); setShowReportModal(true) }}
-                    className="w-full px-4 py-3 text-left text-sm font-medium transition-colors border-b"
-                    style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-divider)' }}
+                    className="w-full px-4 py-3 text-left text-sm"
+                    style={{ color: 'var(--color-text-primary)', fontWeight: 600, borderBottom: '1.5px solid var(--color-divider)' }}
                   >
                     Report user
                   </button>
                   <button
                     role="menuitem"
                     onClick={() => { setShowActionsMenu(false); setShowBlockModal(true) }}
-                    className="w-full px-4 py-3 text-left text-sm font-medium transition-colors"
-                    style={{ color: 'var(--color-danger)' }}
+                    className="w-full px-4 py-3 text-left text-sm"
+                    style={{ color: 'var(--color-danger)', fontWeight: 700 }}
                   >
                     Block user
                   </button>
@@ -771,23 +778,20 @@ export function UserProfile() {
         <div className="px-4 pt-3 flex flex-col gap-2.5">
           {standoutPicks.bestFind && (
             <div
-              className="rounded-xl border px-3.5 py-3 flex items-center gap-3"
-              style={{
-                background: 'var(--color-card)',
-                borderColor: 'var(--color-divider)',
-              }}
+              className="px-3.5 py-3 flex items-center gap-3"
+              style={STAT_CARD}
             >
               <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-accent)' }}>
                 {'\u2B50'}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
+                <p className="eyebrow">
                   Top pick
                 </p>
-                <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                <p className="truncate" style={{ fontSize: '15px', fontWeight: 700, marginTop: '1px', color: 'var(--color-text-primary)' }}>
                   {standoutPicks.bestFind.dish_name}
                 </p>
-                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                   {standoutPicks.bestFind.restaurant_name} &middot; {standoutPicks.bestFind.userRating}/10
                 </p>
               </div>
@@ -796,23 +800,20 @@ export function UserProfile() {
 
           {standoutPicks.harshestTake && (
             <div
-              className="rounded-xl border px-3.5 py-3 flex items-center gap-3"
-              style={{
-                background: 'var(--color-card)',
-                borderColor: 'var(--color-red-muted, rgba(239, 68, 68, 0.2))',
-              }}
+              className="px-3.5 py-3 flex items-center gap-3"
+              style={STAT_CARD}
             >
               <span className="text-lg flex-shrink-0" style={{ color: 'var(--color-red)' }}>
                 {'\uD83C\uDF36\uFE0F'}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold" style={{ color: 'var(--color-red)' }}>
+                <p className="eyebrow" style={{ color: 'var(--color-danger)' }}>
                   Hottest take
                 </p>
-                <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                <p className="truncate" style={{ fontSize: '15px', fontWeight: 700, marginTop: '1px', color: 'var(--color-text-primary)' }}>
                   {standoutPicks.harshestTake.dish_name}
                 </p>
-                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                   {standoutPicks.harshestTake.restaurant_name} &middot; {standoutPicks.harshestTake.userRating}/10 vs {standoutPicks.harshestTake.communityAvg.toFixed(1)} crowd
                 </p>
               </div>
@@ -835,19 +836,19 @@ export function UserProfile() {
       {/* Location Filter Banner */}
       {locationFilter && (
         <div
-          className="mx-4 mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between"
+          className="mx-4 mt-3 px-4 py-2.5 flex items-center justify-between"
           style={{
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-butter-muted)',
+            border: 'var(--border-ink-thin)',
+            borderRadius: 'var(--radius-md)',
           }}
         >
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500 }}>
             Showing picks in <strong style={{ color: 'var(--color-text-primary)' }}>{formatLocationName(locationFilter)}</strong>
           </span>
           <button
             onClick={function () { setSearchParams({}) }}
-            className="font-semibold"
-            style={{ color: 'var(--color-primary)', fontSize: '13px' }}
+            style={{ color: 'var(--color-primary)', fontSize: '13px', fontWeight: 800 }}
           >
             Show all
           </button>
@@ -858,11 +859,12 @@ export function UserProfile() {
       <div
         className="flex"
         style={{
-          borderBottom: '1px solid var(--color-divider)',
-          background: 'var(--color-surface)',
+          borderBottom: 'var(--border-ink)',
+          background: 'var(--color-bg)',
           position: 'sticky',
           top: 0,
           zIndex: 10,
+          marginTop: '20px',
         }}
       >
         {['journal', 'playlists'].map(function (tab) {
@@ -870,14 +872,16 @@ export function UserProfile() {
             <button
               key={tab}
               onClick={function () { setActiveTab(tab) }}
-              className="flex-1 py-3 text-xs font-semibold text-center"
+              className="flex-1 text-center"
               style={{
-                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                padding: '12px 0 10px',
+                marginBottom: '-2px',
+                fontSize: '15px',
+                fontWeight: activeTab === tab ? 800 : 700,
+                color: activeTab === tab ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                 background: 'transparent',
                 border: 'none',
-                borderBottomWidth: 2,
-                borderBottomStyle: 'solid',
-                borderBottomColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                borderBottom: activeTab === tab ? '3px solid var(--color-ink)' : '3px solid transparent',
               }}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -893,11 +897,9 @@ export function UserProfile() {
           <div className="px-4 pt-5 pb-1">
             <h2
               style={{
-                fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '23px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '24px',
+                lineHeight: 1.05,
               }}
             >
               {profile.display_name}'s Ratings
@@ -916,7 +918,17 @@ export function UserProfile() {
       {activeTab === 'playlists' && (
         <div className="px-4 pt-4 pb-6">
           {userPlaylists.length === 0 ? (
-            <div className="py-10 text-center" style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+            <div
+              className="py-10 text-center"
+              style={{
+                color: 'var(--color-text-secondary)',
+                fontSize: 14,
+                fontWeight: 600,
+                background: 'var(--color-surface)',
+                border: '2px dashed var(--color-text-tertiary)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+            >
               No playlists yet
             </div>
           ) : (
@@ -930,22 +942,24 @@ export function UserProfile() {
       {/* Signup CTA for visitors */}
       {!currentUser && (
         <div
-          className="mx-4 mt-6 mb-4 rounded-2xl px-5 py-5 text-center"
+          className="mx-4 mt-6 mb-6 px-5 py-5 text-center"
           style={{
             background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
-          <p className="font-bold" style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}>
+          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)', fontSize: '20px' }}>
             Find the best dishes on Martha's Vineyard
           </p>
-          <p className="mt-1" style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+          <p className="mt-1.5" style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500 }}>
             Save your favorites, rate dishes, and see how your taste compares.
           </p>
           <div className="flex gap-3 mt-4 justify-center">
             <Link
               to="/"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+              className="btn-ink px-5 py-2.5"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
@@ -956,11 +970,10 @@ export function UserProfile() {
             </Link>
             <Link
               to="/login"
-              className="px-5 py-2.5 rounded-xl font-semibold"
+              className="btn-ink px-5 py-2.5"
               style={{
-                background: 'var(--color-surface-elevated)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-card)',
+                color: 'var(--color-ink)',
                 fontSize: '14px',
               }}
             >

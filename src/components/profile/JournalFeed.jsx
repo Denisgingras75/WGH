@@ -42,8 +42,8 @@ export function JournalFeed({ ratings = [], loading }) {
             <div
               key={i}
               data-testid="journal-skeleton"
-              className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-surface-elevated)' }}
+              className="h-24 animate-pulse"
+              style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
             />
           )
         })}
@@ -60,21 +60,21 @@ export function JournalFeed({ ratings = [], loading }) {
     return (
       <div className="p-4">
         <div
-          className="rounded-2xl border p-8 text-center"
+          className="p-8 text-center"
           style={{
-            background: 'var(--color-card)',
-            borderColor: 'var(--color-divider)',
+            background: 'var(--color-surface)',
+            border: '2px dashed var(--color-text-tertiary)',
+            borderRadius: 'var(--radius-lg)',
           }}
         >
           <p
-            className="font-semibold"
-            style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em' }}
           >
             No dishes here yet
           </p>
           <p
             className="mt-1"
-            style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}
+            style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500 }}
           >
             Start rating dishes to build your food journal
           </p>
@@ -108,14 +108,10 @@ export function JournalFeed({ ratings = [], loading }) {
             return (
               <div
                 key={item.key}
+                className="eyebrow"
                 style={{
-                  color: 'var(--color-accent)',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  paddingTop: '4px',
-                  paddingBottom: '2px',
+                  paddingTop: '6px',
+                  paddingBottom: '0',
                 }}
               >
                 {item.label}
@@ -133,12 +129,11 @@ export function JournalFeed({ ratings = [], loading }) {
       {hasMore && (
         <button
           onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
-          className="w-full py-3 rounded-xl font-semibold text-center transition-all active:scale-[0.98] mt-3"
+          className="btn-ink w-full py-3 mt-4"
           style={{
             fontSize: '14px',
-            color: 'var(--color-accent)',
+            color: 'var(--color-ink)',
             background: 'var(--color-card)',
-            border: '1.5px solid var(--color-divider)',
           }}
         >
           Show More ({remaining > PAGE_SIZE ? PAGE_SIZE : remaining} more)

@@ -19,10 +19,12 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
+      className="overflow-hidden"
       style={{
         background: 'var(--color-card)',
-        border: '1px solid var(--color-divider)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
       }}
     >
       {/* Header — avatar left, identity right */}
@@ -30,11 +32,14 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
         <div className="flex items-start gap-3">
           {/* Avatar */}
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+            className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-on-primary)',
-              fontSize: '18px',
+              border: 'var(--border-ink)',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: '20px',
             }}
           >
             {initial}
@@ -43,17 +48,17 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
           {/* Right side — title, tier, description */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
+              <span className="eyebrow" style={{ color: 'var(--color-accent)' }}>
                 Review Fingerprint
               </span>
               <span
-                className="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
-                style={{ background: tierInfo.bg, color: tierInfo.color }}
+                className="px-2 py-0.5 flex-shrink-0"
+                style={{ background: tierInfo.bg, color: tierInfo.color, border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-pill)', fontSize: '10.5px', fontWeight: 800 }}
               >
                 {tierInfo.label}
               </span>
             </div>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.4 }}>
               {isPublic
                 ? 'Every reviewer has a unique typing rhythm that verifies they\u2019re real.'
                 : 'Your typing rhythm is unique — like a signature.'}
@@ -80,11 +85,11 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
       {nextTier && (
         <div className="px-4 py-2">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.label}</span>
-            <span style={{ color: 'var(--color-text-tertiary)' }}>{nextTier.current} of {nextTier.target}</span>
+            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>{nextTier.label}</span>
+            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 700 }}>{nextTier.current} of {nextTier.target}</span>
           </div>
-          <div className="w-full overflow-hidden" style={{ height: '4px', borderRadius: '2px', background: 'var(--color-surface)' }}>
-            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', borderRadius: '2px', background: 'var(--color-accent)' }} />
+          <div className="w-full overflow-hidden" style={{ height: '10px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: 'var(--border-ink-thin)' }}>
+            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', background: 'var(--color-butter)', borderRight: nextTier.current > 0 ? '1.5px solid var(--color-ink)' : 'none' }} />
           </div>
         </div>
       )}
@@ -93,8 +98,8 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
       {hasPrivateData && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full text-xs text-center py-2"
-          style={{ color: 'var(--color-accent)', borderTop: '1px solid var(--color-divider)' }}
+          className="w-full text-xs text-center py-2.5 mt-1"
+          style={{ color: 'var(--color-accent)', fontWeight: 700, borderTop: '1.5px solid var(--color-divider)' }}
         >
           {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
         </button>
@@ -102,7 +107,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 
       {/* Expanded details — own profile only */}
       {hasPrivateData && expanded && (
-        <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid var(--color-divider)' }}>
+        <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
           <div className="pt-3 space-y-2">
             <DetailRow label="Typing pace" value={data.mean_inter_key ? `${Math.round(data.mean_inter_key)}ms between keys` : '\u2014'} />
             <DetailRow label="Key press" value={data.mean_dwell ? `${Math.round(data.mean_dwell)}ms avg hold` : '\u2014'} />
@@ -115,7 +120,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
           {/* Per-key fingerprint — the fun visual */}
           {data.per_key_dwell && Object.keys(data.per_key_dwell).length > 0 && (
             <div>
-              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 How long you hold each key — your unique pattern
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -129,7 +134,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
           )}
 
           {/* What this means */}
-          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+          <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, lineHeight: 1.5 }}>
             This fingerprint builds over time as you write reviews. It helps verify that reviews come from real people — no two typing rhythms are alike.
           </p>
         </div>
@@ -141,8 +146,8 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 function StatCell({ label, value }) {
   return (
     <div>
-      <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{value}</div>
-      <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>{value}</div>
+      <div className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{label}</div>
     </div>
   )
 }
@@ -150,8 +155,8 @@ function StatCell({ label, value }) {
 function DetailRow({ label, value }) {
   return (
     <div className="flex justify-between text-xs">
-      <span style={{ color: 'var(--color-text-tertiary)' }}>{label}</span>
-      <span className="font-mono" style={{ color: 'var(--color-text-secondary)' }}>{value}</span>
+      <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{label}</span>
+      <span className="font-mono" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{value}</span>
     </div>
   )
 }
@@ -161,8 +166,8 @@ function KeyBar({ letter, ms, max }) {
   return (
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
-      <div className="flex-1 overflow-hidden" style={{ height: '6px', borderRadius: '3px', background: 'var(--color-surface)' }}>
-        <div style={{ width: width + '%', height: '100%', borderRadius: '3px', background: 'var(--color-accent)' }} />
+      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: '1px solid var(--color-ink)' }}>
+        <div style={{ width: width + '%', height: '100%', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>
     </div>
@@ -189,9 +194,9 @@ function formatWordCount(keystrokes) {
 }
 
 function getTierInfo(confidence, consistency) {
-  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(34, 197, 94, 0.18)', color: 'var(--color-rating)' }
-  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-rating)' }
-  return { label: 'Building', bg: 'rgba(156, 163, 175, 0.1)', color: 'var(--color-text-tertiary)' }
+  if (confidence === 'high' && consistency >= 0.6) return { label: 'Trusted', bg: 'rgba(var(--color-success-rgb), 0.16)', color: 'var(--color-rating)' }
+  if (confidence === 'medium' && consistency >= 0.4) return { label: 'Verified', bg: 'rgba(var(--color-success-rgb), 0.10)', color: 'var(--color-rating)' }
+  return { label: 'Building', bg: 'var(--color-surface)', color: 'var(--color-text-secondary)' }
 }
 
 function getNextTier(confidence, reviewCount, consistency) {

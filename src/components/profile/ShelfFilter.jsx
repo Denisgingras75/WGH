@@ -26,13 +26,14 @@ export function ShelfFilter({ shelves, active, onSelect }) {
           <button
             key={shelf.id}
             onClick={function () { onSelect(shelf.id) }}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full transition-colors"
+            className="flex-shrink-0 px-3 py-1.5 transition-colors"
             style={{
               fontWeight: isActive ? '700' : '400',
               fontSize: '13px',
-              color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              background: isActive ? 'var(--color-surface-elevated)' : 'transparent',
-              border: isActive ? '1px solid var(--color-divider)' : '1px solid transparent',
+              color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+              background: isActive ? 'var(--color-butter)' : 'var(--color-card)',
+              border: isActive ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              borderRadius: 'var(--radius-pill)',
               whiteSpace: 'nowrap',
             }}
           >

@@ -72,10 +72,12 @@ export const JitterInput = forwardRef(function JitterInput({
         aria-invalid={ariaInvalid}
         maxLength={maxLength}
         rows={rows}
-        className={`w-full p-4 rounded-xl text-sm resize-none focus:outline-none ${className}`}
+        className={`w-full p-4 resize-none focus:outline-none ${className}`}
         style={{
           background: 'var(--color-surface-elevated)',
-          border: '1px solid var(--color-divider)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-md)',
+          fontSize: '16px',
           color: 'var(--color-text-primary)',
           ...style,
         }}
