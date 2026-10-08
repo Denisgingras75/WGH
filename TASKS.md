@@ -606,3 +606,29 @@
 Do NOT start Phase 2 until Phase 1 has been live for ≥7 days and Sentry shows no regressions from stale bundles.
 
 Spec: `docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md`.
+
+---
+
+## T42: Consolidate repeated sticker patterns into shared classes
+
+**Why:** The "Lobster Buoy" redesign (Oct 2026, see `docs/DESIGN-SYSTEM.md`) moved every screen onto the same tokens, but several patterns are still re-declared inline across many files: ink-bordered inputs (~8 files), filter chips, small ink pill badges/buttons, dashed "add/empty" boxes, bottom-sheet panel + grabber (~5), modal panel (~6), underline tabs (Profile, UserProfile). One class each in `src/index.css` would make the next visual tweak a one-line change.
+
+**Acceptance criteria:**
+- Add `.input-ink`, `.chip` / `.chip--active`, `.badge-ink`, `.panel-dashed`, `.sheet` / `.sheet-grabber`, `.modal-panel`, `.tab-underline` to the `@layer components` block in `src/index.css`
+- Replace the inline duplicates; screenshots of affected pages unchanged
+- Document the classes in `docs/DESIGN-SYSTEM.md`
+
+**Files:** `src/index.css`, `docs/DESIGN-SYSTEM.md`, modal/sheet/input call sites (grep `var(--color-backdrop)`, `var(--border-ink)`)
+
+---
+
+## T43: Visual QA of redesign on real data + devices
+
+**Why:** The redesign was verified with mocked Supabase data in headless Chromium. Some states were only code-reviewed: DishModal, VariantPicker, AddToPlaylistSheet, Jitter detail panels, MenuImportWizard steps 2–3, empty/error states, map tiles (blocked in the sandbox).
+
+**Acceptance criteria:**
+- Walk `SMOKE-TEST.md` golden paths on iOS Safari + Android Chrome against production data
+- Check Bricolage Grotesque condensed (`font-stretch`) renders on iOS 15/16 Safari; fallback is acceptable if not
+- File fixes for anything off-system
+
+**Files:** —
