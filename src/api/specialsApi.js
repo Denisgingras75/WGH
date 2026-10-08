@@ -40,6 +40,7 @@ export const specialsApi = {
       .select('*')
       .eq('restaurant_id', restaurantId)
       .eq('is_active', true)
+      .or('expires_at.is.null,expires_at.gt.now()')
       .order('created_at', { ascending: false })
 
     if (error) {

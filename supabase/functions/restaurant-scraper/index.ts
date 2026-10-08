@@ -121,6 +121,11 @@ async function safeFetch(
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 
+// Scraped specials auto-expire unless a later run sees them again. Both
+// specials reads filter on expires_at, so a restaurant that drops out of the
+// scrape rotation can't keep showing a months-old deal.
+const SPECIALS_TTL_DAYS = 7
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://whats-good-here.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -353,6 +358,10 @@ serve(async (req) => {
 
     let allEvents: ExtractedEvent[] = []
     let allSpecials: ExtractedSpecial[] = []
+    // True once any page was fetched AND read by Claude. Distinguishes "the
+    // site no longer lists specials" (clear the old ones) from "we couldn't
+    // read the site" (keep them).
+    let readAnyPage = false
 
     // Fetch and process each URL
     for (const url of urls) {
@@ -363,6 +372,7 @@ serve(async (req) => {
         const extracted = await extractWithClaude(content, restaurant_name || 'Unknown')
         allEvents = allEvents.concat(extracted.events)
         allSpecials = allSpecials.concat(extracted.specials)
+        readAnyPage = true
       } catch (err) {
         console.error(`Error processing ${url}:`, err)
         // Continue with other URLs
@@ -373,8 +383,10 @@ serve(async (req) => {
     // the prior auto_scrape rows. Previously the order was reversed, so a
     // failed extraction or partial insert error left the restaurant with
     // zero active rows until the next successful run. With this order:
-    //   - Total extraction failure (allEvents/allSpecials empty) → old
-    //     rows stay live, deactivate is skipped per the guards below.
+    //   - Total fetch/extraction failure (no page read) → old rows stay
+    //     live, deactivate is skipped per the guards below.
+    //   - Page read but it lists nothing → old rows go inactive (the
+    //     site dropped them; keeping them is how stale specials happen).
     //   - Partial insert failure → whatever new rows landed survive, old
     //     rows go inactive. Brief overlap during the insert window.
     // No SQL transaction is available from the Supabase JS client; the
@@ -382,6 +394,7 @@ serve(async (req) => {
     const runStartedAt = new Date().toISOString()
 
     // Insert new events
+    let eventsAttempted = 0
     let eventsInserted = 0
     const today = new Date().toISOString().split('T')[0]
 
@@ -391,6 +404,7 @@ serve(async (req) => {
       // Skip past events
       if (event.event_date < today) continue
 
+      eventsAttempted++
       const { error } = await supabase.from('events').insert({
         restaurant_id,
         event_name: event.event_name,
@@ -407,11 +421,14 @@ serve(async (req) => {
     }
 
     // Insert new specials
+    let specialsAttempted = 0
     let specialsInserted = 0
+    const specialsExpireAt = new Date(Date.now() + SPECIALS_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
     for (const special of allSpecials) {
       if (!special.deal_name) continue
 
+      specialsAttempted++
       const { error } = await supabase.from('specials').insert({
         restaurant_id,
         deal_name: special.deal_name,
@@ -419,16 +436,19 @@ serve(async (req) => {
         price: special.price || null,
         is_active: true,
         source: 'auto_scrape',
+        expires_at: specialsExpireAt,
       })
       if (!error) specialsInserted++
     }
 
     // Deactivate prior auto_scrape rows (those created before this run
-    // started). Independent guards: only deactivate the table whose new
-    // set landed at least one row, to protect against catastrophic
-    // extraction failure. The `created_at < runStartedAt` filter ensures
-    // the rows we just inserted aren't caught.
-    if (eventsInserted > 0) {
+    // started). Independent guards per table: deactivate only when a page was
+    // actually read AND the new set is trustworthy — either it landed at least
+    // one row, or the page genuinely listed none (so stale rows must go).
+    // Skipped when every fetch failed or every insert failed, so a bad run
+    // never blanks a restaurant. The `created_at < runStartedAt` filter
+    // ensures the rows we just inserted aren't caught.
+    if (readAnyPage && (eventsInserted > 0 || eventsAttempted === 0)) {
       const { error: eventsDeactivateErr } = await supabase
         .from('events')
         .update({ is_active: false })
@@ -439,7 +459,7 @@ serve(async (req) => {
         console.error('restaurant-scraper: events deactivate failed', eventsDeactivateErr)
       }
     }
-    if (specialsInserted > 0) {
+    if (readAnyPage && (specialsInserted > 0 || specialsAttempted === 0)) {
       const { error: specialsDeactivateErr } = await supabase
         .from('specials')
         .update({ is_active: false })
