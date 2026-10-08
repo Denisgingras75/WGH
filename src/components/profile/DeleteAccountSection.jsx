@@ -16,7 +16,7 @@ export function DeleteAccountSection() {
     <>
       <section
         className="mt-16 pt-8 px-4 pb-10"
-        style={{ borderTop: 'var(--border-ink)' }}
+        style={{ borderTop: 'var(--border-default)' }}
       >
         <h2
           style={{
@@ -38,7 +38,7 @@ export function DeleteAccountSection() {
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="btn-ink px-5 py-3"
+          className="btn px-5 py-3"
           style={{
             background: 'var(--color-card)',
             color: 'var(--color-danger)',
@@ -109,9 +109,9 @@ export function DeleteAccountModal({ onClose }) {
         aria-labelledby="delete-account-title"
         className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-float)' }}
       >
-        <div className="h-2" style={{ background: 'var(--color-danger)', borderBottom: 'var(--border-ink)', boxSizing: 'content-box' }} />
+        <div className="h-2" style={{ background: 'var(--color-danger)', borderBottom: 'var(--border-default)', boxSizing: 'content-box' }} />
         <div className="p-7">
           <h2
             id="delete-account-title"
@@ -151,7 +151,7 @@ export function DeleteAccountModal({ onClose }) {
             className="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)] transition-colors"
             style={{
               background: 'var(--color-surface-elevated)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-md)',
               color: 'var(--color-text-primary)',
               fontSize: '16px',
@@ -165,7 +165,7 @@ export function DeleteAccountModal({ onClose }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="btn-ink flex-1 px-5 py-3"
+              className="btn flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-card)',
                 color: 'var(--color-ink)',
@@ -177,7 +177,7 @@ export function DeleteAccountModal({ onClose }) {
               type="button"
               onClick={handleConfirm}
               disabled={!canConfirm}
-              className="btn-ink flex-1 px-5 py-3 disabled:cursor-not-allowed"
+              className="btn flex-1 px-5 py-3 disabled:cursor-not-allowed"
               style={{
                 background: 'var(--color-danger)',
                 color: 'var(--color-text-on-primary)',

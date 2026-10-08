@@ -42,7 +42,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
         aria-labelledby="block-user-title"
         className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-float)' }}
       >
         <div className="p-7">
           <h2
@@ -72,7 +72,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="btn-ink flex-1 px-5 py-3"
+              className="btn flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-card)',
                 color: 'var(--color-ink)',
@@ -85,7 +85,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
               type="button"
               onClick={handleConfirm}
               disabled={loading}
-              className="btn-ink flex-1 px-5 py-3"
+              className="btn flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-danger)',
                 color: 'var(--color-text-on-primary)',

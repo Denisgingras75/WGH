@@ -6,6 +6,7 @@ import { DishListItem } from '../DishListItem'
 import { EmptyState } from '../EmptyState'
 import { LocationBanner } from '../LocationBanner'
 import { Wordmark } from '../Wordmark'
+import { DishThumb } from '../DishThumb'
 import { LocalListsSection, Top10Carousel } from './'
 import { useLocalsAggregate } from '../../hooks/useLocalsAggregate'
 
@@ -82,16 +83,16 @@ export const HomeListMode = memo(function HomeListMode({
                   className="flex items-center gap-1 px-2.5 py-1 font-bold flex-shrink-0"
                   style={{
                     fontSize: '12px',
-                    fontWeight: 800,
-                    background: 'var(--color-butter)',
+                    fontWeight: 600,
+                    background: 'var(--color-highlight)',
                     color: 'var(--color-ink)',
-                    border: 'var(--border-ink-thin)',
+                    border: 'var(--border-subtle)',
                     borderRadius: 'var(--radius-pill)',
                     cursor: 'pointer',
                   }}
                 >
                   {radius === 0 ? 'All' : radius + ' mi'}
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -128,8 +129,8 @@ export const HomeListMode = memo(function HomeListMode({
           <div className="px-4 pt-2 pb-4">
             <h2 style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '28px',
-              fontWeight: 700,
+              fontSize: '30px',
+              fontWeight: 500,
               color: 'var(--color-text-primary)',
               letterSpacing: '0.02em',
               marginBottom: '8px',
@@ -157,8 +158,8 @@ export const HomeListMode = memo(function HomeListMode({
         ) : activeDishes && activeDishes.length > 0 ? (
           /* Homepage v4 layout — category chips up top, vertical list */
           <>
-            {/* Editorial stories — buoy cards, horizontal scroll */}
-            <BuoySection
+            {/* Editorial picks — guide cards, horizontal scroll */}
+            <GuideSection
               topRestaurant={topRestaurant}
               mostVotedDish={mostVotedDish}
               bestValueMeal={bestValueMeal}
@@ -198,43 +199,40 @@ export const HomeListMode = memo(function HomeListMode({
   )
 })
 
-// Buoy cards — editorial stories painted in the three inks, like the
-// lobster buoys hanging on Menemsha shacks. Module-level constants (no re-creation per render).
-var BUOY_INKS = [
-  { bg: 'var(--color-primary)', fg: 'var(--color-text-on-primary)' },
-  { bg: 'var(--color-butter)', fg: 'var(--color-ink)' },
-  { bg: 'var(--color-accent)', fg: 'var(--color-text-on-primary)' },
-  { bg: 'var(--color-surface-elevated)', fg: 'var(--color-ink)' },
-]
-var BUOY_CARD = { position: 'relative', flexShrink: 0, width: '164px', minHeight: '156px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', padding: '12px 12px 11px', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }
-var BUOY_ICON = { position: 'absolute', bottom: '6px', right: '6px', width: '58px', height: '58px', objectFit: 'contain', transform: 'rotate(8deg)', pointerEvents: 'none' }
-var BUOY_TAG = { fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.85, margin: 0, lineHeight: 1.25 }
-var BUOY_TITLE = { fontFamily: 'var(--font-display)', fontWeight: 800, fontStretch: '85%', letterSpacing: '-0.02em', lineHeight: 1.0, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
-var BUOY_SUB = { fontSize: '12px', fontWeight: 600, opacity: 0.85, margin: '4px 0 0', lineHeight: 1.3 }
-var BUOY_STAT = { display: 'inline-block', fontSize: '11px', fontWeight: 800, padding: '2px 8px', marginTop: '8px', borderRadius: 'var(--radius-pill)', border: '1.5px solid currentColor' }
-var BUOY_CTA = { marginTop: 'auto', paddingTop: '10px', paddingRight: '56px', fontSize: '13px', fontWeight: 800, lineHeight: 1.2 }
-var BUOY_BOTTOM_ICON = { display: 'block', margin: '6px 0 -2px', width: '40px', height: '40px', objectFit: 'contain' }
+// Guide cards — editorial picks as quiet gallery tiles: image on top
+// (the dish photo when one exists), caption below. Module-level constants.
+var GUIDE_CARD = { flexShrink: 0, width: '152px', display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }
+var GUIDE_TILE = { width: '152px', height: '176px', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-category-strip)', position: 'relative' }
+var GUIDE_ICON = { position: 'absolute', inset: 0, margin: 'auto', width: '62%', height: '62%', objectFit: 'contain' }
+var GUIDE_MONOGRAM = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '64px', fontWeight: 400, color: 'var(--color-text-secondary)' }
+var GUIDE_TAG = { margin: 0 }
+var GUIDE_TITLE = { fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500, lineHeight: 1.12, color: 'var(--color-text-primary)', margin: '3px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
+var GUIDE_SUB = { fontSize: '13px', color: 'var(--color-text-secondary)', margin: '3px 0 0', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+var GUIDE_STAT = { fontSize: '12px', color: 'var(--color-text-tertiary)', margin: '2px 0 0' }
 
-function BuoyCard({ ink, tag, title, titleSize, sub, stat, cta, onClick, icon, bottomIcon }) {
-  var colors = BUOY_INKS[ink % BUOY_INKS.length]
+function GuideCard({ tag, title, sub, stat, cta, onClick, icon, dish, monogram }) {
   return (
-    <button
-      onClick={onClick}
-      className="sticker-press"
-      style={Object.assign({}, BUOY_CARD, { background: colors.bg, color: colors.fg })}
-    >
-      {icon && <img src={icon} alt="" style={BUOY_ICON} />}
-      <p style={BUOY_TAG}>{tag}</p>
-      <p style={Object.assign({}, BUOY_TITLE, { fontSize: titleSize || '26px' })}>{title}</p>
-      {sub && <p style={BUOY_SUB}>{sub}</p>}
-      {stat && <span style={BUOY_STAT}>{stat}</span>}
-      {bottomIcon && <img src={bottomIcon} alt="" style={BUOY_BOTTOM_ICON} />}
-      <span style={BUOY_CTA}>{cta}</span>
+    <button onClick={onClick} className="press" style={GUIDE_CARD} aria-label={title + (cta ? ', ' + cta : '')}>
+      <div style={GUIDE_TILE}>
+        {dish ? (
+          <DishThumb dish={dish} fill radius="0" iconScale={0.62} />
+        ) : icon ? (
+          <img src={icon} alt="" style={GUIDE_ICON} />
+        ) : (
+          <span aria-hidden="true" style={GUIDE_MONOGRAM}>{(monogram || title || '?').charAt(0)}</span>
+        )}
+      </div>
+      <div style={{ minWidth: 0, width: '100%' }}>
+        <p className="eyebrow" style={GUIDE_TAG}>{tag}</p>
+        <p style={GUIDE_TITLE}>{title}</p>
+        {sub && <p style={GUIDE_SUB}>{sub}</p>}
+        {stat && <p style={GUIDE_STAT}>{stat}</p>}
+      </div>
     </button>
   )
 }
 
-function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
+function GuideSection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream, localsAggregate, onExpandCategory }) {
   var navigate = useNavigate()
 
   var hour = new Date().getHours()
@@ -255,8 +253,7 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
       }}
     >
       {/* Board 1: Time of day */}
-      <BuoyCard
-        ink={0}
+      <GuideCard
         icon={timeCallout.icon}
         tag={timeCallout.tag}
         title={timeCallout.title}
@@ -268,9 +265,8 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
 
       {/* Board 2: Top Restaurant */}
       {topRestaurant && (
-        <BuoyCard
-          ink={1}
-          icon="/categories/icons/star.png"
+        <GuideCard
+          monogram={topRestaurant.name}
           tag={'highest rated restaurant'}
           title={topRestaurant.name}
           sub={'avg dish rating ' + topRestaurant.avg}
@@ -280,8 +276,7 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
       )}
 
       {/* Board 3: Chowder */}
-      <BuoyCard
-          ink={2}
+      <GuideCard
         icon="/categories/icons/chowder.webp"
         tag={'the great debate'}
         title="Chowder"
@@ -292,13 +287,11 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
 
       {/* Board 4: Most Talked About */}
       {mostVotedDish && (
-        <BuoyCard
-          ink={3}
-          icon="/categories/icons/speech-bubble.png"
+        <GuideCard
+          dish={mostVotedDish}
           tag={'most talked about'}
           title={mostVotedDish.dish_name || mostVotedDish.name}
-          titleSize="21px"
-          sub={mostVotedDish.restaurant_name}
+                    sub={mostVotedDish.restaurant_name}
           stat={(mostVotedDish.total_votes || 0) + ' votes'}
           cta={'see why \u2192'}
           onClick={function () { navigate('/dish/' + mostVotedDish.dish_id) }}
@@ -307,13 +300,11 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
 
       {/* Board 5: Best Meal Under $15 */}
       {bestValueMeal && (
-        <BuoyCard
-          ink={4}
-          icon="/categories/icons/money-bag.png"
+        <GuideCard
+          dish={bestValueMeal}
           tag={'best value'}
           title={bestValueMeal.dish_name || bestValueMeal.name}
-          titleSize="21px"
-          sub={bestValueMeal.restaurant_name}
+                    sub={bestValueMeal.restaurant_name}
           stat={'$' + Number(bestValueMeal.price).toFixed(0) + ' \u00B7 rated ' + Number(bestValueMeal.avg_rating || 0).toFixed(1)}
           cta={'best meal under $15 \u2192'}
           onClick={function () { navigate('/dish/' + bestValueMeal.dish_id) }}
@@ -322,25 +313,22 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
 
       {/* Board 6: Best Ice Cream — clean cone top, melting cone bottom */}
       {bestIceCream && (
-        <BuoyCard
-          ink={5}
-          icon="/categories/icons/ice-cream-clean.png"
+        <GuideCard
+          dish={bestIceCream}
           tag={'island scoops'}
           title={bestIceCream.dish_name || bestIceCream.name}
-          titleSize="21px"
-          sub={bestIceCream.restaurant_name}
+                    sub={bestIceCream.restaurant_name}
           stat={(bestIceCream.total_votes || 0) + ' votes \u00B7 rated ' + Number(bestIceCream.avg_rating || 0).toFixed(1)}
           cta={'best ice cream \u2192'}
           onClick={function () { navigate('/dish/' + bestIceCream.dish_id) }}
-          bottomIcon="/categories/icons/ice-cream-melting.png"
         />
       )}
 
       {/* Board 7: Locals Agree — most-appearing dish */}
       {localsAggregate && localsAggregate.top_dish_id && localsAggregate.total_lists >= 2 && (
-        <BuoyCard
-          ink={6}
-          tag={'\uD83C\uDFC6 locals agree'}
+        <GuideCard
+          tag={'locals agree'}
+          dish={{ dish_name: localsAggregate.top_dish_name }}
           title={localsAggregate.top_dish_name}
           sub={localsAggregate.top_dish_restaurant_name}
           stat={'On ' + localsAggregate.top_dish_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}
@@ -351,9 +339,8 @@ function BuoySection({ topRestaurant, mostVotedDish, bestValueMeal, bestIceCream
 
       {/* Board 8: Island Favorite — most-appearing restaurant */}
       {localsAggregate && localsAggregate.top_restaurant_id && localsAggregate.total_lists >= 2 && (
-        <BuoyCard
-          ink={7}
-          tag={'\uD83D\uDCCD island favorite'}
+        <GuideCard
+          tag={'island favorite'}
           title={localsAggregate.top_restaurant_name}
           sub={localsAggregate.top_restaurant_town || ''}
           stat={localsAggregate.top_restaurant_list_count >= localsAggregate.total_lists ? 'On every local list' : 'On ' + localsAggregate.top_restaurant_list_count + ' of ' + localsAggregate.total_lists + ' local lists'}

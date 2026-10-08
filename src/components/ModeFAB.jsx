@@ -5,30 +5,31 @@ export function ModeFAB({ mode, onToggle }) {
     <button
       onClick={onToggle}
       aria-label={isMap ? 'Switch to list view' : 'Switch to map view'}
-      className="btn-ink flex items-center gap-2 px-4 py-3"
+      className="btn flex items-center gap-2 px-4 py-3"
       style={{
         position: 'fixed',
         bottom: '82px',
         right: '16px',
         zIndex: 50,
         borderRadius: 'var(--radius-pill)',
-        background: 'var(--color-butter)',
-        fontSize: '15px',
-        fontWeight: 800,
-        color: 'var(--color-ink)',
+        background: 'var(--color-ink)',
+        boxShadow: 'var(--shadow-float)',
+        fontSize: '14px',
+        fontWeight: 600,
+        color: 'var(--color-text-on-primary)',
         cursor: 'pointer',
       }}
     >
       {isMap ? (
         <>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
           </svg>
           List
         </>
       ) : (
         <>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
           </svg>
           Map

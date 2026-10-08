@@ -111,12 +111,12 @@ function MapSearchBar({ onSearch }) {
           flex: 1,
           padding: '8px 12px',
           borderRadius: 'var(--radius-md)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           background: 'var(--color-surface-elevated)',
           fontSize: '16px',
           color: 'var(--color-text-primary)',
           outline: 'none',
-          boxShadow: 'var(--shadow-hard-sm)',
+          boxShadow: 'var(--shadow-float)',
         }}
       />
       <button
@@ -125,13 +125,13 @@ function MapSearchBar({ onSearch }) {
         style={{
           padding: '8px 14px',
           borderRadius: 'var(--radius-md)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           background: 'var(--color-primary)',
           color: 'var(--color-text-on-primary)',
           fontSize: '14px',
-          fontWeight: 800,
+          fontWeight: 600,
           cursor: searching ? 'wait' : 'pointer',
-          boxShadow: 'var(--shadow-hard-sm)',
+          boxShadow: 'var(--shadow-float)',
           opacity: searching ? 0.7 : 1,
         }}
       >
@@ -149,32 +149,28 @@ function buildCategoryIcon(category, dishCount, hasHighRating, dishName, isSelec
 
   var badge = ''
 
-  var medalBg = bestRank === 1 ? 'var(--color-medal-gold)'
-    : bestRank === 2 ? 'var(--color-medal-silver)'
-    : bestRank === 3 ? 'var(--color-medal-bronze)'
-    : null
-  var size = isSelected ? 58 : (medalBg ? 48 : 44)
-  var imgSize = isSelected ? 50 : (medalBg ? 42 : 38)
+  var size = isSelected ? 56 : 46
+  var imgSize = isSelected ? 44 : 36
 
-  // Sticker pins: ink outline + hard offset shadow. Selected = butter, 9+ rated = lobster shadow.
-  var bg = isSelected ? 'var(--color-butter)' : (medalBg || 'var(--color-surface-elevated)')
-  var borderStyle = 'border:' + (isSelected ? '3px' : '2px') + ' solid var(--color-ink);'
-  var glow = isSelected
-    ? 'box-shadow:4px 4px 0 var(--color-ink);z-index:9999 !important;'
+  // Quiet pins: white disc with a soft lift. Selected = ink ring; 9+ rated = thin ink ring.
+  var bg = 'var(--color-card)'
+  var borderStyle = isSelected
+    ? 'border:2px solid var(--color-ink);'
     : hasHighRating
-      ? 'box-shadow:3px 3px 0 var(--color-primary);'
-      : 'box-shadow:2px 2px 0 var(--color-ink);'
+      ? 'border:1.5px solid var(--color-ink);'
+      : 'border:1px solid var(--color-divider);'
+  var glow = isSelected
+    ? 'box-shadow:0 6px 18px rgba(20,20,20,0.22);z-index:9999 !important;'
+    : 'box-shadow:0 2px 8px rgba(20,20,20,0.16);'
 
   var innerContent = posterImage
     ? '<img src="' + posterImage + '" alt="" style="width:' + imgSize + 'px;height:' + imgSize + 'px;object-fit:contain;" />'
-    : '<span style="font-size:' + (isSelected ? 40 : (medalBg ? 36 : 32)) + 'px;">' + emoji + '</span>'
+    : '<span style="font-size:' + (isSelected ? 34 : 28) + 'px;">' + emoji + '</span>'
 
   // Small rank badge top-right for top 10
   var rankBadge = ''
   if (bestRank && bestRank <= 10 && !isSelected) {
-    var badgeBg = medalBg || 'var(--color-ink)'
-    var badgeFg = medalBg ? 'var(--color-ink)' : 'var(--color-bg)'
-    rankBadge = '<div style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;padding:0 4px;background:' + badgeBg + ';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:11px;font-weight:800;color:' + badgeFg + ';border:2px solid var(--color-ink);">' + bestRank + '</div>'
+    rankBadge = '<div style="position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:10px;padding:0 4px;background:var(--color-ink);display:flex;align-items:center;justify-content:center;font-family:var(--font-body);font-size:10.5px;font-weight:600;color:var(--color-text-on-primary);border:1.5px solid var(--color-card);">' + bestRank + '</div>'
   }
 
   return L.divIcon({
@@ -379,7 +375,7 @@ export function RestaurantMap({
         width: '100%',
         borderRadius: fullScreen ? '0' : 'var(--radius-lg)',
         overflow: 'hidden',
-        border: fullScreen ? 'none' : 'var(--border-ink)',
+        border: fullScreen ? 'none' : 'var(--border-default)',
         position: 'relative',
       }}
     >
@@ -501,9 +497,9 @@ export function RestaurantMap({
                 center={[restaurant.lat, restaurant.lng]}
                 radius={8}
                 pathOptions={{
-                  color: '#1B1611',
-                  fillColor: isOpen ? '#CA3216' : '#73665A',
-                  fillOpacity: isOpen ? 1 : 0.6,
+                  color: '#FFFFFF',
+                  fillColor: isOpen ? '#141414' : '#9A9A9A',
+                  fillOpacity: 1,
                   weight: 2,
                   opacity: 1,
                 }}
@@ -562,9 +558,9 @@ export function RestaurantMap({
             gap: '8px',
             padding: '10px 14px',
             borderRadius: 'var(--radius-md)',
-            background: 'var(--color-butter)',
-            border: 'var(--border-ink)',
-            boxShadow: 'var(--shadow-hard)',
+            background: 'var(--color-card)',
+            border: 'var(--border-default)',
+            boxShadow: 'var(--shadow-float)',
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -582,7 +578,7 @@ export function RestaurantMap({
                 border: 'none',
                 padding: 0,
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 600,
                 color: 'var(--color-ink)',
                 textDecoration: 'underline',
                 cursor: 'pointer',
@@ -644,8 +640,8 @@ export function RestaurantMap({
               maxWidth: '320px',
               borderRadius: 'var(--radius-lg)',
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
-              boxShadow: 'var(--shadow-hard)',
+              border: 'var(--border-default)',
+              boxShadow: 'var(--shadow-float)',
               padding: '12px 14px',
               maxHeight: '280px',
               overflowY: 'auto',
@@ -656,9 +652,9 @@ export function RestaurantMap({
               onClick={function () { nav('/restaurants/' + selectedGroup.restaurant_id) }}
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '19px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 color: 'var(--color-text-primary)',
                 cursor: 'pointer',
                 marginBottom: '2px',
@@ -706,7 +702,7 @@ export function RestaurantMap({
                       padding: '10px 4px',
                       background: 'none',
                       border: 'none',
-                      borderTop: '1.5px solid var(--color-divider)',
+                      borderTop: '1px solid var(--color-divider)',
                       cursor: 'pointer',
                       width: '100%',
                       textAlign: 'left',
@@ -716,11 +712,11 @@ export function RestaurantMap({
                     {rank && (
                       <span style={{
                         fontFamily: 'var(--font-display)',
-                        fontSize: '13px',
-                        fontWeight: 800,
+                        fontSize: '14px',
+                        fontWeight: 500,
                         color: 'var(--color-ink)',
                         background: rank <= 3 ? medalColor : 'transparent',
-                        border: rank <= 3 ? '1.5px solid var(--color-ink)' : 'none',
+                        border: rank <= 3 ? '1px solid var(--color-ink)' : 'none',
                         borderRadius: '50%',
                         width: '24px',
                         height: '24px',
@@ -748,9 +744,9 @@ export function RestaurantMap({
                         </span>
                         <span style={{
                           fontFamily: 'var(--font-display)',
-                          fontSize: '18px',
-                          fontWeight: 800,
-                          letterSpacing: '-0.03em',
+                          fontSize: '19px',
+                          fontWeight: 500,
+                          letterSpacing: '-0.01em',
                           color: getRatingColor(dish.avg_rating),
                           flexShrink: 0,
                         }}>
@@ -786,12 +782,12 @@ export function RestaurantMap({
           left: '10px',
           zIndex: 1000,
           background: 'var(--color-card)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           borderRadius: 'var(--radius-sm)',
           padding: '8px 12px',
           fontSize: '11px',
           fontWeight: 600,
-          boxShadow: 'var(--shadow-hard-sm)',
+          boxShadow: 'var(--shadow-float)',
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
@@ -814,7 +810,7 @@ export function RestaurantMap({
                 background: 'var(--color-ink)',
                 color: 'var(--color-bg)',
                 fontSize: '9px',
-                fontWeight: 800,
+                fontWeight: 600,
               }}>3</span>
               <span style={{ color: 'var(--color-text-secondary)' }}>Dish count</span>
             </div>
@@ -824,8 +820,7 @@ export function RestaurantMap({
                 width: '14px',
                 height: '14px',
                 borderRadius: '50%',
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '2px 2px 0 var(--color-primary)',
+                background: 'var(--color-card)',
                 border: '1.5px solid var(--color-ink)',
               }} />
               <span style={{ color: 'var(--color-text-secondary)' }}>Rated 9+</span>
@@ -833,7 +828,7 @@ export function RestaurantMap({
           </>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)', border: '1.5px solid var(--color-ink)', display: 'inline-block' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)', border: '1px solid var(--color-ink)', display: 'inline-block' }} />
             <span style={{ color: 'var(--color-text-secondary)' }}>On WGH</span>
           </div>
         )}

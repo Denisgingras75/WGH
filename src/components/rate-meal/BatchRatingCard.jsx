@@ -40,17 +40,17 @@ export function BatchRatingCard({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: 'var(--border-ink)',
+          borderBottom: 'var(--border-default)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             aria-label="Go back"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
@@ -58,9 +58,9 @@ export function BatchRatingCard({
             <p
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '22px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '24px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.05,
                 color: 'var(--color-text-primary)',
               }}
@@ -79,9 +79,9 @@ export function BatchRatingCard({
           className="px-4 py-5"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <div className="text-center mb-5">
@@ -91,10 +91,10 @@ export function BatchRatingCard({
                 style={{
                   padding: '2px 9px',
                   fontSize: '10.5px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   letterSpacing: '0.1em',
-                  background: 'var(--color-butter)',
-                  border: 'var(--border-ink-thin)',
+                  background: 'var(--color-highlight)',
+                  border: 'var(--border-subtle)',
                   borderRadius: 'var(--radius-pill)',
                   color: 'var(--color-ink)',
                 }}
@@ -106,9 +106,9 @@ export function BatchRatingCard({
               className="mt-2"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '28px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '30px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.05,
                 color: 'var(--color-text-primary)',
               }}
@@ -135,8 +135,8 @@ export function BatchRatingCard({
               onClick={function () { setIsReviewExpanded(!isReviewExpanded) }}
               className="w-full px-4 py-3 text-left transition-all active:scale-[0.99]"
               style={{
-                background: isReviewExpanded ? 'var(--color-butter-muted)' : 'var(--color-surface)',
-                border: isReviewExpanded ? 'var(--border-ink)' : '2px dashed var(--color-text-tertiary)',
+                background: isReviewExpanded ? 'var(--color-highlight-muted)' : 'var(--color-surface)',
+                border: isReviewExpanded ? 'var(--border-default)' : '1px dashed var(--color-divider-strong)',
                 borderRadius: 'var(--radius-md)',
               }}
             >
@@ -160,7 +160,7 @@ export function BatchRatingCard({
                   className="w-full px-4 py-3 resize-none outline-none"
                   style={{
                     background: 'var(--color-surface-elevated)',
-                    border: reviewOverLimit ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+                    border: reviewOverLimit ? '2px solid var(--color-danger)' : 'var(--border-default)',
                     borderRadius: 'var(--radius-md)',
                     color: 'var(--color-text-primary)',
                     fontSize: '16px',
@@ -186,7 +186,7 @@ export function BatchRatingCard({
               className="w-full px-4 py-3 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
               style={{
                 background: 'var(--color-surface)',
-                border: '2px dashed var(--color-text-tertiary)',
+                border: '1px dashed var(--color-divider-strong)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--color-text-secondary)',
               }}
@@ -203,7 +203,7 @@ export function BatchRatingCard({
                 className="mt-3 px-4 py-3 flex items-center justify-between gap-3"
                 style={{
                   background: 'var(--color-surface)',
-                  border: 'var(--border-ink-thin)',
+                  border: 'var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
                 }}
               >
@@ -218,7 +218,7 @@ export function BatchRatingCard({
                 <button
                   onClick={function () { updateValue({ photoFile: null }) }}
                   className="text-sm flex-shrink-0"
-                  style={{ color: 'var(--color-primary)', fontWeight: 800 }}
+                  style={{ color: 'var(--color-primary)', fontWeight: 600 }}
                 >
                   Remove
                 </button>
@@ -233,18 +233,18 @@ export function BatchRatingCard({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          borderTop: 'var(--border-ink)',
+          borderTop: 'var(--border-default)',
         }}
       >
         <button
           onClick={onNext}
           disabled={value.rating10 == null || value.rating10 === 0 || reviewOverLimit}
-          className="btn-ink w-full py-3.5"
+          className="btn w-full py-3.5"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: '15px',
-            fontWeight: 800,
+            fontWeight: 600,
           }}
         >
           {index === total - 1 ? 'Review' : 'Next'}

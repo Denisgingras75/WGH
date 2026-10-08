@@ -3,37 +3,37 @@ import { EVENT_TYPES } from '../../constants/eventTypes'
 
 const INPUT_STYLE = {
   background: 'var(--color-surface-elevated)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-md)',
   color: 'var(--color-text-primary)',
   fontSize: '16px',
 }
 const PANEL_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-hard)',
+  boxShadow: 'var(--shadow-card)',
 }
 const PILL_BTN_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-pill)',
   fontWeight: 700,
 }
 const ROW_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-hard-sm)',
+  boxShadow: 'var(--shadow-card)',
 }
 const INACTIVE_ROW_STYLE = {
   background: 'var(--color-surface)',
-  border: '2px dashed var(--color-divider)',
+  border: '1px dashed var(--color-divider-strong)',
   borderRadius: 'var(--radius-lg)',
 }
 const EMPTY_STYLE = {
   background: 'var(--color-surface)',
-  border: '2px dashed var(--color-text-tertiary)',
+  border: '1px dashed var(--color-divider-strong)',
   borderRadius: 'var(--radius-lg)',
 }
 
@@ -135,7 +135,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
           className="w-full py-3 transition-colors mb-4"
           style={EMPTY_STYLE}
         >
-          <span className="text-sm" style={{ fontWeight: 800, color: 'var(--color-ink)' }}>+ Add Event</span>
+          <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-ink)' }}>+ Add Event</span>
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="mb-4 p-4" style={PANEL_STYLE}>
@@ -214,7 +214,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-ink flex-1 py-2 text-sm"
+                className="btn flex-1 py-2 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Event'}
@@ -222,7 +222,7 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
               <button
                 type="button"
                 onClick={resetForm}
-                className="btn-ink px-4 py-2 text-sm"
+                className="btn px-4 py-2 text-sm"
                 style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 Cancel
@@ -256,9 +256,9 @@ export function EventsManager({ restaurantId, events, onAdd, onUpdate, onDeactiv
                       className="px-2 py-0.5 rounded-full"
                       style={{
                         fontSize: '11px',
-                        fontWeight: 800,
-                        background: 'var(--color-butter)',
-                        border: 'var(--border-ink-thin)',
+                        fontWeight: 600,
+                        background: 'var(--color-highlight)',
+                        border: 'var(--border-subtle)',
                         color: 'var(--color-ink)',
                       }}
                     >

@@ -7,7 +7,7 @@ export function Support() {
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -16,12 +16,12 @@ export function Support() {
               color: 'var(--color-ink)',
               fontWeight: 700,
               background: 'var(--color-card)',
-              border: 'var(--border-ink-thin)',
+              border: 'var(--border-subtle)',
               borderRadius: 'var(--radius-pill)',
             }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -37,15 +37,15 @@ export function Support() {
           <WghSeal size={96} />
         </div>
         <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2
               className="mb-3"
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '23px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '25px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.1,
               }}
             >
@@ -58,7 +58,7 @@ export function Support() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Email us
             </h2>
@@ -67,7 +67,7 @@ export function Support() {
             </p>
             <a
               href="mailto:hello@whatsgoodhere.app"
-              className="btn-ink px-4 py-2.5"
+              className="btn px-4 py-2.5"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '14px' }}
             >
               hello@whatsgoodhere.app
@@ -77,7 +77,7 @@ export function Support() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Common questions
             </h2>
@@ -143,7 +143,7 @@ export function Support() {
             </div>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Privacy and Terms
             </h2>
@@ -160,7 +160,7 @@ export function Support() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Who runs this
             </h2>

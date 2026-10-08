@@ -62,7 +62,7 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
           className="w-full"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderBottom: 'none',
             borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
             padding: '8px 0 20px',
@@ -77,8 +77,8 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
           <div style={{ width: 40, height: 6, background: 'var(--color-ink)', opacity: 0.25, borderRadius: 'var(--radius-pill)', margin: '6px auto 12px' }} />
 
           {/* Header */}
-          <div style={{ padding: '0 20px 14px', borderBottom: '1.5px solid var(--color-divider)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
+          <div style={{ padding: '0 20px 14px', borderBottom: '1px solid var(--color-divider)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               Add to a playlist
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 4 }}>
@@ -95,23 +95,23 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
               gap: 12,
               padding: '14px 20px',
               color: 'var(--color-primary)',
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: 14,
               background: 'transparent',
               border: 'none',
-              borderBottom: '1.5px solid var(--color-divider)',
+              borderBottom: '1px solid var(--color-divider)',
               width: '100%',
               textAlign: 'left',
             }}
           >
             <span style={{
               width: 40, height: 40,
-              border: '2px dashed var(--color-text-tertiary)',
+              border: '1px dashed var(--color-divider-strong)',
               borderRadius: 'var(--radius-sm)',
               background: 'var(--color-surface)',
               color: 'var(--color-ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, fontWeight: 800, lineHeight: 1, flexShrink: 0,
+              fontSize: 22, fontWeight: 600, lineHeight: 1, flexShrink: 0,
             }}>+</span>
             Create new playlist
           </button>
@@ -139,9 +139,9 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
                     gap: 12,
                     padding: '12px 20px',
                     width: '100%',
-                    background: checked ? 'var(--color-butter-muted)' : 'transparent',
+                    background: checked ? 'var(--color-highlight-muted)' : 'transparent',
                     border: 'none',
-                    borderBottom: '1.5px solid var(--color-divider)',
+                    borderBottom: '1px solid var(--color-divider)',
                     textAlign: 'left',
                   }}
                 >
@@ -156,12 +156,12 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
                   </div>
                   <div style={{
                     width: 24, height: 24, borderRadius: '50%',
-                    border: 'var(--border-ink)',
+                    border: 'var(--border-default)',
                     background: checked ? 'var(--color-primary)' : 'var(--color-card)',
-                    boxShadow: checked ? 'var(--shadow-hard-sm)' : 'none',
+                    boxShadow: checked ? 'var(--shadow-card)' : 'none',
                     color: 'var(--color-text-on-primary)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 800, flexShrink: 0,
+                    fontSize: 13, fontWeight: 600, flexShrink: 0,
                   }}>
                     {checked ? '\u2713' : ''}
                   </div>

@@ -140,20 +140,19 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
       <div
         className="relative flex items-center gap-3 px-4 py-3 transition-all duration-150"
         style={{
-          background: 'var(--color-surface-elevated)',
-          border: 'var(--border-ink)',
+          background: isFocused ? 'var(--color-card)' : 'var(--color-surface)',
+          border: isFocused ? '1px solid var(--color-ink)' : '1px solid transparent',
           borderRadius: 'var(--radius-md)',
-          boxShadow: isFocused ? '4px 4px 0 var(--color-primary)' : 'var(--shadow-hard)',
-          minHeight: '50px',
+          minHeight: '48px',
         }}
       >
         <svg
           className="w-5 h-5 flex-shrink-0"
-          style={{ color: 'var(--color-ink)' }}
+          style={{ color: 'var(--color-text-secondary)' }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2.5}
+          strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -186,7 +185,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
             aria-label="Clear search"
             className="p-1 rounded-full transition-colors"
             style={{ ':hover': { background: 'var(--color-surface-elevated)' } }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-highlight-muted)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <svg
@@ -224,9 +223,9 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
           className="absolute top-full left-0 right-0 mt-3 overflow-hidden z-50"
           style={{
             background: 'var(--color-surface-elevated)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-float)',
           }}
         >
           {isLoading ? (
@@ -250,7 +249,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Dish Results */}
               {results.dishes.length > 0 && (
                 <div>
-                  <div className="px-4 py-2" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
+                  <div className="px-4 py-2" style={{ borderBottom: '1px solid var(--color-divider)' }}>
                     <span className="eyebrow" style={{ fontSize: '10px' }}>
                       {town ? `Best in ${town}` : 'Best Matches'}
                     </span>
@@ -293,7 +292,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Restaurant fallback — local DB + Google Places */}
               {hasRestaurantResults && (
                 <div>
-                  <div className="px-4 py-2" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
+                  <div className="px-4 py-2" style={{ borderBottom: '1px solid var(--color-divider)' }}>
                     <span className="eyebrow" style={{ fontSize: '10px' }}>
                       Restaurants
                     </span>
@@ -304,10 +303,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       key={r.id}
                       onClick={() => { setIsFocused(false); setQuery(''); navigate('/restaurants/' + r.id) }}
                       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-butter-muted)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-highlight-muted)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', border: '1.5px solid var(--color-ink)' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)' }}>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
@@ -324,7 +323,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       key={p.placeId}
                       onClick={() => { setIsFocused(false); setQuery(''); setAddModalQuery(p.name); setAddModalOpen(true) }}
                       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-butter-muted)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-highlight-muted)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
                       <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)', border: '1.5px solid var(--color-accent)' }}>
@@ -339,7 +338,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                     </button>
                   ))}
                   {restaurantExternal.length > 0 && (
-                    <div className="px-4 py-2" style={{ borderTop: '1.5px solid var(--color-divider)' }}>
+                    <div className="px-4 py-2" style={{ borderTop: '1px solid var(--color-divider)' }}>
                       <PoweredByGoogle align="right" />
                     </div>
                   )}
@@ -368,12 +367,12 @@ function DishResult({ dish, rank, onClick }) {
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-highlight-muted)'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       <span
         className="w-6 text-center flex-shrink-0"
-        style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}
+        style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}
       >
         {rank}
       </span>
@@ -388,7 +387,7 @@ function DishResult({ dish, rank, onClick }) {
 
       <div className="flex-shrink-0 text-right">
         {isRanked ? (
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 800, letterSpacing: '-0.02em', color: getRatingColor(avg_rating) }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, letterSpacing: '-0.01em', color: getRatingColor(avg_rating) }}>
             {avg_rating || '—'}
           </span>
         ) : (
@@ -407,7 +406,7 @@ function CategoryResult({ category, onClick }) {
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-highlight-muted)'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       {/* Category icon */}

@@ -9,7 +9,7 @@ export function DishRowSkeleton() {
       className="w-full flex items-center gap-3 p-2.5"
       style={{
         background: 'var(--color-surface)',
-        border: '2px solid var(--color-divider)',
+        border: '1px solid var(--color-divider)',
         borderRadius: 'var(--radius-lg)',
       }}
       role="status"
@@ -77,7 +77,7 @@ export function ProfileSkeleton() {
             className="p-6"
             style={{
               background: 'var(--color-surface)',
-              border: '2px solid var(--color-divider)',
+              border: '1px solid var(--color-divider)',
               borderRadius: 'var(--radius-xl)',
             }}
           >
@@ -113,7 +113,7 @@ export function ProfileSkeleton() {
               className="h-20"
               style={{
                 background: 'var(--color-surface)',
-                border: '2px solid var(--color-divider)',
+                border: '1px solid var(--color-divider)',
                 borderRadius: 'var(--radius-lg)',
               }}
             />
@@ -131,7 +131,7 @@ export function DishCardSkeleton() {
       className="w-full overflow-hidden"
       style={{
         background: 'var(--color-surface)',
-        border: '2px solid var(--color-divider)',
+        border: '1px solid var(--color-divider)',
         borderRadius: 'var(--radius-lg)',
       }}
       role="status"

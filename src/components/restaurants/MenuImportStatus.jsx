@@ -2,9 +2,9 @@ import { useMenuImportStatus } from '../../hooks/useMenuImportStatus'
 
 const headingStyle = {
   fontFamily: 'var(--font-display)',
-  fontWeight: 800,
-  fontSize: '19px',
-  letterSpacing: '-0.02em',
+  fontWeight: 500,
+  fontSize: '21px',
+  letterSpacing: '-0.01em',
   lineHeight: 1.1,
   color: 'var(--color-text-primary)',
   marginBottom: '6px',
@@ -27,7 +27,7 @@ export function MenuImportStatus({ restaurantId, dishCount }) {
         textAlign: 'center',
         color: 'var(--color-text-secondary)',
         background: 'var(--color-surface)',
-        border: '2px dashed var(--color-text-tertiary)',
+        border: '1px dashed var(--color-divider-strong)',
         borderRadius: 'var(--radius-lg)',
       }}
     >

@@ -609,16 +609,16 @@ Spec: `docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md`.
 
 ---
 
-## T42: Consolidate repeated sticker patterns into shared classes
+## T42: Consolidate repeated UI patterns into shared classes
 
-**Why:** The "Lobster Buoy" redesign (Oct 2026, see `docs/DESIGN-SYSTEM.md`) moved every screen onto the same tokens, but several patterns are still re-declared inline across many files: ink-bordered inputs (~8 files), filter chips, small ink pill badges/buttons, dashed "add/empty" boxes, bottom-sheet panel + grabber (~5), modal panel (~6), underline tabs (Profile, UserProfile). One class each in `src/index.css` would make the next visual tweak a one-line change.
+**Why:** The "Quiet" redesign (Oct 2026, see `docs/DESIGN-SYSTEM.md`) moved every screen onto the same tokens, but several patterns are still re-declared inline across many files: inputs (~8 files), filter chips, small pill badges/buttons, dashed "add/empty" boxes, bottom-sheet panel + grabber (~5), modal panel (~6), underline tabs (Profile, UserProfile). One class each in `src/index.css` would make the next visual tweak a one-line change.
 
 **Acceptance criteria:**
-- Add `.input-ink`, `.chip` / `.chip--active`, `.badge-ink`, `.panel-dashed`, `.sheet` / `.sheet-grabber`, `.modal-panel`, `.tab-underline` to the `@layer components` block in `src/index.css`
+- Add `.input`, `.chip` / `.chip--active`, `.badge`, `.panel-dashed`, `.sheet` / `.sheet-grabber`, `.modal-panel`, `.tab-underline` to the `@layer components` block in `src/index.css`
 - Replace the inline duplicates; screenshots of affected pages unchanged
 - Document the classes in `docs/DESIGN-SYSTEM.md`
 
-**Files:** `src/index.css`, `docs/DESIGN-SYSTEM.md`, modal/sheet/input call sites (grep `var(--color-backdrop)`, `var(--border-ink)`)
+**Files:** `src/index.css`, `docs/DESIGN-SYSTEM.md`, modal/sheet/input call sites (grep `var(--color-backdrop)`, `var(--border-default)`)
 
 ---
 
@@ -628,7 +628,22 @@ Spec: `docs/superpowers/specs/2026-04-12-binary-vote-removal-design.md`.
 
 **Acceptance criteria:**
 - Walk `SMOKE-TEST.md` golden paths on iOS Safari + Android Chrome against production data
-- Check Bricolage Grotesque condensed (`font-stretch`) renders on iOS 15/16 Safari; fallback is acceptable if not
+- Check Newsreader optical sizing + italic render on iOS 15/16 Safari; Georgia fallback is acceptable if not
+- Check real community photos in `DishThumb` (crop, fade-in, broken-URL fallback) on production data
 - File fixes for anything off-system
 
 **Files:** —
+
+---
+
+## T44: Real dish photos — get coverage past the top dishes
+
+**Why:** The Quiet redesign is photo-ready: every dish image slot (`DishThumb`) shows a real photo when one exists. But production has ~14 community photos across ~8,800 dishes (0 dishes with `photo_url`), so almost everyone sees icons. Photos are the single biggest lever for the "tasteful" feel and for trust ("that's the actual dish"). Stock/AI images must not stand in for specific dishes — it misleads diners. Google Places photos are restaurant-level, not dish-level, and their terms restrict caching.
+
+**Acceptance criteria:**
+- Founders shoot the top ~50 ranked dishes (good light, 4:3, plate filling the frame) and upload them as featured photos
+- Prompt for a photo after rating (already supported by `ReviewFlow`) — measure upload rate in PostHog
+- Restaurant managers can upload dish photos from `/manage` (today `DishesManager` only takes a pasted photo URL)
+- Decide the featured-photo rule when several exist (quality tier → most recent)
+
+**Files:** `src/components/ReviewFlow.jsx`, `src/components/restaurant-admin/DishesManager.jsx`, `src/api/dishPhotosApi.js`, `supabase/schema.sql` (only if a new field is needed)

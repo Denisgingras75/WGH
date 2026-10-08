@@ -23,12 +23,12 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
   return (
     <button
       onClick={handleClick}
-      className="sticker-press w-full p-4 text-left"
+      className="press w-full p-4 text-left"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: promoted ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <div className="flex gap-3">
@@ -47,9 +47,9 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
               className="mb-1.5 inline-block px-2 py-0.5 rounded-full"
               style={{
                 fontSize: '11px',
-                fontWeight: 800,
-                background: 'var(--color-butter)',
-                border: 'var(--border-ink-thin)',
+                fontWeight: 600,
+                background: 'var(--color-highlight)',
+                border: 'var(--border-subtle)',
                 color: 'var(--color-ink)',
               }}
             >
@@ -87,11 +87,11 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
                 className="inline-block px-2.5 py-0.5"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.03em',
-                  background: 'var(--color-butter)',
-                  border: 'var(--border-ink-thin)',
+                  fontSize: '19px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.01em',
+                  background: 'var(--color-highlight)',
+                  border: 'var(--border-subtle)',
                   borderRadius: 'var(--radius-sm)',
                   color: 'var(--color-ink)',
                 }}

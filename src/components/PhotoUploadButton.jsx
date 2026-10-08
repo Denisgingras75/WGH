@@ -64,8 +64,8 @@ export function PhotoUploadButton({
           className="photo-upload-btn-compact tap-target"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
-            boxShadow: 'var(--shadow-hard-sm)',
+            border: 'var(--border-default)',
+            boxShadow: 'var(--shadow-card)',
             color: 'var(--color-ink)',
           }}
           title="Add photo"
@@ -103,7 +103,7 @@ export function PhotoUploadButton({
         className="photo-upload-btn tap-target"
         style={{
           background: 'var(--color-surface)',
-          border: '2px dashed var(--color-text-tertiary)',
+          border: '1px dashed var(--color-divider-strong)',
           borderRadius: 'var(--radius-lg)',
           color: 'var(--color-ink)',
           fontWeight: 700,
@@ -130,7 +130,7 @@ export function PhotoUploadButton({
             className="photo-upload-retry-btn tap-target"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink-thin)',
+              border: 'var(--border-subtle)',
               borderRadius: 'var(--radius-pill)',
               color: 'var(--color-ink)',
               fontWeight: 700,

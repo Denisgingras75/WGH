@@ -139,7 +139,7 @@ export function WelcomeModal() {
 
         <div className="relative z-10 text-center px-8">
           {/* Logo — matches splash page layout */}
-          <div className="flex justify-center" style={{ marginBottom: '-18px', position: 'relative', zIndex: 2 }}>
+          <div className="flex justify-center" style={{ marginBottom: '16px' }}>
             <SmileyPin size={72} />
           </div>
 
@@ -151,9 +151,9 @@ export function WelcomeModal() {
             style={{
               color: 'var(--color-text-primary)',
               fontFamily: 'var(--font-display)',
-              fontSize: '22px',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
+              fontSize: '24px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               lineHeight: 1.2,
               marginTop: '18px',
             }}
@@ -188,13 +188,13 @@ export function WelcomeModal() {
         style={{
           animationDelay: '0.1s',
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
         {/* Lobster header band */}
-        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-ink)' }} />
+        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-default)' }} />
 
         <div className="p-7">
           {/* Progress dots */}
@@ -211,7 +211,7 @@ export function WelcomeModal() {
                       : 'w-2.5'
                 }`}
                 style={{
-                  border: 'var(--border-ink-thin)',
+                  border: 'var(--border-subtle)',
                   background: i === step
                     ? 'var(--color-primary)'
                     : i < step
@@ -234,8 +234,8 @@ export function WelcomeModal() {
               style={{
                 background: 'var(--color-category-strip)',
                 color: 'var(--color-ink)',
-                border: 'var(--border-ink)',
-                boxShadow: 'var(--shadow-hard)',
+                border: 'var(--border-default)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               {currentStep.icon === 'star' ? <span className="text-4xl">⭐</span>
@@ -274,14 +274,14 @@ export function WelcomeModal() {
                     width: 44,
                     height: 44,
                     background: 'var(--color-card)',
-                    border: 'var(--border-ink-thin)',
+                    border: 'var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-hard-sm)',
+                    boxShadow: 'var(--shadow-card)',
                     color: getRatingColor(n),
                     fontFamily: 'var(--font-display)',
-                    fontSize: '20px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.03em',
+                    fontSize: '22px',
+                    fontWeight: 500,
+                    letterSpacing: '-0.01em',
                     lineHeight: 1,
                   }}
                 >
@@ -294,15 +294,15 @@ export function WelcomeModal() {
           {/* Photos step visual */}
           {currentStep.id === 'photos' && (
             <div className="flex justify-center gap-3 mb-6">
-              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">📸</span>
                 <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Snap</span>
               </div>
-              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">⬆️</span>
                 <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Upload</span>
               </div>
-              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">🍽️</span>
                 <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Help others</span>
               </div>
@@ -328,7 +328,7 @@ export function WelcomeModal() {
                 className="w-full px-4 py-4 text-lg text-center focus:outline-none disabled:opacity-60"
                 style={{
                   background: 'var(--color-surface-elevated)',
-                  border: saveError ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+                  border: saveError ? '2px solid var(--color-danger)' : 'var(--border-default)',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--color-text-primary)',
                   fontWeight: 600,
@@ -346,7 +346,7 @@ export function WelcomeModal() {
               <button
                 type="submit"
                 disabled={!name.trim() || saving}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {saving ? 'Saving...' : "Let's go!"}
@@ -375,7 +375,7 @@ export function WelcomeModal() {
               <button
                 onClick={handleNext}
                 disabled={saving}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {saving ? 'Saving...' : step === activeSteps.length - 1 ? "Let's go!" : 'Next'}

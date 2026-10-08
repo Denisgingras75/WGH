@@ -1,7 +1,7 @@
 /**
  * Wordmark — the "What's Good Here" brand lockup.
- * Condensed display type with "Good" on a butter sticker. Sized entirely in em,
- * so pass `size` (px) and everything — outline, shadow, tilt — scales with it.
+ * Serif display type with "Good" set in italic. Sized in em, so pass `size`
+ * (px) and the whole lockup scales with it.
  */
 export function Wordmark({ size = 20, as = 'span', className = '', style }) {
   var Tag = as

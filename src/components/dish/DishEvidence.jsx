@@ -64,9 +64,9 @@ export function DishEvidence({
           <div className="mb-4">
             <h3 style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '17px',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
+              fontSize: '18px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               color: 'var(--color-text-primary)',
               marginBottom: '12px',
             }}>
@@ -77,8 +77,6 @@ export function DishEvidence({
               style={{ gap: gap + 'px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
             >
               {friendsVotes.map(function (vote) {
-                var avatarColors = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
-                var colorIndex = (vote.display_name || '').charCodeAt(0) % avatarColors.length
                 return (
                   <Link
                     key={vote.user_id}
@@ -91,9 +89,8 @@ export function DishEvidence({
                       style={{
                         width: avatarSize + 'px',
                         height: avatarSize + 'px',
-                        background: avatarColors[colorIndex],
-                        color: 'var(--color-text-on-primary)',
-                        border: 'var(--border-ink)',
+                        background: 'var(--color-surface)',
+                        color: 'var(--color-text-primary)',
                         fontFamily: 'var(--font-display)',
                         fontSize: avatarFont + 'px',
                       }}
@@ -116,8 +113,8 @@ export function DishEvidence({
                     <span style={{
                       fontFamily: 'var(--font-display)',
                       fontSize: scoreSize + 'px',
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
                       color: getRatingColor(vote.rating_10),
                       marginTop: '2px',
                     }}>
@@ -136,10 +133,10 @@ export function DishEvidence({
           <div
             className="mb-5 p-4"
             style={{
-              background: 'var(--color-butter)',
-              border: 'var(--border-ink)',
+              background: 'var(--color-highlight)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-hard)',
+              boxShadow: 'var(--shadow-card)',
             }}
           >
             <div className="flex items-start gap-2">
@@ -167,7 +164,7 @@ export function DishEvidence({
                 — @{smartSnippet.profiles?.display_name || 'Anonymous'}
               </span>
               {smartSnippet.rating_10 && (
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-ink)' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500, color: 'var(--color-ink)' }}>
                   {formatScore10(smartSnippet.rating_10)}
                 </span>
               )}
@@ -188,7 +185,7 @@ export function DishEvidence({
                   onClick={() => setLightboxPhoto(photo)}
                   aria-label={'View photo of ' + dish.dish_name}
                   className="aspect-square overflow-hidden active:scale-95 transition-transform"
-                  style={{ border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}
+                  style={{ border: 'var(--border-default)', borderRadius: 'var(--radius-md)' }}
                 >
                   <img
                     src={photo.photo_url}
@@ -242,13 +239,13 @@ export function DishEvidence({
                   <div
                     key={review.id}
                     className="p-4 flex-shrink-0 snap-start"
-                    style={{ width: '280px', background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }}
+                    style={{ width: '280px', background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}
                   >
                     <div className="flex items-start gap-2 mb-2.5">
                       <Link to={'/user/' + review.user_id} className="flex items-center gap-3 min-w-0 flex-1">
                         <div
                           className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink)', fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800 }}
+                          style={{ background: 'var(--color-surface)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500 }}
                         >
                           {review.profiles?.display_name?.charAt(0).toUpperCase() || '?'}
                         </div>
@@ -300,7 +297,7 @@ export function DishEvidence({
                       <div className="flex items-center gap-2 mb-2.5">
                         <span
                           className="rounded-full px-2.5 py-0.5"
-                          style={{ background: 'var(--color-surface-elevated)', border: '2px solid currentColor', color: getRatingColor(review.rating_10), fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800 }}
+                          style={{ background: 'var(--color-surface-elevated)', border: '2px solid currentColor', color: getRatingColor(review.rating_10), fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 500 }}
                         >
                           {formatScore10(review.rating_10)}
                         </span>
@@ -324,7 +321,7 @@ export function DishEvidence({
         {!reviewsLoading && reviews.length === 0 && dish.total_votes > 0 && (
           <div
             className="mb-4 p-4 text-center"
-            style={{ background: 'var(--color-surface)', border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)' }}
+            style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-lg)' }}
           >
             <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
               No written reviews yet — be the first to share your thoughts!

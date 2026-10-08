@@ -22,9 +22,9 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
       className="overflow-hidden"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       {/* Header — avatar left, identity right */}
@@ -36,10 +36,10 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-on-primary)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: '20px',
+              fontWeight: 500,
+              fontSize: '22px',
             }}
           >
             {initial}
@@ -53,7 +53,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
               </span>
               <span
                 className="px-2 py-0.5 flex-shrink-0"
-                style={{ background: tierInfo.bg, color: tierInfo.color, border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-pill)', fontSize: '10.5px', fontWeight: 800 }}
+                style={{ background: tierInfo.bg, color: tierInfo.color, border: 'var(--border-subtle)', borderRadius: 'var(--radius-pill)', fontSize: '10.5px', fontWeight: 600 }}
               >
                 {tierInfo.label}
               </span>
@@ -88,8 +88,8 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
             <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>{nextTier.label}</span>
             <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 700 }}>{nextTier.current} of {nextTier.target}</span>
           </div>
-          <div className="w-full overflow-hidden" style={{ height: '10px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: 'var(--border-ink-thin)' }}>
-            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', background: 'var(--color-butter)', borderRight: nextTier.current > 0 ? '1.5px solid var(--color-ink)' : 'none' }} />
+          <div className="w-full overflow-hidden" style={{ height: '6px', borderRadius: 'var(--radius-pill)', background: 'var(--color-divider)' }}>
+            <div style={{ width: `${Math.min(100, (nextTier.current / nextTier.target) * 100)}%`, height: '100%', background: 'var(--color-ink)' }} />
           </div>
         </div>
       )}
@@ -99,7 +99,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full text-xs text-center py-2.5 mt-1"
-          style={{ color: 'var(--color-accent)', fontWeight: 700, borderTop: '1.5px solid var(--color-divider)' }}
+          style={{ color: 'var(--color-accent)', fontWeight: 700, borderTop: '1px solid var(--color-divider)' }}
         >
           {expanded ? 'Less detail \u25B2' : 'See your rhythm \u25BC'}
         </button>
@@ -107,7 +107,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 
       {/* Expanded details — own profile only */}
       {hasPrivateData && expanded && (
-        <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+        <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px dashed var(--color-divider-strong)' }}>
           <div className="pt-3 space-y-2">
             <DetailRow label="Typing pace" value={data.mean_inter_key ? `${Math.round(data.mean_inter_key)}ms between keys` : '\u2014'} />
             <DetailRow label="Key press" value={data.mean_dwell ? `${Math.round(data.mean_dwell)}ms avg hold` : '\u2014'} />
@@ -146,7 +146,7 @@ export function ProfileJitterCard({ profile, user, userProfile, displayName, isP
 function StatCell({ label, value }) {
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>{value}</div>
       <div className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>{label}</div>
     </div>
   )
@@ -166,7 +166,7 @@ function KeyBar({ letter, ms, max }) {
   return (
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
-      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: '1px solid var(--color-ink)' }}>
+      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-divider)' }}>
         <div style={{ width: width + '%', height: '100%', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>

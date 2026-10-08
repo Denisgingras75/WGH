@@ -67,7 +67,7 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
             <div
               key={i}
               className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)' }}
+              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)' }}
               aria-hidden="true"
             />
           ))}
@@ -110,10 +110,10 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
         <div
           className="mb-4 px-3.5 py-3 flex items-center gap-3"
           style={{
-            background: 'var(--color-butter)',
-            border: 'var(--border-ink)',
+            background: 'var(--color-highlight)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard-sm)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           {/* Stacked avatars */}
@@ -135,9 +135,9 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
                   to={`/user/${friend.user_id}`}
                   className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
                   style={{
-                    background: 'var(--color-primary)',
-                    color: 'var(--color-text-on-primary)',
-                    border: 'var(--border-ink)',
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-text-primary)',
+                    border: '2px solid var(--color-card)',
                     zIndex: 3 - i,
                   }}
                 >
@@ -170,7 +170,7 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
           className="py-10 text-center"
           style={{
             background: 'var(--color-surface)',
-            border: '2px dashed var(--color-text-tertiary)',
+            border: '1px dashed var(--color-divider-strong)',
             borderRadius: 'var(--radius-lg)',
           }}
         >
@@ -197,7 +197,7 @@ export function RestaurantDishes({ dishes, loading, error, searchQuery = '', fri
         <div className="mt-6">
           <button
             onClick={() => setShowAllDishes(!showAllDishes)}
-            className="btn-ink w-full py-3"
+            className="btn w-full py-3"
             style={{
               background: 'var(--color-card)',
               color: 'var(--color-ink)',

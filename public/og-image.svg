@@ -1,31 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
-  <!-- Source for og-image.png. "Lobster Buoy" palette — see docs/DESIGN-SYSTEM.md -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Source for og-image.png. "Quiet" palette — see docs/DESIGN-SYSTEM.md -->
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&amp;family=Instrument+Sans:wght@400..700&amp;display=swap');
-    .display { font-family: 'Bricolage Grotesque', 'Arial Black', sans-serif; font-weight: 800; font-stretch: 80%; }
+    @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;family=Instrument+Sans:wght@400..700&amp;display=swap');
+    .display { font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif; }
     .body { font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; }
   </style>
 
-  <!-- Cream paper -->
-  <rect width="1200" height="630" fill="#F6EEDC"/>
+  <rect width="1200" height="630" fill="#FFFFFF"/>
 
-  <!-- Food sticker scatter (Dan's icon set) -->
-  <image href="categories/icons/lobster-roll.webp" x="10" y="-10" width="300" height="300" transform="rotate(-10 160 140)"/>
-  <image href="categories/icons/pizza.webp" x="900" y="-14" width="280" height="280" transform="rotate(12 1040 126)"/>
-  <image href="categories/icons/chowder.webp" x="20" y="350" width="270" height="270" transform="rotate(8 155 485)"/>
-  <image href="categories/icons/ice-cream.webp" x="920" y="345" width="260" height="280" transform="rotate(-8 1050 485)"/>
-
-  <!-- Wordmark: What's [Good] Here -->
-  <text class="display" x="600" y="228" text-anchor="middle" font-size="104" letter-spacing="-3" fill="#1B1611">What’s</text>
-  <g transform="rotate(-3 600 312)">
-    <rect x="452" y="248" width="296" height="128" rx="24" fill="#1B1611" transform="translate(9 9)"/>
-    <rect x="452" y="248" width="296" height="128" rx="24" fill="#FFC83D" stroke="#1B1611" stroke-width="7"/>
-    <text class="display" x="600" y="348" text-anchor="middle" font-size="104" letter-spacing="-3" fill="#1B1611">Good</text>
+  <!-- Mark -->
+  <g transform="translate(560 92) scale(0.4)">
+    <path d="M100 20 C60 20, 30 50, 30 90 C30 130, 100 185, 100 185 C100 185, 170 130, 170 90 C170 50, 140 20, 100 20 Z" fill="#C8361B"/>
+    <circle cx="100" cy="90" r="46" fill="#FFFFFF"/>
+    <circle cx="84" cy="80" r="7" fill="#141414"/>
+    <circle cx="116" cy="80" r="7" fill="#141414"/>
+    <path d="M78 100 Q 100 124, 122 100" stroke="#141414" stroke-width="5" fill="none" stroke-linecap="round"/>
   </g>
-  <text class="display" x="600" y="470" text-anchor="middle" font-size="104" letter-spacing="-3" fill="#1B1611">Here</text>
 
-  <!-- Tagline + region pill -->
-  <text class="body" x="600" y="528" text-anchor="middle" font-size="30" font-weight="700" fill="#554A3E">The best dishes, ranked by locals</text>
-  <rect x="440" y="553" width="320" height="48" rx="24" fill="#CA3216" stroke="#1B1611" stroke-width="3.5"/>
-  <text class="body" x="600" y="585" text-anchor="middle" font-size="21" font-weight="700" letter-spacing="0.5" fill="#FFFFFF">Martha’s Vineyard &amp; Beyond</text>
+  <!-- Wordmark -->
+  <text class="display" x="600" y="352" text-anchor="middle" font-size="112" font-weight="500" letter-spacing="-2.5" fill="#141414">What’s <tspan font-style="italic" font-weight="400">Good</tspan> Here</text>
+
+  <line x1="560" y1="408" x2="640" y2="408" stroke="#D6D3CC" stroke-width="2"/>
+
+  <!-- Tagline -->
+  <text class="body" x="600" y="470" text-anchor="middle" font-size="30" font-weight="500" fill="#5C5C5C">The best dishes, ranked by locals</text>
+  <text class="body" x="600" y="534" text-anchor="middle" font-size="18" font-weight="600" letter-spacing="3.5" fill="#707070">MARTHA’S VINEYARD &amp; BEYOND</text>
 </svg>

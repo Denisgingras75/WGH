@@ -7,7 +7,7 @@ function ErrorFallback({ error, resetError }) {
       <div className="text-center max-w-md">
         <div
           className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+          style={{ background: 'var(--color-category-strip)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
         >
           <span className="text-2xl">😵</span>
         </div>
@@ -20,14 +20,14 @@ function ErrorFallback({ error, resetError }) {
         <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="btn-ink w-full px-4 py-3.5"
+            className="btn w-full px-4 py-3.5"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             Refresh Page
           </button>
           <button
             onClick={resetError}
-            className="btn-ink w-full px-4 py-3.5"
+            className="btn w-full px-4 py-3.5"
             style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
           >
             Try Again
@@ -40,7 +40,7 @@ function ErrorFallback({ error, resetError }) {
             </summary>
             <pre
               className="mt-2 p-3 text-xs overflow-auto"
-              style={{ background: 'var(--color-surface)', color: 'var(--color-danger)', border: '1.5px dashed var(--color-divider)', borderRadius: 'var(--radius-sm)' }}
+              style={{ background: 'var(--color-surface)', color: 'var(--color-danger)', border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-sm)' }}
             >
               {error?.message}
             </pre>

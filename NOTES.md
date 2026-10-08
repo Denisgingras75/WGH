@@ -200,9 +200,9 @@ The `dish_search_score()` function uses Bayesian shrinkage to adjust ratings by 
 
 ## Design Tokens & Typography
 
-Superseded by the "Lobster Buoy" redesign (Oct 2026). The single source of truth is
+Superseded by the "Quiet" redesign (Oct 2026). The single source of truth is
 `src/index.css` (`:root`), documented in `docs/DESIGN-SYSTEM.md` and summarized in CLAUDE.md §4.6–4.7.
-Light theme only. Fonts: Bricolage Grotesque (display) + Instrument Sans (body).
+Light theme only. Fonts: Newsreader (display, serif) + Instrument Sans (body).
 
 ---
 

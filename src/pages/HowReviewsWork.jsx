@@ -6,7 +6,7 @@ export function HowReviewsWork() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
-      <header className="px-5 pt-6 pb-5 mb-6" style={{ borderBottom: 'var(--border-ink)' }}>
+      <header className="px-5 pt-6 pb-5 mb-6" style={{ borderBottom: 'var(--border-default)' }}>
         <button
           onClick={() => navigate(-1)}
           className="text-sm mb-5 px-3 py-1"
@@ -14,7 +14,7 @@ export function HowReviewsWork() {
             color: 'var(--color-ink)',
             fontWeight: 700,
             background: 'var(--color-card)',
-            border: 'var(--border-ink-thin)',
+            border: 'var(--border-subtle)',
             borderRadius: 'var(--radius-pill)',
           }}
         >
@@ -60,7 +60,7 @@ export function HowReviewsWork() {
           </h2>
           <p className="mb-3" style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             Every review typed on What&apos;s Good Here is verified through behavioral analysis.
-            We measure <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>how</strong> you type, not <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>what</strong> you type &mdash; your unique
+            We measure <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>how</strong> you type, not <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>what</strong> you type &mdash; your unique
             typing rhythm builds a profile over time, like a batting average that stabilizes
             with more at-bats.
           </p>
@@ -68,9 +68,9 @@ export function HowReviewsWork() {
             className="p-4 space-y-3 mb-3"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-hard)',
+              boxShadow: 'var(--shadow-card)',
             }}
           >
             <div className="flex items-center gap-3">
@@ -116,10 +116,10 @@ export function HowReviewsWork() {
         <section
           className="p-5"
           style={{
-            background: 'var(--color-butter)',
-            border: 'var(--border-ink)',
+            background: 'var(--color-highlight)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-hard-lg)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <h2

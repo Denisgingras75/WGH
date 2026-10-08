@@ -29,112 +29,113 @@
 }
 
 /* ===========================
-   What's Good Here — "Lobster Buoy"
-   Screen-print inks on cream paper. Ink outlines + hard offset shadows
-   match the neo-brutalist food icons (ICON-SPEC.md). Three inks, used
-   with discipline: Lobster red = act, Harbor blue = navigate,
-   Butter yellow = celebrate. Ink black does everything else.
+   What's Good Here — "Quiet"
+   A gallery wall for food. White paper, ink type, hairline rules, no
+   chrome competing with the dish. Color comes from the food (photos,
+   or Dan's icons until photos exist); the UI itself is monochrome with
+   one brand red reserved for the mark.
    =========================== */
 :root {
   /* ---------- Typography ---------- */
-  --font-display: 'Bricolage Grotesque', 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
   --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
   /* ---------- Ink + paper ---------- */
-  --color-ink: #1B1611;
-  --color-text-primary: #1B1611;
-  --color-text-secondary: #554A3E;
-  --color-text-tertiary: #73665A;
+  --color-ink: #141414;
+  --color-text-primary: #141414;
+  --color-text-secondary: #5C5C5C;
+  --color-text-tertiary: #707070;
   --color-text-on-primary: #FFFFFF;
-  --color-text-on-primary-muted: rgba(255, 255, 255, 0.75);
-  --color-bg: #F6EEDC;
-  --color-surface: #FBF6EA;
-  --color-surface-elevated: #FFFDF7;
-  --color-card: #FFFDF7;
-  --color-card-hover: #FFF8EA;
-  --color-card-border: #1B1611;
-  --color-divider: #E3D7BF;
-  --color-category-strip: #F9DDB8;
+  --color-text-on-primary-muted: rgba(255, 255, 255, 0.72);
+  --color-bg: #FFFFFF;
+  --color-surface: #F6F5F2;
+  --color-surface-elevated: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-card-hover: #FAFAF8;
+  --color-card-border: #EAE8E3;
+  --color-divider: #EAE8E3;
+  --color-divider-strong: #D6D3CC;
+  /* Quiet tile behind dish icons / photo placeholders */
+  --color-category-strip: #F3F1EC;
 
-  /* ---------- Inks ---------- */
-  /* Lobster — primary actions, brand mark */
-  --color-primary: #CA3216;
-  --color-primary-muted: rgba(202, 50, 22, 0.10);
-  /* Harbor — links, restaurant names, secondary actions */
-  --color-accent: #1F4FA3;
-  --color-accent-muted: rgba(31, 79, 163, 0.10);
+  /* ---------- Brand + actions ---------- */
+  /* Primary actions are ink. The brand red lives only in the mark. */
+  --color-primary: #141414;
+  --color-primary-muted: rgba(20, 20, 20, 0.06);
+  --color-brand: #C8361B;
+  /* Links / restaurant names / secondary actions */
+  --color-accent: #141414;
+  --color-accent-muted: rgba(20, 20, 20, 0.06);
   /* Deprecated alias — kept so in-flight branches using the old name still render. Use --color-accent. */
   --color-accent-gold: var(--color-accent);
-  --color-accent-orange: #A82812;
-  /* Butter — highlights, #1, active states. Always pair with ink text. */
-  --color-butter: #FFC83D;
-  --color-butter-muted: rgba(255, 200, 61, 0.28);
+  --color-accent-orange: #2B2B2B;
+  /* Highlight — selected / active surfaces. Always ink text. */
+  --color-highlight: #EFEDE8;
+  --color-highlight-muted: #F6F5F2;
 
   /* ---------- Ratings + medals ---------- */
-  --color-rating: #0E7A3D;
-  --color-medal-gold: #FFC83D;
-  --color-medal-silver: #C9CDD1;
-  --color-medal-bronze: #E0A06A;
+  --color-rating: #1E6E45;
+  --color-medal-gold: #C9A227;
+  --color-medal-silver: #A3A8AE;
+  --color-medal-bronze: #A9714B;
 
   /* ---------- Status ---------- */
-  --color-danger: #C1271A;
-  --color-danger-muted: rgba(193, 39, 26, 0.10);
-  --color-success: #0E7A3D;
-  --color-success-muted: rgba(14, 122, 61, 0.10);
-  --color-success-border: rgba(14, 122, 61, 0.30);
+  --color-danger: #B42318;
+  --color-danger-muted: rgba(180, 35, 24, 0.07);
+  --color-success: #1E6E45;
+  --color-success-muted: rgba(30, 110, 69, 0.07);
+  --color-success-border: rgba(30, 110, 69, 0.28);
 
-  /* Semantic status colors (rating/compat scales) — all text-safe (>= 4.5:1) on cards */
-  --color-emerald: #0E7A3D;
-  --color-emerald-light: #1A8045;
-  --color-red: #C1271A;
-  --color-red-light: #E2573F;
-  --color-red-muted: rgba(193, 39, 26, 0.10);
-  --color-amber: #A84E06;
-  --color-orange: #B4500A;
+  /* Semantic status colors (rating/compat scales) — all text-safe (>= 4.5:1) on white */
+  --color-emerald: #1E6E45;
+  --color-emerald-light: #2B7F52;
+  --color-red: #B42318;
+  --color-red-light: #D4533F;
+  --color-red-muted: rgba(180, 35, 24, 0.07);
+  --color-amber: #9A5A10;
+  --color-orange: #A8540C;
   --color-lime: #4F7A0E;
-  --color-yellow: #8A6A00;
-  --color-green-deep: #0E7A3D;
-  --color-green-dark: #0B6532;
-  --color-blue: #1F4FA3;
-  --color-blue-light: #5A82C9;
+  --color-yellow: #85690A;
+  --color-green-deep: #1E6E45;
+  --color-green-dark: #175A38;
+  --color-blue: #2F5D8A;
+  --color-blue-light: #6E8FB3;
 
   /* Photo tier badges */
-  --color-tier-featured: #E0A800;
-  --color-tier-community: #1F4FA3;
-  --color-tier-hidden: #73665A;
+  --color-tier-featured: #85690A;
+  --color-tier-community: #2F5D8A;
+  --color-tier-hidden: #707070;
 
   /* RGB components for rgba() usage (Safari <16.2 compat — replaces color-mix) */
-  --color-danger-rgb: 193, 39, 26;
-  --color-success-rgb: 14, 122, 61;
-  --color-primary-rgb: 202, 50, 22;
-  --color-accent-rgb: 31, 79, 163;
-  --color-rating-rgb: 14, 122, 61;
-  --color-bg-rgb: 246, 238, 220;
-  --color-ink-rgb: 27, 22, 17;
+  --color-danger-rgb: 180, 35, 24;
+  --color-success-rgb: 30, 110, 69;
+  --color-primary-rgb: 20, 20, 20;
+  --color-accent-rgb: 20, 20, 20;
+  --color-rating-rgb: 30, 110, 69;
+  --color-bg-rgb: 255, 255, 255;
+  --color-ink-rgb: 20, 20, 20;
   /* Modal / sheet scrim */
-  --color-backdrop: rgba(27, 22, 17, 0.55);
+  --color-backdrop: rgba(20, 20, 20, 0.42);
 
   /* ---------- Shape ---------- */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
-  --border-ink: 2px solid var(--color-ink);
-  --border-ink-thin: 1.5px solid var(--color-ink);
+  --border-default: 1px solid var(--color-divider);
+  --border-subtle: 1px solid var(--color-divider);
+  --border-dashed: 1px dashed var(--color-divider-strong);
 
-  /* ---------- Shade: hard offset ink shadows (no blur) ---------- */
-  --shadow-hard-sm: 2px 2px 0 var(--color-ink);
-  --shadow-hard: 3px 3px 0 var(--color-ink);
-  --shadow-hard-lg: 5px 5px 0 var(--color-ink);
+  /* ---------- Shade: flat surfaces; only floating things lift ---------- */
+  --shadow-card: none;
+  --shadow-float: 0 1px 2px rgba(20, 20, 20, 0.06), 0 8px 28px rgba(20, 20, 20, 0.12);
   /* Tailwind shadow-* utilities map here */
-  --shadow-sm: var(--shadow-hard-sm);
-  --shadow-md: var(--shadow-hard);
-  --shadow-lg: var(--shadow-hard-lg);
-  --shadow-xl: 7px 7px 0 var(--color-ink);
-  /* Soft lift for floating overlays (sheets, toasts) where a hard edge would fight the map */
-  --shadow-float: 0 10px 30px rgba(27, 22, 17, 0.18);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: var(--shadow-float);
+  --shadow-xl: var(--shadow-float);
 }
 
 @tailwind base;
@@ -167,12 +168,12 @@
 
   h1, h2, h3 {
     font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
   ::selection {
-    background: var(--color-butter);
+    background: var(--color-highlight);
     color: var(--color-ink);
   }
 
@@ -197,77 +198,66 @@
   }
 
   /* ===========================
-     Sticker primitives — ink outline + hard offset shadow.
-     Use these instead of re-declaring border/shadow inline.
+     Primitives — flat surfaces, hairline rules, quiet press.
      =========================== */
-  .sticker {
-    background: var(--color-card);
-    border: var(--border-ink);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-hard);
+  /* Pressable surface — dims slightly on tap */
+  .press {
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .press:active {
+    transform: scale(0.985);
+    opacity: 0.85;
   }
 
-  /* Pressable sticker — sinks into its shadow on tap */
-  .sticker-press {
-    transition: transform 0.08s ease, box-shadow 0.08s ease;
-  }
-  .sticker-press:active {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 var(--color-ink);
-  }
-
-  /* Primary button — Lobster fill, ink outline, hard shadow */
-  .btn-ink {
+  /* Button base. Fill comes from the call site (ink for primary, card for secondary). */
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     font-family: var(--font-body);
-    font-weight: 700;
-    border: var(--border-ink);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-hard);
-    transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
   }
-  .btn-ink:active:not(:disabled) {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 var(--color-ink);
+  /* Light-filled (secondary) buttons get a hairline so they read as buttons */
+  .btn[style*="--color-card"],
+  .btn[style*="--color-surface-elevated"] {
+    border-color: var(--color-divider-strong);
   }
-  .btn-ink:disabled {
-    opacity: 0.5;
-    box-shadow: none;
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+    opacity: 0.88;
+  }
+  .btn:disabled {
+    opacity: 0.4;
   }
 
   /* Eyebrow label — small caps over section headings */
   .eyebrow {
     font-family: var(--font-body);
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-text-tertiary);
   }
 
-  /* Wordmark — see components/Wordmark.jsx */
+  /* Wordmark — see components/Wordmark.jsx. Serif, with "Good" set in italic. */
   .wordmark {
     display: inline-block;
     font-family: var(--font-display);
-    font-weight: 800;
-    font-stretch: 80%;
-    letter-spacing: -0.03em;
+    font-weight: 500;
+    letter-spacing: -0.015em;
     line-height: 1;
     color: var(--color-ink);
     white-space: nowrap;
   }
   .wordmark__good {
-    display: inline-block;
-    margin: 0 0.04em;
-    padding: 0.02em 0.16em 0.06em;
-    background: var(--color-butter);
-    border: 0.08em solid var(--color-ink);
-    border-radius: 0.22em;
-    box-shadow: 0.08em 0.08em 0 var(--color-ink);
-    transform: rotate(-2.5deg);
+    font-style: italic;
+    font-weight: 400;
   }
 
   /* TopBar - brand anchor in safe-area region */
@@ -276,7 +266,7 @@
     width: 100%;
     background: var(--color-bg);
     padding-top: env(safe-area-inset-top, 0px);
-    border-bottom: var(--border-ink);
+    border-bottom: var(--border-default);
     box-shadow: none;
   }
 
@@ -319,21 +309,19 @@
   }
 
   .wgh-splash__rule {
-    height: 3px;
-    width: 160px;
-    background: var(--color-ink);
-    border-radius: 2px;
+    height: 1px;
+    width: 120px;
+    background: var(--color-divider-strong);
     transform: scaleX(0);
     animation: ruleGrow 0.5s 3.0s cubic-bezier(.3, .8, .3, 1) forwards;
   }
 
   .wgh-splash__text {
     font-family: var(--font-display);
-    font-weight: 800;
-    font-stretch: 75%;
-    font-size: 92px;
-    letter-spacing: -0.03em;
-    line-height: 0.86;
+    font-weight: 400;
+    font-size: 76px;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
     color: var(--color-ink);
     animation: groundShake 0.6s 1.9s linear both;
   }
@@ -341,25 +329,10 @@
   .wgh-splash__b1 { animation: fadeIn 0.3s 0.6s both; }
   .wgh-splash__line { display: block; }
 
-  /* "Good" sits on a butter highlighter swash */
+  /* "Good" is set in italic, like the wordmark */
   .wgh-splash__line--mark {
-    position: relative;
     display: inline-block;
-    padding: 0 10px;
-    margin: 4px 0;
-    isolation: isolate;
-  }
-  .wgh-splash__line--mark::before {
-    content: '';
-    position: absolute;
-    inset: 6px 0 2px;
-    background: var(--color-butter);
-    border: 3px solid var(--color-ink);
-    border-radius: 10px;
-    box-shadow: 5px 5px 0 var(--color-ink);
-    transform: rotate(-2.5deg) scaleX(0);
-    animation: swashIn 0.4s 3.1s cubic-bezier(.34, 1.56, .64, 1) forwards;
-    z-index: -1;
+    font-style: italic;
   }
 
   .wgh-splash__letter {
@@ -372,7 +345,7 @@
   .wgh-splash__period {
     display: inline-block;
     transform-origin: center;
-    color: var(--color-primary);
+    color: var(--color-brand);
     animation: ghostIn 0.55s 4.7s cubic-bezier(.34, 1.4, .5, 1) both;
   }
 
@@ -436,7 +409,6 @@
   }
   @keyframes drawSmile { from { stroke-dashoffset: 80; } to { stroke-dashoffset: 0; } }
   @keyframes ruleGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes swashIn { from { transform: rotate(-2.5deg) scaleX(0); } to { transform: rotate(-2.5deg) scaleX(1); } }
   @keyframes ghostIn {
     0%   { opacity: 0; transform: scale(0.4); filter: blur(4px); }
     60%  { opacity: 0.85; transform: scale(1.18); filter: blur(0.5px); }
@@ -454,12 +426,10 @@
     .wgh-splash__rule,
     .wgh-splash__text,
     .wgh-splash__b1,
-    .wgh-splash__period,
-    .wgh-splash__line--mark::before {
+    .wgh-splash__period {
       animation: none;
     }
     .wgh-splash .smile-draw { stroke-dashoffset: 0; }
-    .wgh-splash__line--mark::before { transform: rotate(-2.5deg); }
     .wgh-splash__rule { transform: scaleX(1); }
   }
 }
@@ -528,20 +498,19 @@
     --tw-ring-color: var(--color-primary);
   }
 
-  /* Rating slider thumb — lobster sticker with ink outline + hard shadow */
+  /* Rating slider thumb — white disc with a soft lift, like an iOS control */
   .rating-slider::-webkit-slider-thumb {
-    background: var(--color-primary) !important;
-    border: 3px solid var(--color-ink) !important;
-    box-shadow: var(--shadow-hard-sm);
+    background: var(--color-card) !important;
+    border: 1px solid var(--color-divider-strong) !important;
+    box-shadow: 0 1px 3px rgba(20, 20, 20, 0.18), 0 4px 10px rgba(20, 20, 20, 0.10);
   }
   .rating-slider::-webkit-slider-thumb:hover {
-    background: var(--color-primary) !important;
-    filter: brightness(0.95);
+    background: var(--color-card) !important;
   }
   .rating-slider::-moz-range-thumb {
-    background: var(--color-primary) !important;
-    border: 3px solid var(--color-ink) !important;
-    box-shadow: var(--shadow-hard-sm);
+    background: var(--color-card) !important;
+    border: 1px solid var(--color-divider-strong) !important;
+    box-shadow: 0 1px 3px rgba(20, 20, 20, 0.18), 0 4px 10px rgba(20, 20, 20, 0.10);
   }
 }
 
@@ -839,7 +808,7 @@
   border-color: var(--color-ink);
   border-style: solid;
   color: var(--color-ink);
-  background: var(--color-butter-muted);
+  background: var(--color-highlight-muted);
 }
 
 .photo-upload-btn:disabled {
@@ -854,16 +823,16 @@
   width: 44px;
   height: 44px;
   background: var(--color-card);
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: 50%;
-  box-shadow: var(--shadow-hard-sm);
+  box-shadow: var(--shadow-card);
   font-size: 18px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .photo-upload-btn-compact:hover:not(:disabled) {
-  background: var(--color-butter);
+  background: var(--color-highlight);
 }
 
 .photo-upload-btn-compact:disabled {
@@ -874,7 +843,7 @@
 .upload-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--color-divider);
+  border: 1px solid var(--color-divider);
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -899,7 +868,7 @@
 .photo-upload-retry-btn {
   padding: 6px 16px;
   background: var(--color-card);
-  border: var(--border-ink-thin);
+  border: var(--border-subtle);
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
@@ -909,7 +878,7 @@
 }
 
 .photo-upload-retry-btn:hover {
-  background: var(--color-butter);
+  background: var(--color-highlight);
 }
 
 /* Photo Upload Confirmation */
@@ -923,9 +892,9 @@
   width: 120px;
   height: 120px;
   margin: 0 auto 16px;
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -942,14 +911,14 @@
   width: 28px;
   height: 28px;
   background: var(--color-success);
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-text-on-primary);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .photo-upload-confirmation h3 {
@@ -984,7 +953,7 @@
   gap: 6px;
   padding: 6px 14px;
   background: var(--color-card);
-  border: 2px solid var(--tier-color);
+  border: 1px solid var(--tier-color);
   border-radius: var(--radius-pill);
   margin: 8px 0 12px;
 }
@@ -995,7 +964,7 @@
 
 .photo-tier-badge .tier-label {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--tier-color);
 }
 
@@ -1010,8 +979,8 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--color-ink);
-  background: var(--color-butter-muted);
-  border: 1.5px solid var(--color-ink);
+  background: var(--color-highlight-muted);
+  border: 1px solid var(--color-divider-strong);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   margin-bottom: 12px;
@@ -1034,7 +1003,7 @@
 
 .photo-upload-confirmation .photo-info-content {
   background: var(--color-surface);
-  border: 1.5px dashed var(--color-divider);
+  border: var(--border-dashed);
   border-radius: var(--radius-sm);
   padding: 12px;
   margin-bottom: 12px;
@@ -1071,9 +1040,9 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
   margin-bottom: 16px;
 }
@@ -1090,8 +1059,8 @@
   left: 8px;
   padding: 3px 10px;
   font-size: 11px;
-  font-weight: 800;
-  border: 1.5px solid var(--color-ink);
+  font-weight: 600;
+  border: 1px solid var(--color-divider-strong);
   border-radius: var(--radius-pill);
   background: var(--color-card);
   color: var(--color-ink);
@@ -1123,7 +1092,7 @@
 
 .photo-grid-item {
   aspect-ratio: 1;
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-surface);
@@ -1151,17 +1120,17 @@
   margin-top: 10px;
   padding: 8px;
   background: var(--color-card);
-  border: var(--border-ink-thin);
+  border: var(--border-subtle);
   border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--color-ink);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .see-all-photos-btn:hover {
-  background: var(--color-butter);
+  background: var(--color-highlight);
 }
 
 /* Photo Lightbox */
@@ -1184,7 +1153,7 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border: 3px solid var(--color-bg);
+  border: none;
   border-radius: var(--radius-md);
 }
 
@@ -1196,7 +1165,7 @@
   height: 44px;
   border-radius: 50%;
   background: var(--color-card);
-  border: var(--border-ink);
+  border: var(--border-default);
   color: var(--color-ink);
   font-size: 24px;
   cursor: pointer;
@@ -1207,7 +1176,7 @@
 }
 
 .lightbox-close:hover {
-  background: var(--color-butter);
+  background: var(--color-highlight);
 }
 
 /* ===========================
@@ -1273,8 +1242,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible {
-  /* Harbor ring; no box-shadow so sticker hard shadows survive keyboard focus */
-  outline: 2.5px solid var(--color-accent);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
 }
 
@@ -1322,11 +1290,11 @@ input.outline-none:focus-visible {
    CartoDB Voyager
    =========================== */
 .wgh-map-tiles {
-  /* Warm the cool CARTO Voyager tiles so they sit on the cream palette */
-  filter: sepia(0.16) saturate(1.08) contrast(1.02);
+  /* Quiet the tiles so food pins carry the color */
+  filter: saturate(0.55) contrast(0.98) brightness(1.03);
 }
 
-/* Leaflet chrome → sticker system */
+/* Leaflet chrome → quiet system */
 .leaflet-container {
   font-family: var(--font-body);
   background: var(--color-surface);
@@ -1334,32 +1302,32 @@ input.outline-none:focus-visible {
 .leaflet-popup-content-wrapper {
   background: var(--color-card);
   color: var(--color-text-primary);
-  border: var(--border-ink);
+  border: var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-float);
 }
 .leaflet-popup-tip {
   background: var(--color-card);
-  border: var(--border-ink);
+  border: var(--border-default);
   box-shadow: none;
 }
 .leaflet-container a.leaflet-popup-close-button {
   color: var(--color-ink);
 }
 .leaflet-bar {
-  border: var(--border-ink) !important;
+  border: var(--border-default) !important;
   border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-hard) !important;
+  box-shadow: var(--shadow-float) !important;
   overflow: hidden;
 }
 .leaflet-bar a {
   background: var(--color-card);
   color: var(--color-ink);
-  border-bottom: 1.5px solid var(--color-divider);
-  font-weight: 800;
+  border-bottom: 1px solid var(--color-divider);
+  font-weight: 600;
 }
 .leaflet-bar a:hover {
-  background: var(--color-butter);
+  background: var(--color-highlight);
   color: var(--color-ink);
 }
 .leaflet-container .leaflet-control-attribution {

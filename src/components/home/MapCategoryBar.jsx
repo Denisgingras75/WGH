@@ -16,9 +16,9 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
     <div
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-float)',
         padding: '5px 4px',
       }}
     >
@@ -36,14 +36,14 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
             width: 40,
             height: 40,
             borderRadius: 12,
-            border: activeCategory === null ? 'var(--border-ink)' : '2px solid transparent',
-            background: activeCategory === null ? 'var(--color-butter)' : 'transparent',
+            border: activeCategory === null ? 'var(--border-default)' : '2px solid transparent',
+            background: activeCategory === null ? 'var(--color-highlight)' : 'transparent',
             transition: 'border-color 0.2s, background 0.2s',
           }}
           aria-label="Near You — all categories"
           title="Near You"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-ink)' : 'var(--color-text-secondary)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-ink)' : 'var(--color-text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
@@ -63,8 +63,8 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
                 width: 40,
                 height: 40,
                 borderRadius: 12,
-                border: isActive ? 'var(--border-ink)' : '2px solid transparent',
-                background: isActive ? 'var(--color-butter)' : 'transparent',
+                border: isActive ? 'var(--border-default)' : '2px solid transparent',
+                background: isActive ? 'var(--color-highlight)' : 'transparent',
                 transition: 'border-color 0.2s, background 0.2s',
               }}
               aria-label={cat.label}

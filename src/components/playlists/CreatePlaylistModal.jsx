@@ -93,13 +93,13 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
         className="w-full sm:max-w-md p-5"
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
         <h2
-          style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)', marginBottom: 14 }}
+          style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, color: 'var(--color-text-primary)', marginBottom: 14 }}
         >
           New playlist
         </h2>
@@ -128,7 +128,7 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
           className="w-full px-4 py-3 mb-3"
           style={{
             background: 'var(--color-surface-elevated)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-primary)',
             fontSize: '16px',
@@ -149,12 +149,12 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
         <button
           onClick={submit}
           disabled={submitting}
-          className="btn-ink w-full py-3"
+          className="btn w-full py-3"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: 15,
-            fontWeight: 800,
+            fontWeight: 600,
           }}
         >
           {submitting ? 'Creating\u2026' : 'Create playlist'}

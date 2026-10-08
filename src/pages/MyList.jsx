@@ -66,7 +66,7 @@ export function MyList() {
           </p>
           <button
             onClick={function () { navigate('/') }}
-            className="btn-ink px-6 py-3"
+            className="btn px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', cursor: 'pointer' }}
           >
             Go Home
@@ -195,7 +195,7 @@ export function MyList() {
       <div className="px-4 pt-5 pb-3">
         <h1 style={{
           fontSize: '30px',
-          fontWeight: 800,
+          fontWeight: 600,
           lineHeight: 1.05,
           color: 'var(--color-text-primary)',
           letterSpacing: '-0.02em',
@@ -223,7 +223,7 @@ export function MyList() {
             padding: '10px 12px',
             fontSize: '16px',
             background: 'var(--color-surface-elevated)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-primary)',
             outline: 'none',
@@ -239,7 +239,7 @@ export function MyList() {
             style={{
               padding: '24px 16px',
               background: 'var(--color-surface)',
-              border: '2px dashed var(--color-text-tertiary)',
+              border: '1px dashed var(--color-divider-strong)',
               borderRadius: 'var(--radius-lg)',
             }}
           >
@@ -257,21 +257,21 @@ export function MyList() {
                   key={item.dish_id}
                   style={{
                     background: 'var(--color-card)',
-                    border: 'var(--border-ink)',
+                    border: 'var(--border-default)',
                     borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-hard)',
+                    boxShadow: 'var(--shadow-card)',
                     padding: '12px',
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Rank number — medal sticker for the podium */}
+                    {/* Rank number — medal disc for the podium */}
                     <span
                       className="flex items-center justify-center flex-shrink-0"
                       style={{
                         width: '28px',
                         height: '28px',
                         borderRadius: '50%',
-                        border: isPodium ? 'var(--border-ink)' : 'none',
+                        border: isPodium ? 'var(--border-default)' : 'none',
                         background: i === 0
                           ? 'var(--color-medal-gold)'
                           : i === 1
@@ -280,8 +280,8 @@ export function MyList() {
                               ? 'var(--color-medal-bronze)'
                               : 'transparent',
                         fontFamily: 'var(--font-display)',
-                        fontSize: '16px',
-                        fontWeight: 800,
+                        fontSize: '17px',
+                        fontWeight: 500,
                         lineHeight: 1,
                         color: isPodium ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                       }}
@@ -309,7 +309,7 @@ export function MyList() {
                         disabled={i === 0}
                         style={{
                           background: 'var(--color-card)',
-                          border: i === 0 ? '1.5px solid var(--color-divider)' : 'var(--border-ink-thin)',
+                          border: i === 0 ? '1px solid var(--color-divider)' : 'var(--border-subtle)',
                           borderRadius: 'var(--radius-sm)',
                           padding: '1px 7px',
                           fontSize: '11px',
@@ -325,7 +325,7 @@ export function MyList() {
                         disabled={i >= items.length - 1}
                         style={{
                           background: 'var(--color-card)',
-                          border: i >= items.length - 1 ? '1.5px solid var(--color-divider)' : 'var(--border-ink-thin)',
+                          border: i >= items.length - 1 ? '1px solid var(--color-divider)' : 'var(--border-subtle)',
                           borderRadius: 'var(--radius-sm)',
                           padding: '1px 7px',
                           fontSize: '11px',
@@ -347,10 +347,10 @@ export function MyList() {
                         height: '28px',
                         borderRadius: '50%',
                         background: 'var(--color-card)',
-                        border: 'var(--border-ink-thin)',
+                        border: 'var(--border-subtle)',
                         padding: 0,
                         fontSize: '13px',
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: 'var(--color-ink)',
                         cursor: 'pointer',
                       }}
@@ -374,7 +374,7 @@ export function MyList() {
                         fontWeight: 500,
                         background: 'transparent',
                         border: 'none',
-                        borderBottom: '1.5px dashed var(--color-divider)',
+                        borderBottom: '1px dashed var(--color-divider-strong)',
                         color: 'var(--color-text-secondary)',
                         outline: 'none',
                       }}
@@ -397,7 +397,7 @@ export function MyList() {
               style={{
                 padding: '14px 12px',
                 background: 'var(--color-surface)',
-                border: '2px dashed var(--color-text-tertiary)',
+                border: '1px dashed var(--color-divider-strong)',
                 borderRadius: 'var(--radius-lg)',
                 color: 'var(--color-ink)',
                 fontSize: '14px',
@@ -412,12 +412,12 @@ export function MyList() {
               className="overflow-hidden"
               style={{
                 background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-hard)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
-              <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: 'var(--border-ink)' }}>
+              <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: 'var(--border-default)' }}>
                 <span style={{ fontSize: '16px', marginRight: '8px', color: 'var(--color-text-tertiary)' }}>🔍</span>
                 <input
                   type="text"
@@ -471,7 +471,7 @@ export function MyList() {
                             padding: '10px 12px',
                             background: 'transparent',
                             border: 'none',
-                            borderBottom: '1.5px solid var(--color-divider)',
+                            borderBottom: '1px solid var(--color-divider)',
                             cursor: 'pointer',
                           }}
                         >
@@ -486,7 +486,7 @@ export function MyList() {
                           </div>
                           <span
                             className="flex items-center justify-center flex-shrink-0"
-                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'var(--border-ink)', background: 'var(--color-card)', fontSize: '16px', fontWeight: 800, lineHeight: 1, color: 'var(--color-ink)' }}
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'var(--border-default)', background: 'var(--color-card)', fontSize: '16px', fontWeight: 600, lineHeight: 1, color: 'var(--color-ink)' }}
                           >
                             +
                           </span>
@@ -510,7 +510,7 @@ export function MyList() {
           right: 0,
           padding: '12px 16px',
           background: 'var(--color-bg)',
-          borderTop: 'var(--border-ink)',
+          borderTop: 'var(--border-default)',
           zIndex: 50,
         }}
       >
@@ -528,11 +528,11 @@ export function MyList() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="btn-ink w-full"
+          className="btn w-full"
           style={{
             padding: '14px',
             fontSize: '16px',
-            fontWeight: 800,
+            fontWeight: 600,
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             cursor: saving ? 'default' : 'pointer',
@@ -557,7 +557,7 @@ export function MyList() {
             className="w-full"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderBottom: 'none',
               borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
               padding: '8px 16px 24px',
@@ -566,7 +566,7 @@ export function MyList() {
             }}
           >
             <div style={{ width: 40, height: 6, background: 'var(--color-ink)', opacity: 0.25, borderRadius: 'var(--radius-pill)', margin: '6px auto 16px' }} />
-            <div style={{ marginBottom: '4px', fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
+            <div style={{ marginBottom: '4px', fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               Rate it to add it
             </div>
             <div style={{ marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>

@@ -26,7 +26,7 @@ export function RestaurantInfoEditor({ restaurant, onUpdate }) {
 
   const inputStyle = {
     background: 'var(--color-surface-elevated)',
-    border: 'var(--border-ink)',
+    border: 'var(--border-default)',
     borderRadius: 'var(--radius-md)',
     color: 'var(--color-text-primary)',
     fontSize: '16px',
@@ -89,7 +89,7 @@ export function RestaurantInfoEditor({ restaurant, onUpdate }) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="btn-ink w-full py-3 text-sm"
+        className="btn w-full py-3 text-sm"
         style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {saving ? 'Saving...' : 'Save Changes'}

@@ -71,7 +71,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
         className="relative w-full max-w-lg"
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderBottom: 'none',
           borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           transform: 'translateY(' + dragOffset + 'px)',
@@ -97,7 +97,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
         {/* Header — also draggable */}
         <div
           className="px-6 pb-4"
-          style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+          style={{ borderBottom: '1px solid var(--color-divider)' }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -119,13 +119,13 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                 onClick={function () { handleRadiusSelect(r) }}
                 className="w-full flex items-center justify-between p-4 transition-all"
                 style={radius === r ? {
-                  background: 'var(--color-butter)',
-                  border: 'var(--border-ink)',
+                  background: 'var(--color-highlight)',
+                  border: 'var(--border-default)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-hard-sm)',
+                  boxShadow: 'var(--shadow-card)',
                 } : {
                   background: 'var(--color-surface)',
-                  border: '2px solid var(--color-divider)',
+                  border: '1px solid var(--color-divider)',
                   borderRadius: 'var(--radius-lg)',
                 }}
               >
@@ -134,7 +134,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{
                       background: 'var(--color-card)',
-                      border: radius === r ? 'var(--border-ink)' : '2px solid var(--color-divider)',
+                      border: radius === r ? 'var(--border-default)' : '1px solid var(--color-divider)',
                     }}
                   >
                     <span>
@@ -143,7 +143,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                   </div>
                   <div className="text-left">
                     <p
-                      style={{ color: 'var(--color-ink)', fontWeight: 800 }}
+                      style={{ color: 'var(--color-ink)', fontWeight: 600 }}
                     >
                       {r === 0 ? 'Anywhere' : 'Within ' + r + ' ' + (r === 1 ? 'mile' : 'miles')}
                     </p>
@@ -193,9 +193,9 @@ export function LocationPicker({ radius, onRadiusChange }) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{
               fontSize: '13px',
-              fontWeight: 800,
-              background: 'var(--color-butter)',
-              border: 'var(--border-ink-thin)',
+              fontWeight: 600,
+              background: 'var(--color-highlight)',
+              border: 'var(--border-subtle)',
               color: 'var(--color-ink)'
             }}
           >
@@ -207,7 +207,7 @@ export function LocationPicker({ radius, onRadiusChange }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>

@@ -68,7 +68,6 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
         width: dim,
         height: dim,
         background: isTrusted ? config.color : config.bg,
-        border: '1.5px solid var(--color-ink)',
         cursor: profileData ? 'pointer' : 'default',
       }}
       title={config.label}
@@ -104,9 +103,9 @@ export function TrustBadge({ type, size = 'sm', profileData, warScore }) {
           className="absolute left-0 top-full mt-1.5 p-3 z-50"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-float)',
             minWidth: '160px',
             fontSize: '11px',
             display: 'block',

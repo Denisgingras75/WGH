@@ -75,7 +75,7 @@ export const JitterInput = forwardRef(function JitterInput({
         className={`w-full p-4 resize-none focus:outline-none ${className}`}
         style={{
           background: 'var(--color-surface-elevated)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-md)',
           fontSize: '16px',
           color: 'var(--color-text-primary)',

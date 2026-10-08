@@ -16,10 +16,10 @@ export function SectionHeader({ title, subtitle, action, level = 'h2' }) {
         <Tag
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '24px',
-            fontWeight: 800,
+            fontSize: '26px',
+            fontWeight: 500,
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.01em',
             lineHeight: 1.1,
           }}
         >

@@ -14,9 +14,9 @@
 
 - **Owner / session:** Denis's Claude (cloud session)
 - **Branch:** `ccr-0a624ce3-i5unc8`
-- **Files / modules claimed:** visual layer of essentially every `src/**/*.jsx` file, `src/index.css`, `index.html` (fonts), `tailwind.config.js`, `public/favicon.svg`, design docs (CLAUDE.md §4.6–4.7, NOTES.md, `docs/DESIGN-SYSTEM.md`)
-- **Safe for others to continue:** `src/api/`, `src/hooks/`, `supabase/`, `api/`, `e2e/`, `scripts/` — no logic/data changes in this branch
-- **Do not duplicate:** full-site visual redesign ("Lobster Buoy": new palette, Bricolage Grotesque + Instrument Sans, sticker/hard-shadow system). Rebase UI work onto this branch or expect style conflicts.
+- **Files / modules claimed:** visual layer of essentially every `src/**/*.jsx` file, new `src/components/DishThumb.jsx`, `src/index.css`, `index.html` (fonts), `tailwind.config.js`, brand assets in `public/` (favicon, apple-touch icon, og-image), share-image generators `api/og-image.ts` + `api/playlist-og.ts` (SVG templates only), design docs (CLAUDE.md §1.3/§4.6–4.7, NOTES.md, ICON-SPEC.md, `docs/DESIGN-SYSTEM.md`)
+- **Safe for others to continue:** `src/api/`, `src/hooks/`, `supabase/`, `e2e/`, `scripts/` — no logic/data changes in this branch
+- **Do not duplicate:** full-site visual redesign ("Quiet": white paper, ink type, hairlines, Newsreader + Instrument Sans, photo-ready `DishThumb`). It replaces the earlier "Lobster Buoy" pass on this same branch (kept in history at `526e295`). Rebase UI work onto this branch or expect style conflicts.
 
 ---
 
@@ -25,7 +25,7 @@
 <!-- One paragraph. What are we actually shipping this session?
      Skip the long context — CLAUDE.md + SPEC.md provide that. -->
 
-Top-to-bottom visual redesign requested by Denis: new color system (Lobster / Harbor / Butter inks on cream, ink outlines, hard offset shadows that match Dan's neo-brutalist food icons), new type (Bricolage Grotesque display + Instrument Sans body, replacing Amatic SC + Outfit), and every screen moved onto shared tokens/primitives. Visual only — no behavior, copy, or data changes. **Needs Dan's sign-off** (he owns visual identity) before merge.
+Top-to-bottom visual redesign requested by Denis. First pass ("Lobster Buoy", neo-brutalist stickers) read as too generic, so the branch now carries a minimalist direction, "Quiet": white paper, ink type, hairline rules, flat surfaces, brand red only in the mark, Newsreader serif display + Instrument Sans body. Every dish image goes through `DishThumb`, which shows a real photo when one exists and the icon tile otherwise, so the UI improves as photos arrive without layout changes. Visual only — no behavior, copy, or data changes. **Needs Dan's sign-off** (he owns visual identity) before merge.
 
 ## Blockers / waiting on
 
@@ -33,7 +33,8 @@ Top-to-bottom visual redesign requested by Denis: new color system (Lobster / Ha
      Claude should NOT quietly start work that's waiting on someone else. -->
 
 - Dan's review of the redesign direction (brand/visual identity is his call).
-- Regenerated `og-image.png`/`.svg`, `wgh-icon.png`, `favicon.png`/`.svg` in the new style. `public/logo*.svg`, `logo.webp`, `wgh-splash.webp` are unreferenced legacy assets — left untouched.
+- Regenerated `og-image.png`/`.svg`, `wgh-icon.png`, `favicon.png`/`.svg` in the Quiet style.
+- Real dish photos: production has ~14 photos across ~8,800 dishes. See TASKS.md T44. `public/logo*.svg`, `logo.webp`, `wgh-splash.webp` are unreferenced legacy assets — left untouched.
 
 ## Not this session
 

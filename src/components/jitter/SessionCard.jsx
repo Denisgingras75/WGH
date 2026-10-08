@@ -18,9 +18,9 @@ export function SessionCard({ sessionStats, profileStats, onDismiss }) {
       className="p-4 space-y-3"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       {/* Header */}
@@ -29,7 +29,7 @@ export function SessionCard({ sessionStats, profileStats, onDismiss }) {
           Session Stats
         </span>
         {onDismiss && (
-          <button onClick={onDismiss} className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 800 }}>
+          <button onClick={onDismiss} className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
             ✕
           </button>
         )}
@@ -61,7 +61,7 @@ export function SessionCard({ sessionStats, profileStats, onDismiss }) {
 
       {/* Deep stats */}
       {expanded && (
-        <div className="space-y-2 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+        <div className="space-y-2 pt-3" style={{ borderTop: '1px dashed var(--color-divider-strong)' }}>
           <DetailRow label="Keystrokes" value={sessionStats.keystrokes} />
           <DetailRow label="Duration" value={`${Math.round(sessionStats.duration / 60)}m ${sessionStats.duration % 60}s`} />
           {profileStats?.profile_data && (
@@ -99,7 +99,7 @@ function StatBox({ label, value, highlight }) {
   return (
     <div className="py-1">
       <div
-        style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, color: highlight ? 'var(--color-rating)' : 'var(--color-text-primary)' }}
+        style={{ fontFamily: 'var(--font-display)', fontSize: '21px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.15, color: highlight ? 'var(--color-rating)' : 'var(--color-text-primary)' }}
       >
         {value}
       </div>

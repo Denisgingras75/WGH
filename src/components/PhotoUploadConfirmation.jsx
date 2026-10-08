@@ -16,9 +16,9 @@ export function PhotoUploadConfirmation({
       <div
         className="photo-preview"
         style={{
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-hard)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <img src={photoUrl} alt={dishName} />
@@ -27,28 +27,28 @@ export function PhotoUploadConfirmation({
           style={{
             background: 'var(--color-success)',
             color: 'var(--color-text-on-primary)',
-            border: 'var(--border-ink-thin)',
-            fontWeight: 800,
+            border: 'var(--border-subtle)',
+            fontWeight: 600,
           }}
         >
           ✓
         </div>
       </div>
 
-      <h3 style={{ fontSize: '22px', fontWeight: 800 }}>Photo Added!</h3>
+      <h3 style={{ fontSize: '22px', fontWeight: 600 }}>Photo Added!</h3>
 
       {/* Tier badge */}
       <div
         className="photo-tier-badge"
         style={{
           '--tier-color': tier.color,
-          background: status === 'featured' ? 'var(--color-butter)' : 'var(--color-card)',
-          border: 'var(--border-ink-thin)',
+          background: status === 'featured' ? 'var(--color-highlight)' : 'var(--color-card)',
+          border: 'var(--border-subtle)',
           borderRadius: 'var(--radius-pill)',
         }}
       >
         <span className="tier-icon">{tier.icon}</span>
-        <span className="tier-label" style={{ color: 'var(--color-ink)', fontWeight: 800 }}>{tier.label}</span>
+        <span className="tier-label" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{tier.label}</span>
       </div>
 
       {/* Tier explanation */}
@@ -76,7 +76,7 @@ export function PhotoUploadConfirmation({
       {showInfo && (
         <div
           className="photo-info-content"
-          style={{ border: '1.5px dashed var(--color-divider)', borderRadius: 'var(--radius-md)' }}
+          style={{ border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-md)' }}
         >
           <ul>
             <li>Photos are scored by clarity and shown in the community gallery.</li>
@@ -91,14 +91,14 @@ export function PhotoUploadConfirmation({
       <div className="confirmation-buttons">
         <button
           onClick={onRateNow}
-          className="btn-ink px-6 py-2.5 text-sm"
+          className="btn px-6 py-2.5 text-sm"
           style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Rate Now
         </button>
         <button
           onClick={onLater}
-          className="btn-ink px-6 py-2.5 text-sm"
+          className="btn px-6 py-2.5 text-sm"
           style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
         >
           Later

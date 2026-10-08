@@ -3,7 +3,7 @@ import { getCategoryNeonImage, categoryEmojiFor } from '../../constants/categori
 // Screen-print ink tiles — used behind icons when no photo is available.
 // Diagonal pairs (butter/ink, lobster/harbor) keep every 2x2 cover high-contrast.
 var BG_COLORS = [
-  'var(--color-butter)',
+  'var(--color-highlight)',
   'var(--color-primary)',
   'var(--color-accent)',
   'var(--color-ink)',
@@ -41,9 +41,9 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
         gridTemplateColumns: '1fr 1fr',
         gap: isTiny ? 1.5 : 2,
         background: 'var(--color-ink)',
-        border: isTiny ? 'var(--border-ink-thin)' : 'var(--border-ink)',
+        border: isTiny ? 'var(--border-subtle)' : 'var(--border-default)',
         borderRadius: isTiny ? 'var(--radius-sm)' : isHero ? 'var(--radius-xl)' : 'var(--radius-lg)',
-        boxShadow: isTiny ? 'none' : isHero ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
+        boxShadow: isTiny ? 'none' : isHero ? 'var(--shadow-float)' : 'var(--shadow-card)',
         overflow: 'hidden',
         flexShrink: 0,
       }}

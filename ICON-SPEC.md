@@ -26,7 +26,7 @@ They must work at 48px in a category chip AND at 128px as a category hero. The s
 
 ### Color Temperature
 
-All icons share a warm, saturated color temperature. Bright yellows (buns, cheese), punchy reds (pepperoni, ketchup, tomato), vivid greens (lettuce). Even "cool" foods skew warm. This keeps the set cohesive on the cream `#F6EEDC` background.
+All icons share a warm, saturated color temperature. Bright yellows (buns, cheese), punchy reds (pepperoni, ketchup, tomato), vivid greens (lettuce). Even "cool" foods skew warm. This keeps the set cohesive on the app's white paper and the neutral `#F3F1EC` icon tiles.
 
 ### Hard Shadow
 
@@ -65,7 +65,7 @@ File naming: `{category-id}.png` — must exactly match the `id` field in `ALL_C
 
 ### Theme
 
-Light mode only (Appetite theme). Icons use warm flat fills — no tinting or CSS filtering needed. They sit on the cream `#F6EEDC` background, `#FFFDF7` card surfaces, or the peach `#F9DDB8` plate discs. The UI's ink outlines + hard offset shadows (docs/DESIGN-SYSTEM.md) are borrowed from this icon style.
+Light mode only ("Quiet" theme, docs/DESIGN-SYSTEM.md). Icons use warm flat fills — no tinting or CSS filtering needed. They sit on white `#FFFFFF` paper or inside `<DishThumb />` tiles (`--color-category-strip`, `#F3F1EC`). The UI around them is deliberately plain so the icons — and, as they arrive, real dish photos, which take the same slot — carry the colour.
 
 ---
 

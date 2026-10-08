@@ -43,7 +43,7 @@ export function JournalFeed({ ratings = [], loading }) {
               key={i}
               data-testid="journal-skeleton"
               className="h-24 animate-pulse"
-              style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
+              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
             />
           )
         })}
@@ -63,12 +63,12 @@ export function JournalFeed({ ratings = [], loading }) {
           className="p-8 text-center"
           style={{
             background: 'var(--color-surface)',
-            border: '2px dashed var(--color-text-tertiary)',
+            border: '1px dashed var(--color-divider-strong)',
             borderRadius: 'var(--radius-lg)',
           }}
         >
           <p
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em' }}
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '19px', fontWeight: 500, letterSpacing: '-0.01em' }}
           >
             No dishes here yet
           </p>
@@ -129,7 +129,7 @@ export function JournalFeed({ ratings = [], loading }) {
       {hasMore && (
         <button
           onClick={function () { setVisibleCount(visibleCount + PAGE_SIZE) }}
-          className="btn-ink w-full py-3 mt-4"
+          className="btn w-full py-3 mt-4"
           style={{
             fontSize: '14px',
             color: 'var(--color-ink)',

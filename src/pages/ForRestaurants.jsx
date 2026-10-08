@@ -1,16 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 
-// Sticker-sheet inks for the step numerals and value-prop blocks
+// Quiet fills for the step numerals and value-prop blocks
 var STEP_INKS = {
-  '1': { bg: 'var(--color-primary)', fg: 'var(--color-text-on-primary)' },
-  '2': { bg: 'var(--color-accent)', fg: 'var(--color-text-on-primary)' },
-  '3': { bg: 'var(--color-butter)', fg: 'var(--color-ink)' },
+  '1': { bg: 'var(--color-surface)', fg: 'var(--color-ink)' },
+  '2': { bg: 'var(--color-surface)', fg: 'var(--color-ink)' },
+  '3': { bg: 'var(--color-surface)', fg: 'var(--color-ink)' },
 }
 var PROP_BLOCKS = [
-  { bg: 'var(--color-butter)', fg: 'var(--color-ink)', muted: 'var(--color-text-secondary)', tilt: '-1.5deg' },
-  { bg: 'var(--color-primary)', fg: 'var(--color-text-on-primary)', muted: 'var(--color-text-on-primary-muted)', tilt: '1deg' },
-  { bg: 'var(--color-accent)', fg: 'var(--color-text-on-primary)', muted: 'var(--color-text-on-primary-muted)', tilt: '1.5deg' },
-  { bg: 'var(--color-card)', fg: 'var(--color-ink)', muted: 'var(--color-text-secondary)', tilt: '-1deg' },
+  { bg: 'var(--color-surface)', fg: 'var(--color-ink)', muted: 'var(--color-text-secondary)' },
 ]
 
 /**
@@ -29,13 +26,12 @@ export function ForRestaurants() {
           className="inline-flex items-center gap-1 px-3 py-1 rounded-full mb-6"
           style={{
             fontSize: '12px',
-            fontWeight: 800,
+            fontWeight: 600,
             letterSpacing: '0.08em',
-            background: 'var(--color-butter)',
+            background: 'var(--color-highlight)',
             color: 'var(--color-ink)',
-            border: 'var(--border-ink)',
-            boxShadow: 'var(--shadow-hard-sm)',
-            transform: 'rotate(-2deg)',
+            border: 'var(--border-default)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           FREE FOR RESTAURANTS
@@ -98,9 +94,9 @@ export function ForRestaurants() {
                 className="flex items-start gap-4 p-4"
                 style={{
                   background: 'var(--color-card)',
-                  border: 'var(--border-ink)',
+                  border: 'var(--border-default)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-hard)',
+                  boxShadow: 'var(--shadow-card)',
                 }}
               >
                 <span
@@ -108,11 +104,11 @@ export function ForRestaurants() {
                   style={{
                     background: STEP_INKS[step.num].bg,
                     color: STEP_INKS[step.num].fg,
-                    border: 'var(--border-ink)',
-                    boxShadow: 'var(--shadow-hard-sm)',
+                    border: 'var(--border-default)',
+                    boxShadow: 'var(--shadow-card)',
                     fontFamily: 'var(--font-display)',
-                    fontWeight: 800,
-                    fontSize: '20px',
+                    fontWeight: 500,
+                    fontSize: '22px',
                     lineHeight: 1,
                   }}
                   aria-hidden="true"
@@ -120,7 +116,7 @@ export function ForRestaurants() {
                   {step.num}
                 </span>
                 <div>
-                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', fontSize: '19px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>
+                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 500, letterSpacing: '-0.01em', fontSize: '21px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>
                     {step.title}
                   </p>
                   <p className="mt-1.5" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
@@ -156,16 +152,15 @@ export function ForRestaurants() {
                 style={{
                   background: block.bg,
                   color: block.fg,
-                  border: 'var(--border-ink)',
+                  border: 'var(--border-default)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-hard)',
-                  transform: 'rotate(' + block.tilt + ')',
+                  boxShadow: 'var(--shadow-card)',
                 }}
               >
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '44px', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: '48px', letterSpacing: '-0.01em', lineHeight: 1 }}>
                   {prop.icon}
                 </p>
-                <p className="mt-2" style={{ fontSize: '14px', fontWeight: 800 }}>
+                <p className="mt-2" style={{ fontSize: '14px', fontWeight: 600 }}>
                   {prop.label}
                 </p>
                 <p style={{ fontSize: '12px', fontWeight: 500, color: block.muted, marginTop: '2px', lineHeight: 1.35 }}>
@@ -183,9 +178,9 @@ export function ForRestaurants() {
           className="p-5"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-hard-lg)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <h3 className="mb-4" style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
@@ -205,11 +200,11 @@ export function ForRestaurants() {
                     className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
                     style={{
                       marginTop: '1px',
-                      background: 'var(--color-butter)',
-                      border: 'var(--border-ink-thin)',
+                      background: 'var(--color-highlight)',
+                      border: 'var(--border-subtle)',
                       color: 'var(--color-ink)',
                       fontSize: '13px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       lineHeight: 1,
                     }}
                   >
@@ -229,13 +224,13 @@ export function ForRestaurants() {
       <div className="px-6 pb-12 text-center">
         <button
           onClick={function () { navigate('/restaurants') }}
-          className="btn-ink w-full py-4"
+          className="btn w-full py-4"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: '17px',
-            fontWeight: 800,
-            boxShadow: 'var(--shadow-hard-lg)',
+            fontWeight: 600,
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           See Restaurants on WGH

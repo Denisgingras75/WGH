@@ -47,7 +47,7 @@ export const BrowseResults = memo(function BrowseResults({
   return (
     <>
       {/* Category Header */}
-      <div className="px-4 pt-2 pb-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <div className="px-4 pt-2 pb-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="flex flex-col gap-3">
           <div>
             <h2 style={{ fontSize: '28px', lineHeight: 1.05, color: 'var(--color-text-primary)' }}>
@@ -73,9 +73,9 @@ export const BrowseResults = memo(function BrowseResults({
               className="flex items-center gap-1 px-3 py-1.5 rounded-full whitespace-nowrap"
               style={{
                 fontSize: '13px',
-                fontWeight: 800,
-                background: 'var(--color-butter)',
-                border: 'var(--border-ink-thin)',
+                fontWeight: 600,
+                background: 'var(--color-highlight)',
+                border: 'var(--border-subtle)',
                 color: 'var(--color-ink)',
               }}
             >
@@ -87,7 +87,7 @@ export const BrowseResults = memo(function BrowseResults({
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
@@ -114,7 +114,7 @@ export const BrowseResults = memo(function BrowseResults({
               <div
                 key={i}
                 className="flex items-center gap-3 p-3 animate-pulse"
-                style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
+                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
               >
                 <div className="w-7 h-7 rounded-full" style={{ background: 'var(--color-divider)' }} />
                 <div className="w-12 h-12 rounded-lg" style={{ background: 'var(--color-divider)' }} />
@@ -128,13 +128,13 @@ export const BrowseResults = memo(function BrowseResults({
           </div>
         ) : error ? (
           <div className="py-16 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-danger-muted)', border: 'var(--border-ink)' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-danger-muted)', border: 'var(--border-default)' }}>
               <span className="text-2xl">⚠️</span>
             </div>
             <p role="alert" className="text-sm mb-4" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>{error?.message || 'Something went wrong'}</p>
             <button
               onClick={() => window.location.reload()}
-              className="btn-ink px-5 py-2.5 text-sm"
+              className="btn px-5 py-2.5 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Retry
@@ -142,8 +142,8 @@ export const BrowseResults = memo(function BrowseResults({
           </div>
         ) : filteredDishes.length === 0 ? (
           <div className="py-12 text-center">
-            <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" style={{ border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }} />
-            <p className="mb-1" style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
+            <img src="/search-not-found.webp" alt="" className="w-16 h-16 mx-auto mb-4 rounded-full object-cover" style={{ border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }} />
+            <p className="mb-1" style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)' }}>
               {debouncedSearchQuery
                 ? `No dishes found for "${debouncedSearchQuery}"`
                 : 'No dishes in this category yet'
@@ -166,7 +166,7 @@ export const BrowseResults = memo(function BrowseResults({
                     style={{
                       background: 'var(--color-card)',
                       color: 'var(--color-ink)',
-                      border: 'var(--border-ink-thin)',
+                      border: 'var(--border-subtle)',
                       borderRadius: 'var(--radius-pill)',
                       fontWeight: 700,
                     }}
@@ -180,7 +180,7 @@ export const BrowseResults = memo(function BrowseResults({
             {/* Browse categories button */}
             <button
               onClick={onBackToCategories}
-              className="btn-ink px-5 py-2.5 text-sm"
+              className="btn px-5 py-2.5 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Browse Categories
@@ -223,7 +223,7 @@ export const BrowseResults = memo(function BrowseResults({
             {filteredDishes.length > 10 && (
               <details className="mt-4">
                 <summary
-                  className="btn-ink w-full cursor-pointer py-3 text-center text-sm"
+                  className="btn w-full cursor-pointer py-3 text-center text-sm"
                   style={{
                     background: 'var(--color-card)',
                     color: 'var(--color-ink)',
@@ -253,7 +253,7 @@ export const BrowseResults = memo(function BrowseResults({
 
         {/* Footer */}
         {!loading && filteredDishes.length > 0 && (
-          <div className="mt-8 pt-6 text-center" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+          <div className="mt-8 pt-6 text-center" style={{ borderTop: '1px dashed var(--color-divider-strong)' }}>
             <p className="eyebrow">
               {filteredDishes.length} {filteredDishes.length === 1 ? 'dish' : 'dishes'} found
             </p>

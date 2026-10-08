@@ -12,8 +12,6 @@ import { logger } from '../../utils/logger'
 import { toast } from 'sonner'
 
 // Rotating avatar inks for restaurant initials
-var AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
-
 /**
  * Two-mode search sheet for adding dishes to a playlist.
  *
@@ -170,14 +168,14 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '12px 20px', width: '100%',
           background: 'transparent', border: 'none',
-          borderBottom: '1.5px solid var(--color-divider)',
+          borderBottom: '1px solid var(--color-divider)',
           textAlign: 'left', opacity: isAdded ? 0.5 : 1,
         }}
       >
         <div style={{
           width: 40, height: 40, borderRadius: 'var(--radius-sm)',
           background: 'var(--color-category-strip)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 18, flexShrink: 0, overflow: 'hidden',
         }}>
@@ -198,11 +196,11 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         </div>
         <div style={{
           width: 28, height: 28, borderRadius: '50%',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           background: isAdded ? 'var(--color-rating)' : 'var(--color-card)',
           color: isAdded ? 'var(--color-text-on-primary)' : 'var(--color-ink)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 15, fontWeight: 800, lineHeight: 1, flexShrink: 0,
+          fontSize: 15, fontWeight: 600, lineHeight: 1, flexShrink: 0,
         }}>
           {isAdded ? '\u2713' : '+'}
         </div>
@@ -225,7 +223,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         className="w-full flex flex-col"
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderBottom: 'none',
           borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           maxHeight: '85vh',
@@ -241,9 +239,9 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
               className="flex p-1"
               style={{
                 background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-hard-sm)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               {['dish', 'restaurant'].map(function (m) {
@@ -254,7 +252,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                     onClick={function () { setMode(m); setQuery('') }}
                     className="flex-1 py-2 text-sm transition-all"
                     style={{
-                      fontWeight: 800,
+                      fontWeight: 600,
                       borderRadius: 'var(--radius-sm)',
                       background: active ? 'var(--color-ink)' : 'transparent',
                       color: active ? 'var(--color-bg)' : 'var(--color-text-secondary)',
@@ -270,17 +268,17 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
 
         {/* Restaurant drill-down header */}
         {selectedRestaurant && (
-          <div className="flex items-center gap-3 px-5 pt-3 pb-3" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
+          <div className="flex items-center gap-3 px-5 pt-3 pb-3" style={{ borderBottom: '1px solid var(--color-divider)' }}>
             <button
               onClick={function () { setSelectedRestaurant(null); setRestaurantDishes([]) }}
               className="flex items-center justify-center active:scale-95"
-              style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)', fontSize: 18, fontWeight: 800, color: 'var(--color-ink)', padding: 0, flexShrink: 0 }}
+              style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-surface-elevated)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)', fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', padding: 0, flexShrink: 0 }}
               aria-label="Back to restaurant search"
             >
               &larr;
             </button>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
                 {selectedRestaurant.name}
               </div>
               {selectedRestaurant.town && (
@@ -293,7 +291,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         )}
 
         {/* Search input */}
-        <div style={{ padding: '8px 20px 12px', borderBottom: selectedRestaurant ? 'none' : '1.5px solid var(--color-divider)' }}>
+        <div style={{ padding: '8px 20px 12px', borderBottom: selectedRestaurant ? 'none' : '1px solid var(--color-divider)' }}>
           <input
             ref={inputRef}
             type="text"
@@ -311,9 +309,9 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
             className="w-full px-4 py-2.5 focus:outline-none"
             style={{
               background: 'var(--color-surface-elevated)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-hard)',
+              boxShadow: 'var(--shadow-card)',
               color: 'var(--color-text-primary)',
               fontSize: '16px',
               fontWeight: 500,
@@ -384,16 +382,15 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '14px 20px', width: '100%',
                       background: 'transparent', border: 'none',
-                      borderBottom: '1.5px solid var(--color-divider)',
+                      borderBottom: '1px solid var(--color-divider)',
                       textAlign: 'left',
                     }}
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
-                      background: AVATAR_COLORS[ri % AVATAR_COLORS.length], color: 'var(--color-text-on-primary)',
-                      border: 'var(--border-ink)',
+                      background: 'var(--color-surface)', color: 'var(--color-text-primary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, flexShrink: 0,
+                      fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, flexShrink: 0,
                     }}>
                       {(r.name || '?').charAt(0)}
                     </div>
@@ -405,7 +402,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                         {r.town || r.address || ''}
                       </div>
                     </div>
-                    <svg style={{ width: 16, height: 16, color: 'var(--color-ink)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg style={{ width: 16, height: 16, color: 'var(--color-ink)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
@@ -416,11 +413,11 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         </div>
 
         {/* Done button */}
-        <div style={{ padding: '12px 20px', borderTop: 'var(--border-ink)', flexShrink: 0 }}>
+        <div style={{ padding: '12px 20px', borderTop: 'var(--border-default)', flexShrink: 0 }}>
           <button
             onClick={onClose}
-            className="btn-ink w-full py-3"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: 15, fontWeight: 800 }}
+            className="btn w-full py-3"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: 15, fontWeight: 600 }}
           >
             Done
           </button>

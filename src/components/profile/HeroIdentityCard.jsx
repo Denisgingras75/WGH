@@ -4,7 +4,7 @@ import { useState } from 'react'
  * Hero Identity Card for the Profile page
  * Centered layout: avatar, name, stats row
  */
-var STAT_NUM = { fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }
+var STAT_NUM = { fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)' }
 
 function getRhythmLabel(score) {
   if (score >= 0.8) return 'Steady'
@@ -42,7 +42,7 @@ export function HeroIdentityCard({
       className="relative px-4 pt-6 pb-5"
       style={{
         background: 'var(--color-bg)',
-        borderBottom: 'var(--border-ink)',
+        borderBottom: 'var(--border-default)',
       }}
     >
       {/* Avatar + Name row */}
@@ -50,13 +50,11 @@ export function HeroIdentityCard({
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
-            background: 'var(--color-primary)',
-            color: 'var(--color-text-on-primary)',
-            border: 'var(--border-ink)',
-            boxShadow: 'var(--shadow-hard)',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
             fontFamily: 'var(--font-display)',
-            fontSize: '32px',
-            fontWeight: 800,
+            fontSize: '35px',
+            fontWeight: 500,
             lineHeight: 1,
           }}
         >
@@ -96,8 +94,8 @@ export function HeroIdentityCard({
                 <button
                   onClick={handleSaveName}
                   disabled={nameStatus === 'taken' || nameStatus === 'checking'}
-                  className="btn-ink px-3 py-1 text-sm"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-hard-sm)' }}
+                  className="btn px-3 py-1 text-sm"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-card)' }}
                 >
                   Save
                 </button>
@@ -107,8 +105,8 @@ export function HeroIdentityCard({
                     setNewName(profile?.display_name || '')
                     setNameStatus(null)
                   }}
-                  className="btn-ink px-3 py-1 text-sm"
-                  style={{ background: 'var(--color-card)', color: 'var(--color-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+                  className="btn px-3 py-1 text-sm"
+                  style={{ background: 'var(--color-card)', color: 'var(--color-ink)', boxShadow: 'var(--shadow-card)' }}
                 >
                   Cancel
                 </button>
@@ -127,9 +125,9 @@ export function HeroIdentityCard({
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '27px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '29px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: '1.1',
               }}
             >
@@ -149,7 +147,7 @@ export function HeroIdentityCard({
                 </span>
                 {stats.uniqueRestaurants > 0 && (
                   <>
-                    <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 800 }}>&middot;</span>
+                    <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>&middot;</span>
                     <span style={{ color: 'var(--color-text-secondary)' }}>
                       <span style={STAT_NUM}>{stats.uniqueRestaurants}</span> spots
                     </span>
@@ -184,30 +182,30 @@ export function HeroIdentityCard({
           return (
             <button
               onClick={hasJitterDetail ? () => setJitterExpanded(!jitterExpanded) : undefined}
-              className={'flex-shrink-0 px-3 py-2.5 text-center' + (hasJitterDetail ? ' sticker-press' : '')}
+              className={'flex-shrink-0 px-3 py-2.5 text-center' + (hasJitterDetail ? ' press' : '')}
               style={{
-                background: jitterExpanded ? 'var(--color-butter-muted)' : 'var(--color-card)',
-                border: 'var(--border-ink)',
+                background: jitterExpanded ? 'var(--color-highlight-muted)' : 'var(--color-card)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-hard-sm)',
+                boxShadow: 'var(--shadow-card)',
                 minWidth: '90px',
                 cursor: hasJitterDetail ? 'pointer' : 'default',
               }}
             >
               <span
                 className="px-2 py-0.5 inline-block"
-                style={{ background: tier.bg, color: tier.color, border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-pill)', fontSize: '10px', fontWeight: 800, letterSpacing: '0.02em' }}
+                style={{ background: tier.bg, color: tier.color, border: 'var(--border-subtle)', borderRadius: 'var(--radius-pill)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.02em' }}
               >
                 {tier.label}
               </span>
               <div className="mt-1.5">
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1 }}>
                   {jitterProfile.review_count || 0}
                 </div>
                 <div style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', fontWeight: 600, marginTop: '2px' }}>reviews</div>
               </div>
               <div className="mt-1">
-                <div style={{ color: 'var(--color-accent)', fontSize: '12px', fontWeight: 800, lineHeight: 1 }}>
+                <div style={{ color: 'var(--color-accent)', fontSize: '12px', fontWeight: 600, lineHeight: 1 }}>
                   {jitterProfile.consistency_score != null
                     ? getRhythmLabel(Number(jitterProfile.consistency_score))
                     : '\u2014'}
@@ -230,9 +228,9 @@ export function HeroIdentityCard({
           className="mt-4 overflow-hidden"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <div className="px-4 py-3 space-y-2">
@@ -261,7 +259,7 @@ export function HeroIdentityCard({
             </div>
           )}
 
-          <div className="px-4 py-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+          <div className="px-4 py-3" style={{ borderTop: '1px dashed var(--color-divider-strong)' }}>
             <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, lineHeight: 1.5 }}>
               Your typing rhythm builds over time as you write reviews. No two people type alike.
             </p>
@@ -286,7 +284,7 @@ function KeyBar({ letter, ms, max }) {
   return (
     <div className="flex items-center gap-1" style={{ minWidth: '60px' }}>
       <span className="font-mono font-bold text-xs w-3 text-center" style={{ color: 'var(--color-text-primary)' }}>{letter}</span>
-      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface)', border: '1px solid var(--color-ink)' }}>
+      <div className="flex-1 overflow-hidden" style={{ height: '8px', borderRadius: 'var(--radius-pill)', background: 'var(--color-divider)' }}>
         <div style={{ width: width + '%', height: '100%', background: 'var(--color-accent)' }} />
       </div>
       <span className="text-xs font-mono" style={{ color: 'var(--color-text-tertiary)', minWidth: '32px', textAlign: 'right' }}>{Math.round(ms)}</span>

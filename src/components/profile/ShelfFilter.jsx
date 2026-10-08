@@ -31,8 +31,8 @@ export function ShelfFilter({ shelves, active, onSelect }) {
               fontWeight: isActive ? '700' : '400',
               fontSize: '13px',
               color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-              background: isActive ? 'var(--color-butter)' : 'var(--color-card)',
-              border: isActive ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              background: isActive ? 'var(--color-highlight)' : 'var(--color-card)',
+              border: isActive ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
               borderRadius: 'var(--radius-pill)',
               whiteSpace: 'nowrap',
             }}

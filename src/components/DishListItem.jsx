@@ -2,8 +2,7 @@ import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MIN_VOTES_FOR_RANKING, VALUE_BADGE_THRESHOLD } from '../constants/app'
 import { getRatingColor } from '../utils/ranking'
-import { getCategoryNeonImage, getCategoryEmoji, getDishNameIcon } from '../constants/categories'
-import { RestaurantAvatar } from './RestaurantAvatar'
+import { DishThumb } from './DishThumb'
 import { HearingIcon } from './HearingIcon'
 import { sanitizeUrl } from '../utils/sanitize'
 /**
@@ -13,7 +12,7 @@ import { sanitizeUrl } from '../utils/sanitize'
  *   dish        - dish data object
  *   rank        - optional rank number (1, 2, 3...)
  *   variant     - 'ranked' | 'voted' | 'compact' (default: 'ranked')
- *   showPhoto   - show photo thumbnail (default: false)
+ *   showPhoto   - compact thumb size (restaurant detail); photos show automatically when a dish has one
  *   showDistance - show distance badge (default: false)
  *   sortBy      - sort mode for value badge display
  *   tab         - for voted variant: 'worth-it' | 'avoid' | 'saved'
@@ -50,18 +49,15 @@ export const DishListItem = memo(function DishListItem({
   const dishName = dish.dish_name || dish.name
   const restaurantName = dish.restaurant_name || (dish.restaurants && dish.restaurants.name)
   const restaurantId = dish.restaurant_id || (dish.restaurants && dish.restaurants.id)
-  const restaurantTown = dish.restaurant_town || (dish.restaurants && dish.restaurants.town)
   const dishId = dish.dish_id || dish.id
   const avgRating = dish.avg_rating
   const totalVotes = dish.total_votes || 0
   const isRanked = totalVotes >= MIN_VOTES_FOR_RANKING
   const distanceMiles = dish.distance_miles
   const price = dish.price
-  const photoUrl = dish.photo_url
   const valuePercentile = dish.value_percentile
   const valueScore = dish.value_score
   const valueRating = valueScore != null ? Math.min(10, Math.round(valueScore / 15 * 10) / 10) : null
-  const category = dish.category
   const toastSlug = dish.toast_slug
   const orderUrl = dish.order_url
   const restaurantLat = dish.restaurant_lat || dish.lat
@@ -75,8 +71,8 @@ export const DishListItem = memo(function DishListItem({
   }
 
   // --- RANKED VARIANT (home, browse, restaurant detail) ---
-  // Scoreboard layout: rank · dish name / restaurant · rating / votes
-  var isPodium = rank != null && rank <= 3
+  // Quiet row: rank · thumb (photo or icon) · dish / restaurant · rating
+  var isTopThree = rank != null && rank <= 3
 
   return (
     <div
@@ -85,113 +81,44 @@ export const DishListItem = memo(function DishListItem({
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e) } }}
-      className={'w-full text-left' + (isPodium ? ' sticker-press' : ' active:scale-[0.99]')}
+      className="w-full text-left press"
       style={{
-        background: highlighted
-          ? 'var(--color-butter-muted)'
-          : isPodium
-            ? 'var(--color-card)'
-            : 'transparent',
-        padding: isPodium ? '10px 12px 10px 10px' : '8px 10px',
-        marginBottom: isPodium ? '10px' : 0,
-        border: isPodium ? 'var(--border-ink)' : 'none',
-        borderRadius: isPodium ? 'var(--radius-lg)' : 0,
-        boxShadow: isPodium ? 'var(--shadow-hard)' : 'none',
+        background: highlighted ? 'var(--color-highlight)' : 'transparent',
+        padding: '12px 4px',
         cursor: 'pointer',
         transition: 'background 1s ease-out',
-        borderBottom: !isPodium && !isLast ? '1.5px solid var(--color-divider)' : (isPodium ? 'var(--border-ink)' : 'none'),
+        borderBottom: isLast ? 'none' : '1px solid var(--color-divider)',
       }}
     >
-      <div className="flex items-center">
-      {/* Rank — medal sticker for the podium, plain numeral after */}
+      <div className="flex items-center" style={{ gap: '12px' }}>
       {rank != null && (
-        isPodium ? (
-          <span
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              border: 'var(--border-ink)',
-              background: rank === 1
-                ? 'var(--color-medal-gold)'
-                : rank === 2
-                  ? 'var(--color-medal-silver)'
-                  : 'var(--color-medal-bronze)',
-              fontFamily: 'var(--font-display)',
-              fontSize: '17px',
-              fontWeight: 800,
-              color: 'var(--color-ink)',
-              lineHeight: 1,
-            }}
-          >
-            {rank}
-          </span>
-        ) : (
-          <span
-            className="flex-shrink-0"
-            style={{
-              width: '32px',
-              textAlign: 'center',
-              fontFamily: 'var(--font-display)',
-              fontSize: '17px',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-tertiary)',
-            }}
-          >
-            {rank}
-          </span>
-        )
+        <span
+          className="flex-shrink-0"
+          style={{
+            width: '22px',
+            textAlign: 'center',
+            fontFamily: 'var(--font-display)',
+            fontSize: '20px',
+            fontWeight: 400,
+            fontVariantNumeric: 'lining-nums tabular-nums',
+            color: isTopThree ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+          }}
+        >
+          {rank}
+        </span>
       )}
 
-      {/* Category icon (when no photo thumbnail) */}
-      {!showPhoto && (
-        <div
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: isPodium ? '64px' : '56px', height: isPodium ? '64px' : '56px', marginLeft: '6px' }}
-        >
-          {(getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
-            <img
-              src={getDishNameIcon(dishName) || getCategoryNeonImage(category)}
-              alt=""
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <span style={{ fontSize: isPodium ? '18px' : '14px' }}>{getCategoryEmoji(category)}</span>
-          )}
-        </div>
-      )}
-
-      {/* Photo thumbnail (restaurant detail only) */}
-      {showPhoto && photoUrl && (
-        <div
-          className="flex-shrink-0 rounded-lg overflow-hidden"
-          style={{ width: '48px', height: '48px', marginLeft: '6px', background: 'var(--color-surface)' }}
-        >
-          <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
-        </div>
-      )}
-      {showPhoto && !photoUrl && (
-        <div
-          className="flex-shrink-0 rounded-lg overflow-hidden relative"
-          style={{ width: '48px', height: '48px', marginLeft: '6px' }}
-        >
-          <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill />
-        </div>
-      )}
+      <DishThumb dish={dish} size={isTopThree && !showPhoto ? 64 : 56} />
 
       {/* Name + restaurant + distance */}
-      <div className="flex-1 min-w-0" style={{ marginLeft: showPhoto ? '6px' : (isPodium ? '8px' : '6px') }}>
+      <div className="flex-1 min-w-0">
         <p
-          className="font-bold line-clamp-2"
+          className="line-clamp-2"
           style={{
-            fontSize: isPodium ? '16px' : '15px',
-            fontWeight: 700,
+            fontSize: '15px',
+            fontWeight: 600,
             color: 'var(--color-text-primary)',
-            lineHeight: 1.25,
-            letterSpacing: '-0.01em',
+            lineHeight: 1.3,
           }}
         >
           {dishName}
@@ -200,8 +127,8 @@ export const DishListItem = memo(function DishListItem({
           <p
             className="truncate"
             style={{
-              fontSize: '12.5px',
-              color: 'var(--color-text-tertiary)',
+              fontSize: '13px',
+              color: 'var(--color-text-secondary)',
             }}
           >
             {restaurantId ? (
@@ -215,7 +142,7 @@ export const DishListItem = memo(function DishListItem({
                     navigate('/restaurants/' + restaurantId)
                   }
                 }}
-                style={{ color: 'var(--color-accent)', fontWeight: 700, cursor: 'pointer' }}
+                style={{ cursor: 'pointer' }}
               >
                 {restaurantName}
               </span>
@@ -226,15 +153,13 @@ export const DishListItem = memo(function DishListItem({
           {valuePercentile != null && valuePercentile >= VALUE_BADGE_THRESHOLD && (
             <span
               style={{
-                fontSize: '9px',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                color: 'var(--color-ink)',
-                background: 'var(--color-butter)',
-                border: '1.5px solid var(--color-ink)',
+                fontSize: '9.5px',
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-divider-strong)',
                 padding: '0 5px',
                 borderRadius: 'var(--radius-pill)',
-                marginTop: '2px',
                 display: 'inline-block',
                 flexShrink: 0,
               }}
@@ -243,25 +168,18 @@ export const DishListItem = memo(function DishListItem({
             </span>
           )}
         </div>
-        {/* Action buttons — Order / Directions */}
+        {/* Action links — Order / Directions */}
         {(toastSlug || sanitizeUrl(orderUrl) || restaurantLat) && (
-          <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
+          <div className="flex items-center gap-3" style={{ marginTop: '4px' }}>
             {(toastSlug || sanitizeUrl(orderUrl)) && (
               <a
                 href={toastSlug ? 'https://order.toasttab.com/online/' + toastSlug : sanitizeUrl(orderUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
-                style={{
-                  background: 'var(--color-primary)',
-                  color: 'var(--color-text-on-primary)',
-                  border: '1.5px solid var(--color-ink)',
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                }}
+                style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
               >
-                Order Now
+                Order
               </a>
             )}
             {restaurantLat && restaurantLng && (
@@ -270,13 +188,7 @@ export const DishListItem = memo(function DishListItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={function (e) { e.stopPropagation() }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
-                style={{
-                  border: '1.5px solid var(--color-divider)',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '10.5px',
-                  fontWeight: 700,
-                }}
+                style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}
               >
                 Directions
               </a>
@@ -286,43 +198,31 @@ export const DishListItem = memo(function DishListItem({
       </div>
 
       {/* Rating + value + votes */}
-      <div className="flex-shrink-0 text-right" style={{ marginLeft: '8px' }}>
+      <div className="flex-shrink-0 text-right">
         {isRanked ? (
           <>
-            <div className="flex items-baseline gap-1.5" style={{ justifyContent: 'flex-end' }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: isPodium ? '26px' : '21px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1,
-                  color: getRatingColor(avgRating),
-                }}
-              >
-                {avgRating}
-              </span>
-              {valueRating != null && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    color: 'var(--color-text-secondary)',
-                  }}
-                  title="WGH Value Rating"
-                >
-                  {valueRating.toFixed(1)}v
-                </span>
-              )}
-            </div>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '22px',
+                fontWeight: 500,
+                lineHeight: 1,
+                fontVariantNumeric: 'lining-nums tabular-nums',
+                color: getRatingColor(avgRating),
+              }}
+            >
+              {avgRating}
+            </span>
             {!hideVotes && (
               <div style={{
                 fontSize: '11px',
                 color: 'var(--color-text-tertiary)',
-                fontWeight: 600,
-                marginTop: '3px',
+                marginTop: '4px',
               }}>
                 {totalVotes} vote{totalVotes === 1 ? '' : 's'}
+                {valueRating != null && (
+                  <span title="WGH Value Rating">{' \u00b7 ' + valueRating.toFixed(1) + 'v'}</span>
+                )}
               </div>
             )}
           </>
@@ -331,7 +231,6 @@ export const DishListItem = memo(function DishListItem({
             style={{
               fontSize: '12px',
               color: 'var(--color-text-tertiary)',
-              fontWeight: 500,
             }}
           >
             {totalVotes ? totalVotes + ' vote' + (totalVotes === 1 ? '' : 's') : 'New'}
@@ -359,33 +258,17 @@ export const DishListItem = memo(function DishListItem({
     return (
       <CardTag
         {...cardProps}
-        className={'overflow-hidden' + (isOtherProfile ? ' w-full text-left sticker-press' : '')}
+        className={'overflow-hidden' + (isOtherProfile ? ' w-full text-left press' : '')}
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-hard)',
         }}
       >
         <div className="flex">
-          {/* Image */}
-          <div
-            className="relative w-24 h-24 flex-shrink-0 overflow-hidden flex items-center justify-center"
-            style={{ background: 'var(--color-category-strip)', borderRight: 'var(--border-ink)' }}
-          >
-            {photoUrl ? (
-              <img src={photoUrl} alt={dishName} loading="lazy" className="w-full h-full object-cover" />
-            ) : (getDishNameIcon(dishName) || getCategoryNeonImage(category)) ? (
-              <img
-                src={getDishNameIcon(dishName) || getCategoryNeonImage(category)}
-                alt=""
-                className="object-contain"
-                style={{ width: '56px', height: '56px' }}
-                loading="lazy"
-              />
-            ) : (
-              <RestaurantAvatar name={restaurantName} town={restaurantTown} dishCategory={category} fill className="absolute inset-0" />
-            )}
+          {/* Image — photo when available, icon tile otherwise */}
+          <div className="w-24 h-24 flex-shrink-0">
+            <DishThumb dish={dish} fill radius="0" iconScale={0.6} />
           </div>
 
           {/* Info */}
@@ -412,7 +295,7 @@ export const DishListItem = memo(function DishListItem({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {dish.rating_10 && (
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, lineHeight: 1, color: getRatingColor(dish.rating_10) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, lineHeight: 1, color: getRatingColor(dish.rating_10) }}>
                       {dish.rating_10 % 1 === 0 ? dish.rating_10 : dish.rating_10.toFixed(1)}
                     </span>
                   )}
@@ -443,7 +326,7 @@ export const DishListItem = memo(function DishListItem({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {theirRatingNum >= 1 && (
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, lineHeight: 1, color: getRatingColor(theirRatingNum) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, lineHeight: 1, color: getRatingColor(theirRatingNum) }}>
                       {theirRatingNum % 1 === 0 ? theirRatingNum : theirRatingNum.toFixed(1)}
                     </span>
                   )}
@@ -457,7 +340,7 @@ export const DishListItem = memo(function DishListItem({
                 </div>
                 {communityAvg ? (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 800, lineHeight: 1, color: getRatingColor(communityAvg) }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, lineHeight: 1, color: getRatingColor(communityAvg) }}>
                       {communityAvg.toFixed(1)}
                     </span>
                     <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>avg</span>

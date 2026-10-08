@@ -424,11 +424,11 @@ export function Browse() {
           <div className="px-4 pt-4 pb-2 flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="sticker-press w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+              className="press w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
               aria-label="Back to home"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -442,10 +442,10 @@ export function Browse() {
                   className="px-2.5 py-1"
                   style={{
                     fontSize: '12px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: 'var(--color-ink)',
                     background: 'var(--color-card)',
-                    border: 'var(--border-ink-thin)',
+                    border: 'var(--border-subtle)',
                     borderRadius: 'var(--radius-pill)',
                   }}
                 >

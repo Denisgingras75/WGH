@@ -8,31 +8,28 @@ import { useLocalListDetail } from '../../hooks/useLocalListDetail'
 var MENU_CARD = {
   flexShrink: 0, width: '272px', scrollSnapAlign: 'start',
   background: 'var(--color-card)', borderRadius: 'var(--radius-lg)', padding: '16px 16px 12px',
-  border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard)', position: 'relative',
+  border: 'var(--border-default)', position: 'relative',
 }
 var CURATOR_AVATAR = {
   width: '36px', height: '36px', borderRadius: '50%',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '16px', color: 'var(--color-text-on-primary)', flexShrink: 0,
-  border: 'var(--border-ink)',
+  fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '18px', color: 'var(--color-text-primary)', flexShrink: 0,
+  background: 'var(--color-surface)',
 }
-var CURATOR_NAME = { fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.02em', lineHeight: 1.05 }
+var CURATOR_NAME = { fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500, color: 'var(--color-text-primary)', letterSpacing: '-0.01em', lineHeight: 1.05 }
 var CURATOR_TAGLINE = { fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: '2px' }
-var RESTAURANT_HEADER = { fontSize: '10.5px', fontWeight: 800, color: 'var(--color-accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2px', textAlign: 'left' }
-var DISH_NAME_STYLE = { fontSize: '13.5px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
-var DISH_DOTS = { flex: 1, borderBottom: '2px dotted var(--color-divider)', minWidth: '12px', alignSelf: 'baseline', marginBottom: '3px' }
-var DISH_RATING_STYLE = { fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 800, color: 'var(--color-rating)', flexShrink: 0 }
-var MENU_FOOTER = { borderTop: '2px solid var(--color-ink)', paddingTop: '10px', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+var RESTAURANT_HEADER = { fontSize: '10.5px', fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2px', textAlign: 'left' }
+var DISH_NAME_STYLE = { fontSize: '14px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+var DISH_DOTS = { flex: 1, borderBottom: '1px dotted var(--color-divider-strong)', minWidth: '12px', alignSelf: 'baseline', marginBottom: '3px' }
+var DISH_RATING_STYLE = { fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 500, color: 'var(--color-rating)', flexShrink: 0 }
+var MENU_FOOTER = { borderTop: '1px solid var(--color-divider)', paddingTop: '10px', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
 
-// Rotating avatar inks for curators
-var AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
 
 function MenuCard({ list, index }) {
   var navigate = useNavigate()
   var { items, loading } = useLocalListDetail(list.user_id)
 
   var initial = (list.display_name || '?').charAt(0).toUpperCase()
-  var avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length]
 
   // Group items by restaurant
   var groups = []
@@ -56,9 +53,9 @@ function MenuCard({ list, index }) {
       {/* Curator header */}
       <div className="flex items-center gap-2.5" style={{ marginBottom: '10px' }}>
         {list.avatar_url ? (
-          <img src={list.avatar_url} alt="" className="rounded-full" style={{ width: '36px', height: '36px', objectFit: 'cover', flexShrink: 0, border: 'var(--border-ink)' }} />
+          <img src={list.avatar_url} alt="" className="rounded-full" style={{ width: '36px', height: '36px', objectFit: 'cover', flexShrink: 0, border: 'var(--border-default)' }} />
         ) : (
-          <div style={Object.assign({}, CURATOR_AVATAR, { background: avatarColor })}>{initial}</div>
+          <div style={CURATOR_AVATAR}>{initial}</div>
         )}
         <div>
           <p style={CURATOR_NAME}>{list.display_name}</p>
@@ -67,7 +64,7 @@ function MenuCard({ list, index }) {
       </div>
 
       {/* Divider */}
-      <div style={{ height: '2px', background: 'var(--color-ink)', marginBottom: '10px' }} />
+      <div style={{ height: '1px', background: 'var(--color-divider)', marginBottom: '10px' }} />
 
       {/* Restaurant-grouped dishes */}
       {loading ? (
@@ -108,7 +105,7 @@ function MenuCard({ list, index }) {
         </span>
         <button
           onClick={function () { navigate('/user/' + list.user_id) }}
-          style={{ fontSize: '13px', fontWeight: 800, color: 'var(--color-primary)' }}
+          style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}
         >
           {'See full list \u2192'}
         </button>

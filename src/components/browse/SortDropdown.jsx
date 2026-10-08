@@ -33,10 +33,10 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
         className="flex items-center gap-1.5 px-3 py-1.5 whitespace-nowrap transition-colors"
         style={{
           fontSize: '13px',
-          fontWeight: 800,
+          fontWeight: 600,
           color: 'var(--color-ink)',
           background: 'var(--color-card)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           borderRadius: 'var(--radius-pill)',
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
@@ -50,7 +50,7 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
@@ -60,9 +60,9 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
           className="absolute right-0 mt-2 w-44 p-1 z-50"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-float)',
           }}
         >
           {SORT_OPTIONS.map((option) => (
@@ -72,12 +72,12 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
               className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors"
               style={{
                 color: sortBy === option.id ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-                fontWeight: sortBy === option.id ? 800 : 600,
+                fontWeight: sortBy === option.id ? 600 : 500,
                 borderRadius: 'var(--radius-sm)',
-                background: sortBy === option.id ? 'var(--color-butter-muted)' : 'transparent',
+                background: sortBy === option.id ? 'var(--color-highlight-muted)' : 'transparent',
               }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = sortBy === option.id ? 'var(--color-butter-muted)' : 'transparent'}
+              onMouseLeave={(e) => e.currentTarget.style.background = sortBy === option.id ? 'var(--color-highlight-muted)' : 'transparent'}
             >
               <span>{option.icon}</span>
               <span>{option.label}</span>

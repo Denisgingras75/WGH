@@ -27,9 +27,9 @@ import { jitterApi } from '../api/jitterApi'
 // SECURITY: Email is NOT persisted to storage to prevent XSS exposure of PII
 
 // Food Story card — ink panel, cream type, butter highlight
-const FOOD_STORY_ROW = { padding: '8px 0 7px', borderTop: '1.5px dashed rgba(var(--color-bg-rgb), 0.18)' }
-const FOOD_STORY_LABEL = { fontSize: '12px', color: 'rgba(var(--color-bg-rgb), 0.62)', fontWeight: 600, flexShrink: 0 }
-const FOOD_STORY_VALUE = { fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--color-bg)', textAlign: 'right' }
+const FOOD_STORY_ROW = { padding: '9px 0 8px', borderTop: '1px solid var(--color-divider)' }
+const FOOD_STORY_LABEL = { fontSize: '12px', color: 'var(--color-text-tertiary)', fontWeight: 500, flexShrink: 0 }
+const FOOD_STORY_VALUE = { fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)', textAlign: 'right' }
 
 export function Profile() {
   const { user, loading } = useAuth()
@@ -191,20 +191,18 @@ export function Profile() {
             <div style={{ padding: '12px 16px 4px' }}>
               <div
                 style={{
-                  background: 'var(--color-ink)',
-                  border: 'var(--border-ink)',
+                  background: 'var(--color-surface)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-hard)',
-                  padding: '16px 18px 10px',
+                  padding: '16px 18px 8px',
                 }}
               >
                 <h3 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: '20px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
+                  fontSize: '22px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.01em',
                   lineHeight: 1.1,
-                  color: 'var(--color-bg)',
+                  color: 'var(--color-text-primary)',
                   marginBottom: '8px',
                 }}>
                   Your Food Story
@@ -215,13 +213,10 @@ export function Profile() {
                     <span style={FOOD_STORY_LABEL}>Rating style</span>
                     <span style={{
                       fontFamily: 'var(--font-display)',
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      color: 'var(--color-ink)',
-                      background: 'var(--color-butter)',
-                      border: 'var(--border-ink-thin)',
-                      borderRadius: 'var(--radius-pill)',
-                      padding: '2px 10px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      fontStyle: 'italic',
+                      color: 'var(--color-text-primary)',
                       whiteSpace: 'nowrap',
                     }}>
                       {stats.ratingStyle.label}
@@ -269,15 +264,15 @@ export function Profile() {
                     handleUnratedDishClick(unratedDishes[0])
                   }
                 }}
-                className="sticker-press w-full p-4 flex items-center gap-4"
+                className="press w-full p-4 flex items-center gap-4"
                 style={{
                   background: 'var(--color-primary)',
-                  border: 'var(--border-ink)',
+                  border: 'var(--border-default)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-hard)',
+                  boxShadow: 'var(--shadow-card)',
                 }}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-ink)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-default)' }}>
                   <CameraIcon size={28} />
                 </div>
                 <div className="flex-1 text-left">
@@ -289,7 +284,7 @@ export function Profile() {
                   </p>
                 </div>
                 <svg className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-on-primary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
@@ -299,7 +294,7 @@ export function Profile() {
           <div
             className="flex"
             style={{
-              borderBottom: 'var(--border-ink)',
+              borderBottom: 'var(--border-default)',
               background: 'var(--color-bg)',
               position: 'sticky',
               top: 0,
@@ -314,13 +309,13 @@ export function Profile() {
                 className="flex-1 text-center"
                 style={{
                   padding: '12px 0 10px',
-                  marginBottom: '-2px',
+                  marginBottom: '-1px',
                   fontSize: '15px',
-                  fontWeight: activeTab === tab ? 800 : 700,
+                  fontWeight: activeTab === tab ? 600 : 500,
                   color: activeTab === tab ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                   background: 'transparent',
                   border: 'none',
-                  borderBottom: activeTab === tab ? '3px solid var(--color-ink)' : '3px solid transparent',
+                  borderBottom: activeTab === tab ? '2px solid var(--color-ink)' : '2px solid transparent',
                 }}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -364,15 +359,15 @@ export function Profile() {
                   style={{
                     width: '100%',
                     aspectRatio: '1',
-                    border: '2px dashed var(--color-text-tertiary)',
+                    border: '1px dashed var(--color-divider-strong)',
                     borderRadius: 'var(--radius-lg)',
                     background: 'var(--color-surface)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontFamily: 'var(--font-display)',
-                    fontSize: 36,
-                    fontWeight: 800,
+                    fontSize: 39,
+                    fontWeight: 500,
                     color: 'var(--color-text-secondary)',
                   }}
                 >
@@ -396,7 +391,7 @@ export function Profile() {
                     fontSize: 14,
                     fontWeight: 600,
                     background: 'var(--color-surface)',
-                    border: '2px dashed var(--color-text-tertiary)',
+                    border: '1px dashed var(--color-divider-strong)',
                     borderRadius: 'var(--radius-lg)',
                   }}
                 >

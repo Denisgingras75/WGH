@@ -68,7 +68,7 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2.5}
+          strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
@@ -79,7 +79,7 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
       {expanded && (
         <div
           className="mt-2 overflow-hidden"
-          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}
+          style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)' }}
         >
           {loading ? (
             <div className="p-3 space-y-2">
@@ -104,7 +104,7 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
                     key={variant.dish_id}
                     onClick={(e) => handleVariantClick(e, variant)}
                     className="w-full flex items-center justify-between p-3 text-left active:scale-[0.99]"
-                    style={{ borderTop: i > 0 ? '1.5px dashed var(--color-divider)' : 'none' }}
+                    style={{ borderTop: i > 0 ? '1px dashed var(--color-divider-strong)' : 'none' }}
                   >
                     <div className="flex-1 min-w-0">
                       <span className="text-sm truncate block" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
@@ -122,9 +122,9 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
                         <span
                           style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '17px',
-                            fontWeight: 800,
-                            letterSpacing: '-0.03em',
+                            fontSize: '18px',
+                            fontWeight: 500,
+                            letterSpacing: '-0.01em',
                             lineHeight: 1,
                             color: getRatingColor(variant.avg_rating),
                           }}
@@ -137,7 +137,7 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth={2.5}
+                        strokeWidth={2}
                         style={{ color: 'var(--color-ink)' }}
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -168,10 +168,10 @@ export function VariantBadge({ variantCount, bestVariantName, bestVariantRating,
       style={{
         background: 'var(--color-card)',
         color: 'var(--color-ink)',
-        border: 'var(--border-ink-thin)',
+        border: 'var(--border-subtle)',
         borderRadius: 'var(--radius-pill)',
         fontSize: '11px',
-        fontWeight: 800,
+        fontWeight: 600,
       }}
     >
       <span>{variantCount} flavor{variantCount === 1 ? '' : 's'}</span>
@@ -180,7 +180,7 @@ export function VariantBadge({ variantCount, bestVariantName, bestVariantRating,
           <span style={{ color: 'var(--color-text-tertiary)' }}>·</span>
           <span className="truncate max-w-[80px]" style={{ fontWeight: 600 }}>Best: {bestVariantName}</span>
           {bestVariantRating && (
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: getRatingColor(bestVariantRating) }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 500, color: getRatingColor(bestVariantRating) }}>
               {bestVariantRating}
             </span>
           )}
@@ -210,10 +210,10 @@ export function VariantSelector({ variants, currentDishId, onSelect }) {
             }`}
             style={{
               borderRadius: 'var(--radius-pill)',
-              background: isActive ? 'var(--color-butter)' : 'var(--color-card)',
+              background: isActive ? 'var(--color-highlight)' : 'var(--color-card)',
               color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-              border: isActive ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
-              fontWeight: isActive ? 800 : 700,
+              border: isActive ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
+              fontWeight: isActive ? 600 : 500,
             }}
           >
             {variant.dish_name}

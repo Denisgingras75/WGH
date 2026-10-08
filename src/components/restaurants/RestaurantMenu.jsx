@@ -139,7 +139,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
           className="py-10 text-center"
           style={{
             background: 'var(--color-surface)',
-            border: '2px dashed var(--color-text-tertiary)',
+            border: '1px dashed var(--color-divider-strong)',
             borderRadius: 'var(--radius-lg)',
           }}
         >
@@ -164,9 +164,9 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
       className="flex mx-4 my-4 overflow-hidden"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
         minHeight: '420px',
       }}
     >
@@ -176,7 +176,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
         style={{
           width: '33%',
           background: 'var(--color-surface)',
-          borderRight: 'var(--border-ink)',
+          borderRight: 'var(--border-default)',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
         }}
@@ -193,9 +193,9 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
               onClick={() => setActiveSection(section.name)}
               className="w-full text-left px-3 py-3 relative"
               style={{
-                background: isActive ? 'var(--color-butter)' : 'transparent',
-                borderBottom: isActive ? 'var(--border-ink)' : '2px solid var(--color-divider)',
-                borderTop: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                background: isActive ? 'var(--color-highlight)' : 'transparent',
+                borderBottom: isActive ? 'var(--border-default)' : '1px solid var(--color-divider)',
+                borderTop: isActive ? 'var(--border-default)' : '2px solid transparent',
                 marginTop: '-2px',
                 transition: 'background 0.15s ease',
               }}
@@ -204,7 +204,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                 className="block leading-tight"
                 style={{
                   fontSize: '14px',
-                  fontWeight: isActive ? 800 : 700,
+                  fontWeight: isActive ? 600 : 500,
                   color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
                   letterSpacing: '-0.01em',
                 }}
@@ -233,16 +233,16 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
           className="sticky top-0 z-10 px-4 py-3"
           style={{
             background: 'var(--color-card)',
-            borderBottom: 'var(--border-ink)',
+            borderBottom: 'var(--border-default)',
           }}
         >
           <h3
             style={{
               fontFamily: 'var(--font-display)',
               color: 'var(--color-text-primary)',
-              fontSize: '19px',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
+              fontSize: '21px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               lineHeight: 1.1,
             }}
           >
@@ -267,7 +267,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                 style={{
                   transition: 'transform 0.08s ease',
                   borderBottom: i < activeDishes.length - 1
-                    ? '1.5px dashed var(--color-divider)'
+                    ? '1px dashed var(--color-divider-strong)'
                     : 'none',
                 }}
               >
@@ -292,9 +292,9 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                           marginLeft: '5px',
                           padding: '1px 5px',
                           fontSize: '9px',
-                          fontWeight: 800,
-                          background: 'var(--color-butter)',
-                          border: 'var(--border-ink-thin)',
+                          fontWeight: 600,
+                          background: 'var(--color-highlight)',
+                          border: 'var(--border-subtle)',
                           borderRadius: 'var(--radius-pill)',
                           color: 'var(--color-ink)',
                           lineHeight: '1.2',
@@ -310,9 +310,9 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                           marginLeft: '5px',
                           padding: '1px 5px',
                           fontSize: '9px',
-                          fontWeight: 800,
+                          fontWeight: 600,
                           background: 'var(--color-ink)',
-                          border: 'var(--border-ink-thin)',
+                          border: 'var(--border-subtle)',
                           borderRadius: 'var(--radius-pill)',
                           color: 'var(--color-bg)',
                           lineHeight: '1.2',
@@ -339,7 +339,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                       style={{
                         color: 'var(--color-ink)',
                         fontSize: '14px',
-                        fontWeight: 800,
+                        fontWeight: 600,
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
@@ -359,11 +359,11 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
                       <span
                         style={{
                           fontFamily: 'var(--font-display)',
-                          fontWeight: 800,
-                          letterSpacing: '-0.03em',
+                          fontWeight: 500,
+                          letterSpacing: '-0.01em',
                           lineHeight: 1,
                           color: getRatingColor(displayRating),
-                          fontSize: '17px',
+                          fontSize: '18px',
                         }}
                       >
                         {displayRating}

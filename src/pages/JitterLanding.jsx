@@ -7,7 +7,7 @@ import { logger } from '../utils/logger'
 var STEP_INKS = {
   '1': { bg: 'var(--color-primary)', fg: 'var(--color-text-on-primary)' },
   '2': { bg: 'var(--color-accent)', fg: 'var(--color-text-on-primary)' },
-  '3': { bg: 'var(--color-butter)', fg: 'var(--color-ink)' },
+  '3': { bg: 'var(--color-highlight)', fg: 'var(--color-ink)' },
 }
 
 /**
@@ -80,9 +80,9 @@ function ExplainerSection() {
               className="p-4"
               style={{
                 background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-hard)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               <p className="mb-2">
@@ -91,9 +91,9 @@ function ExplainerSection() {
                   style={{
                     background: tier.bg,
                     color: tier.color,
-                    border: 'var(--border-ink-thin)',
+                    border: 'var(--border-subtle)',
                     fontSize: '12px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                   }}
                 >
                   {tier.label}
@@ -122,10 +122,10 @@ function ExplainerSection() {
       <div
         className="p-5"
         style={{
-          background: 'var(--color-butter)',
-          border: 'var(--border-ink)',
+          background: 'var(--color-highlight)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <h3 className="mb-2" style={{ fontSize: '22px', lineHeight: 1.1, color: 'var(--color-ink)' }}>
@@ -145,7 +145,7 @@ function ExplainerSection() {
 
 function ProtocolSection() {
   return (
-    <section className="px-6 py-12" style={{ maxWidth: '640px', margin: '0 auto', borderTop: 'var(--border-ink)' }}>
+    <section className="px-6 py-12" style={{ maxWidth: '640px', margin: '0 auto', borderTop: 'var(--border-default)' }}>
       <h2 className="mb-5" style={{ fontSize: '28px', color: 'var(--color-text-primary)' }}>
         The protocol
       </h2>
@@ -194,9 +194,9 @@ function ProtocolSection() {
         className="p-5 mt-8"
         style={{
           background: 'var(--color-accent)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <h3 className="mb-2" style={{ fontSize: '22px', lineHeight: 1.1, color: 'var(--color-text-on-primary)' }}>
@@ -206,7 +206,7 @@ function ProtocolSection() {
           Jitter is becoming an embeddable widget — drop a script tag, get human verification on any text input.
           Like reCAPTCHA, but for content authenticity instead of form submission.
         </p>
-        <p className="text-sm" style={{ color: 'var(--color-text-on-primary)', fontWeight: 800 }}>
+        <p className="text-sm" style={{ color: 'var(--color-text-on-primary)', fontWeight: 600 }}>
           Join the waitlist below for early access.
         </p>
       </div>
@@ -260,9 +260,9 @@ function WaitlistSection({ position }) {
         className="flex-1 min-w-0 px-4 py-2.5"
         style={{
           background: 'var(--color-surface-elevated)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-hard)',
+          boxShadow: 'var(--shadow-card)',
           color: 'var(--color-text-primary)',
           fontSize: '16px',
           outline: 'none',
@@ -271,11 +271,11 @@ function WaitlistSection({ position }) {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="btn-ink px-5 py-2.5 text-sm"
+        className="btn px-5 py-2.5 text-sm"
         style={{
           background: 'var(--color-primary)',
           color: 'var(--color-text-on-primary)',
-          fontWeight: 800,
+          fontWeight: 600,
         }}
       >
         {status === 'sending' ? '...' : 'Join'}
@@ -298,9 +298,9 @@ function JitterWordmark() {
         color: 'var(--color-rating)',
         textTransform: 'lowercase',
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-sm)',
-        boxShadow: 'var(--shadow-hard-sm)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       jitter
@@ -314,9 +314,9 @@ function StepCard({ number, title, description }) {
       className="flex gap-4 items-start p-4"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <span
@@ -324,18 +324,18 @@ function StepCard({ number, title, description }) {
         style={{
           background: (STEP_INKS[number] || STEP_INKS['1']).bg,
           color: (STEP_INKS[number] || STEP_INKS['1']).fg,
-          border: 'var(--border-ink)',
-          boxShadow: 'var(--shadow-hard-sm)',
+          border: 'var(--border-default)',
+          boxShadow: 'var(--shadow-card)',
           fontFamily: 'var(--font-display)',
-          fontWeight: 800,
-          fontSize: '20px',
+          fontWeight: 500,
+          fontSize: '22px',
           lineHeight: 1,
         }}
       >
         {number}
       </span>
       <div>
-        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', fontSize: '19px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>{title}</p>
+        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 500, letterSpacing: '-0.01em', fontSize: '21px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>{title}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.55 }}>{description}</p>
       </div>
     </div>
@@ -350,9 +350,9 @@ function PrivacyPoint({ text }) {
         style={{
           background: 'var(--color-rating)',
           color: 'var(--color-text-on-primary)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           fontSize: '12px',
-          fontWeight: 800,
+          fontWeight: 600,
           lineHeight: 1,
         }}
       >
@@ -367,7 +367,7 @@ function SignalRow({ name, weight, description }) {
   return (
     <div
       className="p-3"
-      style={{ background: 'var(--color-card)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}
+      style={{ background: 'var(--color-card)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}
     >
       <div className="flex justify-between items-center gap-2 mb-1">
         <span className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{name}</span>
@@ -377,8 +377,8 @@ function SignalRow({ name, weight, description }) {
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',
             fontWeight: 700,
-            background: 'var(--color-butter)',
-            border: 'var(--border-ink-thin)',
+            background: 'var(--color-highlight)',
+            border: 'var(--border-subtle)',
             color: 'var(--color-ink)',
           }}
         >
@@ -392,7 +392,7 @@ function SignalRow({ name, weight, description }) {
 
 function Footer() {
   return (
-    <footer className="px-6 py-8 text-center" style={{ borderTop: 'var(--border-ink)' }}>
+    <footer className="px-6 py-8 text-center" style={{ borderTop: 'var(--border-default)' }}>
       <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500, lineHeight: 1.6 }}>
         Jitter Integrity Tracking &amp; Typing Entropy Recognition<br />
         Patent pending &middot; Built on Martha's Vineyard

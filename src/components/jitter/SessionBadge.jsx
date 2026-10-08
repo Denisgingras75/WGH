@@ -11,7 +11,7 @@ export function SessionBadge({ stats }) {
       className="flex items-center gap-3 px-3 py-1.5 mt-1.5"
       style={{
         background: 'var(--color-surface)',
-        border: '1.5px solid var(--color-divider)',
+        border: '1px solid var(--color-divider)',
         borderRadius: 'var(--radius-sm)',
         fontFamily: 'var(--font-mono)',
         fontSize: '11px',

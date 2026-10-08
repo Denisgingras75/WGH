@@ -104,12 +104,12 @@ export function SettingsDropdown() {
           role="menu"
           aria-label="Settings menu"
           className="fixed top-14 right-4 w-64 z-50 overflow-hidden"
-          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
+          style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-float)' }}
         >
           {/* Header */}
           <div
             className="px-4 py-3"
-            style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)', borderBottom: 'var(--border-ink)' }}
+            style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)', borderBottom: 'var(--border-default)' }}
           >
             Settings
           </div>
@@ -119,13 +119,13 @@ export function SettingsDropdown() {
             role="menuitem"
             onClick={() => { const m = toggleSoundMute(); setSoundMuted(m) }}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Sounds</span>
-            <div className="w-10 h-6 rounded-full transition-colors flex-shrink-0" style={{ background: soundMuted ? 'var(--color-surface)' : 'var(--color-primary)', border: 'var(--border-ink-thin)' }}>
+            <div className="w-10 h-6 rounded-full transition-colors flex-shrink-0" style={{ background: soundMuted ? 'var(--color-surface)' : 'var(--color-primary)', border: 'var(--border-subtle)' }}>
               <div
                 className="w-4 h-4 rounded-full transform transition-transform"
-                style={{ background: 'var(--color-card)', border: 'var(--border-ink-thin)', marginTop: '2.5px', marginLeft: soundMuted ? '2.5px' : '18.5px' }}
+                style={{ background: 'var(--color-card)', border: 'var(--border-subtle)', marginTop: '2.5px', marginLeft: soundMuted ? '2.5px' : '18.5px' }}
               />
             </div>
           </button>
@@ -137,11 +137,11 @@ export function SettingsDropdown() {
               to="/admin"
               onClick={() => setShowDropdown(false)}
               className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-              style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+              style={{ borderBottom: '1px solid var(--color-divider)' }}
             >
               <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Admin Panel</span>
               <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           )}
@@ -153,11 +153,11 @@ export function SettingsDropdown() {
               to="/manage"
               onClick={() => setShowDropdown(false)}
               className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-              style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+              style={{ borderBottom: '1px solid var(--color-divider)' }}
             >
               <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Manage Restaurant</span>
               <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           )}
@@ -168,11 +168,11 @@ export function SettingsDropdown() {
             href="/privacy"
             onClick={() => setShowDropdown(false)}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Privacy Policy</span>
             <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </a>
 
@@ -182,11 +182,11 @@ export function SettingsDropdown() {
             href="/terms"
             onClick={() => setShowDropdown(false)}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Terms of Service</span>
             <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </a>
 
@@ -196,11 +196,11 @@ export function SettingsDropdown() {
             href="/support"
             onClick={() => setShowDropdown(false)}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Help &amp; Support</span>
             <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </a>
 
@@ -209,11 +209,11 @@ export function SettingsDropdown() {
             role="menuitem"
             onClick={() => { setShowDropdown(false); setShowBlockedModal(true) }}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Blocked users</span>
             <svg className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
 
@@ -222,7 +222,7 @@ export function SettingsDropdown() {
             role="menuitem"
             onClick={() => { setShowDropdown(false); setShowDeleteModal(true) }}
             className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-            style={{ borderBottom: '1.5px solid var(--color-divider)' }}
+            style={{ borderBottom: '1px solid var(--color-divider)' }}
           >
             <span className="text-sm" style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Delete Account</span>
           </button>

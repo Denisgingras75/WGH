@@ -207,14 +207,14 @@ export function Login() {
             style={{
               background: 'var(--color-card)',
               color: 'var(--color-ink)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-pill)',
-              boxShadow: 'var(--shadow-hard-sm)',
+              boxShadow: 'var(--shadow-card)',
               fontWeight: 700,
             }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -225,7 +225,7 @@ export function Login() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
             {/* Logo + Brand */}
             <div className="flex flex-col items-center mb-8">
-              <div style={{ marginBottom: '-14px', position: 'relative', zIndex: 2 }}>
+              <div style={{ marginBottom: '14px' }}>
                 <SmileyPin size={56} />
               </div>
               <Wordmark as="h1" size={36} style={{ position: 'relative', zIndex: 1 }} />
@@ -244,40 +244,40 @@ export function Login() {
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
-                      background: 'var(--color-butter)',
+                      background: 'var(--color-highlight)',
                       color: 'var(--color-ink)',
-                      border: 'var(--border-ink)',
-                      boxShadow: 'var(--shadow-hard-sm)',
+                      border: 'var(--border-default)',
+                      boxShadow: 'var(--shadow-card)',
                       fontFamily: 'var(--font-display)',
-                      fontWeight: 800,
-                      fontSize: '18px',
+                      fontWeight: 500,
+                      fontSize: '19px',
                       lineHeight: 1,
                     }}
                   >
                     <span>1</span>
                   </div>
                   <p style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.4 }}>
-                    Help you find <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>the best dishes</strong> wherever you are
+                    Help you find <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>the best dishes</strong> wherever you are
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
-                      background: 'var(--color-butter)',
+                      background: 'var(--color-highlight)',
                       color: 'var(--color-ink)',
-                      border: 'var(--border-ink)',
-                      boxShadow: 'var(--shadow-hard-sm)',
+                      border: 'var(--border-default)',
+                      boxShadow: 'var(--shadow-card)',
                       fontFamily: 'var(--font-display)',
-                      fontWeight: 800,
-                      fontSize: '18px',
+                      fontWeight: 500,
+                      fontSize: '19px',
                       lineHeight: 1,
                     }}
                   >
                     <span>2</span>
                   </div>
                   <p style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.4 }}>
-                    Let you <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>order confidently</strong> at any restaurant you're at
+                    Let you <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>order confidently</strong> at any restaurant you're at
                   </p>
                 </div>
               </div>
@@ -288,9 +288,9 @@ export function Login() {
               className="w-full max-w-sm mb-8 p-4"
               style={{
                 background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-hard)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               <h3 className="text-center mb-4" style={{ color: 'var(--color-text-primary)', fontSize: '19px', lineHeight: 1.1 }}>
@@ -300,20 +300,20 @@ export function Login() {
                 <div className="flex items-center gap-3 pb-3">
                   <span
                     className="w-9 h-9 flex items-center justify-center flex-shrink-0 text-lg"
-                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)' }}
+                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
                   >
                     ⭐
                   </span>
-                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
+                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
                 </div>
-                <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+                <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1px dashed var(--color-divider-strong)' }}>
                   <span
                     className="w-9 h-9 flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)' }}
+                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
                   >
                     <CameraIcon size={20} />
                   </span>
-                  <p><strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>Snap a photo</strong> — it'll show in the community gallery for that dish.</p>
+                  <p><strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>Snap a photo</strong> — it'll show in the community gallery for that dish.</p>
                 </div>
               </div>
             </div>
@@ -321,8 +321,8 @@ export function Login() {
             {/* Get Started Button - goes to homepage */}
             <button
               onClick={() => navigate('/')}
-              className="btn-ink w-full max-w-sm px-6 py-4 text-lg"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 800 }}
+              className="btn w-full max-w-sm px-6 py-4 text-lg"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 600 }}
             >
               Get Started
             </button>
@@ -333,8 +333,8 @@ export function Login() {
                 setShowLogin(true)
                 setMode('signup')
               }}
-              className="btn-ink w-full max-w-sm mt-3 px-6 py-4 text-lg"
-              style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontWeight: 800 }}
+              className="btn w-full max-w-sm mt-3 px-6 py-4 text-lg"
+              style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontWeight: 600 }}
             >
               Create Account
             </button>
@@ -345,7 +345,7 @@ export function Login() {
               className="mt-5 text-sm"
               style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
             >
-              Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>Sign in</span>
+              Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Sign in</span>
             </button>
           </div>
         ) : (
@@ -411,7 +411,7 @@ export function Login() {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="btn-ink w-full gap-3 px-6 py-4"
+                  className="btn w-full gap-3 px-6 py-4"
                   style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -433,7 +433,7 @@ export function Login() {
                 {/* Email Sign In */}
                 <button
                   onClick={() => setMode('signin')}
-                  className="btn-ink w-full px-6 py-4"
+                  className="btn w-full px-6 py-4"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   Sign in with Email
@@ -445,7 +445,7 @@ export function Login() {
                   <button
                     onClick={() => setMode('signup')}
                     className="underline"
-                    style={{ color: 'var(--color-accent)', fontWeight: 800 }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 600 }}
                   >
                     Sign up
                   </button>
@@ -469,7 +469,7 @@ export function Login() {
                     required
                     autoFocus
                     className="w-full px-4 py-3 focus:outline-none"
-                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
@@ -485,14 +485,14 @@ export function Login() {
                     placeholder="Enter your password"
                     required
                     className="w-full px-4 py-3 focus:outline-none"
-                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-ink w-full px-6 py-4"
+                  className="btn w-full px-6 py-4"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
@@ -521,7 +521,7 @@ export function Login() {
                     type="button"
                     onClick={() => setMode('signup')}
                     className="underline"
-                    style={{ color: 'var(--color-accent)', fontWeight: 800 }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 600 }}
                   >
                     Sign up
                   </button>
@@ -545,14 +545,14 @@ export function Login() {
                     required
                     autoFocus
                     className="w-full px-4 py-3 focus:outline-none"
-                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-ink w-full px-6 py-4"
+                  className="btn w-full px-6 py-4"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
@@ -590,7 +590,7 @@ export function Login() {
                       className="w-full px-4 py-3 focus:outline-none pr-10"
                       style={{
                         background: 'var(--color-surface-elevated)',
-                        border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-ink)',
+                        border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-default)',
                         borderRadius: 'var(--radius-md)',
                         color: 'var(--color-text-primary)',
                         fontSize: '16px',
@@ -600,7 +600,7 @@ export function Login() {
                     {usernameStatus && (
                       <span
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-lg"
-                        style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 800 }}
+                        style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 600 }}
                       >
                         {usernameStatus === 'checking' && '⏳'}
                         {usernameStatus === 'available' && '✓'}
@@ -628,7 +628,7 @@ export function Login() {
                     placeholder="you@example.com"
                     required
                     className="w-full px-4 py-3 focus:outline-none"
-                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
@@ -645,14 +645,14 @@ export function Login() {
                     required
                     minLength={6}
                     className="w-full px-4 py-3 focus:outline-none"
-                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                  className="btn-ink w-full px-6 py-4"
+                  className="btn w-full px-6 py-4"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Creating account...' : 'Create Account'}

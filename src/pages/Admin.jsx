@@ -9,19 +9,19 @@ import { ALL_CATEGORIES } from '../constants/categories'
 
 const INPUT_STYLE = {
   background: 'var(--color-surface-elevated)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-md)',
   color: 'var(--color-text-primary)',
   fontSize: '16px',
 }
 const ROW_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-md)',
 }
 const PILL_BTN_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-pill)',
   fontWeight: 700,
 }
@@ -319,7 +319,7 @@ export function Admin() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-butter)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-highlight)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}>
             <span className="text-2xl">🔒</span>
           </div>
           <h1 className="mb-2" style={{ fontSize: '28px', color: 'var(--color-text-primary)' }}>
@@ -333,7 +333,7 @@ export function Admin() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="btn-ink px-6 py-3"
+            className="btn px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Go Home
@@ -346,15 +346,15 @@ export function Admin() {
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="sticker-press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+              className="press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -365,7 +365,7 @@ export function Admin() {
           {editingDishId && (
             <button
               onClick={handleCancelEdit}
-              className="btn-ink px-3 py-1.5 text-sm"
+              className="btn px-3 py-1.5 text-sm"
               style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
             >
               Cancel Edit
@@ -487,7 +487,7 @@ export function Admin() {
           <button
             type="submit"
             disabled={submitting}
-            className="btn-ink w-full py-3"
+            className="btn w-full py-3"
             style={{ background: editingDishId ? 'var(--color-green-dark)' : 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             {submitting
@@ -514,7 +514,7 @@ export function Admin() {
             <button
               type="submit"
               disabled={searching}
-              className="btn-ink px-4 py-2 text-sm"
+              className="btn px-4 py-2 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               {searching ? '...' : 'Search'}
@@ -617,7 +617,7 @@ export function Admin() {
         </div>
 
         {/* Restaurant Managers Section */}
-        <div className="mt-8 pt-8" style={{ borderTop: 'var(--border-ink)' }}>
+        <div className="mt-8 pt-8" style={{ borderTop: 'var(--border-default)' }}>
           <h2 className="mb-4" style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}>
             Restaurant Managers
           </h2>
@@ -653,7 +653,7 @@ export function Admin() {
                   setManagers([])
                 }}
                 className="absolute right-3 top-[40px] text-sm px-1"
-                style={{ color: 'var(--color-ink)', fontWeight: 800 }}
+                style={{ color: 'var(--color-ink)', fontWeight: 600 }}
               >
                 ✕
               </button>
@@ -661,7 +661,7 @@ export function Admin() {
             {inviteDropdownOpen && !inviteRestaurantId && (
               <div
                 className="absolute z-10 w-full mt-2 max-h-48 overflow-y-auto"
-                style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
+                style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-card)' }}
               >
                 {restaurants
                   .filter((r) => {
@@ -704,14 +704,14 @@ export function Admin() {
             <div className="mb-4">
               <button
                 onClick={handleGenerateInvite}
-                className="btn-ink px-4 py-2 text-sm"
+                className="btn px-4 py-2 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Generate Invite Link
               </button>
 
               {inviteLink && (
-                <div className="mt-3 p-3" style={{ background: 'var(--color-butter-muted)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}>
+                <div className="mt-3 p-3" style={{ background: 'var(--color-highlight-muted)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)' }}>
                   <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>
                     Invite Link (expires in 7 days):
                   </p>
@@ -722,7 +722,7 @@ export function Admin() {
                       readOnly
                       value={inviteLink}
                       className="flex-1 min-w-0 px-2 py-1 text-xs"
-                      style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)' }}
+                      style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)' }}
                     />
                     <button
                       onClick={() => {
@@ -744,8 +744,8 @@ export function Admin() {
                         }
                         document.body.removeChild(ta)
                       }}
-                      className="btn-ink px-3 py-1 text-xs"
-                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-hard-sm)' }}
+                      className="btn px-3 py-1 text-xs"
+                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-card)' }}
                     >
                       Copy
                     </button>

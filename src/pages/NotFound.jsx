@@ -13,8 +13,8 @@ export function NotFound() {
           className="w-24 h-24 mx-auto mb-6 rounded-full object-cover"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
-            boxShadow: 'var(--shadow-hard)',
+            border: 'var(--border-default)',
+            boxShadow: 'var(--shadow-card)',
           }}
         />
         <h1
@@ -31,7 +31,7 @@ export function NotFound() {
         </p>
         <Link
           to="/"
-          className="btn-ink w-full py-3.5 px-6 text-center"
+          className="btn w-full py-3.5 px-6 text-center"
           style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
         >
           Explore the Map

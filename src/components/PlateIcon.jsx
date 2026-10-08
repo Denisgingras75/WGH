@@ -20,9 +20,9 @@ export function PlateIcon({
       style={{
         width: size,
         height: size,
-        background: active ? 'var(--color-butter)' : 'var(--color-category-strip)',
-        border: 'var(--border-ink)',
-        boxShadow: 'var(--shadow-hard)',
+        background: active ? 'var(--color-highlight)' : 'var(--color-category-strip)',
+        border: 'var(--border-default)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       {/* Content container - centers children */}

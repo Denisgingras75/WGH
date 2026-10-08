@@ -124,7 +124,7 @@ export function Restaurants() {
         className="px-4 pt-4 pb-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: 'var(--border-ink)',
+          borderBottom: 'var(--border-default)',
         }}
       >
         {/* Search bar */}
@@ -134,7 +134,7 @@ export function Restaurants() {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={2.5}
+            strokeWidth={2}
             stroke="currentColor"
             className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2"
             style={{ color: 'var(--color-ink)' }}
@@ -153,9 +153,9 @@ export function Restaurants() {
             className="w-full pl-11 pr-4 py-3 focus:outline-none"
             style={{
               background: 'var(--color-surface-elevated)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-hard)',
+              boxShadow: 'var(--shadow-card)',
               color: 'var(--color-text-primary)',
               fontSize: '16px',
               fontWeight: 500,
@@ -172,9 +172,9 @@ export function Restaurants() {
             style={{
               fontFamily: 'var(--font-display)',
               color: 'var(--color-text-primary)',
-              fontSize: '30px',
-              fontWeight: 800,
-              letterSpacing: '-0.025em',
+              fontSize: '32px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
             }}
           >
             Restaurants
@@ -187,14 +187,14 @@ export function Restaurants() {
             className="flex items-center gap-1 px-3 py-1.5 rounded-full"
             style={{
               fontSize: '13px',
-              fontWeight: 800,
-              background: 'var(--color-butter)',
+              fontWeight: 600,
+              background: 'var(--color-highlight)',
               color: 'var(--color-ink)',
-              border: 'var(--border-ink-thin)',
+              border: 'var(--border-subtle)',
             }}
           >
             {radius} mi
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
@@ -212,9 +212,9 @@ export function Restaurants() {
           className="flex p-1 mb-4"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard-sm)',
+            boxShadow: 'var(--shadow-card)',
           }}
           role="group"
           aria-label="Filter by status"
@@ -225,7 +225,7 @@ export function Restaurants() {
             onClick={function () { setRestaurantTab('open') }}
             className="flex-1 py-2 text-sm transition-all"
             style={{
-              fontWeight: 800,
+              fontWeight: 600,
               borderRadius: 'var(--radius-sm)',
               background: restaurantTab === 'open' ? 'var(--color-ink)' : 'transparent',
               color: restaurantTab === 'open' ? 'var(--color-bg)' : 'var(--color-text-secondary)',
@@ -239,7 +239,7 @@ export function Restaurants() {
             onClick={function () { setRestaurantTab('closed') }}
             className="flex-1 py-2 text-sm transition-all"
             style={{
-              fontWeight: 800,
+              fontWeight: 600,
               borderRadius: 'var(--radius-sm)',
               background: restaurantTab === 'closed' ? 'var(--color-ink)' : 'transparent',
               color: restaurantTab === 'closed' ? 'var(--color-bg)' : 'var(--color-text-secondary)',
@@ -256,10 +256,10 @@ export function Restaurants() {
             aria-pressed={sortBy === 'distance'}
             className="px-3 py-1.5 rounded-full text-xs transition-all"
             style={{
-              fontWeight: 800,
-              background: sortBy === 'distance' ? 'var(--color-butter)' : 'var(--color-card)',
+              fontWeight: 600,
+              background: sortBy === 'distance' ? 'var(--color-highlight)' : 'var(--color-card)',
               color: sortBy === 'distance' ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-              border: sortBy === 'distance' ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              border: sortBy === 'distance' ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
             }}
           >
             Distance
@@ -269,10 +269,10 @@ export function Restaurants() {
             aria-pressed={sortBy === 'top-rated'}
             className="px-3 py-1.5 rounded-full text-xs transition-all"
             style={{
-              fontWeight: 800,
-              background: sortBy === 'top-rated' ? 'var(--color-butter)' : 'var(--color-card)',
+              fontWeight: 600,
+              background: sortBy === 'top-rated' ? 'var(--color-highlight)' : 'var(--color-card)',
               color: sortBy === 'top-rated' ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-              border: sortBy === 'top-rated' ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              border: sortBy === 'top-rated' ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
             }}
           >
             Top Rated
@@ -287,7 +287,7 @@ export function Restaurants() {
             </p>
             <button
               onClick={function () { window.location.reload() }}
-              className="btn-ink px-5 py-2.5 text-sm"
+              className="btn px-5 py-2.5 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               Try Again
@@ -300,7 +300,7 @@ export function Restaurants() {
                 <div
                   key={i}
                   className="h-24 animate-pulse"
-                  style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
+                  style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }}
                 />
               )
             })}
@@ -316,9 +316,9 @@ export function Restaurants() {
                     background: restaurant.is_open
                       ? 'var(--color-card)'
                       : 'var(--color-surface)',
-                    border: restaurant.is_open ? 'var(--border-ink)' : '2px dashed var(--color-divider)',
+                    border: restaurant.is_open ? 'var(--border-default)' : '1px dashed var(--color-divider-strong)',
                     borderRadius: 'var(--radius-lg)',
-                    boxShadow: restaurant.is_open ? 'var(--shadow-hard)' : 'none',
+                    boxShadow: restaurant.is_open ? 'var(--shadow-card)' : 'none',
                   }}
                 >
                   <button
@@ -387,7 +387,7 @@ export function Restaurants() {
                       </div>
 
                       {/* Chevron */}
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
@@ -401,14 +401,14 @@ export function Restaurants() {
                         navigate('/restaurants/' + restaurant.id + '/reviews')
                       }}
                       className="flex items-center gap-2 mt-2.5 pt-2.5 w-full text-left active:opacity-70 transition-opacity"
-                      style={{ borderTop: '1.5px dashed var(--color-divider)' }}
+                      style={{ borderTop: '1px dashed var(--color-divider-strong)' }}
                     >
                       <span
                         style={{
                           fontFamily: 'var(--font-display)',
-                          fontSize: '22px',
-                          fontWeight: 800,
-                          letterSpacing: '-0.03em',
+                          fontSize: '24px',
+                          fontWeight: 500,
+                          letterSpacing: '-0.01em',
                           lineHeight: 1,
                           color: getRatingColor(restaurant.avg_rating),
                         }}
@@ -435,7 +435,7 @@ export function Restaurants() {
                 style={{
                   color: 'var(--color-text-tertiary)',
                   background: 'var(--color-surface)',
-                  border: '2px dashed var(--color-text-tertiary)',
+                  border: '1px dashed var(--color-divider-strong)',
                   borderRadius: 'var(--radius-lg)',
                 }}
               >
@@ -465,9 +465,9 @@ export function Restaurants() {
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '20px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '22px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
               }}
             >
               Discover more restaurants
@@ -516,7 +516,7 @@ export function Restaurants() {
       {/* Floating Add Restaurant button */}
       <button
         onClick={function () { setAddModalOpen(true) }}
-        className="btn-ink fixed right-4 px-4 py-3 text-sm"
+        className="btn fixed right-4 px-4 py-3 text-sm"
         style={{
           bottom: 'calc(78px + env(safe-area-inset-bottom))',
           zIndex: 40,
@@ -525,7 +525,7 @@ export function Restaurants() {
           color: 'var(--color-text-on-primary)',
         }}
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         Add Restaurant
@@ -564,7 +564,7 @@ function NearbyPlaceCard({ place }) {
       className="p-4"
       style={{
         background: 'var(--color-surface)',
-        border: '2px dashed var(--color-divider)',
+        border: '1px dashed var(--color-divider-strong)',
         borderRadius: 'var(--radius-lg)',
       }}
     >

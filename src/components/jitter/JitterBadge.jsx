@@ -108,7 +108,7 @@ function Waveform({ points, color, dash, width, height, animate, stateKey }) {
       <path
         d={pathD}
         stroke={color}
-        strokeWidth={3}
+        strokeWidth={2.25}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={dash || 'none'}
@@ -149,9 +149,9 @@ function JitterPopover({ stats, state, warScore }) {
         top: '100%',
         marginTop: '6px',
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-md)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-float)',
         padding: '10px 14px',
         minWidth: '170px',
         fontSize: '11px',
@@ -159,7 +159,7 @@ function JitterPopover({ stats, state, warScore }) {
       }}
     >
       {/* Mini waveform header */}
-      <div className="flex items-center gap-2" style={{ marginBottom: '8px', paddingBottom: '6px', borderBottom: '1.5px dashed var(--color-divider)' }}>
+      <div className="flex items-center gap-2" style={{ marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px dashed var(--color-divider-strong)' }}>
         <Waveform points={cfg.wave} color={cfg.color} dash={cfg.dash} width={32} height={12} animate={false} stateKey={state} />
         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', color: cfg.color, textTransform: 'uppercase' }}>
           jitter
@@ -236,8 +236,8 @@ export function JitterBadge({ warScore, classification, stats, onProfileClick, s
         padding: sz.pad,
         borderRadius: 'var(--radius-pill)',
         background: hovered ? cfg.bgHover : cfg.bg,
-        border: 'var(--border-ink-thin)',
-        boxShadow: hovered ? 'var(--shadow-hard-sm)' : 'none',
+        border: 'var(--border-subtle)',
+        boxShadow: hovered ? 'var(--shadow-card)' : 'none',
         cursor: onProfileClick ? 'pointer' : hasPopover ? 'default' : 'default',
         transition: 'all 0.2s ease',
         userSelect: 'none',

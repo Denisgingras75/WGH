@@ -107,7 +107,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
   var visibleCount = Math.min(allActiveTabDishes.length, activeLimit)
 
   return (
-    <div className="pt-2" style={{ borderTop: 'var(--border-ink)' }}>
+    <div className="pt-2" style={{ borderTop: 'var(--border-default)' }}>
       {/* Category icons — food icons as carousel navigation */}
       <div
         ref={tabsRef}
@@ -141,10 +141,8 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '50%',
-                background: isActive ? 'var(--color-butter)' : 'transparent',
-                border: isActive ? 'var(--border-ink)' : '2px solid transparent',
-                boxShadow: isActive ? 'var(--shadow-hard-sm)' : 'none',
-                opacity: isActive ? 1 : 0.6,
+                background: isActive ? 'var(--color-highlight)' : 'transparent',
+                opacity: isActive ? 1 : 0.55,
                 transition: 'opacity 0.15s, background 0.15s',
               }}>
                 {tab.id === 'nearby' ? (
@@ -156,7 +154,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
               <span style={{
                 marginTop: '4px',
                 fontSize: '11px',
-                fontWeight: isActive ? 800 : 600,
+                fontWeight: isActive ? 600 : 500,
                 color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                 lineHeight: 1.2,
               }}>
@@ -171,10 +169,10 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
       <div className="px-4 flex items-baseline justify-between mb-2 mt-1">
         <h2 style={{
           fontFamily: 'var(--font-display)',
-          fontSize: '26px',
-          fontWeight: 800,
+          fontSize: '28px',
+          fontWeight: 500,
           color: 'var(--color-text-primary)',
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.01em',
           lineHeight: 1,
         }}>
           {activeTab.id === 'nearby' ? 'Top Rated Nearby' : 'Top ' + activeTab.label}
@@ -236,7 +234,7 @@ export var Top10Carousel = forwardRef(function Top10Carousel({ dishes, onCategor
                   {hasMore && (
                     <button
                       onClick={function () { handleShowMore(tab.id) }}
-                      className="btn-ink w-full py-3"
+                      className="btn w-full py-3"
                       style={{
                         fontSize: '14px',
                         color: 'var(--color-ink)',

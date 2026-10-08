@@ -345,15 +345,15 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
           className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-hard-lg)',
+            boxShadow: 'var(--shadow-float)',
           }}
         >
           {/* Header */}
           <div
             className="flex items-center justify-between px-5 py-4 sticky top-0 z-10"
-            style={{ borderBottom: 'var(--border-ink)', background: 'var(--color-card)' }}
+            style={{ borderBottom: 'var(--border-default)', background: 'var(--color-card)' }}
           >
             <h2
               style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}
@@ -362,10 +362,10 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
             </h2>
             <button
               onClick={onClose}
-              className="sticker-press w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+              className="press w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -391,9 +391,9 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                 className="w-full px-4 py-3 focus:outline-none"
                 style={{
                   background: 'var(--color-surface-elevated)',
-                  border: 'var(--border-ink)',
+                  border: 'var(--border-default)',
                   borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-hard)',
+                  boxShadow: 'var(--shadow-card)',
                   color: 'var(--color-text-primary)',
                   fontSize: '16px',
                   fontWeight: 500,
@@ -423,8 +423,8 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink-thin)', fontSize: '12px', fontWeight: 700 }}>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', border: 'var(--border-subtle)', fontSize: '12px', fontWeight: 700 }}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
@@ -455,8 +455,8 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', color: 'var(--color-accent)', border: 'var(--border-ink-thin)', fontSize: '14px' }}>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', color: 'var(--color-accent)', border: 'var(--border-subtle)', fontSize: '14px' }}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
@@ -477,17 +477,17 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                   <button
                     onClick={handleManualAdd}
                     className="w-full flex items-center gap-3 px-3 py-3 mt-2 text-left transition-colors"
-                    style={{ border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)', color: 'var(--color-accent)' }}
+                    style={{ border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)', color: 'var(--color-accent)' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-muted)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-surface)'}
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-ink-thin)' }}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-subtle)' }}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm" style={{ fontWeight: 800 }}>Add "{searchQuery.trim()}" manually</p>
+                      <p className="text-sm" style={{ fontWeight: 600 }}>Add "{searchQuery.trim()}" manually</p>
                       <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>Not found in Google Places</p>
                     </div>
                   </button>
@@ -500,7 +500,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
           {step === STEPS.DETAILS && (
             <div className="p-5 space-y-4">
               {googlePlaceId && (
-                <div className="flex items-center justify-between px-3 py-2" style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)', borderRadius: 'var(--radius-md)' }}>
+                <div className="flex items-center justify-between px-3 py-2" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderRadius: 'var(--radius-md)' }}>
                   <span className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                     Pre-filled from Google Maps
                   </span>
@@ -514,7 +514,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-2.5 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
                 />
               </div>
               <div>
@@ -524,7 +524,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className="w-full px-4 py-2.5 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
                 />
               </div>
               <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
@@ -533,7 +533,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
 
               <button
                 onClick={handleDetailsNext}
-                className="btn-ink w-full py-3 text-sm"
+                className="btn w-full py-3 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Next

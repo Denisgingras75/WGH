@@ -55,10 +55,9 @@ export function BrowseSearchBar({
           <div
             className="flex items-center gap-3 px-4 py-3 transition-all duration-150"
             style={{
-              background: 'var(--color-surface-elevated)',
-              border: 'var(--border-ink)',
+              background: searchFocused ? 'var(--color-card)' : 'var(--color-surface)',
+              border: searchFocused ? '1px solid var(--color-ink)' : '1px solid transparent',
               borderRadius: 'var(--radius-md)',
-              boxShadow: searchFocused ? '4px 4px 0 var(--color-primary)' : 'var(--shadow-hard)',
             }}
           >
             <svg
@@ -114,7 +113,7 @@ export function BrowseSearchBar({
             <div
               ref={autocompleteRef}
               className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border overflow-hidden z-50"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)', border: '1.5px solid var(--color-divider)' }}
+              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)', border: '1px solid var(--color-divider)' }}
             >
               {autocompleteSuggestions.map((suggestion, index) => (
                 <button

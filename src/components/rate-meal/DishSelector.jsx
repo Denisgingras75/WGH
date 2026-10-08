@@ -119,17 +119,17 @@ export function DishSelector({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: 'var(--border-ink)',
+          borderBottom: 'var(--border-default)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             aria-label="Back to restaurant"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
@@ -138,9 +138,9 @@ export function DishSelector({
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '24px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '26px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.05,
               }}
             >
@@ -153,7 +153,7 @@ export function DishSelector({
         </div>
 
         <div className="mt-3 relative">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-ink)' }} aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-ink)' }} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
@@ -164,9 +164,9 @@ export function DishSelector({
             className="w-full pl-11 pr-4 py-3 outline-none"
             style={{
               background: 'var(--color-surface-elevated)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-hard)',
+              boxShadow: 'var(--shadow-card)',
               color: 'var(--color-text-primary)',
               fontSize: '16px',
               fontWeight: 500,
@@ -196,7 +196,7 @@ export function DishSelector({
             className="px-5 py-8 text-center"
             style={{
               background: 'var(--color-surface)',
-              border: '2px dashed var(--color-text-tertiary)',
+              border: '1px dashed var(--color-divider-strong)',
               borderRadius: 'var(--radius-lg)',
             }}
           >
@@ -215,9 +215,9 @@ export function DishSelector({
           className="flex mx-4 my-4 overflow-hidden"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-card)',
             minHeight: '420px',
           }}
         >
@@ -226,7 +226,7 @@ export function DishSelector({
             style={{
               width: '33%',
               background: 'var(--color-surface)',
-              borderRight: 'var(--border-ink)',
+              borderRight: 'var(--border-default)',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
@@ -240,9 +240,9 @@ export function DishSelector({
                   onClick={function () { setActiveSection(section.name) }}
                   className="w-full text-left px-3 py-3 relative"
                   style={{
-                    background: isActive ? 'var(--color-butter)' : 'transparent',
-                    borderBottom: isActive ? 'var(--border-ink)' : '2px solid var(--color-divider)',
-                    borderTop: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                    background: isActive ? 'var(--color-highlight)' : 'transparent',
+                    borderBottom: isActive ? 'var(--border-default)' : '1px solid var(--color-divider)',
+                    borderTop: isActive ? 'var(--border-default)' : '2px solid transparent',
                     marginTop: '-2px',
                     transition: 'background 0.15s ease',
                   }}
@@ -251,7 +251,7 @@ export function DishSelector({
                     className="block leading-tight"
                     style={{
                       fontSize: '14px',
-                      fontWeight: isActive ? 800 : 700,
+                      fontWeight: isActive ? 600 : 500,
                       color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
                       letterSpacing: '-0.01em',
                     }}
@@ -278,16 +278,16 @@ export function DishSelector({
               className="sticky top-0 z-10 px-4 py-3"
               style={{
                 background: 'var(--color-card)',
-                borderBottom: 'var(--border-ink)',
+                borderBottom: 'var(--border-default)',
               }}
             >
               <h2
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: 'var(--color-text-primary)',
-                  fontSize: '19px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
+                  fontSize: '21px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.01em',
                   lineHeight: 1.1,
                 }}
               >
@@ -305,8 +305,8 @@ export function DishSelector({
                     className="w-full text-left px-2 py-3 active:scale-[0.98]"
                     style={{
                       transition: 'transform 0.08s ease, background 0.15s ease',
-                      borderBottom: index < activeSectionData.dishes.length - 1 ? '1.5px dashed var(--color-divider)' : 'none',
-                      background: isSelected ? 'var(--color-butter-muted)' : 'transparent',
+                      borderBottom: index < activeSectionData.dishes.length - 1 ? '1px dashed var(--color-divider-strong)' : 'none',
+                      background: isSelected ? 'var(--color-highlight-muted)' : 'transparent',
                       borderRadius: isSelected ? 'var(--radius-sm)' : 0,
                     }}
                   >
@@ -315,8 +315,8 @@ export function DishSelector({
                         className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
                           background: isSelected ? 'var(--color-primary)' : 'var(--color-card)',
-                          border: 'var(--border-ink)',
-                          boxShadow: isSelected ? 'var(--shadow-hard-sm)' : 'none',
+                          border: 'var(--border-default)',
+                          boxShadow: isSelected ? 'var(--shadow-card)' : 'none',
                           color: 'var(--color-text-on-primary)',
                         }}
                       >
@@ -338,7 +338,7 @@ export function DishSelector({
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p style={{ color: 'var(--color-ink)', fontSize: '14px', fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}>
+                            <p style={{ color: 'var(--color-ink)', fontSize: '14px', fontWeight: 600, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}>
                               {dish.price ? '$' + Number(dish.price).toFixed(0) : '--'}
                             </p>
                             <p className="mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 600 }}>
@@ -359,17 +359,17 @@ export function DishSelector({
       <div className="px-4 pb-24">
         <button
           onClick={onSpecialToggle}
-          className="w-full px-4 py-4 text-left sticker-press"
+          className="w-full px-4 py-4 text-left press"
           style={{
-            background: specialDishEnabled ? 'var(--color-butter-muted)' : 'var(--color-card)',
-            border: 'var(--border-ink)',
+            background: specialDishEnabled ? 'var(--color-highlight-muted)' : 'var(--color-card)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+              <p style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '19px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
                 Special
               </p>
               <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
@@ -380,8 +380,8 @@ export function DishSelector({
               className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
                 background: specialDishEnabled ? 'var(--color-primary)' : 'var(--color-card)',
-                border: 'var(--border-ink)',
-                boxShadow: specialDishEnabled ? 'var(--shadow-hard-sm)' : 'none',
+                border: 'var(--border-default)',
+                boxShadow: specialDishEnabled ? 'var(--shadow-card)' : 'none',
                 color: 'var(--color-text-on-primary)',
               }}
             >
@@ -399,7 +399,7 @@ export function DishSelector({
             className="mt-3 px-4 py-4"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-lg)',
             }}
           >
@@ -414,7 +414,7 @@ export function DishSelector({
               className="w-full px-3 py-3 outline-none"
               style={{
                 background: 'var(--color-surface-elevated)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--color-text-primary)',
                 fontSize: '16px',
@@ -429,7 +429,7 @@ export function DishSelector({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          borderTop: 'var(--border-ink)',
+          borderTop: 'var(--border-default)',
         }}
       >
         {selectedCount > 0 && (
@@ -443,12 +443,12 @@ export function DishSelector({
         <button
           onClick={onContinue}
           disabled={selectedCount === 0}
-          className="btn-ink w-full py-3.5"
+          className="btn w-full py-3.5"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: '15px',
-            fontWeight: 800,
+            fontWeight: 600,
           }}
         >
           {selectedCount === 0

@@ -55,12 +55,12 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
   return (
     <button
       onClick={handleClick}
-      className="sticker-press w-full p-4 text-left"
+      className="press w-full p-4 text-left"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: promoted ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <div className="flex gap-3">
@@ -79,9 +79,9 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
               className="px-2 py-0.5 rounded-full"
               style={{
                 fontSize: '11px',
-                fontWeight: 800,
+                fontWeight: 600,
                 background: 'var(--color-card)',
-                border: 'var(--border-ink-thin)',
+                border: 'var(--border-subtle)',
                 color: 'var(--color-ink)',
               }}
             >
@@ -92,9 +92,9 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
                 className="px-2 py-0.5 rounded-full"
                 style={{
                   fontSize: '11px',
-                  fontWeight: 800,
-                  background: 'var(--color-butter)',
-                  border: 'var(--border-ink-thin)',
+                  fontWeight: 600,
+                  background: 'var(--color-highlight)',
+                  border: 'var(--border-subtle)',
                   color: 'var(--color-ink)',
                 }}
               >
@@ -128,7 +128,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           <div className="flex items-center gap-2 mt-2">
             <span
               className="text-xs"
-              style={{ color: 'var(--color-ink)', fontWeight: 800 }}
+              style={{ color: 'var(--color-ink)', fontWeight: 600 }}
             >
               {formatDate(event_date)}
             </span>
@@ -143,17 +143,17 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
               today.setHours(0, 0, 0, 0)
               const diffDays = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
               if (diffDays === 0) return (
-                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-butter)', border: 'var(--border-ink-thin)', color: 'var(--color-ink)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 600, background: 'var(--color-highlight)', border: 'var(--border-subtle)', color: 'var(--color-ink)' }}>
                   Today
                 </span>
               )
               if (diffDays === 1) return (
-                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-card)', border: 'var(--border-ink-thin)', color: 'var(--color-ink)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 600, background: 'var(--color-card)', border: 'var(--border-subtle)', color: 'var(--color-ink)' }}>
                   Tomorrow
                 </span>
               )
               if (diffDays > 0 && diffDays <= 3) return (
-                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-secondary)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 600, background: 'var(--color-surface)', border: '1px solid var(--color-divider)', color: 'var(--color-text-secondary)' }}>
                   This week
                 </span>
               )
@@ -169,7 +169,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2.5}
+          strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>

@@ -21,12 +21,12 @@ export function JournalCard({ dish }) {
     <Link
       to={'/dish/' + dishId}
       data-testid="journal-card"
-      className="sticker-press flex items-start gap-3 no-underline"
+      className="press flex items-start gap-3 no-underline"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
         padding: '12px 14px 12px 12px',
         marginBottom: '8px',
         display: 'flex',
@@ -41,7 +41,7 @@ export function JournalCard({ dish }) {
           height: '56px',
           borderRadius: 'var(--radius-md)',
           background: 'var(--color-category-strip)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           overflow: 'hidden',
         }}
       >
@@ -97,9 +97,9 @@ export function JournalCard({ dish }) {
             style={{
               color: getRatingColor(rating),
               fontFamily: 'var(--font-display)',
-              fontSize: '30px',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
+              fontSize: '32px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
               lineHeight: 1,
             }}
           >

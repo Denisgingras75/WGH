@@ -99,16 +99,16 @@ export function RestaurantReviews() {
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: 'var(--border-ink)',
+          borderBottom: 'var(--border-default)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={function () { window.history.length > 1 ? navigate(-1) : navigate('/restaurants/' + restaurantId) }}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
@@ -118,9 +118,9 @@ export function RestaurantReviews() {
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '24px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '26px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.05,
               }}
             >
@@ -150,10 +150,10 @@ export function RestaurantReviews() {
                 className="px-3.5 py-1.5 text-xs transition-all"
                 style={{
                   borderRadius: 'var(--radius-pill)',
-                  background: isActive ? 'var(--color-butter)' : 'var(--color-card)',
+                  background: isActive ? 'var(--color-highlight)' : 'var(--color-card)',
                   color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
-                  border: isActive ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
-                  fontWeight: isActive ? 800 : 700,
+                  border: isActive ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
+                  fontWeight: isActive ? 600 : 500,
                 }}
               >
                 {opt.label}
@@ -171,7 +171,7 @@ export function RestaurantReviews() {
           </p>
           <button
             onClick={function () { window.location.reload() }}
-            className="btn-ink px-5 py-2.5 text-sm"
+            className="btn px-5 py-2.5 text-sm"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Try Again
@@ -187,11 +187,11 @@ export function RestaurantReviews() {
             style={{
               color: 'var(--color-text-tertiary)',
               background: 'var(--color-surface)',
-              border: '2px dashed var(--color-text-tertiary)',
+              border: '1px dashed var(--color-divider-strong)',
               borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>No written reviews yet</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: '21px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)' }}>No written reviews yet</p>
             <p className="text-sm mt-2" style={{ fontWeight: 500 }}>Be the first to leave a review!</p>
           </div>
         ) : (
@@ -201,14 +201,14 @@ export function RestaurantReviews() {
               <div key={i} className="relative">
                 <button
                   onClick={function () { if (review.dish_id) navigate('/dish/' + review.dish_id) }}
-                  className="w-full text-left sticker-press"
+                  className="w-full text-left press"
                   style={{
                     padding: '14px 16px',
                     paddingRight: canReport ? '44px' : '16px',
                     background: 'var(--color-card)',
-                    border: 'var(--border-ink)',
+                    border: 'var(--border-default)',
                     borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-hard)',
+                    boxShadow: 'var(--shadow-card)',
                   }}
                 >
                   {/* Top row: dish name + rating */}
@@ -224,9 +224,9 @@ export function RestaurantReviews() {
                         <span
                           style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '22px',
-                            fontWeight: 800,
-                            letterSpacing: '-0.03em',
+                            fontSize: '24px',
+                            fontWeight: 500,
+                            letterSpacing: '-0.01em',
                             lineHeight: 1,
                             color: getRatingColor(review.rating),
                           }}

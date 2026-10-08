@@ -19,17 +19,17 @@ export function BatchSummary({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: 'var(--border-ink)',
+          borderBottom: 'var(--border-default)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             aria-label="Back to dishes"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
@@ -38,9 +38,9 @@ export function BatchSummary({
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '24px',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontSize: '26px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
                 lineHeight: 1.05,
               }}
             >
@@ -60,12 +60,12 @@ export function BatchSummary({
             <button
               key={dish.clientId}
               onClick={function () { onEdit(index) }}
-              className="w-full text-left px-4 py-3.5 sticker-press"
+              className="w-full text-left px-4 py-3.5 press"
               style={{
                 background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-hard)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               <div className="flex items-center justify-between gap-3">
@@ -77,9 +77,9 @@ export function BatchSummary({
                     <span
                       style={{
                         fontFamily: 'var(--font-display)',
-                        fontSize: '24px',
-                        fontWeight: 800,
-                        letterSpacing: '-0.03em',
+                        fontSize: '26px',
+                        fontWeight: 500,
+                        letterSpacing: '-0.01em',
                         lineHeight: 1,
                         color: getRatingColor(rating.rating10),
                       }}
@@ -92,9 +92,9 @@ export function BatchSummary({
                         style={{
                           padding: '1px 7px',
                           fontSize: '10.5px',
-                          fontWeight: 800,
+                          fontWeight: 600,
                           background: 'var(--color-card)',
-                          border: 'var(--border-ink-thin)',
+                          border: 'var(--border-subtle)',
                           borderRadius: 'var(--radius-pill)',
                           color: 'var(--color-ink)',
                         }}
@@ -107,9 +107,9 @@ export function BatchSummary({
                         style={{
                           padding: '1px 7px',
                           fontSize: '10.5px',
-                          fontWeight: 800,
-                          background: 'var(--color-butter)',
-                          border: 'var(--border-ink-thin)',
+                          fontWeight: 600,
+                          background: 'var(--color-highlight)',
+                          border: 'var(--border-subtle)',
                           borderRadius: 'var(--radius-pill)',
                           color: 'var(--color-ink)',
                         }}
@@ -125,10 +125,10 @@ export function BatchSummary({
                     style={{
                       padding: '3px 10px',
                       fontSize: '12px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: 'var(--color-ink)',
                       background: 'var(--color-card)',
-                      border: 'var(--border-ink-thin)',
+                      border: 'var(--border-subtle)',
                       borderRadius: 'var(--radius-pill)',
                     }}
                   >
@@ -152,7 +152,7 @@ export function BatchSummary({
               borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p className="text-sm" style={{ color: 'var(--color-danger)', fontWeight: 800 }}>
+            <p className="text-sm" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>
               {submittedCount > 0
                 ? 'Stopped after ' + submittedCount + ' dish' + (submittedCount === 1 ? '' : 'es')
                 : "Couldn't submit your meal"}
@@ -173,11 +173,11 @@ export function BatchSummary({
             className="px-4 py-4"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>
               Preparing photos
             </p>
             <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
@@ -192,18 +192,18 @@ export function BatchSummary({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          borderTop: 'var(--border-ink)',
+          borderTop: 'var(--border-default)',
         }}
       >
         <button
           onClick={onSubmit}
           disabled={submitting}
-          className="btn-ink w-full py-3.5"
+          className="btn w-full py-3.5"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
             fontSize: '15px',
-            fontWeight: 800,
+            fontWeight: 600,
           }}
         >
           {submitting ? 'Submitting...' : 'Submit All'}

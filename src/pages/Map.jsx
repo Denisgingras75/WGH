@@ -390,7 +390,7 @@ export function Map() {
             }}
           >
             <div className="flex items-center gap-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
-              <div className="flex-1">
+              <div className="flex-1" style={{ background: 'var(--color-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-float)' }}>
                 <DishSearch
                   loading={false}
                   placeholder="What are you craving?"
@@ -403,16 +403,16 @@ export function Map() {
                       className="flex items-center gap-1 px-2.5 py-1 flex-shrink-0"
                       style={{
                         fontSize: '12px',
-                        fontWeight: 800,
-                        background: 'var(--color-butter)',
+                        fontWeight: 600,
+                        background: 'var(--color-highlight)',
                         color: 'var(--color-ink)',
-                        border: 'var(--border-ink-thin)',
+                        border: 'var(--border-subtle)',
                         borderRadius: 'var(--radius-pill)',
                         cursor: 'pointer',
                       }}
                     >
                       {radius === 0 ? 'All' : radius + ' mi'}
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
@@ -450,12 +450,12 @@ export function Map() {
               height: '44px',
               borderRadius: '50%',
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
-              boxShadow: 'var(--shadow-hard)',
+              border: 'var(--border-default)',
+              boxShadow: 'var(--shadow-float)',
             }}
             aria-label="Show distance to dish"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <circle cx="12" cy="12" r="3" />
               <line x1="12" y1="2" x2="12" y2="6" />

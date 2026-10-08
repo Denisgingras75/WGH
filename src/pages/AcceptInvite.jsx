@@ -80,13 +80,13 @@ export function AcceptInvite() {
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
         <div
           className="text-center max-w-md w-full px-6 py-8"
-          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }}
+          style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}
         >
           <div
             className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-danger)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ background: 'var(--color-danger)', color: 'var(--color-text-on-primary)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
           >
-            <span className="text-2xl" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>!</span>
+            <span className="text-2xl" style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}>!</span>
           </div>
           <h1 className="mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.15 }}>
             Invalid Invite
@@ -96,7 +96,7 @@ export function AcceptInvite() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="btn-ink px-6 py-3"
+            className="btn px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Go Home
@@ -110,11 +110,11 @@ export function AcceptInvite() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
       <div
         className="text-center max-w-md w-full px-6 py-8"
-        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}
       >
         <div
           className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+          style={{ background: 'var(--color-category-strip)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
         >
           <span className="text-2xl">🏪</span>
         </div>
@@ -126,7 +126,7 @@ export function AcceptInvite() {
         </p>
         <p
           className="mb-6"
-          style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15 }}
+          style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.15 }}
         >
           {invite.restaurant_name}
         </p>
@@ -135,7 +135,7 @@ export function AcceptInvite() {
           <button
             onClick={handleAccept}
             disabled={accepting}
-            className="btn-ink w-full px-6 py-3.5"
+            className="btn w-full px-6 py-3.5"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             {accepting ? 'Accepting...' : 'Accept Invitation'}
@@ -143,7 +143,7 @@ export function AcceptInvite() {
         ) : (
           <button
             onClick={handleSignIn}
-            className="btn-ink w-full px-6 py-3.5"
+            className="btn w-full px-6 py-3.5"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             Sign In to Accept

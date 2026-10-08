@@ -87,7 +87,7 @@ export function ReportModal({ isOpen, onClose, target }) {
         aria-labelledby="report-modal-title"
         className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-float)' }}
       >
         <div className="p-6">
           <h2
@@ -112,9 +112,9 @@ export function ReportModal({ isOpen, onClose, target }) {
                   key={value}
                   className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
                   style={{
-                    border: reason === value ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+                    border: reason === value ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
                     borderRadius: 'var(--radius-md)',
-                    background: reason === value ? 'var(--color-butter-muted)' : 'var(--color-card)',
+                    background: reason === value ? 'var(--color-highlight-muted)' : 'var(--color-card)',
                   }}
                 >
                   <input
@@ -126,7 +126,7 @@ export function ReportModal({ isOpen, onClose, target }) {
                     className="w-4 h-4"
                     style={{ accentColor: 'var(--color-ink)' }}
                   />
-                  <span className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: reason === value ? 800 : 600 }}>
+                  <span className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: reason === value ? 600 : 500 }}>
                     {REASON_LABELS[value]}
                   </span>
                 </label>
@@ -150,7 +150,7 @@ export function ReportModal({ isOpen, onClose, target }) {
               className="w-full px-3 py-2 resize-none focus:outline-none"
               style={{
                 background: 'var(--color-surface-elevated)',
-                border: 'var(--border-ink)',
+                border: 'var(--border-default)',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '16px',
                 color: 'var(--color-text-primary)',
@@ -169,7 +169,7 @@ export function ReportModal({ isOpen, onClose, target }) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="btn-ink flex-1 px-5 py-3"
+              className="btn flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-card)',
                 color: 'var(--color-ink)',
@@ -182,7 +182,7 @@ export function ReportModal({ isOpen, onClose, target }) {
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="btn-ink flex-1 px-5 py-3"
+              className="btn flex-1 px-5 py-3"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',

@@ -283,7 +283,7 @@ export function ReviewFlow({
           className="w-full p-4 resize-none focus:outline-none"
           style={{
             background: 'var(--color-surface-elevated)',
-            border: reviewError ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+            border: reviewError ? '2px solid var(--color-danger)' : 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
             fontSize: '16px',
             color: 'var(--color-text-primary)',
@@ -367,7 +367,7 @@ export function ReviewFlow({
           type="button"
           onClick={() => setPhotoExpanded(true)}
           className="w-full py-3 text-sm transition-colors"
-          style={{ color: 'var(--color-text-secondary)', fontWeight: 700, border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-md)' }}
+          style={{ color: 'var(--color-text-secondary)', fontWeight: 700, border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-md)' }}
         >
           + Add a photo (optional)
         </button>
@@ -402,7 +402,7 @@ export function ReviewFlow({
       <button
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`btn-ink w-full py-4 px-6 focus-ring ${canSubmit ? '' : 'cursor-not-allowed'}`}
+        className={`btn w-full py-4 px-6 focus-ring ${canSubmit ? '' : 'cursor-not-allowed'}`}
         style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
       >
         {submitLabel}

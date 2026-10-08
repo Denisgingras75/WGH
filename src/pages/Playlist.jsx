@@ -44,7 +44,7 @@ export function Playlist() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
         <div style={{ fontSize: 64 }}>⚠️</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, lineHeight: 1.05, marginTop: 12, color: 'var(--color-text-primary)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, lineHeight: 1.05, marginTop: 12, color: 'var(--color-text-primary)' }}>
           Something went wrong
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', marginTop: 8, textAlign: 'center', fontWeight: 500 }}>
@@ -52,7 +52,7 @@ export function Playlist() {
         </p>
         <button
           onClick={function () { window.location.reload() }}
-          className="btn-ink"
+          className="btn"
           style={{ marginTop: 16, padding: '10px 22px', fontSize: 14, background: 'var(--color-card)', color: 'var(--color-ink)' }}
         >
           Retry
@@ -65,7 +65,7 @@ export function Playlist() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--color-bg)' }}>
         <div style={{ fontSize: 64 }}>🔒</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, lineHeight: 1.05, marginTop: 12, color: 'var(--color-text-primary)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, lineHeight: 1.05, marginTop: 12, color: 'var(--color-text-primary)' }}>
           Playlist not found
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', marginTop: 8, textAlign: 'center', fontWeight: 500 }}>
@@ -73,7 +73,7 @@ export function Playlist() {
         </p>
         <Link
           to="/"
-          className="btn-ink"
+          className="btn"
           style={{ marginTop: 16, padding: '10px 22px', fontSize: 14, background: 'var(--color-card)', color: 'var(--color-ink)', textDecoration: 'none' }}
         >
           Go home
@@ -106,17 +106,17 @@ export function Playlist() {
 
   return (
     <div style={{ minHeight: '100vh', paddingBottom: 80, background: 'var(--color-bg)' }}>
-      {/* Header — cover sticker on paper, ink rule below */}
-      <div style={{ padding: '24px 20px 20px', background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      {/* Header — cover on paper, hairline below */}
+      <div style={{ padding: '24px 20px 20px', background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="flex justify-center">
           <PlaylistCover coverCategories={covers} coverPhotos={coverPhotos} size={240} />
         </div>
         <h1
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 30,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
+            fontSize: 32,
+            fontWeight: 500,
+            letterSpacing: '-0.01em',
             lineHeight: 1.05,
             marginTop: 20,
             color: 'var(--color-text-primary)',
@@ -143,12 +143,12 @@ export function Playlist() {
             <button
               onClick={toggleFollow}
               disabled={follow.isPending || unfollow.isPending}
-              className="btn-ink"
+              className="btn"
               style={{
                 padding: '10px 24px',
                 background: playlist.is_followed ? 'var(--color-card)' : 'var(--color-accent)',
                 color: playlist.is_followed ? 'var(--color-ink)' : 'var(--color-text-on-primary)',
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: 14,
               }}
             >
@@ -157,12 +157,12 @@ export function Playlist() {
           )}
           <button
             onClick={handleShare}
-            className="btn-ink"
+            className="btn"
             style={{
               padding: '10px 24px',
               background: 'var(--color-card)',
               color: 'var(--color-ink)',
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: 14,
             }}
           >
@@ -181,12 +181,12 @@ export function Playlist() {
             style={{
               background: 'var(--color-surface)',
               color: 'var(--color-ink)',
-              border: '2px dashed var(--color-text-tertiary)',
+              border: '1px dashed var(--color-divider-strong)',
               borderRadius: 'var(--radius-lg)',
               fontWeight: 700,
             }}
           >
-            <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>+</span> Add dishes
+            <span style={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>+</span> Add dishes
           </button>
         </div>
       )}
@@ -195,7 +195,7 @@ export function Playlist() {
       {items.length === 0 ? (
         <div style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: 48 }}>🥄</div>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)', marginTop: 8 }}>No dishes yet</p>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)', marginTop: 8 }}>No dishes yet</p>
           {playlist.is_owner && (
             <button
               onClick={function () { setSearchSheetOpen(true) }}
@@ -216,13 +216,13 @@ export function Playlist() {
                   display: 'flex',
                   gap: 12,
                   alignItems: 'center',
-                  borderBottom: '1.5px solid var(--color-divider)',
+                  borderBottom: '1px solid var(--color-divider)',
                 }}
               >
-                <div style={{ width: 24, textAlign: 'center', color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em', flexShrink: 0 }}>
+                <div style={{ width: 24, textAlign: 'center', color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', flexShrink: 0 }}>
                   {item.position}
                 </div>
-                <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-md)', background: 'var(--color-category-strip)', border: 'var(--border-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, overflow: 'hidden' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-md)', background: 'var(--color-category-strip)', border: 'var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, overflow: 'hidden' }}>
                   {item.photo_url ? (
                     <img src={item.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : getCategoryNeonImage(item.category) ? (
@@ -247,7 +247,7 @@ export function Playlist() {
                       lineHeight: 1.4,
                       color: 'var(--color-text-secondary)',
                       marginTop: 6,
-                      borderLeft: '3px solid var(--color-butter)',
+                      borderLeft: '3px solid var(--color-highlight)',
                       paddingLeft: 8,
                     }}>
                       {item.note}
@@ -255,7 +255,7 @@ export function Playlist() {
                   )}
                 </div>
                 {item.avg_rating != null && (
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, color: getRatingColor(item.avg_rating), flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 23, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, color: getRatingColor(item.avg_rating), flexShrink: 0 }}>
                     {Number(item.avg_rating).toFixed(1)}
                   </div>
                 )}
@@ -268,7 +268,7 @@ export function Playlist() {
                     aria-label={'Remove ' + item.dish_name}
                     style={{
                       width: 28, height: 28, borderRadius: '50%',
-                      background: 'var(--color-card)', border: 'var(--border-ink-thin)',
+                      background: 'var(--color-card)', border: 'var(--border-subtle)',
                       color: 'var(--color-ink)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 16, fontWeight: 700, lineHeight: 1, flexShrink: 0, marginLeft: 4,

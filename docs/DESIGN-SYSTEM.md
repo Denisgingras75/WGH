@@ -1,96 +1,129 @@
-# WGH Design System — "Lobster Buoy"
+# WGH Design System — "Quiet"
 
-The visual system for What's Good Here. Tokens live in `src/index.css` (`:root`); shared
-primitives (`.sticker`, `.sticker-press`, `.btn-ink`, `.eyebrow`, `.wordmark`) live in the
-`@layer components` block of the same file. The brand lockup is `<Wordmark />`
-(`src/components/Wordmark.jsx`). Reference implementations: `DishListItem.jsx`,
-`home/HomeListMode.jsx` (BuoyCard), `pages/RestaurantDetail.jsx`, `pages/Restaurants.jsx`,
-`dish/DishHero.jsx`.
+The visual system for What's Good Here. Tokens live in `src/index.css` (`:root`); the few shared
+primitives (`.press`, `.btn`, `.eyebrow`, `.wordmark`) live in the `@layer components` block of the
+same file. The brand lockup is `<Wordmark />` (`src/components/Wordmark.jsx`). Every dish image goes
+through `<DishThumb />` (`src/components/DishThumb.jsx`).
 
-## Concept
-Screen-printed sticker sheet / Menemsha lobster-buoy palette on cream paper. Ink outlines + HARD
-offset shadows (no blur) — the UI matches the neo-brutalist food icons (ICON-SPEC.md) instead of
-fighting them. Quiet chrome, loud numbers.
+Reference implementations: `DishListItem.jsx`, `dish/DishHero.jsx`, `home/HomeListMode.jsx`
+(GuideCard), `pages/RestaurantDetail.jsx`, `pages/Restaurants.jsx`, `BottomNav.jsx`.
 
-Three inks, each with one job:
-- **Lobster** (`--color-primary`) — act. Primary buttons, the brand mark.
-- **Harbor** (`--color-accent`) — navigate. Links, restaurant names, secondary actions (Directions).
-- **Butter** (`--color-butter`) — celebrate / "you are here". Active nav + chips, #1, price tags, highlights. Always ink text.
+> Superseded: "Lobster Buoy" (neo-brutalist stickers, cream paper, Bricolage) shipped in commit
+> `526e295` and was replaced because it read as generic. Earlier: "Island Depths", "Appetite".
 
-Ink black does everything else. Rating numerals keep the semantic green/amber/red scale from `getRatingColor()`.
+## Idea
+A good menu, not an app. White paper, black type, hairline rules, generous space. The food — real
+photos as they arrive, Dan's illustrated icons until then — and the scores are the only things with
+colour. Chrome stays out of the way.
+
+- **One accent, used once.** Brand red (`--color-brand`) appears in the mark (pin, seal, splash
+  period, notification dot) and nowhere else. Actions are ink.
+- **Type does the hierarchy.** A serif display face for names, places and numbers; a plain sans for
+  everything you read or tap. Weight, size and spacing — not boxes — separate things.
+- **Flat until it floats.** Surfaces have no shadow. Only things that sit *over* other content
+  (map overlays, popovers, toasts, the Map/List FAB, modals) get `--shadow-float`.
+- **Photo-ready.** Every dish image slot is the same box whether it holds a photo or an icon, so the
+  layout doesn't change as photo coverage grows.
 
 ## Palette
-| Token | Hex | Notes |
+| Token | Value | Use |
 |---|---|---|
-| `--color-ink` / `--color-text-primary` | `#1B1611` | Text, outlines, hard shadows |
-| `--color-text-secondary` | `#554A3E` | 7.5:1 on bg |
-| `--color-text-tertiary` | `#73665A` | 4.8:1 on bg (AA body) |
-| `--color-bg` | `#F6EEDC` | Cream paper — page background |
-| `--color-surface` | `#FBF6EA` | Recessed / inactive |
-| `--color-card`, `--color-surface-elevated` | `#FFFDF7` | Cards, inputs, sheets |
-| `--color-divider` | `#E3D7BF` | Sand rule |
-| `--color-primary` | `#CA3216` | Lobster — 5.3:1 with white text |
-| `--color-accent` | `#1F4FA3` | Harbor — 7.8:1 with white text, 6.7:1 as text on bg |
-| `--color-butter` | `#FFC83D` | 11.6:1 with ink text — never as a text color |
-| `--color-category-strip` | `#F9DDB8` | Peach icon backdrop |
-| `--color-rating` / `--color-green-deep` | `#0E7A3D` | Ratings ≥ 8 |
-| `--color-amber` | `#A84E06` | Ratings 6–8 (text-safe amber) |
-| `--color-red` / `--color-danger` | `#C1271A` | Ratings < 6, errors |
-| `--color-medal-gold/silver/bronze` | `#FFC83D` / `#C9CDD1` / `#E0A06A` | Podium discs (ink text) |
+| `--color-bg` / `--color-card` / `--color-surface-elevated` | `#FFFFFF` | Page, cards, inputs, sheets |
+| `--color-surface` | `#F6F5F2` | Recessed: resting inputs, segmented controls, avatar discs, quiet panels |
+| `--color-category-strip` | `#F3F1EC` | DishThumb tile behind icons |
+| `--color-highlight` / `-muted` | `#EFEDE8` / `#F6F5F2` | Quiet tags, active chip fill, hover |
+| `--color-divider` | `#EAE8E3` | Hairline rules (also `--border-default`) |
+| `--color-divider-strong` | `#D6D3CC` | Secondary-button outline, dashed "add" boxes |
+| `--color-ink` / `--color-text-primary` | `#141414` | Text, primary buttons, active states |
+| `--color-text-secondary` | `#5C5C5C` | Restaurant names, meta |
+| `--color-text-tertiary` | `#707070` | Eyebrows, timestamps (AA on white) |
+| `--color-primary` / `--color-accent` | `#141414` | Kept for call-site compatibility — both are ink now |
+| `--color-brand` | `#C8361B` | The mark only |
+| `--color-rating` / `--color-success` | `#1E6E45` | Ratings ≥ 8 |
+| `--color-amber` / `--color-orange` / `--color-yellow` | `#9A5A10` / `#A8540C` / `#85690A` | Rating scale steps (`getRatingColor()`), text-safe |
+| `--color-danger` | `#B42318` | Errors, destructive actions |
+| `--color-medal-gold/silver/bronze` | `#C9A227` / `#A3A8AE` / `#A9714B` | Podium discs |
+| `--color-backdrop` | `rgba(20,20,20,0.42)` | Modal scrim |
 
-## Typography
-| Role | Font | Weights | Notes |
-|---|---|---|---|
-| Display (`--font-display`) | Bricolage Grotesque (variable opsz/wdth/wght) | 800 | h1–h3 default to it. Page title 28–30px, section 22–26px, card title 17–20px, score numerals 20–60px. Tracking −0.02 to −0.04em. `fontStretch: '75%'–'90%'` for condensed signage moments (wordmark, splash, buoy titles). |
-| Body (`--font-body`) | Instrument Sans | 400–700 | Inherited from `body`. 15–16px for names/inputs, 12–13px meta. |
-| Mono (`--font-mono`) | SF Mono stack | 700 | Jitter badges only. |
+`--color-accent-gold` is a deprecated alias of `--color-accent` — don't use it in new code.
+RGB triplets for `rgba()`: `--color-primary-rgb`, `--color-accent-rgb`, `--color-ink-rgb`,
+`--color-success-rgb`, `--color-danger-rgb`, `--color-rating-rgb`, `--color-bg-rgb`.
 
-Amatic SC, Outfit, DM Sans, Cormorant and Aglet Sans are retired — don't reintroduce them.
+Leaflet `pathOptions` (CircleMarker etc.) go straight to the SVG/canvas renderer, so they take hex
+values, not CSS vars. `divIcon` HTML strings can use vars. Map tiles are desaturated via
+`.wgh-map-tiles` so pins and photos carry the colour.
 
-## Map markers
-Leaflet path options (`CircleMarker` `color`/`fillColor`) are handed straight to the SVG/canvas
-renderer, so they take hex values, not CSS vars. `divIcon` HTML strings can use `var(--…)`.
+## Type
+| Font | Token | Role |
+|---|---|---|
+| **Newsreader** (variable, opsz 6–72, roman 400–700 + italic 400–600) | `--font-display` | Wordmark, page/section headings, dish and restaurant names in headers and cards, rank + rating numerals, avatar initials. `h1`–`h3` default to it at weight 500. |
+| **Instrument Sans** (400–700) | `--font-body` | Everything else — list dish names, meta, buttons, inputs. Inherited from `body`. |
+| SF Mono stack | `--font-mono` | Jitter only |
 
-## Tokens (use these; never raw hex for brand colors; never Tailwind color classes)
-- Paper: `--color-bg` (page), `--color-surface` (recessed/inactive), `--color-card` / `--color-surface-elevated` (cards, inputs, modals)
-- Ink: `--color-ink` (= `--color-text-primary`), `--color-text-secondary`, `--color-text-tertiary`, `--color-divider` (subtle sand rule)
-- Inks: `--color-primary` Lobster = primary action / brand. `--color-accent` Harbor blue = links, restaurant names, secondary action.
-  `--color-butter` = highlight / active / celebrate — ALWAYS with ink text, never as text color. `--color-butter-muted`.
-  `--color-category-strip` = peach icon backdrop.
-- Text on lobster/harbor/ink fills: `--color-text-on-primary`. On ink fill you may also use `--color-bg`.
-- Status: `--color-danger`, `--color-success`, `--color-rating` (green), plus `getRatingColor()` for scores.
-- Shape: `--radius-sm` 8 / `--radius-md` 12 / `--radius-lg` 16 / `--radius-xl` 22 / `--radius-pill`
-- Borders: `--border-ink` (2px ink), `--border-ink-thin` (1.5px ink)
-- Shadows: `--shadow-hard-sm` (2px), `--shadow-hard` (3px), `--shadow-hard-lg` (5px). `--shadow-float` = soft, ONLY for things floating over the map.
-- Fonts: `--font-display` (Bricolage Grotesque; headings, big numbers, avatars initials), `--font-body` (Instrument Sans; inherited, don't set it), `--font-mono` (Jitter only)
-- RGB triplets for rgba(): `--color-primary-rgb`, `--color-accent-rgb`, `--color-success-rgb`, `--color-danger-rgb`, `--color-bg-rgb`
+Rules of thumb:
+- Display weight is **400–500**, never bold. Numerals: 400 at hero size, 500 at list size, with
+  `fontVariantNumeric: 'lining-nums tabular-nums'`.
+- Body weights: 400 reading, 500 meta/labels, 600 names and buttons. Nothing heavier.
+- Italic is the emphasis voice of the display face (the *Good* in the wordmark, rating-style labels).
+- Sizes: page title 28–32px, section 22–24px, card title 17–20px, list name 15px, meta 12–13px.
+- `.eyebrow`: 11px, 600, 0.12em tracking, uppercase, tertiary — for small labels above headings.
 
-## Patterns
-- **Card / panel**: `background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)'`
-  (or `className="sticker"`). Tappable card: add `className="sticker-press"` (sinks into its shadow). Nested/secondary cards inside a sticker: ink border, NO shadow.
-- **Empty / placeholder / "add" box**: `border: '2px dashed var(--color-text-tertiary)'`, radius lg, `--color-surface` bg.
-- **Primary button**: `className="btn-ink ..."` + `background: 'var(--color-primary)', color: 'var(--color-text-on-primary)'`.
-  Secondary: btn-ink with `background: 'var(--color-card)', color: 'var(--color-ink)'`. Harbor variant for "Directions"/"Order"/"Follow"-type secondary actions.
-  `.btn-ink` sets border, radius-md, hard shadow, bold, flex-center, press + disabled states — don't stack rounded-*/font-*/shadow classes on it.
-  Small inline pill buttons: `border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-pill)'`, no shadow.
-- **Inputs / textareas / selects**: `background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)'`, `fontSize: '16px'` (prevents iOS zoom). Search-style inputs also get `boxShadow: 'var(--shadow-hard)'`.
-- **Segmented control / tabs**: container = card + ink border + radius-md + `--shadow-hard-sm`, padding 4px; active segment `background: 'var(--color-ink)', color: 'var(--color-bg)'`, radius-sm, fontWeight 800.
-  Underline-style tabs: active = ink text 800 + 3px ink underline; inactive = text-tertiary.
-- **Filter chips**: active `background: 'var(--color-butter)', border: 'var(--border-ink-thin)', color: ink, fontWeight 800`; inactive `background: 'var(--color-card)', border: '1.5px solid var(--color-divider)', color: text-secondary`.
-- **Modals / sheets**: backdrop `rgba(27, 22, 17, 0.55)`; panel = card bg + `--border-ink` + radius-xl + `--shadow-hard-lg`. Bottom sheets: ink top/side border, top radius-xl, no hard shadow needed. Modal titles = display font.
-- **Section heading**: optional `<p className="eyebrow">LABEL</p>` above an `<h2>` (h1–h3 already default to display font 800, -0.02em). Typical sizes: page title 28–30px, section 22–24px, card title 17–20px.
-- **Small caps labels**: `className="eyebrow"` (11px, 700, 0.14em tracking, uppercase, tertiary).
-- **Rating / score numerals**: `fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1`, color `getRatingColor(x)`. List 20–22px, hero 44–60px.
-- **Avatars (initials)**: circle, `border: 'var(--border-ink)'`, display font 800, bg rotates through `['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']`.
-- **Dividers**: within cards `1.5px solid var(--color-divider)` or `1.5px dashed var(--color-divider)`; structural rules (header bottoms, card section splits) `var(--border-ink)`. Delete decorative `linear-gradient(...transparent...)` hairlines.
-- **Badges / tags**: pill, 1.5px ink border, butter or card bg, ink text, 10–11px weight 800.
-- Sticky headers: `background: 'var(--color-bg)'`, `borderBottom: 'var(--border-ink)'`. Round icon buttons in headers: card bg + ink border + `--shadow-hard-sm`.
-- No soft drop shadows or `backdrop-filter` glass. Tailwind `shadow-sm/md/lg/xl` map to the hard ink shadows.
-- Text weights: 500–600 for meta, 700 for names/labels, 800 for emphasis. Quotes use weight, not italics.
+## Shape & shade
+- Radius: `--radius-sm` 6 / `--radius-md` 10 / `--radius-lg` 14 / `--radius-xl` 20 / `--radius-pill`.
+- Borders: `--border-default` and `--border-subtle` are both `1px solid var(--color-divider)`;
+  `--border-dashed` for "add" / empty boxes.
+- Shadows: `--shadow-card` is `none` (kept so call sites stay valid). `--shadow-float` is the only
+  real shadow. Tailwind `shadow-sm/md` → none, `shadow-lg/xl` → float.
+
+## Components & patterns
+- **DishThumb** — `dish` (any shape with `dish_name`/`name`, `category`, `featured_photo_url`,
+  `photo_url`), `size` (square px) or `fill` (fills a parent that sets size/aspect-ratio), `radius`,
+  `iconScale`. Shows the real photo (fades in, falls back to the icon on error), else the dish-name
+  or category icon on the `--color-category-strip` tile, else the category emoji. Never build a
+  separate image slot for dishes.
+- **List rows** (`DishListItem` ranked): no card — a row with a bottom hairline, `className="press"`.
+  Rank in serif, DishThumb 56px (64px for the top three), name 15px/600, restaurant 13px secondary,
+  score in serif on the right coloured by `getRatingColor()`.
+- **Cards / panels**: prefer no container at all — space and a hairline. When a panel is needed:
+  `background: 'var(--color-surface)'`, radius lg, no border, no shadow; or white with
+  `--border-default`.
+- **Buttons**: `className="btn ..."` (pill, 600, flex-centre, press + disabled states).
+  Primary: `background: 'var(--color-primary)', color: 'var(--color-text-on-primary)'`.
+  Secondary: `background: 'var(--color-card)', color: 'var(--color-text-primary)'` — `.btn` adds the
+  `--color-divider-strong` hairline automatically. Text links: underline with `textUnderlineOffset: '3px'`.
+- **Inputs**: resting `background: 'var(--color-surface)', border: '1px solid transparent'`, radius md,
+  min-height 48, `fontSize: '16px'` (prevents iOS zoom); focused → card background + `1px solid var(--color-ink)`.
+- **Segmented control**: surface container, padding 4px; active segment ink fill with white text.
+  Underline tabs: active ink text 600 + `2px solid var(--color-ink)`; inactive tertiary 500 + `2px solid transparent`.
+- **Chips**: active `background: 'var(--color-highlight)'`, ink text, 600; inactive transparent,
+  secondary text, 500. No outlines.
+- **Avatars (initials)**: circle, `--color-surface` fill, ink serif initial. No rotating colours.
+- **Modals / sheets**: `--color-backdrop`; panel card bg + radius xl + `--shadow-float`.
+- **Sticky headers / bottom nav**: `--color-bg` with a hairline (`--border-default`). Nav icons are
+  1.6-stroke outlines; active = ink + 600, inactive = tertiary.
+- **Map**: white pins with the category emoji/icon, 1px divider ring (1.5px ink for 9+, 2px ink when
+  selected), ink rank badge. Overlays are white with `--shadow-float`.
+- **Marks**: `SmileyPin` (flat brand-red pin, white plate, ink face) and `WghSeal` (brand disc,
+  hairline ring text). These are the only places `--color-brand` should appear.
+
+## Photos
+Production has very few real photos today (14 of ~8,800 dishes at the time of this pass), so every
+screen must look finished with icons alone. Photos enter through the same DishThumb slot:
+`featured_photo_url` (best community photo) → `photo_url` (dish row) → icon. Don't use stock or
+AI-generated photos for specific dishes — a picture of *a* lobster roll presented as *this*
+restaurant's lobster roll misleads diners.
+
+## Brand assets
+`public/favicon.svg` / `favicon.png` (32px), `public/wgh-icon.png` (180px apple-touch),
+`public/og-image.svg` → `og-image.png` (1200×630), and the dynamic generators `api/og-image.ts`
+and `api/playlist-og.ts` all use the Quiet palette. The generators can't read CSS vars — keep their
+hex constants in sync with `:root` when the palette changes.
 
 ## Hard rules (from CLAUDE.md)
-- No Tailwind color classes (`text-gray-*`, `bg-white`, `ring-*` colors…). Tailwind = layout/spacing only.
-- Brand colors only via `var(--color-*)`. Hex OK only for one-offs (SVG illustration fills, third-party logos like Google).
+- No Tailwind color classes (`text-gray-*`, `bg-white`, `ring-*` colours…). Tailwind = layout/spacing only.
+- Brand colours only via `var(--color-*)`. Hex OK only for one-offs (SVG illustration fills, Leaflet
+  paths, third-party logos like Google).
+- Fonts only via `--font-*` tokens.
 - Never render error objects directly (`{error?.message || error}`).
 - No `console.*`, no `localStorage.*`, no ES2023 array methods (`toSorted`, `.at()`).
 - New tokens or shared classes go in `src/index.css` — don't invent one-off values inline.

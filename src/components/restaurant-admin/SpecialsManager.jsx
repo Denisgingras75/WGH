@@ -3,37 +3,37 @@ import { validateUserContent } from '../../lib/reviewBlocklist'
 
 const INPUT_STYLE = {
   background: 'var(--color-surface-elevated)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-md)',
   color: 'var(--color-text-primary)',
   fontSize: '16px',
 }
 const PANEL_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-hard)',
+  boxShadow: 'var(--shadow-card)',
 }
 const PILL_BTN_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-pill)',
   fontWeight: 700,
 }
 const ROW_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-hard-sm)',
+  boxShadow: 'var(--shadow-card)',
 }
 const INACTIVE_ROW_STYLE = {
   background: 'var(--color-surface)',
-  border: '2px dashed var(--color-divider)',
+  border: '1px dashed var(--color-divider-strong)',
   borderRadius: 'var(--radius-lg)',
 }
 const EMPTY_STYLE = {
   background: 'var(--color-surface)',
-  border: '2px dashed var(--color-text-tertiary)',
+  border: '1px dashed var(--color-divider-strong)',
   borderRadius: 'var(--radius-lg)',
 }
 
@@ -186,12 +186,12 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               onKeyDown={handleQuickKeyDown}
               placeholder="Half-price oysters until 6pm"
               className="flex-1 min-w-0 px-3 py-2.5"
-              style={{ ...INPUT_STYLE, boxShadow: 'var(--shadow-hard-sm)' }}
+              style={{ ...INPUT_STYLE, boxShadow: 'var(--shadow-card)' }}
             />
             <button
               onClick={handleQuickPost}
               disabled={!quickText.trim() || quickSubmitting}
-              className="btn-ink px-4 py-2.5 text-sm"
+              className="btn px-4 py-2.5 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               {quickSubmitting ? '...' : 'Post'}
@@ -257,7 +257,7 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-ink flex-1 py-2 text-sm"
+                className="btn flex-1 py-2 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Special'}
@@ -265,7 +265,7 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               <button
                 type="button"
                 onClick={resetForm}
-                className="btn-ink px-4 py-2 text-sm"
+                className="btn px-4 py-2 text-sm"
                 style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 Cancel
@@ -296,7 +296,7 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
                   )}
                   <div className="flex items-center gap-2 mt-1">
                     {special.price && (
-                      <span className="text-sm" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>
+                      <span className="text-sm" style={{ fontFamily: 'var(--font-display)', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>
                         ${Number(special.price).toFixed(2)}
                       </span>
                     )}

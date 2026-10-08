@@ -25,9 +25,9 @@ export function BlockedUsersModal({ isOpen, onClose }) {
         aria-labelledby="blocked-users-title"
         className="relative max-w-md w-full overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-hard-lg)', maxHeight: '80vh' }}
+        style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-float)', maxHeight: '80vh' }}
       >
-        <div className="px-6 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: 'var(--border-ink)' }}>
+        <div className="px-6 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: 'var(--border-default)' }}>
           <h2
             id="blocked-users-title"
             style={{ fontSize: '22px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}
@@ -39,9 +39,9 @@ export function BlockedUsersModal({ isOpen, onClose }) {
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95"
             aria-label="Close"
-            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -56,7 +56,7 @@ export function BlockedUsersModal({ isOpen, onClose }) {
             <div className="p-6">
               <p
                 className="text-sm leading-relaxed text-center p-5"
-                style={{ color: 'var(--color-text-secondary)', fontWeight: 500, background: 'var(--color-surface)', border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)' }}
+                style={{ color: 'var(--color-text-secondary)', fontWeight: 500, background: 'var(--color-surface)', border: '1px dashed var(--color-divider-strong)', borderRadius: 'var(--radius-lg)' }}
               >
                 You haven't blocked anyone. When you block someone, you can manage them here.
               </p>
@@ -67,16 +67,16 @@ export function BlockedUsersModal({ isOpen, onClose }) {
                 <li
                   key={block.blockedId}
                   className="px-6 py-3.5 flex items-center gap-3"
-                  style={{ borderBottom: i < blocks.length - 1 ? '1.5px solid var(--color-divider)' : 'none' }}
+                  style={{ borderBottom: i < blocks.length - 1 ? '1px solid var(--color-divider)' : 'none' }}
                 >
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
-                    style={{ background: 'var(--color-surface)', border: 'var(--border-ink)' }}
+                    style={{ background: 'var(--color-surface)', border: 'var(--border-default)' }}
                   >
                     {block.avatarUrl ? (
                       <img src={block.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}>
                         {(block.displayName || '?').charAt(0).toUpperCase()}
                       </span>
                     )}
@@ -93,7 +93,7 @@ export function BlockedUsersModal({ isOpen, onClose }) {
                     className="px-4 py-1.5 text-sm transition-transform active:scale-95 disabled:opacity-60"
                     style={{
                       background: 'var(--color-card)',
-                      border: 'var(--border-ink-thin)',
+                      border: 'var(--border-subtle)',
                       borderRadius: 'var(--radius-pill)',
                       color: 'var(--color-ink)',
                       fontWeight: 700,

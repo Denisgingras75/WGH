@@ -7,7 +7,7 @@ export function Terms() {
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -16,12 +16,12 @@ export function Terms() {
               color: 'var(--color-ink)',
               fontWeight: 700,
               background: 'var(--color-card)',
-              border: 'var(--border-ink-thin)',
+              border: 'var(--border-subtle)',
               borderRadius: 'var(--radius-pill)',
             }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -39,7 +39,7 @@ export function Terms() {
         <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
           <p className="eyebrow">Last updated: April 18, 2026</p>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Welcome to What's Good Here
             </h2>
@@ -50,7 +50,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               What We Do
             </h2>
@@ -61,7 +61,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Account
             </h2>
@@ -81,7 +81,7 @@ export function Terms() {
             </div>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Voting Guidelines
             </h2>
@@ -99,7 +99,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Restaurant Information
             </h2>
@@ -110,7 +110,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Acceptable Use
             </h2>
@@ -127,7 +127,7 @@ export function Terms() {
             </ul>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Moderation, Reporting, and Blocking
             </h2>
@@ -150,7 +150,7 @@ export function Terms() {
             </div>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Content
             </h2>
@@ -164,7 +164,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Intellectual Property
             </h2>
@@ -175,7 +175,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Disclaimer
             </h2>
@@ -187,7 +187,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Limitation of Liability
             </h2>
@@ -199,7 +199,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               App Store Terms (iOS)
             </h2>
@@ -230,7 +230,7 @@ export function Terms() {
             </div>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Governing Law
             </h2>
@@ -241,7 +241,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Changes to These Terms
             </h2>
@@ -252,7 +252,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Termination
             </h2>
@@ -264,7 +264,7 @@ export function Terms() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Contact Us
             </h2>

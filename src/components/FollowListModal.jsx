@@ -4,8 +4,6 @@ import { followsApi } from '../api/followsApi'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 // Rotating avatar inks for initials
-const AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
-
 /**
  * Modal to display followers or following list with pagination
  */
@@ -94,9 +92,9 @@ export function FollowListModal({ userId, type, onClose }) {
         style={{
           background: 'var(--color-card)',
           maxHeight: 'calc(100vh - 120px)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-float)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -104,7 +102,7 @@ export function FollowListModal({ userId, type, onClose }) {
         <div
           className="flex items-center justify-between px-5 py-4"
           style={{
-            borderBottom: 'var(--border-ink)',
+            borderBottom: 'var(--border-default)',
             background: 'var(--color-card)'
           }}
         >
@@ -114,10 +112,10 @@ export function FollowListModal({ userId, type, onClose }) {
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95"
-            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            style={{ color: 'var(--color-ink)', background: 'var(--color-card)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
             aria-label="Close"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -158,18 +156,17 @@ export function FollowListModal({ userId, type, onClose }) {
                     key={user.id}
                     onClick={() => handleUserClick(user)}
                     className="w-full flex items-center gap-3 px-5 py-3 transition-all text-left active:scale-[0.99]"
-                    style={{ borderBottom: i < users.length - 1 ? '1.5px solid var(--color-divider)' : 'none' }}
+                    style={{ borderBottom: i < users.length - 1 ? '1px solid var(--color-divider)' : 'none' }}
                   >
                     {/* Avatar */}
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
-                        background: AVATAR_COLORS[i % AVATAR_COLORS.length],
-                        color: 'var(--color-text-on-primary)',
-                        border: 'var(--border-ink)',
+                        background: 'var(--color-surface)',
+                        color: 'var(--color-text-primary)',
                         fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: 800,
+                        fontSize: '19px',
+                        fontWeight: 500,
                       }}
                     >
                       {user.display_name?.charAt(0).toUpperCase() || '?'}
@@ -199,11 +196,11 @@ export function FollowListModal({ userId, type, onClose }) {
 
               {/* Load More Button */}
               {hasMore && (
-                <div className="p-4" style={{ borderTop: '1.5px solid var(--color-divider)' }}>
+                <div className="p-4" style={{ borderTop: '1px solid var(--color-divider)' }}>
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="btn-ink w-full py-2.5 text-sm"
+                    className="btn w-full py-2.5 text-sm"
                     style={{
                       background: 'var(--color-primary)',
                       color: 'var(--color-text-on-primary)',

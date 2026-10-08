@@ -5,9 +5,29 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-10-08 — Denis + Claude (later)
+
+### Redesign, take two — "Quiet"
+
+**Why:** Denis's read on Lobster Buoy: "still feels too… AI generic." Fair — cream paper, chunky outlines and hard offset shadows are the default "fun app" look right now. The new direction is minimalist: a good menu, not an app. Lobster Buoy stays in history at `526e295`.
+
+**System.** White paper, ink `#141414` type, 1px hairline rules, flat surfaces. Only things floating over content (map overlays, popovers, toasts, FAB, modals) get a soft shadow. Brand red `#C8361B` appears only in the mark (pin, seal, splash). Actions are ink. Rating numerals keep the green/amber/red scale — with the food, they're the only colour on screen.
+
+**Type.** Newsreader (variable serif, optical sizes, real italic) for headings, names and numbers at weight 400–500; Instrument Sans for everything you read or tap, never heavier than 600. The wordmark is "What's *Good* Here" with Good in italic.
+
+**Photo-ready.** New `<DishThumb />` is the one image slot for a dish at any size: real photo when one exists (featured community photo → `photo_url`), Dan's icon on a quiet tile otherwise, same box either way. Used by `DishListItem` (ranked + voted), the dish hero (4:3), and the home guide cards. Production today: 14 community photos across 8,799 dishes, 0 `photo_url` — so the design has to look finished with icons and simply improves as photos land (TASKS.md T44).
+
+**Signature surfaces:** list rows lose their cards (serif rank, 56–64px thumb, serif score); dish page = photo, serif name, 60px score, ink/outline action bar; home guide cards = tall tiles with serif titles; restaurant monogram tiles; bottom nav = outline icons, no pill; map pins = white discs with ink rank badges on desaturated tiles; avatars = quiet discs with serif initials; favicon, apple-touch icon, static OG image and both OG generators redrawn.
+
+**Token renames** (neutral names so the next pivot is cheap): `--color-butter` → `--color-highlight`, `--border-ink(-thin)` → `--border-default`/`--border-subtle`, `--shadow-hard*` → `--shadow-card` (now `none`), `.sticker-press` → `.press`, `.btn-ink` → `.btn`. New: `--color-brand`, `--color-divider-strong`, `--border-dashed`.
+
+**Docs:** `docs/DESIGN-SYSTEM.md` rewritten; CLAUDE.md §1.3/§4.6/§4.7, NOTES.md, ICON-SPEC.md, CURRENT_FOCUS.md, TASKS.md (T42/T43 updated, T44 photos added).
+
+**Still needs Dan's eyes** — visual identity is his call.
+
 ## 2026-10-08 — Denis + Claude
 
-### Full visual redesign — "Lobster Buoy"
+### Full visual redesign — "Lobster Buoy" (superseded by "Quiet" above)
 
 **Why:** The UI and the icons were speaking two languages. Dan's food icons are neo-brutalist stickers (bold ink outlines, hard offset shadows, flat saturated fills), but the chrome around them was soft — thin Amatic SC headings, blurry drop shadows, a coral + gold + green palette all competing for attention. This redesign brings the whole interface up to the icons' energy so the app finally reads as one thing.
 

@@ -123,7 +123,7 @@ export function ResetPassword() {
               autoFocus
               minLength={6}
               className="w-full px-4 py-3 focus:outline-none"
-              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>
 
@@ -139,14 +139,14 @@ export function ResetPassword() {
               required
               minLength={6}
               className="w-full px-4 py-3 focus:outline-none"
-              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn-ink w-full px-6 py-4"
+            className="btn w-full px-6 py-4"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             {loading ? 'Updating...' : 'Update Password'}
@@ -156,7 +156,7 @@ export function ResetPassword() {
         <div className="w-full max-w-sm">
           <button
             onClick={() => navigate('/login')}
-            className="btn-ink w-full px-6 py-4"
+            className="btn w-full px-6 py-4"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             Back to Sign In

@@ -1,79 +1,37 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { CategoryIcon } from '../home/CategoryIcons'
 import { TrustBadge } from '../jitter'
+import { DishThumb } from '../DishThumb'
 import { MIN_VOTES_FOR_RANKING } from '../../constants/app'
 import { getRatingColor, formatScore10 } from '../../utils/ranking'
 
 /**
  * Dish hero section: photo, name, restaurant, price, score, jitter trust.
  * The "2-second verdict" a tourist needs.
+ *
+ * The image slot is always there: the best community photo when one exists,
+ * the dish's icon on a quiet tile until then.
  */
 export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
   const navigate = useNavigate()
   const isRanked = dish.total_votes >= MIN_VOTES_FOR_RANKING
 
   var heroPhoto = allPhotos.length > 0 ? allPhotos[0].photo_url : (dish.photo_url || null)
+  var thumbDish = Object.assign({}, dish, { featured_photo_url: heroPhoto })
 
   return (
-    <>
-      {/* Hero photo */}
-      {heroPhoto && (
-        <div className="relative" style={{ height: '220px', overflow: 'hidden' }}>
-          <img
-            src={heroPhoto}
-            alt={dish.dish_name}
-            className="w-full h-full object-cover"
-          />
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.5))' }}
-          />
-        </div>
-      )}
+    <section style={{ padding: '8px 16px 0' }}>
+      {/* Image slot */}
+      <div style={{ width: '100%', aspectRatio: '4 / 3', maxWidth: '100%' }}>
+        <DishThumb dish={thumbDish} fill radius="var(--radius-lg)" iconScale={0.5} alt={dish.dish_name} />
+      </div>
 
-      {/* Verdict Card */}
-      <div
-        className="mx-4 px-4 py-4"
-        style={{
-          background: 'var(--color-card)',
-          border: 'var(--border-ink)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-hard-lg)',
-          marginTop: heroPhoto ? '-28px' : '16px',
-          position: 'relative',
-          zIndex: 5,
-        }}
-      >
-        {/* Price tag sticker */}
-        {dish.price ? (
-          <span
-            style={{
-              position: 'absolute',
-              top: '-14px',
-              right: '14px',
-              padding: '3px 10px',
-              background: 'var(--color-butter)',
-              border: 'var(--border-ink)',
-              borderRadius: 'var(--radius-sm)',
-              boxShadow: 'var(--shadow-hard-sm)',
-              transform: 'rotate(4deg)',
-              fontFamily: 'var(--font-display)',
-              fontSize: '20px',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-ink)',
-              lineHeight: 1.1,
-            }}
-          >
-            ${Number(dish.price).toFixed(0)}
-          </span>
-        ) : null}
+      <div style={{ padding: '20px 4px 0' }}>
         {/* Variant breadcrumb */}
         {isVariant && parentDish && (
           <button
             onClick={() => navigate('/dish/' + parentDish.id)}
-            className="flex items-center gap-1 text-xs font-bold mb-3"
-            style={{ color: 'var(--color-primary)' }}
+            className="flex items-center gap-1 mb-3"
+            style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-secondary)' }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -82,85 +40,77 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
           </button>
         )}
 
-        {/* Name + Icon + Price */}
-        <div className="flex items-center gap-3">
-          {!allPhotos.length && !dish.photo_url && (
-            <div className="flex-shrink-0">
-              <CategoryIcon categoryId={dish.category} dishName={dish.dish_name} size={80} />
-            </div>
+        {dish.category && <p className="eyebrow">{dish.category}</p>}
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 500,
+            fontSize: '32px',
+            letterSpacing: '-0.015em',
+            color: 'var(--color-text-primary)',
+            lineHeight: 1.08,
+            margin: '6px 0 0',
+          }}
+        >
+          {dish.dish_name}
+        </h1>
+
+        <div className="flex items-center flex-wrap" style={{ marginTop: '8px', gap: '4px 6px', fontSize: '15px' }}>
+          <button
+            onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
+            className="flex items-center gap-1 text-left"
+            style={{
+              fontWeight: 500,
+              color: 'var(--color-text-primary)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+            }}
+          >
+            {dish.restaurant_name}
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          {(dish.restaurant_town || dish.price) && (
+            <span style={{ color: 'var(--color-text-secondary)' }}>
+              {dish.restaurant_town}
+              {dish.restaurant_town && dish.price ? ' · ' : ''}
+              {dish.price ? '$' + Number(dish.price).toFixed(0) : ''}
+            </span>
           )}
-          <div className="flex-1 min-w-0">
-            <h1
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: '27px',
-                fontStretch: '90%',
-                letterSpacing: '-0.025em',
-                color: 'var(--color-text-primary)',
-                lineHeight: 1.0,
-                margin: 0,
-                paddingRight: dish.price ? '36px' : 0,
-              }}
-            >
-              {dish.dish_name}
-            </h1>
-            <button
-              onClick={() => navigate('/restaurants/' + dish.restaurant_id)}
-              className="flex items-center gap-1 text-left"
-              style={{
-                marginTop: '6px',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: 'var(--color-accent)',
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-              }}
-            >
-              {dish.restaurant_name}
-              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            {dish.restaurant_town && (
-              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: '1px' }}>
-                {dish.restaurant_town}
-              </p>
-            )}
-          </div>
         </div>
 
-        {/* Score Block */}
+        {/* Score */}
         {isRanked && dish.avg_rating ? (
-          <div className="flex items-end justify-between mt-4 pt-3" style={{ borderTop: 'var(--border-ink)' }}>
-            <div className="flex items-baseline gap-1">
+          <div className="flex items-end justify-between" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-divider)' }}>
+            <div className="flex items-baseline" style={{ gap: '4px' }}>
               <span
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
+                  fontWeight: 400,
                   fontSize: '60px',
-                  letterSpacing: '-0.04em',
+                  letterSpacing: '-0.03em',
                   lineHeight: 0.9,
                   color: getRatingColor(dish.avg_rating),
-                  fontVariantNumeric: 'tabular-nums',
+                  fontVariantNumeric: 'lining-nums tabular-nums',
                 }}
               >
                 {formatScore10(dish.avg_rating)}
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>/10</span>
+              <span style={{ fontSize: '15px', color: 'var(--color-text-tertiary)' }}>/ 10</span>
             </div>
-            <div className="text-right" style={{ minWidth: '120px' }}>
-              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+            <div className="text-right">
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 {dish.total_votes} rating{dish.total_votes === 1 ? '' : 's'}
               </p>
-              <p className="eyebrow" style={{ fontSize: '9.5px', marginTop: '2px' }}>would order again?</p>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>Would you order it again?</p>
             </div>
           </div>
         ) : dish.total_votes > 0 ? (
-          <div className="mt-3 pt-3" style={{ borderTop: 'var(--border-ink)' }}>
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-divider)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
               {dish.total_votes} vote{dish.total_votes === 1 ? '' : 's'} — needs {MIN_VOTES_FOR_RANKING - dish.total_votes} more to rank
             </p>
           </div>
@@ -168,7 +118,7 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
 
         {/* Jitter trust line */}
         {dish.total_votes > 0 && (
-          <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+          <div className="flex items-center justify-between" style={{ marginTop: '14px' }}>
             <div className="flex items-center gap-2">
               <TrustBadge type="human_verified" size="sm" />
               <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
@@ -179,8 +129,9 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
               to="/jitter"
               style={{
                 fontSize: '12px',
-                fontWeight: 700,
-                color: 'var(--color-accent)',
+                color: 'var(--color-text-secondary)',
+                textDecoration: 'underline',
+                textUnderlineOffset: '3px',
               }}
             >
               What's this?
@@ -188,6 +139,6 @@ export function DishHero({ dish, allPhotos, isVariant, parentDish }) {
           </div>
         )}
       </div>
-    </>
+    </section>
   )
 }

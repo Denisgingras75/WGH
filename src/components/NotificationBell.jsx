@@ -6,8 +6,6 @@ import { notificationsApi } from '../api/notificationsApi'
 import { logger } from '../utils/logger'
 
 // Rotating avatar inks for initials
-const AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
-
 /**
  * Notification bell icon with dropdown
  */
@@ -149,7 +147,7 @@ export function NotificationBell() {
         {unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full px-1"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink-thin)', fontSize: '11px', fontWeight: 800, lineHeight: 1 }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'var(--border-subtle)', fontSize: '11px', fontWeight: 600, lineHeight: 1 }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -162,12 +160,12 @@ export function NotificationBell() {
           role="menu"
           aria-label="Notifications menu"
           className="fixed top-14 right-4 w-80 max-h-96 overflow-y-auto z-50"
-          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
+          style={{ background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-float)' }}
         >
           {/* Header */}
           <div
             className="px-4 py-3"
-            style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-primary)', borderBottom: 'var(--border-ink)' }}
+            style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-text-primary)', borderBottom: 'var(--border-default)' }}
           >
             Notifications
           </div>
@@ -198,20 +196,19 @@ export function NotificationBell() {
                   onClick={() => handleNotificationClick(notification)}
                   className="w-full px-4 py-3 flex items-start gap-3 text-left transition-all duration-150 active:scale-[0.98] active:opacity-80"
                   style={{
-                    borderBottom: i < notifications.length - 1 ? '1.5px solid var(--color-divider)' : 'none',
-                    background: notification.read ? 'transparent' : 'var(--color-butter-muted)',
+                    borderBottom: i < notifications.length - 1 ? '1px solid var(--color-divider)' : 'none',
+                    background: notification.read ? 'transparent' : 'var(--color-highlight-muted)',
                   }}
                 >
                   {/* Icon */}
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
-                      background: AVATAR_COLORS[i % AVATAR_COLORS.length],
-                      color: 'var(--color-text-on-primary)',
-                      border: 'var(--border-ink)',
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-text-primary)',
                       fontFamily: 'var(--font-display)',
-                      fontSize: '17px',
-                      fontWeight: 800,
+                      fontSize: '18px',
+                      fontWeight: 500,
                     }}
                   >
                     {notification.type === 'follow'
@@ -224,7 +221,7 @@ export function NotificationBell() {
                     <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
                       {notification.type === 'follow' ? (
                         <>
-                          <span style={{ fontWeight: 800 }}>{notification.data?.follower_name || 'Someone'}</span>
+                          <span style={{ fontWeight: 600 }}>{notification.data?.follower_name || 'Someone'}</span>
                           {' started following you'}
                         </>
                       ) : (
@@ -240,7 +237,7 @@ export function NotificationBell() {
                   {!notification.read && (
                     <div
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-2"
-                      style={{ background: 'var(--color-primary)', border: '1px solid var(--color-ink)' }}
+                      style={{ background: 'var(--color-brand)' }}
                     />
                   )}
                 </button>

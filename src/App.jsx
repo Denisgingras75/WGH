@@ -119,30 +119,30 @@ function App() {
           // Sticker toasts: card paper + ink text everywhere; richColors keeps a
           // light per-type tint (layered over opaque card so stacked toasts don't bleed).
           '--normal-bg': 'var(--color-card)',
-          '--normal-border': 'var(--color-ink)',
+          '--normal-border': 'var(--color-divider)',
           '--normal-text': 'var(--color-ink)',
           '--success-bg': 'linear-gradient(var(--color-success-muted), var(--color-success-muted)), var(--color-card)',
-          '--success-border': 'var(--color-ink)',
+          '--success-border': 'var(--color-divider)',
           '--success-text': 'var(--color-ink)',
           '--info-bg': 'linear-gradient(var(--color-accent-muted), var(--color-accent-muted)), var(--color-card)',
-          '--info-border': 'var(--color-ink)',
+          '--info-border': 'var(--color-divider)',
           '--info-text': 'var(--color-ink)',
-          '--warning-bg': 'linear-gradient(var(--color-butter-muted), var(--color-butter-muted)), var(--color-card)',
-          '--warning-border': 'var(--color-ink)',
+          '--warning-bg': 'linear-gradient(var(--color-highlight-muted), var(--color-highlight-muted)), var(--color-card)',
+          '--warning-border': 'var(--color-divider)',
           '--warning-text': 'var(--color-ink)',
           '--error-bg': 'linear-gradient(var(--color-danger-muted), var(--color-danger-muted)), var(--color-card)',
-          '--error-border': 'var(--color-ink)',
+          '--error-border': 'var(--color-divider)',
           '--error-text': 'var(--color-ink)',
         }}
         toastOptions={{
           style: {
             padding: '14px 16px',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-float)',
             fontFamily: 'var(--font-body)',
             fontSize: '14px',
-            fontWeight: 600,
+            fontWeight: 500,
           },
         }}
       />

@@ -10,9 +10,9 @@ export function LocationBanner({ permissionState, requestLocation, message }) {
       className="mb-4 p-4 flex items-center justify-between gap-3"
       style={{
         background: 'var(--color-card)',
-        border: 'var(--border-ink)',
+        border: 'var(--border-default)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-hard)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <div className="min-w-0">
@@ -25,7 +25,7 @@ export function LocationBanner({ permissionState, requestLocation, message }) {
       </div>
       <button
         onClick={requestLocation}
-        className="btn-ink flex-shrink-0 px-4 py-2 text-sm"
+        className="btn flex-shrink-0 px-4 py-2 text-sm"
         style={{
           background: 'var(--color-accent)',
           color: 'var(--color-text-on-primary)',

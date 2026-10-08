@@ -13,7 +13,7 @@ export function EmptyState({ emoji, title, subtitle, action }) {
       className="py-10 px-6 text-center"
       style={{
         background: 'var(--color-surface)',
-        border: '2px dashed var(--color-text-tertiary)',
+        border: '1px dashed var(--color-divider-strong)',
         borderRadius: 'var(--radius-lg)',
       }}
     >
@@ -23,9 +23,9 @@ export function EmptyState({ emoji, title, subtitle, action }) {
       <p
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: '18px',
-          fontWeight: 800,
-          letterSpacing: '-0.02em',
+          fontSize: '19px',
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
           lineHeight: 1.2,
           color: 'var(--color-text-primary)',
         }}

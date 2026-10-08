@@ -213,8 +213,8 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
           backgroundColor: 'var(--color-card)',
           borderRadius: 'var(--radius-xl)',
           padding: '20px',
-          border: 'var(--border-ink)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          border: 'var(--border-default)',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
         {/* Action buttons - top right */}
@@ -230,15 +230,15 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               borderRadius: '50%',
               backgroundColor: 'var(--color-surface-elevated)',
               color: 'var(--color-ink)',
-              border: 'var(--border-ink)',
-              boxShadow: 'var(--shadow-hard-sm)',
+              border: 'var(--border-default)',
+              boxShadow: 'var(--shadow-card)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
@@ -256,8 +256,8 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               borderRadius: '50%',
               backgroundColor: 'var(--color-surface-elevated)',
               color: 'var(--color-ink)',
-              border: 'var(--border-ink)',
-              boxShadow: 'var(--shadow-hard-sm)',
+              border: 'var(--border-default)',
+              boxShadow: 'var(--shadow-card)',
               fontSize: '22px',
               fontWeight: 700,
               lineHeight: 1,
@@ -283,7 +283,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
         ) : (
           <>
             {/* Dish name + restaurant */}
-            <h2 id="dish-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '4px', paddingRight: '100px', color: 'var(--color-text-primary)' }}>
+            <h2 id="dish-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.1, marginBottom: '4px', paddingRight: '100px', color: 'var(--color-text-primary)' }}>
               {dish.dish_name}
             </h2>
             <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '14px' }}>
@@ -298,14 +298,14 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
                 // Small delay to let modal close animation complete
                 setTimeout(() => navigate(`/dish/${dish.dish_id}`), 200)
               }}
-              className="btn-ink w-full py-2.5 mb-4 text-sm"
+              className="btn w-full py-2.5 mb-4 text-sm"
               style={{
                 background: 'var(--color-card)',
                 color: 'var(--color-ink)',
               }}
             >
               <span>See Reviews & Photos</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>

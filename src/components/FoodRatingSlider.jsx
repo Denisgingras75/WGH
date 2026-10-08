@@ -69,8 +69,8 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
             <span style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-tertiary)' }}>Tap to rate</span>
           ) : (
             <>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '46px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}>/10</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '50px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, color: 'var(--color-text-primary)' }}>{value.toFixed(1)}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, color: 'var(--color-text-tertiary)' }}>/10</span>
             </>
           )}
         </div>
@@ -78,7 +78,7 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
 
       {/* Label based on rating */}
       <div className="text-center">
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '21px', fontWeight: 800, letterSpacing: '-0.02em', color: unrated ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '23px', fontWeight: 500, letterSpacing: '-0.01em', color: unrated ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)' }}>
           {unrated ? 'Slide to rate' : getRatingLabel(value)}
         </span>
       </div>
@@ -110,10 +110,10 @@ export function FoodRatingSlider({ value, onChange, min = 0, max = 10, step = 0.
           style={{
             height: '16px',
             borderRadius: 'var(--radius-pill)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             background: unrated
               ? 'var(--color-surface)'
-              : 'linear-gradient(90deg, var(--color-red-light), var(--color-butter), var(--color-emerald-light))',
+              : 'linear-gradient(90deg, var(--color-red-light), var(--color-highlight), var(--color-emerald-light))',
           }}
         />
         <div className="flex justify-between text-xs mt-2 px-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 700 }}>

@@ -282,7 +282,7 @@ export function RateYourMeal() {
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="btn-ink px-5 py-2.5"
+            className="btn px-5 py-2.5"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Back to Restaurant
@@ -304,15 +304,15 @@ export function RateYourMeal() {
             className="px-5 py-6 text-center"
             style={{
               background: 'var(--color-card)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-xl)',
-              boxShadow: 'var(--shadow-hard-lg)',
+              boxShadow: 'var(--shadow-card)',
             }}
           >
             <h1
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '26px',
+                fontSize: '28px',
                 lineHeight: 1.05,
                 color: 'var(--color-text-primary)',
               }}
@@ -325,14 +325,14 @@ export function RateYourMeal() {
             <div className="flex gap-3 mt-5">
               <button
                 onClick={function () { navigate('/restaurants/' + restaurantId) }}
-                className="btn-ink flex-1 py-3"
+                className="btn flex-1 py-3"
                 style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 Back
               </button>
               <button
                 onClick={function () { setLoginModalOpen(true) }}
-                className="btn-ink flex-1 py-3"
+                className="btn flex-1 py-3"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Sign In
@@ -355,14 +355,14 @@ export function RateYourMeal() {
           className="px-5 py-6 text-center"
           style={{
             background: 'var(--color-surface)',
-            border: '2px dashed var(--color-text-tertiary)',
+            border: '1px dashed var(--color-divider-strong)',
             borderRadius: 'var(--radius-xl)',
           }}
         >
           <h1
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '26px',
+              fontSize: '28px',
               lineHeight: 1.05,
               color: 'var(--color-text-primary)',
             }}
@@ -374,7 +374,7 @@ export function RateYourMeal() {
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="btn-ink mt-5 px-5 py-3"
+            className="btn mt-5 px-5 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Back to Restaurant
@@ -462,16 +462,16 @@ export function RateYourMeal() {
           className="px-6 py-8 text-center"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: 'var(--shadow-hard-lg)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <div
             className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-butter)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard)' }}
+            style={{ background: 'var(--color-highlight)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-8 h-8">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.25} stroke="currentColor" className="w-8 h-8">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
           </div>
@@ -479,7 +479,7 @@ export function RateYourMeal() {
             className="mt-5"
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '30px',
+              fontSize: '32px',
               lineHeight: 1.05,
               color: 'var(--color-text-primary)',
             }}
@@ -494,8 +494,8 @@ export function RateYourMeal() {
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="btn-ink mt-6 w-full py-3.5"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 800 }}
+            className="btn mt-6 w-full py-3.5"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 600 }}
           >
             Back to Restaurant
           </button>

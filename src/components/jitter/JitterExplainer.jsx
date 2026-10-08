@@ -30,9 +30,9 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
         onClick={function (e) { e.stopPropagation() }}
         style={{
           background: 'var(--color-card)',
-          borderTop: 'var(--border-ink)',
-          borderLeft: 'var(--border-ink)',
-          borderRight: 'var(--border-ink)',
+          borderTop: 'var(--border-default)',
+          borderLeft: 'var(--border-default)',
+          borderRight: 'var(--border-default)',
           borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           maxHeight: '80vh',
         }}
@@ -60,11 +60,11 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
                 <div
                   key={key}
                   className="flex items-center gap-3 p-3"
-                  style={{ background: tier.bg, border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}
+                  style={{ background: tier.bg, border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}
                 >
                   <span
                     className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: tier.color, border: 'var(--border-ink-thin)' }}
+                    style={{ background: tier.color, border: 'var(--border-subtle)' }}
                   >
                     {(key === 'trusted' || key === 'verified') && (
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -78,7 +78,7 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
                     )}
                   </span>
                   <div>
-                    <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>
+                    <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>
                       {tier.label}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
@@ -94,7 +94,7 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
           {warScore != null && (
             <button
               className="w-full text-left p-3 mb-4"
-              style={{ background: 'var(--color-surface)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}
+              style={{ background: 'var(--color-surface)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-md)' }}
               onClick={function () { setShowScore(!showScore) }}
             >
               <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
           <a
             href="/jitter"
             className="block text-center text-sm py-2"
-            style={{ color: 'var(--color-primary)', fontWeight: 800 }}
+            style={{ color: 'var(--color-primary)', fontWeight: 600 }}
           >
             Learn more about how Jitter works &rarr;
           </a>

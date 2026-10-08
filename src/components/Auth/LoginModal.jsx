@@ -185,13 +185,13 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-hard-lg)',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
         {/* Lobster header band */}
-        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-ink)' }} />
+        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-default)' }} />
 
         <div className="p-7">
           {/* Close button */}
@@ -201,8 +201,8 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
             style={{
               background: 'var(--color-card)',
               color: 'var(--color-ink)',
-              border: 'var(--border-ink)',
-              boxShadow: 'var(--shadow-hard-sm)',
+              border: 'var(--border-default)',
+              boxShadow: 'var(--shadow-card)',
             }}
             aria-label="Close"
           >
@@ -216,10 +216,9 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
             className="w-16 h-16 mx-auto mb-6 flex items-center justify-center"
             style={{
               background: 'var(--color-category-strip)',
-              border: 'var(--border-ink)',
+              border: 'var(--border-default)',
               borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-hard)',
-              transform: 'rotate(-3deg)',
+              boxShadow: 'var(--shadow-card)',
             }}
           >
             <span className="text-3xl">{hasPendingVote ? '⭐' : '🍽️'}</span>
@@ -286,7 +285,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="btn-ink w-full gap-3 px-6 py-4"
+                className="btn w-full gap-3 px-6 py-4"
                 style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -308,7 +307,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
               {/* Email Sign In */}
               <button
                 onClick={() => setMode('signin')}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 Sign in with Email
@@ -320,7 +319,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                 <button
                   onClick={() => setMode('signup')}
                   className="underline"
-                  style={{ color: 'var(--color-accent)', fontWeight: 800 }}
+                  style={{ color: 'var(--color-accent)', fontWeight: 600 }}
                 >
                   Sign up
                 </button>
@@ -344,7 +343,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   required
                   autoFocus
                   className="w-full px-4 py-3 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
@@ -360,14 +359,14 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="Enter your password"
                   required
                   className="w-full px-4 py-3 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
@@ -396,7 +395,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   type="button"
                   onClick={() => setMode('signup')}
                   className="underline"
-                  style={{ color: 'var(--color-accent)', fontWeight: 800 }}
+                  style={{ color: 'var(--color-accent)', fontWeight: 600 }}
                 >
                   Sign up
                 </button>
@@ -420,14 +419,14 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   required
                   autoFocus
                   className="w-full px-4 py-3 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
@@ -467,7 +466,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                     className="w-full px-4 py-3 focus:outline-none pr-10"
                     style={{
                       background: 'var(--color-surface-elevated)',
-                      border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-ink)',
+                      border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-default)',
                       borderRadius: 'var(--radius-md)',
                       color: 'var(--color-text-primary)',
                       fontSize: '16px',
@@ -477,7 +476,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   {usernameStatus && (
                     <span
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-lg"
-                      style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 800 }}
+                      style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 600 }}
                       aria-hidden="true"
                     >
                       {usernameStatus === 'checking' && '⏳'}
@@ -506,7 +505,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="you@example.com"
                   required
                   className="w-full px-4 py-3 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
@@ -523,14 +522,14 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   required
                   minLength={6}
                   className="w-full px-4 py-3 focus:outline-none"
-                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                className="btn-ink w-full px-6 py-4"
+                className="btn w-full px-6 py-4"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
@@ -549,7 +548,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   onClick={() => setMode('signin')}
                   style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 >
-                  Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>Sign in</span>
+                  Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Sign in</span>
                 </button>
               </div>
             </form>

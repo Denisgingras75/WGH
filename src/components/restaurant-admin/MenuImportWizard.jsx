@@ -5,26 +5,26 @@ import { logger } from '../../utils/logger'
 
 const INPUT_STYLE = {
   background: 'var(--color-surface-elevated)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-md)',
   color: 'var(--color-text-primary)',
   fontSize: '16px',
 }
 const PANEL_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink)',
+  border: 'var(--border-default)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-hard)',
+  boxShadow: 'var(--shadow-card)',
 }
 const PILL_BTN_STYLE = {
   background: 'var(--color-card)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-pill)',
   fontWeight: 700,
 }
 const COMPACT_INPUT_STYLE = {
   background: 'var(--color-surface-elevated)',
-  border: 'var(--border-ink-thin)',
+  border: 'var(--border-subtle)',
   borderRadius: 'var(--radius-sm)',
   color: 'var(--color-text-primary)',
   fontSize: '16px',
@@ -120,7 +120,7 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
           <button
             onClick={handleParse}
             disabled={!menuText.trim()}
-            className="btn-ink flex-1 py-2.5 text-sm"
+            className="btn flex-1 py-2.5 text-sm"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Parse Menu
@@ -128,7 +128,7 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={extractingPdf}
-            className="btn-ink px-4 py-2.5 text-sm"
+            className="btn px-4 py-2.5 text-sm"
             style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
           >
             {extractingPdf ? 'Reading PDF...' : 'Upload PDF'}
@@ -166,9 +166,9 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
             key={i}
             className="flex items-center gap-2 p-2"
             style={{
-              border: selected[i] ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              border: selected[i] ? 'var(--border-subtle)' : '1px solid var(--color-divider)',
               borderRadius: 'var(--radius-md)',
-              background: selected[i] ? 'var(--color-butter-muted)' : 'var(--color-surface)',
+              background: selected[i] ? 'var(--color-highlight-muted)' : 'var(--color-surface)',
             }}
           >
             <input type="checkbox" checked={!!selected[i]} onChange={() => toggleDish(i)} className="shrink-0" style={{ accentColor: 'var(--color-ink)' }} />
@@ -180,7 +180,7 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
             <select
               value={dish.category} onChange={(e) => updateDish(i, 'category', e.target.value)}
               className="px-1 py-1 text-xs shrink-0"
-              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)', maxWidth: '100px' }}
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)', maxWidth: '100px' }}
             >
               {ALL_CATEGORIES.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.emoji} {cat.label}</option>
@@ -198,14 +198,14 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleConfirm} disabled={selectedCount === 0}
-          className="btn-ink flex-1 py-2.5 text-sm"
+          className="btn flex-1 py-2.5 text-sm"
           style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Add {selectedCount} to Menu
         </button>
         <button
           onClick={() => { setStep(1); setError(null) }}
-          className="btn-ink px-4 py-2.5 text-sm"
+          className="btn px-4 py-2.5 text-sm"
           style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
         >
           Back

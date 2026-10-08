@@ -57,13 +57,13 @@ export function PlaylistOwnerMenu({ playlist }) {
 
   if (editing) {
     return (
-      <div style={{ padding: 16, background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-hard)', margin: 16 }}>
+      <div style={{ padding: 16, background: 'var(--color-card)', border: 'var(--border-default)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', margin: 16 }}>
         <input
           value={title}
           onChange={function (e) { setTitle(e.target.value) }}
           maxLength={MAX_TITLE_LEN}
           className="w-full px-3 py-2 mb-2"
-          style={{ border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', fontSize: '16px' }}
+          style={{ border: 'var(--border-default)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', fontSize: '16px' }}
         />
         <textarea
           value={description}
@@ -72,20 +72,20 @@ export function PlaylistOwnerMenu({ playlist }) {
           rows={2}
           placeholder="Description (optional)"
           className="w-full px-3 py-2 mb-2"
-          style={{ border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', fontSize: '16px', resize: 'none' }}
+          style={{ border: 'var(--border-default)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', fontSize: '16px', resize: 'none' }}
         />
         <div className="flex gap-2">
           <button
             onClick={save}
             disabled={saving}
-            className="btn-ink flex-1 py-2 text-sm"
+            className="btn flex-1 py-2 text-sm"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             {saving ? 'Saving\u2026' : 'Save'}
           </button>
           <button
             onClick={function () { setEditing(false) }}
-            className="btn-ink flex-1 py-2 text-sm"
+            className="btn flex-1 py-2 text-sm"
             style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
           >
             Cancel
@@ -105,13 +105,13 @@ export function PlaylistOwnerMenu({ playlist }) {
       <button
         onClick={function () { setOpen(!open); setError(null) }}
         aria-label="Playlist menu"
-        className="btn-ink"
+        className="btn"
         style={{
           width: 42,
           height: 42,
           background: 'var(--color-card)',
           fontSize: 20,
-          fontWeight: 800,
+          fontWeight: 600,
           color: 'var(--color-ink)',
         }}
       >
@@ -125,9 +125,9 @@ export function PlaylistOwnerMenu({ playlist }) {
             right: 0,
             minWidth: 180,
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard)',
+            boxShadow: 'var(--shadow-float)',
             zIndex: 20,
             overflow: 'hidden',
           }}
@@ -142,14 +142,14 @@ export function PlaylistOwnerMenu({ playlist }) {
           <button
             onClick={togglePrivacy}
             className="w-full text-left"
-            style={{ display: 'block', padding: 12, background: 'transparent', border: 'none', borderTop: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)', fontSize: 14, fontWeight: 700 }}
+            style={{ display: 'block', padding: 12, background: 'transparent', border: 'none', borderTop: '1px solid var(--color-divider)', color: 'var(--color-text-primary)', fontSize: 14, fontWeight: 700 }}
           >
             {playlist.is_public ? 'Make private' : 'Make public'}
           </button>
           <button
             onClick={onDelete}
             className="w-full text-left"
-            style={{ display: 'block', padding: 12, background: 'transparent', border: 'none', borderTop: '1.5px solid var(--color-divider)', color: 'var(--color-danger)', fontSize: 14, fontWeight: 700 }}
+            style={{ display: 'block', padding: 12, background: 'transparent', border: 'none', borderTop: '1px solid var(--color-divider)', color: 'var(--color-danger)', fontSize: 14, fontWeight: 700 }}
           >
             Delete playlist
           </button>

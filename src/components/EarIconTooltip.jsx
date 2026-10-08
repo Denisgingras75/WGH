@@ -52,7 +52,7 @@ export function EarIconTooltip({ visible, onDismiss }) {
           width: 12,
           height: 12,
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRight: 'none',
           borderBottom: 'none',
           borderTopLeftRadius: '2px',
@@ -63,9 +63,9 @@ export function EarIconTooltip({ visible, onDismiss }) {
         className="px-3.5 py-2.5"
         style={{
           background: 'var(--color-card)',
-          border: 'var(--border-ink)',
+          border: 'var(--border-default)',
           borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-hard)',
+          boxShadow: 'var(--shadow-float)',
         }}
       >
         <p
@@ -80,7 +80,7 @@ export function EarIconTooltip({ visible, onDismiss }) {
             handleDismiss()
           }}
           className="mt-1.5 text-xs"
-          style={{ color: 'var(--color-accent)', fontWeight: 800 }}
+          style={{ color: 'var(--color-accent)', fontWeight: 600 }}
         >
           Got it
         </button>

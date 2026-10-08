@@ -76,14 +76,14 @@ export function showImpactToast(impact) {
         className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-xl"
         style={{
           background: 'var(--color-category-strip)',
-          border: 'var(--border-ink-thin)',
+          border: 'var(--border-subtle)',
           borderRadius: 'var(--radius-sm)',
         }}
       >
         {impact.emoji}
       </span>
       <div>
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)' }}>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)' }}>
           {impact.message}
         </p>
         <p className="text-sm" style={{ fontWeight: 500, color: 'var(--color-text-secondary)', marginTop: '2px' }}>

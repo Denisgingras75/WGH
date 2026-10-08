@@ -7,7 +7,7 @@ export function Privacy() {
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -16,12 +16,12 @@ export function Privacy() {
               color: 'var(--color-ink)',
               fontWeight: 700,
               background: 'var(--color-card)',
-              border: 'var(--border-ink-thin)',
+              border: 'var(--border-subtle)',
               borderRadius: 'var(--radius-pill)',
             }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -39,7 +39,7 @@ export function Privacy() {
         <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
           <p className="eyebrow">Last updated: April 18, 2026</p>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Overview
             </h2>
@@ -61,7 +61,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Information We Collect
             </h2>
@@ -158,7 +158,7 @@ export function Privacy() {
             </div>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               How We Use Your Information
             </h2>
@@ -173,7 +173,7 @@ export function Privacy() {
             </ul>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Third-Party Services
             </h2>
@@ -191,7 +191,7 @@ export function Privacy() {
             </ul>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Votes Are Public
             </h2>
@@ -202,7 +202,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Device Permissions
             </h2>
@@ -220,7 +220,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Deleting Your Account
             </h2>
@@ -233,7 +233,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Rights
             </h2>
@@ -247,7 +247,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Children
             </h2>
@@ -258,7 +258,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Data Retention
             </h2>
@@ -273,7 +273,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Where Your Data Lives
             </h2>
@@ -285,7 +285,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Copyright (DMCA)
             </h2>
@@ -309,7 +309,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Changes to This Policy
             </h2>
@@ -319,7 +319,7 @@ export function Privacy() {
             </p>
           </section>
 
-          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-default)' }}>
             <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Contact Us
             </h2>

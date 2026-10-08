@@ -192,7 +192,7 @@ export function ManageRestaurant() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-butter)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-highlight)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}>
             <span className="text-2xl">🔒</span>
           </div>
           <h1 className="mb-2" style={{ fontSize: '28px', color: 'var(--color-text-primary)' }}>
@@ -203,7 +203,7 @@ export function ManageRestaurant() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="btn-ink px-6 py-3"
+            className="btn px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Go Home
@@ -216,14 +216,14 @@ export function ManageRestaurant() {
   return (
     <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-default)' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="sticker-press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+            className="press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-default)', boxShadow: 'var(--shadow-card)' }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -257,9 +257,9 @@ export function ManageRestaurant() {
           className="flex p-1 mb-4"
           style={{
             background: 'var(--color-card)',
-            border: 'var(--border-ink)',
+            border: 'var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-hard-sm)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           {['specials', 'events', 'menu', 'info'].map((tab) => (
@@ -269,7 +269,7 @@ export function ManageRestaurant() {
               className="flex-1 py-2 px-1 whitespace-nowrap transition-all"
               style={{
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 600,
                 borderRadius: 'var(--radius-sm)',
                 background: activeTab === tab ? 'var(--color-ink)' : 'transparent',
                 color: activeTab === tab ? 'var(--color-bg)' : 'var(--color-text-secondary)',
@@ -286,7 +286,7 @@ export function ManageRestaurant() {
         {dataLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 animate-pulse" style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
+              <div key={i} className="h-16 animate-pulse" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
             ))}
           </div>
         ) : activeTab === 'specials' ? (

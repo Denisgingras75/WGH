@@ -207,7 +207,7 @@ export function Dish() {
           </p>
           <button
             onClick={handleBack}
-            className="btn-ink mt-4 px-5 py-2.5 text-sm"
+            className="btn mt-4 px-5 py-2.5 text-sm"
             style={{
               background: 'var(--color-primary)',
               color: 'var(--color-text-on-primary)',
@@ -237,7 +237,7 @@ export function Dish() {
           className="w-9 h-9 rounded-full flex items-center justify-center"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -283,8 +283,8 @@ export function Dish() {
               setPlaylistSheetOpen(true)
             }}
             aria-label="Add to playlist"
-            className="btn-ink w-9 h-9"
-            style={{ background: 'var(--color-butter)', boxShadow: 'var(--shadow-hard-sm)', borderRadius: 'var(--radius-sm)', fontSize: 20, color: 'var(--color-ink)', fontWeight: 800, lineHeight: 1 }}
+            className="btn w-9 h-9"
+            style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-pill)', fontSize: 20, color: 'var(--color-ink)', fontWeight: 500, lineHeight: 1 }}
           >
             +
           </button>
@@ -334,10 +334,8 @@ export function Dish() {
               ref={rateFlowRef}
               className="p-4"
               style={{
-                background: 'var(--color-card)',
-                border: 'var(--border-ink)',
+                background: 'var(--color-surface)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-hard)',
               }}
             >
               <ReviewFlow
@@ -387,14 +385,14 @@ export function Dish() {
                   restaurant_id: dish.restaurant_id,
                   restaurant_name: dish.restaurant_name,
                 })}
-                className="btn-ink w-full py-3 px-4 text-sm"
+                className="btn w-full py-3 px-4 text-sm"
                 style={{
                   background: 'var(--color-primary)',
                   color: 'var(--color-text-on-primary)',
                 }}
               >
                 Order Online
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </a>
@@ -405,21 +403,15 @@ export function Dish() {
 
       {/* Floating action bar */}
       <div
-        className="fixed left-0 right-0 px-3"
+        className="fixed left-0 right-0"
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           zIndex: 40,
+          background: 'var(--color-bg)',
+          borderTop: '1px solid var(--color-divider)',
         }}
       >
-        <div
-          className="flex gap-2 p-2"
-          style={{
-            background: 'var(--color-card)',
-            border: 'var(--border-ink)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-hard)',
-          }}
-        >
+        <div className="flex gap-2 px-4 py-3">
           {(dish.toast_slug || sanitizeUrl(dish.order_url)) ? (
             <a
               href={dish.toast_slug ? 'https://order.toasttab.com/online/' + dish.toast_slug : sanitizeUrl(dish.order_url)}
@@ -432,15 +424,13 @@ export function Dish() {
                 restaurant_name: dish.restaurant_name,
                 source: dish.toast_slug ? 'toast' : 'order_url',
               }) }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
+              className="btn flex-1 py-3 text-sm"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
-                border: 'var(--border-ink)',
-                borderRadius: 'var(--radius-md)',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
               </svg>
               Order Now
@@ -450,15 +440,13 @@ export function Dish() {
               href={sanitizeUrl(dish.website_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
+              className="btn flex-1 py-3 text-sm"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
-                border: 'var(--border-ink)',
-                borderRadius: 'var(--radius-md)',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
               </svg>
               See Menu
@@ -472,15 +460,13 @@ export function Dish() {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-3 font-bold text-sm transition-transform active:scale-[0.97]"
+            className="btn flex-1 py-3 text-sm"
             style={{
-              background: 'var(--color-accent)',
-              color: 'var(--color-text-on-primary)',
-              border: 'var(--border-ink)',
-              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-card)',
+              color: 'var(--color-text-primary)',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
             </svg>
