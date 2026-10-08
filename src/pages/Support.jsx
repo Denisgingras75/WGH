@@ -5,21 +5,27 @@ export function Support() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
+            className="flex items-center gap-1 text-sm pl-2 pr-3 py-1 flex-shrink-0"
+            style={{
+              color: 'var(--color-ink)',
+              fontWeight: 700,
+              background: 'var(--color-card)',
+              border: 'var(--border-ink-thin)',
+              borderRadius: 'var(--radius-pill)',
+            }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.1 }}>
             Support
           </h1>
         </div>
@@ -30,8 +36,8 @@ export function Support() {
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
-        <div className="rounded-2xl p-6 space-y-6" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}>
-          <section>
+        <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
             <h2
               className="mb-3"
               style={{
@@ -52,8 +58,8 @@ export function Support() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Email us
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -61,23 +67,23 @@ export function Support() {
             </p>
             <a
               href="mailto:hello@whatsgoodhere.app"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold"
+              className="btn-ink px-4 py-2.5"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '14px' }}
             >
               hello@whatsgoodhere.app
             </a>
-            <p className="leading-relaxed mt-3" style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+            <p className="leading-relaxed mt-4" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 500 }}>
               We read every email. Typical response time: 1-2 business days.
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Common questions
             </h2>
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>I want to delete my account.</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>I want to delete my account.</h3>
                 <p>
                   Open the app, tap the gear icon (Settings), and choose <strong>Delete Account</strong>.
                   Deletion is immediate and permanent — it removes your votes, reviews, photos,
@@ -85,22 +91,21 @@ export function Support() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>I want to report a review, photo, or user.</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>I want to report a review, photo, or user.</h3>
                 <p>
-                  Every review, photo, dish, and user profile has a <strong>Report</strong>
+                  Every review, photo, dish, and user profile has a <strong>Report</strong>{' '}
                   control — a small ellipsis button on review cards, a Report button in the
                   photo lightbox, the three-dot menu on user profiles. Reports go to our
                   moderation queue and we aim to review them within 48 hours.
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>I own a restaurant on the app. Can I manage it?</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>I own a restaurant on the app. Can I manage it?</h3>
                 <p>
                   Yes. See{' '}
                   <a
                     href="/for-restaurants"
-                    className="font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 700 }}
                   >
                     whatsgoodhere.app/for-restaurants
                   </a>
@@ -108,7 +113,7 @@ export function Support() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Something's wrong with a dish or restaurant listing.</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Something's wrong with a dish or restaurant listing.</h3>
                 <p>
                   Use the <strong>Report</strong> control on the dish page (the small
                   ellipsis button next to the action bar), or email us at the address above
@@ -116,20 +121,19 @@ export function Support() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>I forgot my password.</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>I forgot my password.</h3>
                 <p>
                   On the login screen, choose <strong>Forgot password?</strong>. We'll email
                   you a reset link.
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>How do ratings work?</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>How do ratings work?</h3>
                 <p>
                   See{' '}
                   <a
                     href="/how-reviews-work"
-                    className="font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 700 }}
                   >
                     whatsgoodhere.app/how-reviews-work
                   </a>
@@ -139,25 +143,25 @@ export function Support() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Privacy and Terms
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               Read our{' '}
-              <a href="/privacy" className="font-medium" style={{ color: 'var(--color-primary)' }}>
+              <a href="/privacy" style={{ color: 'var(--color-accent)', fontWeight: 700 }}>
                 Privacy Policy
               </a>
               {' '}and{' '}
-              <a href="/terms" className="font-medium" style={{ color: 'var(--color-primary)' }}>
+              <a href="/terms" style={{ color: 'var(--color-accent)', fontWeight: 700 }}>
                 Terms of Service
               </a>
               .
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Who runs this
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>

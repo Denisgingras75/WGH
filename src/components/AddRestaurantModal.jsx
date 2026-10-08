@@ -333,7 +333,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center px-4"
+        className="fixed inset-0 z-[60] flex items-center justify-center px-4"
         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         style={{ background: 'rgba(27, 22, 17, 0.55)' }}
       >

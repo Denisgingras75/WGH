@@ -5,21 +5,27 @@ export function Privacy() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
+            className="flex items-center gap-1 text-sm pl-2 pr-3 py-1 flex-shrink-0"
+            style={{
+              color: 'var(--color-ink)',
+              fontWeight: 700,
+              background: 'var(--color-card)',
+              border: 'var(--border-ink-thin)',
+              borderRadius: 'var(--radius-pill)',
+            }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.1 }}>
             Privacy Policy
           </h1>
         </div>
@@ -30,11 +36,11 @@ export function Privacy() {
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
-        <div className="rounded-2xl p-6 space-y-6" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}>
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Last updated: April 18, 2026</p>
+        <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
+          <p className="eyebrow">Last updated: April 18, 2026</p>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Overview
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -42,8 +48,7 @@ export function Privacy() {
               Contact:{' '}
               <a
                 href="mailto:hello@whatsgoodhere.app"
-                className="font-medium"
-                style={{ color: 'var(--color-primary)' }}
+                style={{ color: 'var(--color-accent)', fontWeight: 700 }}
               >
                 hello@whatsgoodhere.app
               </a>
@@ -56,13 +61,13 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Information We Collect
             </h2>
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Account Information</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Account Information</h3>
                 <p>
                   When you create an account, we collect your email address and display name.
                   If you sign in with Google or Apple, we receive your name (if you choose to
@@ -74,7 +79,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Dish Ratings and Reviews</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Dish Ratings and Reviews</h3>
                 <p>
                   We store the ratings and written reviews you submit, the dishes you save as
                   favorites, and playlists you create. Ratings are aggregated into public rankings;
@@ -83,7 +88,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Dish Photos</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Dish Photos</h3>
                 <p>
                   When you upload a photo of a dish, we store the image, the dish it's attached
                   to, and a timestamp. We don't use your photos for anything other than displaying
@@ -92,7 +97,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Location Data</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Location Data</h3>
                 <p>
                   With your permission, we access your device's location to show nearby
                   restaurants and dishes and to anchor the map on where you are. We do not
@@ -101,7 +106,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Typing Cadence (Jitter)</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Typing Cadence (Jitter)</h3>
                 <p>
                   To protect reviews from bots and coordinated manipulation, we measure how you
                   type while writing a review. This includes per-key dwell time, timing between
@@ -114,8 +119,7 @@ export function Privacy() {
                   it with advertisers. Learn more at{' '}
                   <a
                     href="/jitter"
-                    className="font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 700 }}
                   >
                     whatsgoodhere.app/jitter
                   </a>
@@ -123,7 +127,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Reports and Blocks</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Reports and Blocks</h3>
                 <p>
                   The app lets you report content and block other users. If you do, we store
                   your report (the content you flagged, the reason, and a timestamp) and your
@@ -132,7 +136,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Usage Analytics</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Usage Analytics</h3>
                 <p>
                   We use PostHog to understand how people use the app. This includes pages you
                   visit, features you interact with, and session recordings. Form inputs
@@ -142,7 +146,7 @@ export function Privacy() {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Error Tracking</h3>
+                <h3 className="mb-1" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Error Tracking</h3>
                 <p>
                   We use Sentry to catch errors and crashes. Error reports include technical
                   context like the device model, operating system version, browser version,
@@ -154,8 +158,8 @@ export function Privacy() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               How We Use Your Information
             </h2>
             <ul className="list-disc list-inside space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
@@ -169,8 +173,8 @@ export function Privacy() {
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Third-Party Services
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -187,8 +191,8 @@ export function Privacy() {
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Votes Are Public
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -198,8 +202,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Device Permissions
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -216,8 +220,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Deleting Your Account
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -229,8 +233,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Rights
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -243,8 +247,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Children
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -254,8 +258,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Data Retention
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -269,8 +273,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Where Your Data Lives
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -281,8 +285,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Copyright (DMCA)
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -290,8 +294,7 @@ export function Privacy() {
               a written notice to{' '}
               <a
                 href="mailto:hello@whatsgoodhere.app"
-                className="font-medium"
-                style={{ color: 'var(--color-primary)' }}
+                style={{ color: 'var(--color-accent)', fontWeight: 700 }}
               >
                 hello@whatsgoodhere.app
               </a>
@@ -306,8 +309,8 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Changes to This Policy
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -316,16 +319,15 @@ export function Privacy() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Contact Us
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               If you have questions about this Privacy Policy, please contact us at:{' '}
               <a
                 href="mailto:hello@whatsgoodhere.app"
-                className="font-medium"
-                style={{ color: 'var(--color-primary)' }}
+                style={{ color: 'var(--color-accent)', fontWeight: 700 }}
               >
                 hello@whatsgoodhere.app
               </a>

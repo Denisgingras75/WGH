@@ -155,8 +155,8 @@ src/
 │   └── index.js      # Barrel export for all API modules
 ├── components/       # Shared + feature-grouped components
 │   ├── Auth/         # LoginModal, WelcomeModal
-│   ├── browse/       # CategoryGrid, SearchAutocomplete, SortDropdown
-│   ├── home/         # CategoryIcons
+│   ├── browse/       # BrowseSearchBar, BrowseResults, SortDropdown
+│   ├── home/         # HomeListMode, Top10Carousel, LocalListsSection, CategoryIcons
 │   ├── jitter/       # SessionCard, SessionBadge, TrustBadge
 │   ├── profile/      # JournalCard, JournalFeed, ShelfFilter, HeroIdentityCard, FoodMap
 │   ├── restaurant-admin/ # DishesManager, EventsManager, MenuImportWizard, SpecialsManager

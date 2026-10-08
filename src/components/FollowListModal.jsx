@@ -77,7 +77,7 @@ export function FollowListModal({ userId, type, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >

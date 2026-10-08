@@ -172,6 +172,11 @@
     background: var(--color-butter);
     color: var(--color-ink);
   }
+
+  ::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 1;
+  }
 }
 
 @layer components {

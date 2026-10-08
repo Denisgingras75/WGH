@@ -48,7 +48,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center"
       onClick={onClose}
       role="presentation"
     >

@@ -5,21 +5,27 @@ export function Terms() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-16" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-divider)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium"
-            style={{ color: 'var(--color-primary)' }}
+            className="flex items-center gap-1 text-sm pl-2 pr-3 py-1 flex-shrink-0"
+            style={{
+              color: 'var(--color-ink)',
+              fontWeight: 700,
+              background: 'var(--color-card)',
+              border: 'var(--border-ink-thin)',
+              borderRadius: 'var(--radius-pill)',
+            }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.1 }}>
             Terms of Service
           </h1>
         </div>
@@ -30,11 +36,11 @@ export function Terms() {
         <div className="flex justify-center mb-6">
           <WghSeal size={96} />
         </div>
-        <div className="rounded-2xl p-6 space-y-6" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-divider)' }}>
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Last updated: April 18, 2026</p>
+        <div className="space-y-8" style={{ maxWidth: '40rem', margin: '0 auto' }}>
+          <p className="eyebrow">Last updated: April 18, 2026</p>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Welcome to What's Good Here
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -44,8 +50,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               What We Do
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -55,8 +61,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Account
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -75,8 +81,8 @@ export function Terms() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Voting Guidelines
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -93,8 +99,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Restaurant Information
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -104,8 +110,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Acceptable Use
             </h2>
             <p className="leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
@@ -121,8 +127,8 @@ export function Terms() {
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Moderation, Reporting, and Blocking
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -144,8 +150,8 @@ export function Terms() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Your Content
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -158,8 +164,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Intellectual Property
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -169,8 +175,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Disclaimer
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -181,8 +187,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Limitation of Liability
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -193,8 +199,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               App Store Terms (iOS)
             </h2>
             <div className="space-y-3 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -214,8 +220,7 @@ export function Terms() {
                 <li>Any questions or complaints about the app should be directed to{' '}
                   <a
                     href="mailto:hello@whatsgoodhere.app"
-                    className="font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 700 }}
                   >
                     hello@whatsgoodhere.app
                   </a>
@@ -225,8 +230,8 @@ export function Terms() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Governing Law
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -236,8 +241,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Changes to These Terms
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -247,8 +252,8 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Termination
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
@@ -259,16 +264,15 @@ export function Terms() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <section className="pt-6" style={{ borderTop: 'var(--border-ink)' }}>
+            <h2 className="mb-3" style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}>
               Contact Us
             </h2>
             <p className="leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
               Questions about these Terms? Contact us at:{' '}
               <a
                 href="mailto:hello@whatsgoodhere.app"
-                className="font-medium"
-                style={{ color: 'var(--color-primary)' }}
+                style={{ color: 'var(--color-accent)', fontWeight: 700 }}
               >
                 hello@whatsgoodhere.app
               </a>
