@@ -213,7 +213,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end"
-      style={{ background: 'rgba(27, 22, 17, 0.55)' }}
+      style={{ background: 'var(--color-backdrop)' }}
       onClick={function (e) { if (e.target === e.currentTarget) onClose() }}
       onKeyDown={function (e) { if (e.key === 'Escape') onClose() }}
     >

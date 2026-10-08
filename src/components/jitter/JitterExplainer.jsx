@@ -24,7 +24,7 @@ export function JitterExplainer({ open, onClose, warScore, stats }) {
       onClick={onClose}
       role="presentation"
     >
-      <div className="absolute inset-0" style={{ background: 'rgba(27, 22, 17, 0.55)' }} aria-hidden="true" />
+      <div className="absolute inset-0" style={{ background: 'var(--color-backdrop)' }} aria-hidden="true" />
       <div
         className="absolute bottom-0 left-0 right-0 overflow-hidden"
         onClick={function (e) { e.stopPropagation() }}

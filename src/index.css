@@ -111,6 +111,9 @@
   --color-accent-rgb: 31, 79, 163;
   --color-rating-rgb: 14, 122, 61;
   --color-bg-rgb: 246, 238, 220;
+  --color-ink-rgb: 27, 22, 17;
+  /* Modal / sheet scrim */
+  --color-backdrop: rgba(27, 22, 17, 0.55);
 
   /* ---------- Shape ---------- */
   --radius-sm: 8px;
@@ -1298,9 +1301,9 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid var(--color-accent);
+  /* Harbor ring; no box-shadow so sticker hard shadows survive keyboard focus */
+  outline: 2.5px solid var(--color-accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(217, 167, 101, 0.2);
 }
 
 /* Override focus styles for inputs inside styled containers (they handle their own focus) */

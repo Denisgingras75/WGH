@@ -56,7 +56,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
       <div
         className="absolute inset-0"
         style={{
-          background: 'rgba(27, 22, 17, 0.55)',
+          background: 'var(--color-backdrop)',
           opacity: dragOffset > 0 ? Math.max(0.2, 1 - dragOffset / 300) : 1,
         }}
         aria-hidden="true"

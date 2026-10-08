@@ -82,7 +82,7 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-      style={{ background: 'rgba(27, 22, 17, 0.55)' }}
+      style={{ background: 'var(--color-backdrop)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div

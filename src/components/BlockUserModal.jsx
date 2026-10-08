@@ -32,7 +32,7 @@ export function BlockUserModal({ isOpen, onClose, user }) {
     >
       <div
         className="absolute inset-0"
-        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
+        style={{ background: 'var(--color-backdrop)' }}
         aria-hidden="true"
       />
       <div

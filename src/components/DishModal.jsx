@@ -186,7 +186,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(27, 22, 17, 0.55)',
+        backgroundColor: 'var(--color-backdrop)',
         padding: '16px',
       }}
       onClick={handleClose}
