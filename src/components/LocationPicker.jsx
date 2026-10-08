@@ -54,9 +54,9 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 backdrop-blur-sm"
+        className="absolute inset-0"
         style={{
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(27, 22, 17, 0.55)',
           opacity: dragOffset > 0 ? Math.max(0.2, 1 - dragOffset / 300) : 1,
         }}
         aria-hidden="true"
@@ -68,9 +68,12 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="radius-sheet-title"
-        className="relative w-full max-w-lg rounded-t-3xl"
+        className="relative w-full max-w-lg"
         style={{
-          background: 'var(--color-bg)',
+          background: 'var(--color-card)',
+          border: 'var(--border-ink)',
+          borderBottom: 'none',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           transform: 'translateY(' + dragOffset + 'px)',
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
           touchAction: 'none',
@@ -88,21 +91,21 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
           onTouchEnd={handleTouchEnd}
           style={{ cursor: 'grab', touchAction: 'none' }}
         >
-          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--color-divider)' }} />
+          <div className="w-10 h-1.5 rounded-full" style={{ background: 'var(--color-ink)', opacity: 0.25 }} />
         </div>
 
         {/* Header — also draggable */}
         <div
-          className="px-6 pb-4 border-b"
-          style={{ borderColor: 'var(--color-divider)' }}
+          className="px-6 pb-4"
+          style={{ borderBottom: '1.5px solid var(--color-divider)' }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <h3 id="radius-sheet-title" className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 id="radius-sheet-title" style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}>
             Search radius
           </h3>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             How far should we look for dishes?
           </p>
         </div>
@@ -114,38 +117,39 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
               <button
                 key={r}
                 onClick={function () { handleRadiusSelect(r) }}
-                className="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all"
+                className="w-full flex items-center justify-between p-4 transition-all"
                 style={radius === r ? {
-                  background: 'var(--color-primary-muted)',
-                  borderColor: 'var(--color-primary)'
+                  background: 'var(--color-butter)',
+                  border: 'var(--border-ink)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-hard-sm)',
                 } : {
-                  background: 'var(--color-surface-elevated)',
-                  borderColor: 'transparent'
+                  background: 'var(--color-surface)',
+                  border: '2px solid var(--color-divider)',
+                  borderRadius: 'var(--radius-lg)',
                 }}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{
-                      background: radius === r
-                        ? 'var(--color-primary)'
-                        : 'var(--color-divider)'
+                      background: 'var(--color-card)',
+                      border: radius === r ? 'var(--border-ink)' : '2px solid var(--color-divider)',
                     }}
                   >
-                    <span style={radius === r ? { color: 'var(--color-text-on-primary)' } : undefined}>
+                    <span>
                       {r === 0 ? '\uD83C\uDF0E' : r <= 5 ? '\uD83D\uDEB6' : r <= 10 ? '\uD83D\uDE97' : r <= 25 ? '\uD83D\uDEE3\uFE0F' : r <= 100 ? '\u2708\uFE0F' : '\uD83C\uDF0E'}
                     </span>
                   </div>
                   <div className="text-left">
                     <p
-                      className="font-semibold"
-                      style={{ color: 'var(--color-text-primary)' }}
+                      style={{ color: 'var(--color-ink)', fontWeight: 800 }}
                     >
                       {r === 0 ? 'Anywhere' : 'Within ' + r + ' ' + (r === 1 ? 'mile' : 'miles')}
                     </p>
                     <p
                       className="text-sm"
-                      style={{ color: 'var(--color-text-secondary)' }}
+                      style={{ color: radius === r ? 'var(--color-ink)' : 'var(--color-text-secondary)', fontWeight: 500 }}
                     >
                       {r === 0 ? 'Show all dishes everywhere' : r === 1 ? 'Walking distance' : r === 5 ? 'Quick drive' : r === 10 ? 'Short trip' : r === 20 ? 'Across the area' : r === 25 ? 'Extended range' : r === 50 ? 'Island-wide' : r === 100 ? 'Regional (Boston, Cape, etc.)' : 'Cross-state'}
                     </p>
@@ -156,7 +160,7 @@ export function RadiusSheet({ isOpen, onClose, radius, onRadiusChange }) {
                     className="w-6 h-6"
                     fill="currentColor"
                     viewBox="0 0 24 24"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-ink)' }}
                   >
                     <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                   </svg>
@@ -186,23 +190,24 @@ export function LocationPicker({ radius, onRadiusChange }) {
           <button
             onClick={function () { setShowRadiusSheet(true) }}
             aria-label={radius === 0 ? 'Showing dishes everywhere. Tap to change' : 'Search radius: ' + radius + ' miles. Tap to change'}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium border transition-all hover:border-neutral-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{
-              background: 'var(--color-surface)',
-              borderColor: 'var(--color-divider)',
-              color: 'var(--color-text-primary)'
+              fontSize: '13px',
+              fontWeight: 800,
+              background: 'var(--color-butter)',
+              border: 'var(--border-ink-thin)',
+              color: 'var(--color-ink)'
             }}
           >
             <span>{radius === 0 ? 'Anywhere' : 'Within ' + radius + ' mi'}</span>
             <svg
               aria-hidden="true"
-              className="w-4 h-4"
+              className="w-3 h-3"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              style={{ color: 'var(--color-text-tertiary)' }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>

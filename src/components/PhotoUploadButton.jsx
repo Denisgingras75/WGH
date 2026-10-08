@@ -62,6 +62,12 @@ export function PhotoUploadButton({
           onClick={handleClick}
           disabled={isProcessing}
           className="photo-upload-btn-compact tap-target"
+          style={{
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            boxShadow: 'var(--shadow-hard-sm)',
+            color: 'var(--color-ink)',
+          }}
           title="Add photo"
           aria-label="Add photo"
         >
@@ -95,6 +101,13 @@ export function PhotoUploadButton({
         onClick={handleClick}
         disabled={isProcessing}
         className="photo-upload-btn tap-target"
+        style={{
+          background: 'var(--color-surface)',
+          border: '2px dashed var(--color-text-tertiary)',
+          borderRadius: 'var(--radius-lg)',
+          color: 'var(--color-ink)',
+          fontWeight: 700,
+        }}
       >
         {isProcessing ? (
           <>
@@ -111,10 +124,17 @@ export function PhotoUploadButton({
 
       {error && (
         <div className="photo-upload-error-container">
-          <p className="photo-upload-error">{error}</p>
+          <p className="photo-upload-error" style={{ fontWeight: 600 }}>{error?.message || error}</p>
           <button
             onClick={handleClick}
             className="photo-upload-retry-btn tap-target"
+            style={{
+              background: 'var(--color-card)',
+              border: 'var(--border-ink-thin)',
+              borderRadius: 'var(--radius-pill)',
+              color: 'var(--color-ink)',
+              fontWeight: 700,
+            }}
           >
             Try again
           </button>

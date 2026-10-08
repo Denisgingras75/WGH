@@ -3,10 +3,14 @@ import { useMenuImportStatus } from '../../hooks/useMenuImportStatus'
 const headingStyle = {
   fontFamily: 'var(--font-display)',
   fontWeight: 800,
-  fontSize: '17px',
+  fontSize: '19px',
+  letterSpacing: '-0.02em',
+  lineHeight: 1.1,
   color: 'var(--color-text-primary)',
-  marginBottom: '8px',
+  marginBottom: '6px',
 }
+
+const bodyStyle = { fontSize: '14px', lineHeight: '1.5', fontWeight: 500 }
 
 export function MenuImportStatus({ restaurantId, dishCount }) {
   const { status, isImporting, hasFailed, loading } = useMenuImportStatus(restaurantId)
@@ -18,15 +22,19 @@ export function MenuImportStatus({ restaurantId, dishCount }) {
   return (
     <div
       style={{
-        padding: '24px 20px',
+        margin: '16px 16px 0',
+        padding: '22px 18px',
         textAlign: 'center',
         color: 'var(--color-text-secondary)',
+        background: 'var(--color-surface)',
+        border: '2px dashed var(--color-text-tertiary)',
+        borderRadius: 'var(--radius-lg)',
       }}
     >
       {isImporting && (
         <>
           <p style={headingStyle}>Thanks for adding this restaurant!</p>
-          <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+          <p style={bodyStyle}>
             We're getting the menu ready — check back in a moment.
           </p>
         </>
@@ -34,7 +42,7 @@ export function MenuImportStatus({ restaurantId, dishCount }) {
       {status === 'completed' && dishCount === 0 && (
         <>
           <p style={headingStyle}>Menu coming soon</p>
-          <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+          <p style={bodyStyle}>
             We couldn't find the menu yet — our team is working on it.
           </p>
         </>
@@ -42,7 +50,7 @@ export function MenuImportStatus({ restaurantId, dishCount }) {
       {hasFailed && (
         <>
           <p style={headingStyle}>Menu coming soon</p>
-          <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+          <p style={bodyStyle}>
             We're working on getting this menu — check back soon.
           </p>
         </>

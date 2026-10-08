@@ -72,10 +72,23 @@ export function showImpactToast(impact) {
 
   toast[toastType](
     <div className="flex items-center gap-3">
-      <span className="text-2xl">{impact.emoji}</span>
+      <span
+        className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-xl"
+        style={{
+          background: 'var(--color-category-strip)',
+          border: 'var(--border-ink-thin)',
+          borderRadius: 'var(--radius-sm)',
+        }}
+      >
+        {impact.emoji}
+      </span>
       <div>
-        <p className="font-semibold">{impact.message}</p>
-        <p className="text-sm opacity-80">Your rating made a difference!</p>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)' }}>
+          {impact.message}
+        </p>
+        <p className="text-sm" style={{ fontWeight: 500, color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+          Your rating made a difference!
+        </p>
       </div>
     </div>,
     {

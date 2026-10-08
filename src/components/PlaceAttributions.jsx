@@ -15,7 +15,7 @@ export function PlaceAttributions({ attributions, className = '' }) {
   return (
     <div
       className={className}
-      style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}
+      style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}
     >
       {attributions.map((a, i) => (
         <span key={`${a.provider}-${i}`}>
@@ -25,7 +25,7 @@ export function PlaceAttributions({ attributions, className = '' }) {
               href={a.url}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: 'var(--color-accent)' }}
+              style={{ color: 'var(--color-accent)', fontWeight: 700 }}
             >
               {a.provider}
             </a>

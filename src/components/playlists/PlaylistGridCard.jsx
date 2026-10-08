@@ -17,8 +17,9 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
           style={{
             width: '100%',
             aspectRatio: '1',
-            borderRadius: 8,
-            background: 'var(--color-surface-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--color-surface)',
+            border: '2px dashed var(--color-text-tertiary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -30,16 +31,19 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
         </div>
         <div
           style={{
-            fontSize: 13,
-            fontWeight: 700,
+            fontFamily: 'var(--font-display)',
+            fontSize: 16,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.15,
             color: 'var(--color-text-primary)',
-            marginTop: 8,
+            marginTop: 10,
           }}
         >
           {playlist.title}
         </div>
         <div
-          style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}
+          style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 2 }}
         >
           No longer available
         </div>
@@ -54,10 +58,13 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
       </div>
       <div
         style={{
-          fontSize: 13,
-          fontWeight: 700,
+          fontFamily: 'var(--font-display)',
+          fontSize: 16,
+          fontWeight: 800,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.15,
           color: 'var(--color-text-primary)',
-          marginTop: 8,
+          marginTop: 10,
         }}
       >
         {playlist.title}
@@ -65,12 +72,16 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
           <span
             style={{
               marginLeft: 6,
+              fontFamily: 'var(--font-body)',
               fontSize: 9,
-              background: 'var(--color-text-primary)',
-              color: 'var(--color-text-on-primary)',
-              padding: '1px 5px',
-              borderRadius: 3,
-              letterSpacing: 0.5,
+              fontWeight: 800,
+              background: 'var(--color-ink)',
+              color: 'var(--color-bg)',
+              border: 'var(--border-ink-thin)',
+              padding: '1px 6px',
+              borderRadius: 'var(--radius-pill)',
+              letterSpacing: '0.08em',
+              verticalAlign: 'middle',
             }}
           >
             PRIVATE
@@ -78,7 +89,7 @@ export function PlaylistGridCard({ playlist, tombstone = false }) {
         )}
       </div>
       <div
-        style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}
+        style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 2 }}
       >
         {playlist.item_count} {playlist.item_count === 1 ? 'dish' : 'dishes'}
         {playlist.follower_count > 0 && ` · ${playlist.follower_count} saves`}

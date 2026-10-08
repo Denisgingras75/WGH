@@ -178,10 +178,10 @@ export function ManageRestaurant() {
   // Loading states
   if (authLoading || managerLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--color-primary)' }} />
-          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--color-ink)' }} />
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>Loading...</p>
         </div>
       </div>
     )
@@ -190,20 +190,20 @@ export function ManageRestaurant() {
   // Access denied
   if (!isManager) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-butter)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}>
             <span className="text-2xl">🔒</span>
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="mb-2" style={{ fontSize: '28px', color: 'var(--color-text-primary)' }}>
             Access Denied
           </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             You don't have permission to manage a restaurant. Ask an admin for an invite link.
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
+            className="btn-ink px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Go Home
@@ -214,24 +214,24 @@ export function ManageRestaurant() {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4 border-b" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="sticker-press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <div className="min-w-0">
+            <p className="eyebrow">Restaurant Manager</p>
+            <h1 style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               {restaurant.name}
             </h1>
-            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Restaurant Manager</p>
           </div>
         </div>
       </header>
@@ -240,10 +240,10 @@ export function ManageRestaurant() {
       {message && (
         <div className="mx-4 mt-4">
           <div
-            className="p-3 rounded-lg text-sm font-medium"
+            className="p-3 text-sm"
             style={message.type === 'error'
-              ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
-              : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
+              ? { background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 700 }
+              : { background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1.5px solid var(--color-success)', borderRadius: 'var(--radius-md)', fontWeight: 700 }
             }
           >
             {message.text}
@@ -253,16 +253,27 @@ export function ManageRestaurant() {
 
       {/* Tabs */}
       <div className="px-4 pt-4">
-        <div className="flex gap-2 mb-4">
+        <div
+          className="flex p-1 mb-4"
+          style={{
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard-sm)',
+          }}
+        >
           {['specials', 'events', 'menu', 'info'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all"
-              style={activeTab === tab
-                ? { background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }
-                : { background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }
-              }
+              className="flex-1 py-2 px-1 whitespace-nowrap transition-all"
+              style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                borderRadius: 'var(--radius-sm)',
+                background: activeTab === tab ? 'var(--color-ink)' : 'transparent',
+                color: activeTab === tab ? 'var(--color-bg)' : 'var(--color-text-secondary)',
+              }}
             >
               {tab === 'specials' ? `Specials${!dataLoading && specials.filter(s => s.is_active).length ? ` (${specials.filter(s => s.is_active).length})` : ''}` : tab === 'events' ? `Events${!dataLoading && events.filter(e => e.is_active).length ? ` (${events.filter(e => e.is_active).length})` : ''}` : tab === 'menu' ? `Menu${!dataLoading && dishes.length ? ` (${dishes.length})` : ''}` : 'Info'}
             </button>
@@ -275,7 +286,7 @@ export function ManageRestaurant() {
         {dataLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--color-surface-elevated)' }} />
+              <div key={i} className="h-16 animate-pulse" style={{ background: 'var(--color-surface)', border: '2px solid var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
             ))}
           </div>
         ) : activeTab === 'specials' ? (

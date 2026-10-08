@@ -81,8 +81,8 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+      style={{ background: 'rgba(27, 22, 17, 0.55)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
@@ -90,25 +90,29 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
         role="dialog"
         aria-modal="true"
         aria-label="New playlist"
-        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5"
+        className="w-full sm:max-w-md p-5"
         style={{
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-divider)',
+          background: 'var(--color-card)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-hard-lg)',
         }}
       >
         <h2
-          className="font-bold text-lg"
-          style={{ color: 'var(--color-text-primary)', marginBottom: 12 }}
+          style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)', marginBottom: 14 }}
         >
           New playlist
         </h2>
         {error && (
           <div
-            className="px-4 py-3 rounded-lg text-sm mb-3"
+            className="px-4 py-3 text-sm mb-3"
             role="alert"
             style={{
-              background: 'var(--color-primary-muted)',
-              color: 'var(--color-primary)',
+              background: 'var(--color-danger-muted)',
+              color: 'var(--color-danger)',
+              border: '1.5px solid var(--color-danger)',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 700,
             }}
           >
             {error}
@@ -121,32 +125,36 @@ export function CreatePlaylistModal({ isOpen, onClose, onCreated, seedDishId }) 
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Playlist name (e.g. Best Hangover Food)"
           maxLength={MAX_TITLE_LEN}
-          className="w-full px-4 py-3 rounded-xl text-sm mb-3"
+          className="w-full px-4 py-3 mb-3"
           style={{
-            background: 'var(--color-bg)',
-            border: '1.5px solid var(--color-divider)',
+            background: 'var(--color-surface-elevated)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-primary)',
+            fontSize: '16px',
           }}
         />
         <label
           className="flex items-center gap-2 text-sm mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
+          style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
         >
           <input
             type="checkbox"
             checked={isPublic}
             onChange={(e) => setIsPublic(e.target.checked)}
+            style={{ width: 18, height: 18, accentColor: 'var(--color-primary)' }}
           />
           Public (shareable link)
         </label>
         <button
           onClick={submit}
           disabled={submitting}
-          className="w-full py-3 rounded-xl font-semibold text-sm"
+          className="btn-ink w-full py-3"
           style={{
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
-            opacity: submitting ? 0.6 : 1,
+            fontSize: 15,
+            fontWeight: 800,
           }}
         >
           {submitting ? 'Creating\u2026' : 'Create playlist'}

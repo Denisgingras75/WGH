@@ -111,12 +111,12 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
         <div className="flex gap-4">
           <div className="space-y-3" style={{ width: '33%' }}>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-8 rounded-lg animate-pulse" style={{ background: 'var(--color-divider)' }} aria-hidden="true" />
+              <div key={i} className="h-8 animate-pulse" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }} aria-hidden="true" />
             ))}
           </div>
           <div className="flex-1 space-y-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 rounded-lg animate-pulse" style={{ background: 'var(--color-divider)' }} aria-hidden="true" />
+              <div key={i} className="h-14 animate-pulse" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }} aria-hidden="true" />
             ))}
           </div>
         </div>
@@ -127,7 +127,7 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
   if (error) {
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{error?.message || error}</p>
+        <p className="text-sm" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>{error?.message || error}</p>
       </div>
     )
   }
@@ -136,21 +136,21 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
     return (
       <div className="px-4 py-5">
         <div
-          className="py-10 text-center rounded-xl"
+          className="py-10 text-center"
           style={{
-            background: 'var(--color-bg)',
-            border: '1.5px solid var(--color-divider)',
-            boxShadow: 'none',
+            background: 'var(--color-surface)',
+            border: '2px dashed var(--color-text-tertiary)',
+            borderRadius: 'var(--radius-lg)',
           }}
         >
-          <p className="font-semibold" style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
+          <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 700 }}>
             {searchQuery
               ? `No dishes matching "${searchQuery}"`
               : 'Menu not set up yet'
             }
           </p>
           {!searchQuery && (
-            <p className="mt-1.5 font-medium" style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
+            <p className="mt-1.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '12px', fontWeight: 600 }}>
               Check back soon
             </p>
           )}
@@ -161,20 +161,22 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
 
   return (
     <div
-      className="flex mx-3 my-4 rounded-xl overflow-hidden"
+      className="flex mx-4 my-4 overflow-hidden"
       style={{
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-divider)',
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
         minHeight: '420px',
       }}
     >
       {/* Left: Section Navigation */}
       <nav
-        className="flex-shrink-0 overflow-y-auto py-3"
+        className="flex-shrink-0 overflow-y-auto"
         style={{
           width: '33%',
-          background: 'var(--color-bg)',
-          borderRight: '1px solid var(--color-divider)',
+          background: 'var(--color-surface)',
+          borderRight: 'var(--border-ink)',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
         }}
@@ -189,39 +191,32 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveSection(section.name)}
-              className="w-full text-left px-3.5 py-3 transition-all relative"
+              className="w-full text-left px-3 py-3 relative"
               style={{
-                background: isActive
-                  ? 'var(--color-primary-muted)'
-                  : 'transparent',
+                background: isActive ? 'var(--color-butter)' : 'transparent',
+                borderBottom: isActive ? 'var(--border-ink)' : '2px solid var(--color-divider)',
+                borderTop: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                marginTop: '-2px',
+                transition: 'background 0.15s ease',
               }}
             >
-              {/* Gold accent bar */}
-              {isActive && (
-                <div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-full"
-                  style={{
-                    height: '60%',
-                    background: 'var(--color-primary)',
-                    boxShadow: 'none',
-                  }}
-                />
-              )}
               <span
-                className="block font-semibold leading-tight"
+                className="block leading-tight"
                 style={{
                   fontSize: '14px',
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                  fontWeight: isActive ? 800 : 700,
+                  color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
                   letterSpacing: '-0.01em',
                 }}
               >
                 {section.name}
               </span>
               <span
-                className="block mt-0.5 font-medium"
+                className="block mt-0.5"
                 style={{
                   fontSize: '11px',
-                  color: isActive ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)',
+                  fontWeight: 600,
+                  color: isActive ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                 }}
               >
                 {section.dishes.length} {section.dishes.length === 1 ? 'item' : 'items'}
@@ -232,23 +227,23 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
       </nav>
 
       {/* Right: Dish List */}
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="flex-1 min-w-0 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {/* Section title */}
         <div
           className="sticky top-0 z-10 px-4 py-3"
           style={{
-            background: 'linear-gradient(180deg, var(--color-surface) 85%, transparent)',
-            borderBottom: '1px solid var(--color-divider)',
+            background: 'var(--color-card)',
+            borderBottom: 'var(--border-ink)',
           }}
         >
           <h3
-            className="font-bold"
             style={{
               fontFamily: 'var(--font-display)',
               color: 'var(--color-text-primary)',
-              fontSize: '16px',
+              fontSize: '19px',
               fontWeight: 800,
               letterSpacing: '-0.02em',
+              lineHeight: 1.1,
             }}
           >
             {activeSection}
@@ -268,109 +263,120 @@ export function RestaurantMenu({ dishes, loading, error, searchQuery = '', menuS
               <button
                 key={dish.dish_id}
                 onClick={() => navigate(`/dish/${dish.dish_id}`)}
-                className="w-full text-left py-3 px-2 transition-all active:scale-[0.98] rounded-lg"
+                className="w-full text-left py-3 px-1 active:scale-[0.98]"
                 style={{
+                  transition: 'transform 0.08s ease',
                   borderBottom: i < activeDishes.length - 1
-                    ? '1px solid var(--color-divider)'
+                    ? '1.5px dashed var(--color-divider)'
                     : 'none',
                 }}
               >
-                {/* Row: Name + Price */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className="font-semibold"
-                        style={{
-                          color: 'var(--color-text-primary)',
-                          fontSize: '13px',
-                          letterSpacing: '-0.01em',
-                          lineHeight: '1.3',
-                        }}
-                      >
-                        {dish.dish_name}
-                      </span>
-                      {dish.tags?.includes('lunch-only') && (
-                        <span
-                          className="flex-shrink-0 px-1 py-0.5 rounded font-bold"
-                          style={{
-                            fontSize: '9px',
-                            background: 'var(--color-accent-muted, rgba(var(--color-primary-rgb), 0.1))',
-                            color: 'var(--color-accent)',
-                            lineHeight: '1',
-                          }}
-                        >
-                          L
-                        </span>
-                      )}
-                      {dish.tags?.includes('dinner-only') && (
-                        <span
-                          className="flex-shrink-0 px-1 py-0.5 rounded font-bold"
-                          style={{
-                            fontSize: '9px',
-                            background: 'var(--color-primary-muted)',
-                            color: 'var(--color-primary)',
-                            lineHeight: '1',
-                          }}
-                        >
-                          D
-                        </span>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Dotted leader + price */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
-                    <div
-                      className="w-8"
+                {/* Row: Name · dotted leader · Price */}
+                <div className="flex items-baseline gap-1.5">
+                  <span className="min-w-0" style={{ flex: '0 1 auto' }}>
+                    <span
                       style={{
-                        borderBottom: '1px dotted var(--color-divider)',
-                        marginBottom: '3px',
+                        color: 'var(--color-text-primary)',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        letterSpacing: '-0.01em',
+                        lineHeight: '1.3',
                       }}
-                    />
-                    {dish.price ? (
+                    >
+                      {dish.dish_name}
+                    </span>
+                    {dish.tags?.includes('lunch-only') && (
                       <span
-                        className="font-semibold"
+                        className="inline-block align-middle"
                         style={{
-                          color: 'var(--color-text-secondary)',
-                          fontSize: '13px',
-                          fontVariantNumeric: 'tabular-nums',
+                          marginLeft: '5px',
+                          padding: '1px 5px',
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          background: 'var(--color-butter)',
+                          border: 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-pill)',
+                          color: 'var(--color-ink)',
+                          lineHeight: '1.2',
                         }}
                       >
-                        ${Number(dish.price).toFixed(0)}
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
-                        --
+                        L
                       </span>
                     )}
-                  </div>
+                    {dish.tags?.includes('dinner-only') && (
+                      <span
+                        className="inline-block align-middle"
+                        style={{
+                          marginLeft: '5px',
+                          padding: '1px 5px',
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          background: 'var(--color-ink)',
+                          border: 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-pill)',
+                          color: 'var(--color-bg)',
+                          lineHeight: '1.2',
+                        }}
+                      >
+                        D
+                      </span>
+                    )}
+                  </span>
+
+                  {/* Dotted leader + price */}
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      flex: '1 1 12px',
+                      minWidth: '12px',
+                      borderBottom: '2px dotted var(--color-divider)',
+                      alignSelf: 'baseline',
+                    }}
+                  />
+                  {dish.price ? (
+                    <span
+                      className="flex-shrink-0"
+                      style={{
+                        color: 'var(--color-ink)',
+                        fontSize: '14px',
+                        fontWeight: 800,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      ${Number(dish.price).toFixed(0)}
+                    </span>
+                  ) : (
+                    <span className="flex-shrink-0" style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 700 }}>
+                      --
+                    </span>
+                  )}
                 </div>
 
                 {/* Rating row */}
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-baseline gap-1.5 mt-1">
                   {isRanked ? (
                     <>
                       <span
-                        className="font-bold"
                         style={{
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 800,
+                          letterSpacing: '-0.03em',
+                          lineHeight: 1,
                           color: getRatingColor(displayRating),
-                          fontSize: '13px',
+                          fontSize: '17px',
                         }}
                       >
                         {displayRating}
                       </span>
                       <span
-                        className="font-medium"
-                        style={{ color: 'var(--color-text-tertiary)', fontSize: '10px' }}
+                        style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 600 }}
                       >
                         {votes} rating{votes === 1 ? '' : 's'}
                       </span>
                     </>
                   ) : (
                     <span
-                      className="font-medium"
-                      style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}
+                      style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 600 }}
                     >
                       {votes > 0
                         ? `${votes} vote${votes === 1 ? '' : 's'} so far`

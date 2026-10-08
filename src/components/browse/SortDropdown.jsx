@@ -30,36 +30,54 @@ export function SortDropdown({ sortBy, onSortChange, isOpen, onToggle }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => onToggle(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-        style={{ color: 'var(--color-text-secondary)' }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        className="flex items-center gap-1.5 px-3 py-1.5 whitespace-nowrap transition-colors"
+        style={{
+          fontSize: '13px',
+          fontWeight: 800,
+          color: 'var(--color-ink)',
+          background: 'var(--color-card)',
+          border: 'var(--border-ink-thin)',
+          borderRadius: 'var(--radius-pill)',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-card)'}
       >
         <span>{SORT_OPTIONS.find(o => o.id === sortBy)?.icon}</span>
         <span>{SORT_OPTIONS.find(o => o.id === sortBy)?.label}</span>
         <svg
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-40 rounded-xl shadow-lg border py-1 z-50" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}>
+        <div
+          className="absolute right-0 mt-2 w-44 p-1 z-50"
+          style={{
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard)',
+          }}
+        >
           {SORT_OPTIONS.map((option) => (
             <button
               key={option.id}
               onClick={() => handleSortChange(option.id)}
-              className={`w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors ${
-                sortBy === option.id ? 'font-medium' : ''
-              }`}
-              style={{ color: sortBy === option.id ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 transition-colors"
+              style={{
+                color: sortBy === option.id ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+                fontWeight: sortBy === option.id ? 800 : 600,
+                borderRadius: 'var(--radius-sm)',
+                background: sortBy === option.id ? 'var(--color-butter-muted)' : 'transparent',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = sortBy === option.id ? 'var(--color-butter-muted)' : 'transparent'}
             >
               <span>{option.icon}</span>
               <span>{option.label}</span>

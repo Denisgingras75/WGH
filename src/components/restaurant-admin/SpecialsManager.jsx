@@ -1,6 +1,42 @@
 import { useState } from 'react'
 import { validateUserContent } from '../../lib/reviewBlocklist'
 
+const INPUT_STYLE = {
+  background: 'var(--color-surface-elevated)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--color-text-primary)',
+  fontSize: '16px',
+}
+const PANEL_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: 'var(--shadow-hard)',
+}
+const PILL_BTN_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink-thin)',
+  borderRadius: 'var(--radius-pill)',
+  fontWeight: 700,
+}
+const ROW_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: 'var(--shadow-hard-sm)',
+}
+const INACTIVE_ROW_STYLE = {
+  background: 'var(--color-surface)',
+  border: '2px dashed var(--color-divider)',
+  borderRadius: 'var(--radius-lg)',
+}
+const EMPTY_STYLE = {
+  background: 'var(--color-surface)',
+  border: '2px dashed var(--color-text-tertiary)',
+  borderRadius: 'var(--radius-lg)',
+}
+
 /**
  * Parse a natural language special into structured fields.
  * Zero API cost — pure client-side regex extraction.
@@ -149,13 +185,13 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               onChange={(e) => { setQuickText(e.target.value); setQuickError(null) }}
               onKeyDown={handleQuickKeyDown}
               placeholder="Half-price oysters until 6pm"
-              className="flex-1 px-3 py-2.5 border rounded-xl text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+              className="flex-1 min-w-0 px-3 py-2.5"
+              style={{ ...INPUT_STYLE, boxShadow: 'var(--shadow-hard-sm)' }}
             />
             <button
               onClick={handleQuickPost}
               disabled={!quickText.trim() || quickSubmitting}
-              className="px-4 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-40"
+              className="btn-ink px-4 py-2.5 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               {quickSubmitting ? '...' : 'Post'}
@@ -166,8 +202,8 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
           )}
           <button
             onClick={() => setShowForm(true)}
-            className="text-xs mt-1.5 font-medium"
-            style={{ color: 'var(--color-text-tertiary)' }}
+            className="text-xs mt-2"
+            style={{ color: 'var(--color-accent)', fontWeight: 700 }}
           >
             or use full form
           </button>
@@ -176,8 +212,8 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
 
       {/* Full Add/Edit Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-4 p-4 rounded-xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-          <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
+        <form onSubmit={handleSubmit} className="mb-4 p-4" style={PANEL_STYLE}>
+          <h3 className="mb-3" style={{ fontSize: '18px', color: 'var(--color-text-primary)' }}>
             {editingId ? 'Edit Special' : 'New Special'}
           </h3>
           <div className="space-y-3">
@@ -187,16 +223,16 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               onChange={(e) => setDealName(e.target.value)}
               placeholder="Deal name (e.g., Half-Price Wings)"
               required
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
             />
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (optional)"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
             />
             <div className="flex gap-3">
               <input
@@ -206,22 +242,22 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
                 placeholder="Price ($)"
                 step="0.01"
                 min="0"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                className="flex-1 min-w-0 px-3 py-2"
+                style={INPUT_STYLE}
               />
               <input
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+                className="flex-1 min-w-0 px-3 py-2"
+                style={INPUT_STYLE}
               />
             </div>
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
+                className="btn-ink flex-1 py-2 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Special'}
@@ -229,8 +265,8 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+                className="btn-ink px-4 py-2 text-sm"
+                style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 Cancel
               </button>
@@ -245,12 +281,12 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
           {activeSpecials.map((special) => (
             <div
               key={special.id}
-              className="p-3 rounded-xl border"
-              style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+              className="p-3"
+              style={ROW_STYLE}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                  <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     {special.deal_name}
                   </p>
                   {special.description && (
@@ -260,7 +296,7 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
                   )}
                   <div className="flex items-center gap-2 mt-1">
                     {special.price && (
-                      <span className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>
+                      <span className="text-sm" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>
                         ${Number(special.price).toFixed(2)}
                       </span>
                     )}
@@ -274,15 +310,15 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
                 <div className="flex items-center gap-1.5 ml-2">
                   <button
                     onClick={() => handleEdit(special)}
-                    className="text-xs font-medium px-2 py-1 rounded"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="text-xs px-2.5 py-1"
+                    style={{ ...PILL_BTN_STYLE, color: 'var(--color-ink)' }}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => onDeactivate(special.id)}
-                    className="text-xs font-medium px-2 py-1 rounded"
-                    style={{ color: 'var(--color-red)' }}
+                    className="text-xs px-2.5 py-1"
+                    style={{ ...PILL_BTN_STYLE, color: 'var(--color-danger)' }}
                   >
                     Deactivate
                   </button>
@@ -296,25 +332,25 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
       {/* Inactive Specials */}
       {inactiveSpecials.length > 0 && (
         <div>
-          <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="eyebrow mb-2">
             Inactive
           </p>
           <div className="space-y-2 opacity-50">
             {inactiveSpecials.map((special) => (
               <div
                 key={special.id}
-                className="p-3 rounded-xl border flex items-center justify-between"
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="p-3 flex items-center justify-between"
+                style={INACTIVE_ROW_STYLE}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm line-through" style={{ color: 'var(--color-text-secondary)' }}>
+                  <p className="text-sm line-through" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                     {special.deal_name}
                   </p>
                 </div>
                 <button
                   onClick={() => onUpdate(special.id, { is_active: true })}
-                  className="text-xs font-medium px-2 py-1 rounded"
-                  style={{ color: 'var(--color-primary)' }}
+                  className="text-xs px-2.5 py-1"
+                  style={{ ...PILL_BTN_STYLE, color: 'var(--color-primary)' }}
                 >
                   Reactivate
                 </button>
@@ -326,8 +362,8 @@ export function SpecialsManager({ restaurantId, specials, onAdd, onUpdate, onDea
 
       {/* Empty State */}
       {specials.length === 0 && !showForm && (
-        <div className="text-center py-8">
-          <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+        <div className="text-center py-8 px-4" style={EMPTY_STYLE}>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             No specials yet. Type one above or use the full form!
           </p>
         </div>

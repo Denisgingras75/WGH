@@ -5,6 +5,7 @@ import { SmileyPin } from '../SmileyPin'
 import { Wordmark } from '../Wordmark'
 import { capture } from '../../lib/analytics'
 import { getUserMessage } from '../../utils/errorHandler'
+import { getRatingColor } from '../../utils/ranking'
 
 const STEPS = [
   {
@@ -149,27 +150,19 @@ export function WelcomeModal() {
           <p
             style={{
               color: 'var(--color-text-primary)',
-              fontSize: '18px',
-              fontWeight: 500,
-              lineHeight: 1.4,
-              marginTop: '16px',
+              fontFamily: 'var(--font-display)',
+              fontSize: '22px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.2,
+              marginTop: '18px',
             }}
           >
             Welcome{displayName ? `, ${displayName}` : ''}.
           </p>
 
           {/* Tagline — matches splash page */}
-          <p
-            style={{
-              color: 'var(--color-text-secondary)',
-              opacity: 0.7,
-              fontSize: '13px',
-              fontWeight: 500,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              marginTop: '14px',
-            }}
-          >
+          <p className="eyebrow" style={{ fontSize: '12px', marginTop: '12px' }}>
             Dish Discovery
           </p>
         </div>
@@ -183,40 +176,47 @@ export function WelcomeModal() {
 
   return (
     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm pointer-events-none" />
+      {/* Backdrop */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(27, 22, 17, 0.55)' }} />
 
       {/* Modal */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Welcome"
-        className="relative z-10 rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
-        style={{ animationDelay: '0.1s', background: 'var(--color-text-on-primary)' }}
+        className="relative z-10 max-w-md w-full overflow-hidden"
+        style={{
+          animationDelay: '0.1s',
+          background: 'var(--color-card)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-hard-lg)',
+        }}
       >
-        {/* Decorative gradient header */}
-        <div className="h-2" style={{ background: 'var(--color-primary)' }} />
+        {/* Lobster header band */}
+        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-ink)' }} />
 
-        <div className="p-8">
+        <div className="p-7">
           {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-6">
+          <div className="flex justify-center items-center gap-2 mb-6">
             {activeSteps.map((_, i) => (
               <button
                 key={i}
                 onClick={() => i < step && setStep(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`h-2.5 rounded-full transition-all ${
                   i === step
-                    ? 'w-6'
+                    ? 'w-7'
                     : i < step
-                      ? 'cursor-pointer'
-                      : ''
+                      ? 'w-2.5 cursor-pointer'
+                      : 'w-2.5'
                 }`}
                 style={{
+                  border: 'var(--border-ink-thin)',
                   background: i === step
                     ? 'var(--color-primary)'
                     : i < step
-                      ? 'var(--color-primary-muted, rgba(var(--color-primary-rgb), 0.5))'
-                      : 'var(--color-divider)'
+                      ? 'var(--color-ink)'
+                      : 'var(--color-card)'
                 }}
                 disabled={i > step}
               />
@@ -230,12 +230,17 @@ export function WelcomeModal() {
             </div>
           ) : (
             <div
-              className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg transition-all"
-              style={{ background: 'var(--color-primary)' }}
+              className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center transition-all"
+              style={{
+                background: 'var(--color-category-strip)',
+                color: 'var(--color-ink)',
+                border: 'var(--border-ink)',
+                boxShadow: 'var(--shadow-hard)',
+              }}
             >
               {currentStep.icon === 'star' ? <span className="text-4xl">⭐</span>
                 : currentStep.icon === 'camera' ? (
-                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.5}>
+                  <svg className="w-11 h-11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                   </svg>
@@ -245,14 +250,14 @@ export function WelcomeModal() {
 
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.15 }}>
               {currentStep.title}
             </h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
               {currentStep.subtitle}
             </p>
             {currentStep.description && (
-              <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="mt-2" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 500 }}>
                 {currentStep.description}
               </p>
             )}
@@ -264,21 +269,20 @@ export function WelcomeModal() {
               {[3, 5, 7, 9, 10].map((n) => (
                 <div
                   key={n}
-                  className="flex flex-col items-center justify-center rounded-xl"
+                  className="flex flex-col items-center justify-center"
                   style={{
                     width: 44,
                     height: 44,
-                    background: n >= 8
-                      ? 'rgba(var(--color-success-rgb), 0.15)'
-                      : n >= 6
-                        ? 'rgba(245, 158, 11, 0.15)'
-                        : 'rgba(var(--color-danger-rgb), 0.08)',
-                    color: n >= 8
-                      ? 'var(--color-rating)'
-                      : n >= 6
-                        ? 'var(--color-accent)'
-                        : 'var(--color-text-secondary)',
-                    fontWeight: 700,
+                    background: 'var(--color-card)',
+                    border: 'var(--border-ink-thin)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-hard-sm)',
+                    color: getRatingColor(n),
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1,
                   }}
                 >
                   {n}
@@ -290,17 +294,17 @@ export function WelcomeModal() {
           {/* Photos step visual */}
           {currentStep.id === 'photos' && (
             <div className="flex justify-center gap-3 mb-6">
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">📸</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Snap</span>
+                <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Snap</span>
               </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">⬆️</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Upload</span>
+                <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Upload</span>
               </div>
-              <div className="flex flex-col items-center p-3 rounded-xl" style={{ background: 'var(--color-category-strip)' }}>
+              <div className="flex flex-col items-center p-3" style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }}>
                 <span className="text-2xl mb-1">🍽️</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>Help others</span>
+                <span className="text-xs" style={{ color: 'var(--color-ink)', fontWeight: 700 }}>Help others</span>
               </div>
             </div>
           )}
@@ -321,18 +325,20 @@ export function WelcomeModal() {
                 autoFocus
                 maxLength={50}
                 disabled={saving}
-                className="w-full px-4 py-4 border-2 rounded-xl text-lg text-center focus:outline-none transition-colors disabled:opacity-60"
+                className="w-full px-4 py-4 text-lg text-center focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow disabled:opacity-60"
                 style={{
-                  background: 'var(--color-bg)',
-                  borderColor: saveError ? 'var(--color-danger)' : 'var(--color-divider)',
+                  background: 'var(--color-surface-elevated)',
+                  border: saveError ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+                  borderRadius: 'var(--radius-md)',
                   color: 'var(--color-text-primary)',
+                  fontWeight: 600,
                 }}
               />
               {saveError && (
                 <p
                   role="alert"
                   className="text-sm text-center"
-                  style={{ color: 'var(--color-danger)' }}
+                  style={{ color: 'var(--color-danger)', fontWeight: 600 }}
                 >
                   {saveError}
                 </p>
@@ -340,8 +346,8 @@ export function WelcomeModal() {
               <button
                 type="submit"
                 disabled={!name.trim() || saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {saving ? 'Saving...' : "Let's go!"}
               </button>
@@ -349,8 +355,8 @@ export function WelcomeModal() {
                 type="button"
                 onClick={handleSkipName}
                 disabled={saving}
-                className="w-full py-2 text-sm transition-colors"
-                style={{ color: 'var(--color-text-tertiary)' }}
+                className="w-full py-2 text-sm"
+                style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
               >
                 Skip for now
               </button>
@@ -361,7 +367,7 @@ export function WelcomeModal() {
                 <p
                   role="alert"
                   className="text-sm text-center"
-                  style={{ color: 'var(--color-danger)' }}
+                  style={{ color: 'var(--color-danger)', fontWeight: 600 }}
                 >
                   {saveError}
                 </p>
@@ -369,16 +375,16 @@ export function WelcomeModal() {
               <button
                 onClick={handleNext}
                 disabled={saving}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {saving ? 'Saving...' : step === activeSteps.length - 1 ? "Let's go!" : 'Next'}
               </button>
               {step > 0 && (
                 <button
                   onClick={handleBack}
-                  className="w-full py-2 text-sm transition-colors"
-                  style={{ color: 'var(--color-text-tertiary)' }}
+                  className="w-full py-2 text-sm"
+                  style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                 >
                   Back
                 </button>
@@ -388,7 +394,7 @@ export function WelcomeModal() {
 
           {/* Fun footer text */}
           {!isNameStep && (
-            <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="eyebrow mt-6 text-center">
               {step === 0 && "Trusted by island food lovers"}
               {step === 1 && "Dishes need 5+ votes to get ranked"}
               {step === 2 && "Your photos help everyone eat better"}

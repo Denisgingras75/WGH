@@ -1,11 +1,12 @@
 import { getCategoryNeonImage, categoryEmojiFor } from '../../constants/categories'
 
-// Brand tile background colors — used behind icons when no photo is available.
+// Screen-print ink tiles — used behind icons when no photo is available.
+// Diagonal pairs (butter/ink, lobster/harbor) keep every 2x2 cover high-contrast.
 var BG_COLORS = [
-  'var(--color-accent)',
+  'var(--color-butter)',
   'var(--color-primary)',
-  'var(--color-medal-bronze)',
-  'var(--color-success)',
+  'var(--color-accent)',
+  'var(--color-ink)',
 ]
 
 /**
@@ -19,6 +20,10 @@ var BG_COLORS = [
  * @param {number} size - Grid size in px
  */
 export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 120 }) {
+  // Sticker treatment scales with the cover: tiny row thumbnails get a thin
+  // outline and no shadow; grid/hero covers get the full ink outline + hard shadow.
+  var isTiny = size < 64
+  var isHero = size >= 200
 
   var tiles = [0, 1, 2, 3].map(function (i) {
     var photo = coverPhotos[i] || null
@@ -34,9 +39,13 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
         height: size,
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: 2,
-        borderRadius: 8,
+        gap: isTiny ? 1.5 : 2,
+        background: 'var(--color-ink)',
+        border: isTiny ? 'var(--border-ink-thin)' : 'var(--border-ink)',
+        borderRadius: isTiny ? 'var(--radius-sm)' : isHero ? 'var(--radius-xl)' : 'var(--radius-lg)',
+        boxShadow: isTiny ? 'none' : isHero ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
         overflow: 'hidden',
+        flexShrink: 0,
       }}
     >
       {tiles.map(function (tile, i) {
@@ -71,8 +80,8 @@ export function PlaylistCover({ coverCategories = [], coverPhotos = [], size = 1
                 src={tile.iconSrc}
                 alt={tile.category || ''}
                 style={{
-                  width: '70%',
-                  height: '70%',
+                  width: '88%',
+                  height: '88%',
                   objectFit: 'contain',
                 }}
               />

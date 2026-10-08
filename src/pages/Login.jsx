@@ -189,7 +189,7 @@ export function Login() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: 'var(--color-surface)' }}
+      style={{ background: 'var(--color-bg)' }}
     >
         {/* Header */}
         <header className="px-4 pt-6 pb-4">
@@ -203,11 +203,18 @@ export function Login() {
                 navigate('/')
               }
             }}
-            className="flex items-center gap-2 text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="flex items-center gap-1.5 pl-2.5 pr-4 py-2 text-sm"
+            style={{
+              background: 'var(--color-card)',
+              color: 'var(--color-ink)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: 'var(--shadow-hard-sm)',
+              fontWeight: 700,
+            }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -222,65 +229,91 @@ export function Login() {
                 <SmileyPin size={56} />
               </div>
               <Wordmark as="h1" size={36} style={{ position: 'relative', zIndex: 1 }} />
-              <p
-                style={{
-                  color: 'var(--color-text-secondary)',
-                  opacity: 0.7,
-                  fontSize: '11px',
-                  fontWeight: 500,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  marginTop: '10px',
-                }}
-              >
+              <p className="eyebrow" style={{ marginTop: '12px' }}>
                 Discover Great Food
               </p>
             </div>
 
             {/* Goals Section */}
             <div className="w-full max-w-sm mb-8">
-              <h2 className="text-xl font-bold text-center mb-6" style={{ color: 'var(--color-text-primary)' }}>
+              <h2 className="text-center mb-5" style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.1 }}>
                 Our Goals
               </h2>
               <div className="space-y-4">
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                    style={{
+                      background: 'var(--color-butter)',
+                      color: 'var(--color-ink)',
+                      border: 'var(--border-ink)',
+                      boxShadow: 'var(--shadow-hard-sm)',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: '18px',
+                      lineHeight: 1,
+                    }}
                   >
-                    <span className="font-bold">1</span>
+                    <span>1</span>
                   </div>
-                  <p style={{ color: 'var(--color-text-secondary)' }}>
-                    Help you find <strong style={{ color: 'var(--color-text-primary)' }}>the best dishes</strong> wherever you are
+                  <p style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.4 }}>
+                    Help you find <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>the best dishes</strong> wherever you are
                   </p>
                 </div>
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                    style={{
+                      background: 'var(--color-butter)',
+                      color: 'var(--color-ink)',
+                      border: 'var(--border-ink)',
+                      boxShadow: 'var(--shadow-hard-sm)',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: '18px',
+                      lineHeight: 1,
+                    }}
                   >
-                    <span className="font-bold">2</span>
+                    <span>2</span>
                   </div>
-                  <p style={{ color: 'var(--color-text-secondary)' }}>
-                    Let you <strong style={{ color: 'var(--color-text-primary)' }}>order confidently</strong> at any restaurant you're at
+                  <p style={{ color: 'var(--color-text-secondary)', fontWeight: 500, lineHeight: 1.4 }}>
+                    Let you <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>order confidently</strong> at any restaurant you're at
                   </p>
                 </div>
               </div>
             </div>
 
             {/* How It Works Section */}
-            <div className="w-full max-w-sm mb-8 p-4 rounded-2xl" style={{ background: 'var(--color-bg)' }}>
-              <h3 className="font-semibold text-center mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <div
+              className="w-full max-w-sm mb-8 p-4"
+              style={{
+                background: 'var(--color-card)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-hard)',
+              }}
+            >
+              <h3 className="text-center mb-4" style={{ color: 'var(--color-text-primary)', fontSize: '19px', lineHeight: 1.1 }}>
                 How We Rate
               </h3>
-              <div className="space-y-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">⭐</span>
-                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)' }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
+              <div className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                <div className="flex items-center gap-3 pb-3">
+                  <span
+                    className="w-9 h-9 flex items-center justify-center flex-shrink-0 text-lg"
+                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)' }}
+                  >
+                    ⭐
+                  </span>
+                  <p>Rate the dishes you try from <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>1 to 10</strong>. Your ratings help locals and visitors find the best food.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <CameraIcon size={20} />
-                  <p><strong style={{ color: 'var(--color-text-primary)' }}>Snap a photo</strong> — it'll show in the community gallery for that dish.</p>
+                <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1.5px dashed var(--color-divider)' }}>
+                  <span
+                    className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)' }}
+                  >
+                    <CameraIcon size={20} />
+                  </span>
+                  <p><strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>Snap a photo</strong> — it'll show in the community gallery for that dish.</p>
                 </div>
               </div>
             </div>
@@ -288,8 +321,8 @@ export function Login() {
             {/* Get Started Button - goes to homepage */}
             <button
               onClick={() => navigate('/')}
-              className="w-full max-w-sm px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+              className="btn-ink w-full max-w-sm px-6 py-4 text-lg"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 800 }}
             >
               Get Started
             </button>
@@ -300,8 +333,8 @@ export function Login() {
                 setShowLogin(true)
                 setMode('signup')
               }}
-              className="w-full max-w-sm mt-3 px-6 py-4 rounded-xl font-bold text-lg active:scale-[0.98] transition-all"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+              className="btn-ink w-full max-w-sm mt-3 px-6 py-4 text-lg"
+              style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontWeight: 800 }}
             >
               Create Account
             </button>
@@ -309,10 +342,10 @@ export function Login() {
             {/* Sign in option */}
             <button
               onClick={() => setShowLogin(true)}
-              className="mt-4 text-sm font-medium"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              className="mt-5 text-sm"
+              style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
             >
-              Already have an account? <span style={{ color: 'var(--color-accent)' }}>Sign in</span>
+              Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>Sign in</span>
             </button>
           </div>
         ) : (
@@ -324,10 +357,10 @@ export function Login() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 className="text-center mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '28px', lineHeight: 1.1 }}>
               {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : 'Sign in to vote'}
             </h1>
-            <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
               {mode === 'signup'
                 ? 'Choose a unique username for your profile'
                 : mode === 'signin'
@@ -341,10 +374,10 @@ export function Login() {
             {/* Messages */}
             {message && (
               <div
-                className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
+                className="w-full max-w-sm mb-4 p-4 text-sm"
                 style={message.type === 'error'
-                  ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(var(--color-danger-rgb), 0.3)' }
-                  : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)', border: '1px solid rgba(var(--color-success-rgb), 0.3)' }
+                  ? { background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
+                  : { background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1.5px solid var(--color-success)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
                 }
               >
                 {message.text}
@@ -378,8 +411,8 @@ export function Login() {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', border: '2px solid var(--color-divider)' }}
+                  className="btn-ink w-full gap-3 px-6 py-4"
+                  style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -392,27 +425,27 @@ export function Login() {
 
                 {/* Divider */}
                 <div className="flex items-center gap-4">
-                  <div className="flex-1 h-px" style={{ background: 'var(--color-divider)' }} />
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>or</span>
-                  <div className="flex-1 h-px" style={{ background: 'var(--color-divider)' }} />
+                  <div className="flex-1" style={{ height: '1.5px', background: 'var(--color-divider)' }} />
+                  <span className="eyebrow">or</span>
+                  <div className="flex-1" style={{ height: '1.5px', background: 'var(--color-divider)' }} />
                 </div>
 
                 {/* Email Sign In */}
                 <button
                   onClick={() => setMode('signin')}
-                  className="w-full px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="btn-ink w-full px-6 py-4"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   Sign in with Email
                 </button>
 
                 {/* Sign Up Link */}
-                <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                   Don't have an account?{' '}
                   <button
                     onClick={() => setMode('signup')}
-                    className="font-semibold underline"
-                    style={{ color: 'var(--color-primary)' }}
+                    className="underline"
+                    style={{ color: 'var(--color-accent)', fontWeight: 800 }}
                   >
                     Sign up
                   </button>
@@ -424,7 +457,7 @@ export function Login() {
             {mode === 'signin' && (
               <form onSubmit={handleSignIn} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label htmlFor="login-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="login-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Email
                   </label>
                   <input
@@ -435,13 +468,13 @@ export function Login() {
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="login-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="login-password" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Password
                   </label>
                   <input
@@ -451,16 +484,16 @@ export function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="btn-ink w-full px-6 py-4"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -469,27 +502,26 @@ export function Login() {
                   <button
                     type="button"
                     onClick={() => setMode('options')}
-                    style={{ color: 'var(--color-text-tertiary)' }}
+                    style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode('forgot')}
-                    className="font-medium"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}
                   >
                     Forgot password?
                   </button>
                 </div>
 
-                <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                   Don't have an account?{' '}
                   <button
                     type="button"
                     onClick={() => setMode('signup')}
-                    className="font-semibold underline"
-                    style={{ color: 'var(--color-primary)' }}
+                    className="underline"
+                    style={{ color: 'var(--color-accent)', fontWeight: 800 }}
                   >
                     Sign up
                   </button>
@@ -501,7 +533,7 @@ export function Login() {
             {mode === 'forgot' && (
               <form onSubmit={handleForgotPassword} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label htmlFor="forgot-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="forgot-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Email
                   </label>
                   <input
@@ -512,16 +544,16 @@ export function Login() {
                     placeholder="you@example.com"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="btn-ink w-full px-6 py-4"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
@@ -530,7 +562,7 @@ export function Login() {
                   type="button"
                   onClick={() => setMode('signin')}
                   className="w-full text-center text-sm"
-                  style={{ color: 'var(--color-text-tertiary)' }}
+                  style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                 >
                   Back to sign in
                 </button>
@@ -541,7 +573,7 @@ export function Login() {
             {mode === 'signup' && (
               <form onSubmit={handleSignUp} className="w-full max-w-sm space-y-4">
                 <div>
-                  <label htmlFor="signup-username" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-username" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Username
                   </label>
                   <div className="relative">
@@ -555,15 +587,21 @@ export function Login() {
                       autoFocus
                       minLength={2}
                       maxLength={30}
-                      className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors pr-10"
+                      className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow pr-10"
                       style={{
-                        background: 'var(--color-bg)',
-                        border: `2px solid ${usernameStatus === 'taken' ? 'var(--color-danger)' : usernameStatus === 'available' ? 'var(--color-success)' : 'var(--color-divider)'}`,
-                        color: 'var(--color-text-primary)'
+                        background: 'var(--color-surface-elevated)',
+                        border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-ink)',
+                        borderRadius: 'var(--radius-md)',
+                        color: 'var(--color-text-primary)',
+                        fontSize: '16px',
+                        fontWeight: 500,
                       }}
                     />
                     {usernameStatus && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg">
+                      <span
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-lg"
+                        style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 800 }}
+                      >
                         {usernameStatus === 'checking' && '⏳'}
                         {usernameStatus === 'available' && '✓'}
                         {usernameStatus === 'taken' && '✗'}
@@ -571,15 +609,15 @@ export function Login() {
                     )}
                   </div>
                   {usernameStatus === 'taken' && (
-                    <p className="text-xs mt-1" style={{ color: 'var(--color-danger)' }}>This username is taken</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>This username is taken</p>
                   )}
                   {usernameStatus === 'available' && (
-                    <p className="text-xs mt-1" style={{ color: 'var(--color-success)' }}>Username available!</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--color-success)', fontWeight: 600 }}>Username available!</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Email
                   </label>
                   <input
@@ -589,13 +627,13 @@ export function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                  <label htmlFor="signup-password" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     Password
                   </label>
                   <input
@@ -606,16 +644,16 @@ export function Login() {
                     placeholder="At least 6 characters"
                     required
                     minLength={6}
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-                    style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                    style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                  className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                  className="btn-ink w-full px-6 py-4"
+                  style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>
@@ -624,15 +662,14 @@ export function Login() {
                   <button
                     type="button"
                     onClick={() => setMode('options')}
-                    style={{ color: 'var(--color-text-tertiary)' }}
+                    style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode('signin')}
-                    className="font-medium"
-                    style={{ color: 'var(--color-primary)' }}
+                    style={{ color: 'var(--color-accent)', fontWeight: 700 }}
                   >
                     Already have an account?
                   </button>
@@ -641,11 +678,11 @@ export function Login() {
             )}
 
             {/* Footer */}
-            <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
               By continuing, you agree to our{' '}
-              <a href="/terms" className="underline">Terms</a>
+              <a href="/terms" className="underline" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Terms</a>
               {' '}and{' '}
-              <a href="/privacy" className="underline">Privacy Policy</a>
+              <a href="/privacy" className="underline" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Privacy Policy</a>
             </p>
           </div>
         )}

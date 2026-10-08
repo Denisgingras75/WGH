@@ -6,17 +6,22 @@ export function HowReviewsWork() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--color-bg)' }}>
-      <header className="px-5 pt-6 pb-4">
+      <header className="px-5 pt-6 pb-5 mb-6" style={{ borderBottom: 'var(--border-ink)' }}>
         <button
           onClick={() => navigate(-1)}
-          className="text-sm font-medium mb-4"
-          style={{ color: 'var(--color-primary)' }}
+          className="text-sm mb-5 px-3 py-1"
+          style={{
+            color: 'var(--color-ink)',
+            fontWeight: 700,
+            background: 'var(--color-card)',
+            border: 'var(--border-ink-thin)',
+            borderRadius: 'var(--radius-pill)',
+          }}
         >
           &#8592; Back
         </button>
         <h1
-          className="font-bold"
-          style={{ color: 'var(--color-text-primary)', fontSize: '26px', letterSpacing: '-0.02em' }}
+          style={{ color: 'var(--color-text-primary)', fontSize: '32px', lineHeight: 1.05, letterSpacing: '-0.03em' }}
         >
           How Our Reviews Work
         </h1>
@@ -26,12 +31,12 @@ export function HowReviewsWork() {
         {/* Section 1: AI-Estimated Ratings */}
         <section>
           <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
+            className="mb-3"
+            style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}
           >
             Getting Started with Real Data
           </h2>
-          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mb-3" style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             We analyzed real reviews from Google to give every restaurant initial ratings.
             AI reads what people said about specific dishes and translates their feedback into
             our 1-10 rating scale. These ratings are labeled clearly:
@@ -39,7 +44,7 @@ export function HowReviewsWork() {
           <div className="mb-3">
             <TrustBadge type="ai_estimated" size="md" />
           </div>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             As more locals and visitors rate dishes themselves, AI estimates are gradually
             replaced by real community ratings.
           </p>
@@ -48,33 +53,41 @@ export function HowReviewsWork() {
         {/* Section 2: Human Verification */}
         <section>
           <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
+            className="mb-3"
+            style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}
           >
             Verified Human Reviews
           </h2>
-          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mb-3" style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             Every review typed on What&apos;s Good Here is verified through behavioral analysis.
-            We measure <strong style={{ color: 'var(--color-text-primary)' }}>how</strong> you type, not <strong style={{ color: 'var(--color-text-primary)' }}>what</strong> you type &mdash; your unique
+            We measure <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>how</strong> you type, not <strong style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>what</strong> you type &mdash; your unique
             typing rhythm builds a profile over time, like a batting average that stabilizes
             with more at-bats.
           </p>
-          <div className="space-y-2 mb-3">
+          <div
+            className="p-4 space-y-3 mb-3"
+            style={{
+              background: 'var(--color-card)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-hard)',
+            }}
+          >
             <div className="flex items-center gap-3">
               <TrustBadge type="building" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 600 }}>
                 New reviewers (1-4 reviews)
               </span>
             </div>
             <div className="flex items-center gap-3">
               <TrustBadge type="human_verified" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 600 }}>
                 Consistent typing pattern (5+ reviews)
               </span>
             </div>
             <div className="flex items-center gap-3">
               <TrustBadge type="trusted_reviewer" size="md" />
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 600 }}>
                 Highly consistent (15+ reviews)
               </span>
             </div>
@@ -84,16 +97,16 @@ export function HowReviewsWork() {
         {/* Section 3: Why This Matters */}
         <section>
           <h2
-            className="font-bold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontSize: '18px' }}
+            className="mb-3"
+            style={{ color: 'var(--color-text-primary)', fontSize: '22px', lineHeight: 1.15 }}
           >
             Why This Matters
           </h2>
-          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mb-3" style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             Fake reviews are everywhere. Bots can post a single fake review easily, but maintaining
             a consistent human typing profile across dozens of reviews is statistically impossible.
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px', fontWeight: 500, lineHeight: 1.65 }}>
             Restaurants can trust that their ratings come from real people.
             Consumers can trust they&apos;re getting honest recommendations.
           </p>
@@ -101,16 +114,21 @@ export function HowReviewsWork() {
 
         {/* Section 4: Privacy */}
         <section
-          className="rounded-2xl p-4"
-          style={{ border: '1px solid var(--color-divider)' }}
+          className="p-5"
+          style={{
+            background: 'var(--color-butter)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-hard-lg)',
+          }}
         >
           <h2
-            className="font-bold mb-2"
-            style={{ color: 'var(--color-text-primary)', fontSize: '16px' }}
+            className="mb-2"
+            style={{ color: 'var(--color-ink)', fontSize: '22px', lineHeight: 1.15 }}
           >
             Your Privacy
           </h2>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p style={{ color: 'var(--color-ink)', fontSize: '15px', fontWeight: 600, lineHeight: 1.6 }}>
             We never store what you type &mdash; only the timing between keystrokes.
             No raw keystrokes, no review content in our verification system.
             Just rhythm metadata. Your review content is only used for the review itself.

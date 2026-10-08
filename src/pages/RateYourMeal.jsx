@@ -264,9 +264,9 @@ export function RateYourMeal() {
     return (
       <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
         <div className="px-4 py-6 space-y-4 animate-pulse">
-          <div className="h-10 w-40 rounded" style={{ background: 'var(--color-surface-elevated)' }} />
-          <div className="h-64 rounded-3xl" style={{ background: 'var(--color-card)' }} />
-          <div className="h-16 rounded-2xl" style={{ background: 'var(--color-card)' }} />
+          <div className="h-10 w-40" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }} />
+          <div className="h-64" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
+          <div className="h-16" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
         </div>
       </div>
     )
@@ -277,12 +277,12 @@ export function RateYourMeal() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center">
-          <p className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>
             {errorMessage}
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="px-5 py-2.5 rounded-xl font-semibold"
+            className="btn-ink px-5 py-2.5"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Back to Restaurant
@@ -301,35 +301,38 @@ export function RateYourMeal() {
       <>
         <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
           <div
-            className="rounded-3xl px-5 py-6 text-center"
+            className="px-5 py-6 text-center"
             style={{
               background: 'var(--color-card)',
-              border: '1px solid var(--color-divider)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-hard-lg)',
             }}
           >
             <h1
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '24px',
+                fontSize: '26px',
+                lineHeight: 1.05,
                 color: 'var(--color-text-primary)',
               }}
             >
               Sign in to Rate Your Meal
             </h1>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
               This flow saves a vote for each dish you ate.
             </p>
             <div className="flex gap-3 mt-5">
               <button
                 onClick={function () { navigate('/restaurants/' + restaurantId) }}
-                className="flex-1 rounded-2xl py-3 font-semibold"
-                style={{ background: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-divider)' }}
+                className="btn-ink flex-1 py-3"
+                style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
               >
                 Back
               </button>
               <button
                 onClick={function () { setLoginModalOpen(true) }}
-                className="flex-1 rounded-2xl py-3 font-semibold"
+                className="btn-ink flex-1 py-3"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Sign In
@@ -349,27 +352,29 @@ export function RateYourMeal() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
         <div
-          className="rounded-3xl px-5 py-6 text-center"
+          className="px-5 py-6 text-center"
           style={{
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-surface)',
+            border: '2px dashed var(--color-text-tertiary)',
+            borderRadius: 'var(--radius-xl)',
           }}
         >
           <h1
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '24px',
+              fontSize: '26px',
+              lineHeight: 1.05,
               color: 'var(--color-text-primary)',
             }}
           >
             No Menu Yet
           </h1>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             This restaurant needs dishes before the batch flow can start.
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="mt-5 rounded-2xl px-5 py-3 font-semibold"
+            className="btn-ink mt-5 px-5 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Back to Restaurant
@@ -454,17 +459,19 @@ export function RateYourMeal() {
     <>
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-bg)' }}>
         <div
-          className="rounded-[32px] px-6 py-8 text-center"
+          className="px-6 py-8 text-center"
           style={{
-            background: 'linear-gradient(180deg, var(--color-primary-muted), var(--color-card))',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-hard-lg)',
           }}
         >
           <div
             className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            style={{ background: 'var(--color-butter)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard)' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-8 h-8">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
           </div>
@@ -472,22 +479,23 @@ export function RateYourMeal() {
             className="mt-5"
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '29px',
+              fontSize: '30px',
+              lineHeight: 1.05,
               color: 'var(--color-text-primary)',
             }}
           >
             Meal Rated
           </h1>
-          <p className="text-base font-semibold mt-2" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="text-base mt-2" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
             Rated {successCount} dish{successCount === 1 ? '' : 'es'} at {restaurant.name}
           </p>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             Every dish was saved as its own vote.
           </p>
           <button
             onClick={function () { navigate('/restaurants/' + restaurantId) }}
-            className="mt-6 w-full rounded-2xl py-3.5 font-bold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="btn-ink mt-6 w-full py-3.5"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontWeight: 800 }}
           >
             Back to Restaurant
           </button>

@@ -9,14 +9,24 @@
  */
 export function EmptyState({ emoji, title, subtitle, action }) {
   return (
-    <div className="py-12 text-center">
+    <div
+      className="py-10 px-6 text-center"
+      style={{
+        background: 'var(--color-surface)',
+        border: '2px dashed var(--color-text-tertiary)',
+        borderRadius: 'var(--radius-lg)',
+      }}
+    >
       {emoji && (
-        <div style={{ fontSize: '40px', marginBottom: '12px' }}>{emoji}</div>
+        <div style={{ fontSize: '40px', lineHeight: 1, marginBottom: '12px' }}>{emoji}</div>
       )}
       <p
-        className="font-semibold"
         style={{
-          fontSize: '16px',
+          fontFamily: 'var(--font-display)',
+          fontSize: '18px',
+          fontWeight: 800,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
           color: 'var(--color-text-primary)',
         }}
       >
@@ -26,8 +36,9 @@ export function EmptyState({ emoji, title, subtitle, action }) {
         <p
           style={{
             fontSize: '14px',
-            color: 'var(--color-text-tertiary)',
-            marginTop: '4px',
+            fontWeight: 500,
+            color: 'var(--color-text-secondary)',
+            marginTop: '6px',
           }}
         >
           {subtitle}

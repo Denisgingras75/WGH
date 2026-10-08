@@ -119,70 +119,72 @@ export function DishSelector({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: 'var(--border-ink)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             aria-label="Back to restaurant"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
           <div className="min-w-0 flex-1">
             <h1
-              className="font-bold"
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '22px',
+                fontSize: '24px',
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
+                lineHeight: 1.05,
               }}
             >
               Rate Your Meal
             </h1>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 600, marginTop: '2px' }}>
               Pick every dish you ate
             </p>
           </div>
         </div>
 
-        <div
-          className="mt-3 rounded-2xl px-3 py-2.5 flex items-center gap-2"
-          style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-divider)',
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35m0 0A7.95 7.95 0 1 0 5.4 5.4a7.95 7.95 0 0 0 11.25 11.25Z" />
+        <div className="mt-3 relative">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-ink)' }} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
             type="search"
             value={searchQuery}
             onChange={function (event) { onSearchQueryChange(event.target.value) }}
             placeholder="Search dishes or sections"
-            className="w-full bg-transparent outline-none text-sm"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="w-full pl-11 pr-4 py-3 outline-none"
+            style={{
+              background: 'var(--color-surface-elevated)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-hard)',
+              color: 'var(--color-text-primary)',
+              fontSize: '16px',
+              fontWeight: 500,
+            }}
           />
         </div>
       </div>
 
       {loading && (
         <div className="px-4 py-6 space-y-4">
-          <div className="h-40 rounded-2xl animate-pulse" style={{ background: 'var(--color-surface)' }} />
-          <div className="h-40 rounded-2xl animate-pulse" style={{ background: 'var(--color-surface)' }} />
+          <div className="h-40 animate-pulse" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
+          <div className="h-40 animate-pulse" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-lg)' }} />
         </div>
       )}
 
       {!loading && error && (
         <div className="px-4 pt-8 text-center">
-          <p className="text-sm mb-4" style={{ color: 'var(--color-danger)' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>
             {error?.message || error}
           </p>
         </div>
@@ -191,16 +193,17 @@ export function DishSelector({
       {!loading && !error && sections.length === 0 && (
         <div className="px-4 pt-8">
           <div
-            className="rounded-2xl px-5 py-8 text-center"
+            className="px-5 py-8 text-center"
             style={{
               background: 'var(--color-surface)',
-              border: '1px solid var(--color-divider)',
+              border: '2px dashed var(--color-text-tertiary)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p className="font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+            <p style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
               {searchQuery ? 'No dishes match that search' : 'No menu items yet'}
             </p>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="text-sm mt-2" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
               You can still add a special dish below.
             </p>
           </div>
@@ -209,19 +212,21 @@ export function DishSelector({
 
       {!loading && !error && sections.length > 0 && (
         <div
-          className="flex mx-3 my-4 rounded-2xl overflow-hidden"
+          className="flex mx-4 my-4 overflow-hidden"
           style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-hard)',
             minHeight: '420px',
           }}
         >
           <nav
-            className="flex-shrink-0 overflow-y-auto py-3"
+            className="flex-shrink-0 overflow-y-auto"
             style={{
               width: '33%',
-              background: 'var(--color-bg)',
-              borderRight: '1px solid var(--color-divider)',
+              background: 'var(--color-surface)',
+              borderRight: 'var(--border-ink)',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
@@ -233,34 +238,32 @@ export function DishSelector({
                 <button
                   key={section.name}
                   onClick={function () { setActiveSection(section.name) }}
-                  className="w-full text-left px-3.5 py-3 transition-all relative"
+                  className="w-full text-left px-3 py-3 relative"
                   style={{
-                    background: isActive ? 'var(--color-primary-muted)' : 'transparent',
+                    background: isActive ? 'var(--color-butter)' : 'transparent',
+                    borderBottom: isActive ? 'var(--border-ink)' : '2px solid var(--color-divider)',
+                    borderTop: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                    marginTop: '-2px',
+                    transition: 'background 0.15s ease',
                   }}
                 >
-                  {isActive && (
-                    <div
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-full"
-                      style={{
-                        height: '60%',
-                        background: 'var(--color-primary)',
-                      }}
-                    />
-                  )}
                   <span
-                    className="block font-semibold leading-tight"
+                    className="block leading-tight"
                     style={{
                       fontSize: '14px',
-                      color: isActive ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                      fontWeight: isActive ? 800 : 700,
+                      color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+                      letterSpacing: '-0.01em',
                     }}
                   >
                     {section.name}
                   </span>
                   <span
-                    className="block mt-0.5 font-medium"
+                    className="block mt-0.5"
                     style={{
                       fontSize: '11px',
-                      color: isActive ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)',
+                      fontWeight: 600,
+                      color: isActive ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
                     }}
                   >
                     {section.dishes.length} {section.dishes.length === 1 ? 'item' : 'items'}
@@ -270,52 +273,55 @@ export function DishSelector({
             })}
           </nav>
 
-          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex-1 min-w-0 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <div
               className="sticky top-0 z-10 px-4 py-3"
               style={{
-                background: 'linear-gradient(180deg, var(--color-surface) 85%, transparent)',
-                borderBottom: '1px solid var(--color-divider)',
+                background: 'var(--color-card)',
+                borderBottom: 'var(--border-ink)',
               }}
             >
               <h2
-                className="font-bold"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: 'var(--color-text-primary)',
-                  fontSize: '16px',
+                  fontSize: '19px',
                   fontWeight: 800,
                   letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
                 }}
               >
                 {activeSectionData?.name}
               </h2>
             </div>
 
-            <div className="px-3 pb-4">
+            <div className="px-2 py-1.5">
               {activeSectionData?.dishes.map(function (dish, index) {
                 var isSelected = !!selectedDishIds[dish.dish_id]
                 return (
                   <button
                     key={dish.dish_id}
                     onClick={function () { onToggleDish(dish) }}
-                    className="w-full text-left px-2 py-3 rounded-xl transition-all active:scale-[0.98]"
+                    className="w-full text-left px-2 py-3 active:scale-[0.98]"
                     style={{
-                      borderBottom: index < activeSectionData.dishes.length - 1 ? '1px solid var(--color-divider)' : 'none',
-                      background: isSelected ? 'var(--color-primary-muted)' : 'transparent',
+                      transition: 'transform 0.08s ease, background 0.15s ease',
+                      borderBottom: index < activeSectionData.dishes.length - 1 ? '1.5px dashed var(--color-divider)' : 'none',
+                      background: isSelected ? 'var(--color-butter-muted)' : 'transparent',
+                      borderRadius: isSelected ? 'var(--radius-sm)' : 0,
                     }}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2.5">
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: isSelected ? 'var(--color-primary)' : 'transparent',
-                          border: isSelected ? 'none' : '1.5px solid var(--color-divider)',
-                          color: isSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-tertiary)',
+                          background: isSelected ? 'var(--color-primary)' : 'var(--color-card)',
+                          border: 'var(--border-ink)',
+                          boxShadow: isSelected ? 'var(--shadow-hard-sm)' : 'none',
+                          color: 'var(--color-text-on-primary)',
                         }}
                       >
                         {isSelected ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3.5} stroke="currentColor" className="w-3.5 h-3.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         ) : null}
@@ -324,18 +330,18 @@ export function DishSelector({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="font-semibold" style={{ color: 'var(--color-text-primary)', fontSize: '14px' }}>
+                            <p style={{ color: 'var(--color-text-primary)', fontSize: '14px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
                               {dish.dish_name}
                             </p>
-                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                            <p className="mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '11.5px', fontWeight: 600 }}>
                               {dish.category || activeSectionData.name}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                            <p style={{ color: 'var(--color-ink)', fontSize: '14px', fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}>
                               {dish.price ? '$' + Number(dish.price).toFixed(0) : '--'}
                             </p>
-                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                            <p className="mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 600 }}>
                               {(dish.total_votes || 0) > 0 ? (dish.total_votes || 0) + ' votes' : 'No votes'}
                             </p>
                           </div>
@@ -353,31 +359,34 @@ export function DishSelector({
       <div className="px-4 pb-24">
         <button
           onClick={onSpecialToggle}
-          className="w-full rounded-2xl px-4 py-4 text-left transition-all active:scale-[0.99]"
+          className="w-full px-4 py-4 text-left sticker-press"
           style={{
-            background: specialDishEnabled ? 'var(--color-primary-muted)' : 'var(--color-surface)',
-            border: specialDishEnabled ? '1px solid var(--color-primary)' : '1px solid var(--color-divider)',
+            background: specialDishEnabled ? 'var(--color-butter-muted)' : 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              <p style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                 Special
               </p>
-              <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                 Add a dish that wasn't on the menu
               </p>
             </div>
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                background: specialDishEnabled ? 'var(--color-primary)' : 'transparent',
-                border: specialDishEnabled ? 'none' : '1.5px solid var(--color-divider)',
+                background: specialDishEnabled ? 'var(--color-primary)' : 'var(--color-card)',
+                border: 'var(--border-ink)',
+                boxShadow: specialDishEnabled ? 'var(--shadow-hard-sm)' : 'none',
                 color: 'var(--color-text-on-primary)',
               }}
             >
               {specialDishEnabled ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3.5} stroke="currentColor" className="w-3.5 h-3.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                 </svg>
               ) : null}
@@ -387,13 +396,14 @@ export function DishSelector({
 
         {specialDishEnabled && (
           <div
-            className="mt-3 rounded-2xl px-4 py-4"
+            className="mt-3 px-4 py-4"
             style={{
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-divider)',
+              background: 'var(--color-card)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <label className="block text-sm mb-2" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
               What was it?
             </label>
             <input
@@ -401,11 +411,13 @@ export function DishSelector({
               value={specialDishName}
               onChange={function (event) { onSpecialDishNameChange(event.target.value) }}
               placeholder="Lobster special, chef's burger, secret pie..."
-              className="w-full rounded-xl px-3 py-3 text-sm outline-none"
+              className="w-full px-3 py-3 outline-none"
               style={{
-                background: 'var(--color-bg)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-surface-elevated)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
                 color: 'var(--color-text-primary)',
+                fontSize: '16px',
               }}
             />
           </div>
@@ -417,14 +429,13 @@ export function DishSelector({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          boxShadow: selectedCount > 0 ? '0 -4px 20px rgba(0,0,0,0.12)' : '0 -2px 12px rgba(0,0,0,0.08)',
-          transition: 'box-shadow 0.2s ease',
+          borderTop: 'var(--border-ink)',
         }}
       >
         {selectedCount > 0 && (
           <p
-            className="text-center font-semibold mb-2"
-            style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}
+            className="text-center mb-2"
+            style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-secondary)' }}
           >
             {selectedCount} dish{selectedCount === 1 ? '' : 'es'} selected — ready to rate!
           </p>
@@ -432,11 +443,12 @@ export function DishSelector({
         <button
           onClick={onContinue}
           disabled={selectedCount === 0}
-          className="w-full rounded-2xl py-3.5 font-bold text-sm transition-all"
+          className="btn-ink w-full py-3.5"
           style={{
-            background: selectedCount === 0 ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-            color: selectedCount === 0 ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
-            opacity: selectedCount === 0 ? 0.7 : 1,
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+            fontSize: '15px',
+            fontWeight: 800,
           }}
         >
           {selectedCount === 0

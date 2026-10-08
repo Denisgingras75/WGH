@@ -60,15 +60,15 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
       {/* Expand/Collapse Button */}
       <button
         onClick={handleExpand}
-        className="flex items-center gap-1 text-xs font-medium transition-colors"
-        style={{ color: 'var(--color-primary)' }}
+        className="flex items-center gap-1 text-xs transition-colors"
+        style={{ color: 'var(--color-accent)', fontWeight: 700 }}
       >
         <svg
           className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
@@ -78,38 +78,39 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
       {/* Variant List */}
       {expanded && (
         <div
-          className="mt-2 rounded-lg overflow-hidden"
-          style={{ background: 'var(--color-surface)', border: '1px solid var(--color-divider)' }}
+          className="mt-2 overflow-hidden"
+          style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}
         >
           {loading ? (
             <div className="p-3 space-y-2">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-10 rounded animate-pulse" style={{ background: 'var(--color-divider)' }} />
+                <div key={i} className="h-10 animate-pulse" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }} />
               ))}
             </div>
           ) : error ? (
-            <div className="p-3 text-center text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+            <div className="p-3 text-center text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
               {error}
             </div>
           ) : variants.length === 0 ? (
-            <div className="p-3 text-center text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+            <div className="p-3 text-center text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
               No variants found
             </div>
           ) : (
-            <div className="divide-y" style={{ borderColor: 'var(--color-divider)' }}>
-              {variants.map((variant) => {
+            <div>
+              {variants.map((variant, i) => {
                 const isRanked = (variant.total_votes || 0) >= MIN_VOTES_FOR_RANKING
                 return (
                   <button
                     key={variant.dish_id}
                     onClick={(e) => handleVariantClick(e, variant)}
-                    className="w-full flex items-center justify-between p-3 text-left hover:bg-black/5 transition-colors"
+                    className="w-full flex items-center justify-between p-3 text-left active:scale-[0.99]"
+                    style={{ borderTop: i > 0 ? '1.5px dashed var(--color-divider)' : 'none' }}
                   >
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium truncate block" style={{ color: 'var(--color-text-primary)' }}>
+                      <span className="text-sm truncate block" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                         {variant.dish_name}
                       </span>
-                      <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                      <span className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                         {variant.total_votes > 0
                           ? `${variant.total_votes} vote${variant.total_votes === 1 ? '' : 's'}`
                           : 'No votes yet'
@@ -119,8 +120,14 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
                     <div className="flex items-center gap-2 ml-2">
                       {isRanked && variant.avg_rating && (
                         <span
-                          className="text-sm font-bold"
-                          style={{ color: getRatingColor(variant.avg_rating) }}
+                          style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '17px',
+                            fontWeight: 800,
+                            letterSpacing: '-0.03em',
+                            lineHeight: 1,
+                            color: getRatingColor(variant.avg_rating),
+                          }}
                         >
                           {variant.avg_rating}
                         </span>
@@ -130,8 +137,8 @@ export function VariantPicker({ parentDishId, parentDishName, onVariantSelect, i
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth={2}
-                        style={{ color: 'var(--color-text-tertiary)' }}
+                        strokeWidth={2.5}
+                        style={{ color: 'var(--color-ink)' }}
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
@@ -157,19 +164,23 @@ export function VariantBadge({ variantCount, bestVariantName, bestVariantRating,
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors hover:opacity-80"
+      className="inline-flex items-center gap-1 px-2 py-0.5 transition-opacity hover:opacity-80"
       style={{
-        background: 'var(--color-primary-muted)',
-        color: 'var(--color-primary)'
+        background: 'var(--color-card)',
+        color: 'var(--color-ink)',
+        border: 'var(--border-ink-thin)',
+        borderRadius: 'var(--radius-pill)',
+        fontSize: '11px',
+        fontWeight: 800,
       }}
     >
       <span>{variantCount} flavor{variantCount === 1 ? '' : 's'}</span>
       {bestVariantName && (
         <>
-          <span style={{ color: 'var(--color-divider)' }}>·</span>
-          <span className="truncate max-w-[80px]">Best: {bestVariantName}</span>
+          <span style={{ color: 'var(--color-text-tertiary)' }}>·</span>
+          <span className="truncate max-w-[80px]" style={{ fontWeight: 600 }}>Best: {bestVariantName}</span>
           {bestVariantRating && (
-            <span className="font-bold" style={{ color: getRatingColor(bestVariantRating) }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: getRatingColor(bestVariantRating) }}>
               {bestVariantRating}
             </span>
           )}
@@ -194,20 +205,20 @@ export function VariantSelector({ variants, currentDishId, onSelect }) {
           <button
             key={variant.dish_id}
             onClick={() => onSelect(variant)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isActive ? 'ring-2 ring-offset-1' : 'hover:opacity-80'
+            className={`px-3 py-1.5 text-sm transition-all ${
+              isActive ? '' : 'hover:opacity-80'
             }`}
             style={{
-              background: isActive ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: isActive ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-              borderColor: 'var(--color-divider)',
-              border: isActive ? 'none' : '1px solid var(--color-divider)',
-              '--tw-ring-color': 'var(--color-primary)',
+              borderRadius: 'var(--radius-pill)',
+              background: isActive ? 'var(--color-butter)' : 'var(--color-card)',
+              color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+              border: isActive ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              fontWeight: isActive ? 800 : 700,
             }}
           >
             {variant.dish_name}
             {variant.avg_rating && (
-              <span className="ml-1 opacity-80">
+              <span className="ml-1" style={{ fontWeight: 600, opacity: 0.8 }}>
                 ({variant.avg_rating})
               </span>
             )}

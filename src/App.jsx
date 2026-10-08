@@ -90,11 +90,11 @@ const PageLoader = () => (
     role="status"
     aria-label="Loading page"
     className="min-h-screen flex items-center justify-center"
-    style={{ background: 'var(--color-surface)' }}
+    style={{ background: 'var(--color-bg)' }}
   >
     <div className="animate-pulse text-center">
       <div className="w-12 h-12 mx-auto mb-3 rounded-full" style={{ background: 'var(--color-divider)' }} />
-      <div className="h-4 w-24 mx-auto rounded" style={{ background: 'var(--color-divider)' }} />
+      <div className="h-4 w-24 mx-auto" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }} />
       <span className="sr-only">Loading...</span>
     </div>
   </div>
@@ -115,10 +115,34 @@ function App() {
         expand={false}
         duration={4000}
         closeButton
+        style={{
+          // Sticker toasts: card paper + ink text everywhere; richColors keeps a
+          // light per-type tint (layered over opaque card so stacked toasts don't bleed).
+          '--normal-bg': 'var(--color-card)',
+          '--normal-border': 'var(--color-ink)',
+          '--normal-text': 'var(--color-ink)',
+          '--success-bg': 'linear-gradient(var(--color-success-muted), var(--color-success-muted)), var(--color-card)',
+          '--success-border': 'var(--color-ink)',
+          '--success-text': 'var(--color-ink)',
+          '--info-bg': 'linear-gradient(var(--color-accent-muted), var(--color-accent-muted)), var(--color-card)',
+          '--info-border': 'var(--color-ink)',
+          '--info-text': 'var(--color-ink)',
+          '--warning-bg': 'linear-gradient(var(--color-butter-muted), var(--color-butter-muted)), var(--color-card)',
+          '--warning-border': 'var(--color-ink)',
+          '--warning-text': 'var(--color-ink)',
+          '--error-bg': 'linear-gradient(var(--color-danger-muted), var(--color-danger-muted)), var(--color-card)',
+          '--error-border': 'var(--color-ink)',
+          '--error-text': 'var(--color-ink)',
+        }}
         toastOptions={{
           style: {
-            padding: '16px',
-            borderRadius: '12px',
+            padding: '14px 16px',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-hard)',
+            fontFamily: 'var(--font-body)',
+            fontSize: '14px',
+            fontWeight: 600,
           },
         }}
       />

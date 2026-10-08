@@ -25,61 +25,63 @@ export function RestaurantInfoEditor({ restaurant, onUpdate }) {
   }
 
   const inputStyle = {
-    background: 'var(--color-bg)',
-    border: '1.5px solid var(--color-divider)',
+    background: 'var(--color-surface-elevated)',
+    border: 'var(--border-ink)',
+    borderRadius: 'var(--radius-md)',
     color: 'var(--color-text-primary)',
+    fontSize: '16px',
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+      <h3 style={{ fontSize: '20px', color: 'var(--color-text-primary)' }}>
         Restaurant Info
       </h3>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Phone</label>
+        <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Phone</label>
         <input
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="(508) 555-1234"
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
+          className="w-full px-4 py-2.5 focus:outline-none"
           style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Website</label>
+        <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Website</label>
         <input
           type="url"
           value={websiteUrl}
           onChange={(e) => setWebsiteUrl(e.target.value)}
           placeholder="https://..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
+          className="w-full px-4 py-2.5 focus:outline-none"
           style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Facebook</label>
+        <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Facebook</label>
         <input
           type="url"
           value={facebookUrl}
           onChange={(e) => setFacebookUrl(e.target.value)}
           placeholder="https://facebook.com/..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
+          className="w-full px-4 py-2.5 focus:outline-none"
           style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Instagram</label>
+        <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Instagram</label>
         <input
           type="url"
           value={instagramUrl}
           onChange={(e) => setInstagramUrl(e.target.value)}
           placeholder="https://instagram.com/..."
-          className="w-full px-4 py-2.5 rounded-lg text-sm"
+          className="w-full px-4 py-2.5 focus:outline-none"
           style={inputStyle}
         />
       </div>
@@ -87,7 +89,7 @@ export function RestaurantInfoEditor({ restaurant, onUpdate }) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
+        className="btn-ink w-full py-3 text-sm"
         style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
       >
         {saving ? 'Saving...' : 'Save Changes'}

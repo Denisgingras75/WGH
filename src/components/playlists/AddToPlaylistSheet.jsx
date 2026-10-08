@@ -50,8 +50,8 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-end"
-        style={{ background: 'rgba(0,0,0,0.5)' }}
+        className="fixed inset-0 z-[60] flex items-end"
+        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
         onClick={function (e) { if (e.target === e.currentTarget) onClose() }}
         onKeyDown={function (e) { if (e.key === 'Escape') onClose() }}
       >
@@ -59,9 +59,12 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
           role="dialog"
           aria-modal="true"
           aria-label="Add to a playlist"
-          className="w-full rounded-t-2xl"
+          className="w-full"
           style={{
-            background: 'var(--color-surface)',
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderBottom: 'none',
+            borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
             padding: '8px 0 20px',
             maxHeight: '80vh',
             overflowY: 'auto',
@@ -71,14 +74,14 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
           }}
         >
           {/* Grabber */}
-          <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 12px' }} />
+          <div style={{ width: 40, height: 6, background: 'var(--color-ink)', opacity: 0.25, borderRadius: 'var(--radius-pill)', margin: '6px auto 12px' }} />
 
           {/* Header */}
-          <div style={{ padding: '0 20px 12px', borderBottom: '1px solid var(--color-divider)' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <div style={{ padding: '0 20px 14px', borderBottom: '1.5px solid var(--color-divider)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               Add to a playlist
             </div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 4 }}>
               {dishName} &middot; {restaurantName}
             </div>
           </div>
@@ -92,31 +95,34 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
               gap: 12,
               padding: '14px 20px',
               color: 'var(--color-primary)',
-              fontWeight: 700,
-              fontSize: 13,
+              fontWeight: 800,
+              fontSize: 14,
               background: 'transparent',
               border: 'none',
+              borderBottom: '1.5px solid var(--color-divider)',
               width: '100%',
               textAlign: 'left',
             }}
           >
             <span style={{
-              width: 36, height: 36,
-              border: '1.5px dashed var(--color-primary)',
-              borderRadius: 6,
+              width: 40, height: 40,
+              border: '2px dashed var(--color-text-tertiary)',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--color-surface)',
+              color: 'var(--color-ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20,
+              fontSize: 22, fontWeight: 800, lineHeight: 1, flexShrink: 0,
             }}>+</span>
             Create new playlist
           </button>
 
           {/* Playlist list */}
           {loading ? (
-            <div style={{ padding: 20, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+            <div style={{ padding: 20, color: 'var(--color-text-tertiary)', textAlign: 'center', fontSize: 14, fontWeight: 600 }}>
               Loading&hellip;
             </div>
           ) : entries.length === 0 ? (
-            <div style={{ padding: 20, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+            <div style={{ padding: 20, color: 'var(--color-text-tertiary)', textAlign: 'center', fontSize: 14, fontWeight: 600 }}>
               No playlists yet &mdash; create one above
             </div>
           ) : (
@@ -133,28 +139,29 @@ export function AddToPlaylistSheet({ isOpen, onClose, dishId, dishName, restaura
                     gap: 12,
                     padding: '12px 20px',
                     width: '100%',
-                    background: 'transparent',
+                    background: checked ? 'var(--color-butter-muted)' : 'transparent',
                     border: 'none',
-                    borderBottom: '1px solid var(--color-divider)',
+                    borderBottom: '1.5px solid var(--color-divider)',
                     textAlign: 'left',
                   }}
                 >
-                  <PlaylistCover coverCategories={e.cover_categories || []} size={36} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                  <PlaylistCover coverCategories={e.cover_categories || []} size={40} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                       {e.title}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
                       {e.item_count} {e.item_count === 1 ? 'dish' : 'dishes'}
                     </div>
                   </div>
                   <div style={{
-                    width: 22, height: 22, borderRadius: '50%',
-                    border: '2px solid ' + (checked ? 'var(--color-primary)' : 'var(--color-divider)'),
-                    background: checked ? 'var(--color-primary)' : 'transparent',
+                    width: 24, height: 24, borderRadius: '50%',
+                    border: 'var(--border-ink)',
+                    background: checked ? 'var(--color-primary)' : 'var(--color-card)',
+                    boxShadow: checked ? 'var(--shadow-hard-sm)' : 'none',
                     color: 'var(--color-text-on-primary)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 700,
+                    fontSize: 13, fontWeight: 800, flexShrink: 0,
                   }}>
                     {checked ? '\u2713' : ''}
                   </div>

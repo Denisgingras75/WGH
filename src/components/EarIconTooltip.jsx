@@ -46,29 +46,31 @@ export function EarIconTooltip({ visible, onDismiss }) {
     >
       {/* Arrow pointing up toward the ear icon */}
       <div
-        className="absolute -top-[5px]"
+        className="absolute -top-[6px]"
         style={{
           right: 20,
-          width: 10,
-          height: 10,
+          width: 12,
+          height: 12,
           background: 'var(--color-card)',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
+          border: 'var(--border-ink)',
           borderRight: 'none',
           borderBottom: 'none',
+          borderTopLeftRadius: '2px',
           transform: 'rotate(45deg)',
         }}
       />
       <div
-        className="rounded-xl px-3.5 py-2.5"
+        className="px-3.5 py-2.5"
         style={{
           background: 'var(--color-card)',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
-          boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.04)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-hard)',
         }}
       >
         <p
-          className="text-[13px] font-medium leading-snug"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="text-[13px] leading-snug"
+          style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
         >
           Tap to save dishes you hear about
         </p>
@@ -77,8 +79,8 @@ export function EarIconTooltip({ visible, onDismiss }) {
             e.stopPropagation()
             handleDismiss()
           }}
-          className="mt-1.5 text-xs font-semibold"
-          style={{ color: 'var(--color-accent)' }}
+          className="mt-1.5 text-xs"
+          style={{ color: 'var(--color-accent)', fontWeight: 800 }}
         >
           Got it
         </button>

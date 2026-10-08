@@ -16,10 +16,11 @@ export function PlaylistStripCard({ playlist }) {
       <PlaylistCover coverCategories={covers} size={110} />
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
+          letterSpacing: '-0.01em',
           color: 'var(--color-text-primary)',
-          marginTop: 6,
+          marginTop: 8,
           lineHeight: 1.2,
           overflow: 'hidden',
           display: '-webkit-box',
@@ -31,7 +32,8 @@ export function PlaylistStripCard({ playlist }) {
       </div>
       <div
         style={{
-          fontSize: 10,
+          fontSize: 10.5,
+          fontWeight: 600,
           color: 'var(--color-text-tertiary)',
           marginTop: 2,
         }}

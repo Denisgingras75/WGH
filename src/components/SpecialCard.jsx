@@ -23,11 +23,12 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
   return (
     <button
       onClick={handleClick}
-      className="w-full rounded-xl p-4 text-left card-press"
+      className="sticker-press w-full p-4 text-left"
       style={{
-        background: 'var(--color-surface-elevated)',
-        border: '2px solid var(--color-card-border)',
-        boxShadow: '2px 2px 0px var(--color-card-border)',
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: promoted ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
       }}
     >
       <div className="flex gap-3">
@@ -43,26 +44,27 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
           {/* Featured badge */}
           {promoted && (
             <span
-              className="text-xs font-medium mb-1 inline-block"
-              style={{ color: 'var(--color-accent)' }}
+              className="mb-1.5 inline-block px-2 py-0.5 rounded-full"
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                background: 'var(--color-butter)',
+                border: 'var(--border-ink-thin)',
+                color: 'var(--color-ink)',
+              }}
             >
               Featured
             </span>
           )}
 
           {/* Deal Name */}
-          <h3 className="font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 style={{ fontSize: '18px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>
             {deal_name}
           </h3>
 
           {/* Restaurant Name */}
           <p
-            className="text-xs mt-0.5 font-medium"
-            style={{
-              color: 'var(--color-text-tertiary)',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}
+            className="eyebrow mt-1"
           >
             {restaurant?.name}
             {restaurant?.town && ` \u00B7 ${restaurant.town}`}
@@ -72,7 +74,7 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
           {description && (
             <p
               className="text-sm mt-2 line-clamp-2"
-              style={{ color: 'var(--color-text-tertiary)' }}
+              style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}
             >
               {description}
             </p>
@@ -82,10 +84,16 @@ export const SpecialCard = memo(function SpecialCard({ special, promoted }) {
           {price && (
             <div className="mt-2">
               <span
-                className="inline-block px-2 py-1 rounded-md text-sm font-bold"
+                className="inline-block px-2.5 py-0.5"
                 style={{
-                  background: 'var(--color-primary-muted)',
-                  color: 'var(--color-primary)',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '18px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.03em',
+                  background: 'var(--color-butter)',
+                  border: 'var(--border-ink-thin)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--color-ink)',
                 }}
               >
                 ${Number(price).toFixed(2)}

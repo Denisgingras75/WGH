@@ -172,8 +172,8 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
       onClick={onClose}
       role="presentation"
     >
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm" aria-hidden="true" />
+      {/* Backdrop */}
+      <div className="absolute inset-0" style={{ background: 'rgba(27, 22, 17, 0.55)' }} aria-hidden="true" />
 
       {/* Modal */}
       <div
@@ -181,37 +181,56 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="login-modal-title"
-        className="relative rounded-3xl max-w-md w-full shadow-xl overflow-hidden"
+        className="relative max-w-md w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ background: 'var(--color-surface-elevated)' }}
+        style={{
+          background: 'var(--color-card)',
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-hard-lg)',
+        }}
       >
-        {/* Decorative gradient header */}
-        <div className="h-2" style={{ background: 'var(--color-primary)' }} />
+        {/* Lobster header band */}
+        <div className="h-3" style={{ background: 'var(--color-primary)', borderBottom: 'var(--border-ink)' }} />
 
-        <div className="p-8">
+        <div className="p-7">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 w-[44px] h-[44px] rounded-full flex items-center justify-center transition-colors tap-target"
-            style={{ background: 'var(--color-divider)', color: 'var(--color-text-secondary)' }}
+            className="absolute top-6 right-5 w-[44px] h-[44px] rounded-full flex items-center justify-center tap-target"
+            style={{
+              background: 'var(--color-card)',
+              color: 'var(--color-ink)',
+              border: 'var(--border-ink)',
+              boxShadow: 'var(--shadow-hard-sm)',
+            }}
             aria-label="Close"
           >
-            <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
               <path d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
 
           {/* Icon */}
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'var(--color-primary)' }}>
+          <div
+            className="w-16 h-16 mx-auto mb-6 flex items-center justify-center"
+            style={{
+              background: 'var(--color-category-strip)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-hard)',
+              transform: 'rotate(-3deg)',
+            }}
+          >
             <span className="text-3xl">{hasPendingVote ? '⭐' : '🍽️'}</span>
           </div>
 
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 id="login-modal-title" className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 id="login-modal-title" className="mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '24px', lineHeight: 1.15 }}>
               {mode === 'signup' ? 'Create Account' : mode === 'signin' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : hasPendingVote ? 'Sign in to save your rating' : 'Sign in to rate'}
             </h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
               {mode === 'signup'
                 ? 'Choose a unique username for your profile'
                 : mode === 'signin'
@@ -230,10 +249,10 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
             <div
               role="alert"
               aria-live="polite"
-              className="mb-6 p-4 rounded-xl text-sm font-medium"
+              className="mb-6 p-4 text-sm"
               style={message.type === 'error'
-                ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
-                : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
+                ? { background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
+                : { background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1.5px solid var(--color-success)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
               }
             >
               {message.text}
@@ -267,8 +286,8 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                className="btn-ink w-full gap-3 px-6 py-4"
+                style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -281,27 +300,27 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
 
               {/* Divider */}
               <div className="flex items-center gap-4">
-                <div className="flex-1 h-px" style={{ background: 'var(--color-divider)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>or</span>
-                <div className="flex-1 h-px" style={{ background: 'var(--color-divider)' }} />
+                <div className="flex-1" style={{ height: '1.5px', background: 'var(--color-divider)' }} />
+                <span className="eyebrow">or</span>
+                <div className="flex-1" style={{ height: '1.5px', background: 'var(--color-divider)' }} />
               </div>
 
               {/* Email Sign In */}
               <button
                 onClick={() => setMode('signin')}
-                className="w-full px-6 py-4 rounded-xl font-semibold active:scale-[0.98] transition-all"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 Sign in with Email
               </button>
 
               {/* Sign Up Link */}
-              <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                 Don't have an account?{' '}
                 <button
                   onClick={() => setMode('signup')}
-                  className="font-semibold underline"
-                  style={{ color: 'var(--color-primary)' }}
+                  className="underline"
+                  style={{ color: 'var(--color-accent)', fontWeight: 800 }}
                 >
                   Sign up
                 </button>
@@ -313,7 +332,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
           {mode === 'signin' && (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <label htmlFor="signin-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="signin-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Email
                 </label>
                 <input
@@ -324,13 +343,13 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="you@example.com"
                   required
                   autoFocus
-                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors"
-                  style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <div>
-                <label htmlFor="signin-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="signin-password" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Password
                 </label>
                 <input
@@ -340,16 +359,16 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors"
-                  style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -358,27 +377,26 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                 <button
                   type="button"
                   onClick={() => setMode('options')}
-                  style={{ color: 'var(--color-text-tertiary)' }}
+                  style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('forgot')}
-                  className="font-medium"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}
                 >
                   Forgot password?
                 </button>
               </div>
 
-              <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-center text-sm" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                 Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => setMode('signup')}
-                  className="font-semibold underline"
-                  style={{ color: 'var(--color-primary)' }}
+                  className="underline"
+                  style={{ color: 'var(--color-accent)', fontWeight: 800 }}
                 >
                   Sign up
                 </button>
@@ -390,7 +408,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
           {mode === 'forgot' && (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label htmlFor="forgot-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="forgot-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Email
                 </label>
                 <input
@@ -401,16 +419,16 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="you@example.com"
                   required
                   autoFocus
-                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors"
-                  style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
@@ -419,7 +437,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                 type="button"
                 onClick={() => setMode('signin')}
                 className="w-full text-center text-sm"
-                style={{ color: 'var(--color-text-tertiary)' }}
+                style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
               >
                 Back to sign in
               </button>
@@ -430,7 +448,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
           {mode === 'signup' && (
             <form onSubmit={handleSignUp} className="space-y-4">
               <div>
-                <label htmlFor="signup-username" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="signup-username" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Username
                 </label>
                 <div className="relative">
@@ -446,15 +464,22 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                     maxLength={30}
                     aria-describedby={usernameStatus ? 'username-status' : undefined}
                     aria-invalid={usernameStatus === 'taken'}
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors pr-10"
+                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow pr-10"
                     style={{
-                      background: 'var(--color-bg)',
-                      border: `2px solid ${usernameStatus === 'taken' ? 'var(--color-red)' : usernameStatus === 'available' ? 'var(--color-emerald)' : 'var(--color-divider)'}`,
-                      color: 'var(--color-text-primary)'
+                      background: 'var(--color-surface-elevated)',
+                      border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-ink)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '16px',
+                      fontWeight: 500,
                     }}
                   />
                   {usernameStatus && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg" aria-hidden="true">
+                    <span
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-lg"
+                      style={{ color: usernameStatus === 'taken' ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 800 }}
+                      aria-hidden="true"
+                    >
                       {usernameStatus === 'checking' && '⏳'}
                       {usernameStatus === 'available' && '✓'}
                       {usernameStatus === 'taken' && '✗'}
@@ -462,15 +487,15 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   )}
                 </div>
                 {usernameStatus === 'taken' && (
-                  <p id="username-status" className="text-xs mt-1" style={{ color: 'var(--color-red)' }} role="alert">This username is taken</p>
+                  <p id="username-status" className="text-xs mt-1" style={{ color: 'var(--color-danger)', fontWeight: 600 }} role="alert">This username is taken</p>
                 )}
                 {usernameStatus === 'available' && (
-                  <p id="username-status" className="text-xs mt-1" style={{ color: 'var(--color-emerald)' }}>Username available!</p>
+                  <p id="username-status" className="text-xs mt-1" style={{ color: 'var(--color-success)', fontWeight: 600 }}>Username available!</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="signup-email" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Email
                 </label>
                 <input
@@ -480,13 +505,13 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors"
-                  style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <div>
-                <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <label htmlFor="signup-password" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                   Password
                 </label>
                 <input
@@ -497,16 +522,16 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="At least 6 characters"
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors"
-                  style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
-                className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                className="btn-ink w-full px-6 py-4"
+                style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
@@ -515,28 +540,27 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                 <button
                   type="button"
                   onClick={() => setMode('options')}
-                  style={{ color: 'var(--color-text-tertiary)' }}
+                  style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('signin')}
-                  className="font-medium"
-                  style={{ color: 'var(--color-primary)' }}
+                  style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}
                 >
-                  Already have an account? <span style={{ color: 'var(--color-accent)' }}>Sign in</span>
+                  Already have an account? <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>Sign in</span>
                 </button>
               </div>
             </form>
           )}
 
           {/* Footer */}
-          <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="mt-6 text-xs text-center" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
             By continuing, you agree to our{' '}
-            <a href="/terms" className="underline" style={{ color: 'var(--color-text-secondary)' }}>Terms</a>
+            <a href="/terms" className="underline" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Terms</a>
             {' '}and{' '}
-            <a href="/privacy" className="underline" style={{ color: 'var(--color-text-secondary)' }}>Privacy Policy</a>
+            <a href="/privacy" className="underline" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Privacy Policy</a>
           </p>
         </div>
       </div>

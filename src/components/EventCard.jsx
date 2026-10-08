@@ -55,11 +55,12 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
   return (
     <button
       onClick={handleClick}
-      className="w-full rounded-xl p-4 text-left transition-all hover:shadow-lg active:scale-[0.99]"
+      className="sticker-press w-full p-4 text-left"
       style={{
         background: 'var(--color-card)',
-        border: '1px solid var(--color-divider)',
-        borderLeft: promoted ? '3px solid var(--color-accent)' : '1px solid var(--color-divider)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: promoted ? 'var(--shadow-hard-lg)' : 'var(--shadow-hard)',
       }}
     >
       <div className="flex gap-3">
@@ -75,18 +76,27 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           {/* Badges row */}
           <div className="flex items-center gap-2 mb-1">
             <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              className="px-2 py-0.5 rounded-full"
               style={{
-                background: 'rgba(var(--color-primary-rgb), 0.2)',
-                color: 'var(--color-primary)',
+                fontSize: '11px',
+                fontWeight: 800,
+                background: 'var(--color-card)',
+                border: 'var(--border-ink-thin)',
+                color: 'var(--color-ink)',
               }}
             >
               {getEventTypeLabel(event_type)}
             </span>
             {promoted && (
               <span
-                className="text-xs font-medium"
-                style={{ color: 'var(--color-accent)' }}
+                className="px-2 py-0.5 rounded-full"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  background: 'var(--color-butter)',
+                  border: 'var(--border-ink-thin)',
+                  color: 'var(--color-ink)',
+                }}
               >
                 Featured
               </span>
@@ -94,12 +104,12 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           </div>
 
           {/* Event Name */}
-          <h3 className="font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 style={{ fontSize: '18px', lineHeight: 1.15, color: 'var(--color-text-primary)' }}>
             {event_name}
           </h3>
 
           {/* Restaurant Name */}
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent)' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent)', fontWeight: 700 }}>
             {restaurant?.name}
             {restaurant?.town && ` \u00b7 ${restaurant.town}`}
           </p>
@@ -108,7 +118,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           {description && (
             <p
               className="text-sm mt-2 line-clamp-2"
-              style={{ color: 'var(--color-text-secondary)' }}
+              style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}
             >
               {description}
             </p>
@@ -117,13 +127,13 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           {/* Date & Time with urgency badge */}
           <div className="flex items-center gap-2 mt-2">
             <span
-              className="text-xs font-semibold"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="text-xs"
+              style={{ color: 'var(--color-ink)', fontWeight: 800 }}
             >
               {formatDate(event_date)}
             </span>
             {timeDisplay && (
-              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                 {timeDisplay}
               </span>
             )}
@@ -133,17 +143,17 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
               today.setHours(0, 0, 0, 0)
               const diffDays = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
               if (diffDays === 0) return (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-butter)', border: 'var(--border-ink-thin)', color: 'var(--color-ink)' }}>
                   Today
                 </span>
               )
               if (diffDays === 1) return (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-card)', border: 'var(--border-ink-thin)', color: 'var(--color-ink)' }}>
                   Tomorrow
                 </span>
               )
               if (diffDays > 0 && diffDays <= 3) return (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }}>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ fontSize: '10px', fontWeight: 800, background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-secondary)' }}>
                   This week
                 </span>
               )
@@ -159,7 +169,7 @@ export const EventCard = memo(function EventCard({ event, promoted }) {
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>

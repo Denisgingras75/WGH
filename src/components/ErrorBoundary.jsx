@@ -5,37 +5,43 @@ function ErrorFallback({ error, resetError }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-bg)' }}>
       <div className="text-center max-w-md">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+        <div
+          className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+          style={{ background: 'var(--color-category-strip)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
+        >
           <span className="text-2xl">😵</span>
         </div>
-        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '26px', lineHeight: 1.1 }}>
           Something went wrong
         </h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           We've been notified and are working on it. Try refreshing the page.
         </p>
         <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="w-full px-4 py-3 font-semibold rounded-xl"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="btn-ink w-full px-4 py-3.5"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             Refresh Page
           </button>
           <button
             onClick={resetError}
-            className="w-full px-4 py-3 font-medium rounded-xl"
-            style={{ color: 'var(--color-text-primary)', border: '1px solid var(--color-divider)' }}
+            className="btn-ink w-full px-4 py-3.5"
+            style={{ background: 'var(--color-card)', color: 'var(--color-ink)', fontSize: '16px' }}
           >
             Try Again
           </button>
         </div>
         {import.meta.env.DEV && (
           <details className="mt-6 text-left">
-            <summary className="text-xs cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
+            <summary className="eyebrow cursor-pointer">
               Error details (dev only)
             </summary>
-            <pre className="mt-2 p-3 rounded-lg text-xs overflow-auto" style={{ background: 'var(--color-surface)', color: 'var(--color-danger)' }}>
+            <pre
+              className="mt-2 p-3 text-xs overflow-auto"
+              style={{ background: 'var(--color-surface)', color: 'var(--color-danger)', border: '1.5px dashed var(--color-divider)', borderRadius: 'var(--radius-sm)' }}
+            >
               {error?.message}
             </pre>
           </details>

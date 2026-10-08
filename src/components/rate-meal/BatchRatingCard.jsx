@@ -40,25 +40,34 @@ export function BatchRatingCard({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: 'var(--border-ink)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             aria-label="Go back"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '22px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.05,
+                color: 'var(--color-text-primary)',
+              }}
+            >
               {index + 1} of {total}
             </p>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 600, marginTop: '2px' }}>
               Rate each dish before you submit
             </p>
           </div>
@@ -67,31 +76,46 @@ export function BatchRatingCard({
 
       <div className="px-4 pt-5">
         <div
-          className="rounded-[28px] px-4 py-5"
+          className="px-4 py-5"
           style={{
             background: 'var(--color-card)',
-            border: '1px solid var(--color-divider)',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-hard)',
           }}
         >
           <div className="text-center mb-5">
             {dish.isSpecial && (
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--color-accent)' }}>
+              <span
+                className="inline-block uppercase"
+                style={{
+                  padding: '2px 9px',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  background: 'var(--color-butter)',
+                  border: 'var(--border-ink-thin)',
+                  borderRadius: 'var(--radius-pill)',
+                  color: 'var(--color-ink)',
+                }}
+              >
                 Special
-              </p>
+              </span>
             )}
             <h1
-              className="mt-1"
+              className="mt-2"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '27px',
-                lineHeight: 1,
+                fontSize: '28px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.05,
                 color: 'var(--color-text-primary)',
               }}
             >
               {dish.name}
             </h1>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="mt-1.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 600 }}>
               {dish.category || 'Menu item'}
             </p>
           </div>
@@ -109,16 +133,17 @@ export function BatchRatingCard({
           <div className="mt-6">
             <button
               onClick={function () { setIsReviewExpanded(!isReviewExpanded) }}
-              className="w-full rounded-2xl px-4 py-3 text-left transition-all active:scale-[0.99]"
+              className="w-full px-4 py-3 text-left transition-all active:scale-[0.99]"
               style={{
-                background: isReviewExpanded ? 'var(--color-primary-muted)' : 'var(--color-surface)',
-                border: isReviewExpanded ? '1px solid var(--color-primary)' : '1px solid var(--color-divider)',
+                background: isReviewExpanded ? 'var(--color-butter-muted)' : 'var(--color-surface)',
+                border: isReviewExpanded ? 'var(--border-ink)' : '2px dashed var(--color-text-tertiary)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
-              <span className="block font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              <span className="block" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                 What stood out?
               </span>
-              <span className="block text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+              <span className="block text-sm mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
                 {isReviewExpanded
                   ? 'Add a quick note if you want'
                   : (value.reviewText ? 'Tap to edit your note' : 'Tap to add a note')}
@@ -132,21 +157,23 @@ export function BatchRatingCard({
                   onChange={function (event) { updateValue({ reviewText: event.target.value }) }}
                   placeholder="Crunchy edge, too salty, great sauce, worth the splurge..."
                   rows={4}
-                  className="w-full rounded-2xl px-4 py-3 text-sm resize-none outline-none"
+                  className="w-full px-4 py-3 resize-none outline-none"
                   style={{
-                    background: 'var(--color-bg)',
-                    border: reviewOverLimit ? '1px solid var(--color-danger)' : '1px solid var(--color-divider)',
+                    background: 'var(--color-surface-elevated)',
+                    border: reviewOverLimit ? '2px solid var(--color-danger)' : 'var(--border-ink)',
+                    borderRadius: 'var(--radius-md)',
                     color: 'var(--color-text-primary)',
+                    fontSize: '16px',
                   }}
                 />
-                <p className="text-xs mt-2 text-right" style={{ color: reviewOverLimit ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
+                <p className="text-xs mt-2 text-right" style={{ color: reviewOverLimit ? 'var(--color-danger)' : 'var(--color-text-tertiary)', fontWeight: 700 }}>
                   {reviewLength}/{MAX_REVIEW_LENGTH}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4">
             <input
               ref={fileInputRef}
               type="file"
@@ -156,40 +183,42 @@ export function BatchRatingCard({
             />
             <button
               onClick={function () { fileInputRef.current && fileInputRef.current.click() }}
-              className="w-full rounded-2xl px-4 py-3 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              className="w-full px-4 py-3 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
               style={{
                 background: 'var(--color-surface)',
-                border: '1px solid var(--color-divider)',
-                color: 'var(--color-text-primary)',
+                border: '2px dashed var(--color-text-tertiary)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 8.37 5.5h7.26a2.31 2.31 0 0 1 1.543.675l.87.778a2.31 2.31 0 0 1 .77 1.72v7.655a2.31 2.31 0 0 1-2.31 2.31H7.497a2.31 2.31 0 0 1-2.31-2.31V8.674a2.31 2.31 0 0 1 .77-1.72l.87-.778Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="m9 14 1.878-1.878a1.5 1.5 0 0 1 2.122 0L15 14m-6 0 1.5-1.5a1.5 1.5 0 0 1 2.121 0L14 14m0 0 1.5-1.5a1.5 1.5 0 0 1 2.121 0L19 14m-8-4.5h.008v.008H11V9.5Z" />
               </svg>
-              <span className="font-semibold text-sm">{value.photoFile ? 'Change Photo' : 'Add Photo'}</span>
+              <span className="text-sm" style={{ fontWeight: 700 }}>{value.photoFile ? 'Change Photo' : 'Add Photo'}</span>
             </button>
 
             {value.photoFile && (
               <div
-                className="mt-3 rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+                className="mt-3 px-4 py-3 flex items-center justify-between gap-3"
                 style={{
-                  background: 'var(--color-bg)',
-                  border: '1px solid var(--color-divider)',
+                  background: 'var(--color-surface)',
+                  border: 'var(--border-ink-thin)',
+                  borderRadius: 'var(--radius-md)',
                 }}
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
+                  <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     {value.photoFile.name}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                     Uploads when you submit everything
                   </p>
                 </div>
                 <button
                   onClick={function () { updateValue({ photoFile: null }) }}
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--color-primary)' }}
+                  className="text-sm flex-shrink-0"
+                  style={{ color: 'var(--color-primary)', fontWeight: 800 }}
                 >
                   Remove
                 </button>
@@ -204,16 +233,18 @@ export function BatchRatingCard({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+          borderTop: 'var(--border-ink)',
         }}
       >
         <button
           onClick={onNext}
           disabled={value.rating10 == null || value.rating10 === 0 || reviewOverLimit}
-          className="w-full rounded-2xl py-3.5 font-bold text-sm transition-all"
+          className="btn-ink w-full py-3.5"
           style={{
-            background: (value.rating10 == null || value.rating10 === 0 || reviewOverLimit) ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-            color: (value.rating10 == null || value.rating10 === 0 || reviewOverLimit) ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+            fontSize: '15px',
+            fontWeight: 800,
           }}
         >
           {index === total - 1 ? 'Review' : 'Next'}

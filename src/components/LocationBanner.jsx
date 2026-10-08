@@ -7,26 +7,28 @@ export function LocationBanner({ permissionState, requestLocation, message }) {
 
   return (
     <div
-      className="mb-4 p-4 rounded-xl flex items-center justify-between gap-3"
+      className="mb-4 p-4 flex items-center justify-between gap-3"
       style={{
-        background: 'rgba(var(--color-accent-rgb), 0.08)',
-        border: '1px solid rgba(var(--color-accent-rgb), 0.2)',
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
       }}
     >
       <div className="min-w-0">
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+        <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
           {message || 'Enable location for better results'}
         </p>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           We'll sort by distance and show what's nearby
         </p>
       </div>
       <button
         onClick={requestLocation}
-        className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+        className="btn-ink flex-shrink-0 px-4 py-2 text-sm"
         style={{
           background: 'var(--color-accent)',
-          color: 'var(--color-bg)',
+          color: 'var(--color-text-on-primary)',
         }}
       >
         Enable

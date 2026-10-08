@@ -333,38 +333,39 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center px-4"
         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-        style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+        style={{ background: 'rgba(27, 22, 17, 0.55)' }}
       >
         <div
           ref={containerRef}
           role="dialog"
           aria-modal="true"
           aria-label="Add a restaurant"
-          className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl"
+          className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
           style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-divider)',
+            background: 'var(--color-card)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-hard-lg)',
           }}
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10"
-            style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+            className="flex items-center justify-between px-5 py-4 sticky top-0 z-10"
+            style={{ borderBottom: 'var(--border-ink)', background: 'var(--color-card)' }}
           >
             <h2
-              className="font-bold text-lg"
-              style={{ color: 'var(--color-text-primary)' }}
+              style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}
             >
               {step === STEPS.SEARCH ? 'Add a Restaurant' : 'Confirm Details'}
             </h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-secondary)' }}
+              className="sticker-press w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -372,7 +373,7 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
 
           {/* Error display */}
           {error && (
-            <div className="mx-5 mt-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}>
+            <div className="mx-5 mt-4 px-4 py-3 text-sm" style={{ background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
               {error}
             </div>
           )}
@@ -387,11 +388,15 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by restaurant name..."
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl text-sm"
+                className="w-full px-4 py-3 focus:outline-none"
                 style={{
-                  background: 'var(--color-bg)',
-                  border: '1.5px solid var(--color-divider)',
+                  background: 'var(--color-surface-elevated)',
+                  border: 'var(--border-ink)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-hard)',
                   color: 'var(--color-text-primary)',
+                  fontSize: '16px',
+                  fontWeight: 500,
                 }}
               />
 
@@ -399,31 +404,32 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
               <div className="mt-3 space-y-1">
                 {searchLoading && (
                   <div className="py-4 text-center">
-                    <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
+                    <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-ink)' }} />
                   </div>
                 )}
 
                 {/* Local DB results */}
                 {localResults.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider px-1 py-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <p className="eyebrow px-1 pt-3 pb-2">
                       Already on WGH
                     </p>
                     {localResults.map((r) => (
                       <button
                         key={r.id}
                         onClick={() => handleSelectLocal(r)}
-                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors"
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+                        className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', fontSize: '12px', fontWeight: 700 }}>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', border: 'var(--border-ink-thin)', fontSize: '12px', fontWeight: 700 }}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{r.name}</p>
+                          <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{r.name}</p>
                           <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>{r.address}</p>
                         </div>
                         <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -437,24 +443,25 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                 {/* Google Places results */}
                 {externalResults.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider px-1 py-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <p className="eyebrow px-1 pt-3 pb-2">
                       From Google
                     </p>
                     {externalResults.map((p) => (
                       <button
                         key={p.placeId}
                         onClick={() => handleSelectExternal(p)}
-                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors"
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+                        className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors"
+                        style={{ borderRadius: 'var(--radius-md)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-accent)', fontSize: '14px' }}>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', color: 'var(--color-accent)', border: 'var(--border-ink-thin)', fontSize: '14px' }}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{p.name}</p>
+                          <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{p.name}</p>
                           <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>{p.address}</p>
                         </div>
                       </button>
@@ -469,19 +476,19 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
                 {searchQuery.trim().length >= 2 && !searchLoading && (
                   <button
                     onClick={handleManualAdd}
-                    className="w-full flex items-center gap-3 px-3 py-3 mt-2 rounded-lg text-left border border-dashed transition-colors"
-                    style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                    className="w-full flex items-center gap-3 px-3 py-3 mt-2 text-left transition-colors"
+                    style={{ border: '2px dashed var(--color-text-tertiary)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)', color: 'var(--color-accent)' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-muted)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-surface)'}
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)' }}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-card)', border: 'var(--border-ink-thin)' }}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">Add "{searchQuery.trim()}" manually</p>
-                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Not found in Google Places</p>
+                      <p className="text-sm" style={{ fontWeight: 800 }}>Add "{searchQuery.trim()}" manually</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>Not found in Google Places</p>
                     </div>
                   </button>
                 )}
@@ -493,48 +500,48 @@ export function AddRestaurantModal({ isOpen, onClose, initialQuery = '' }) {
           {step === STEPS.DETAILS && (
             <div className="p-5 space-y-4">
               {googlePlaceId && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'var(--color-surface-elevated)' }}>
-                  <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <div className="flex items-center justify-between px-3 py-2" style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-divider)', borderRadius: 'var(--radius-md)' }}>
+                  <span className="text-xs" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                     Pre-filled from Google Maps
                   </span>
                   <PoweredByGoogle />
                 </div>
               )}
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Name *</label>
+                <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Name *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-2.5 focus:outline-none"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Address *</label>
+                <label className="block text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Address *</label>
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm"
-                  style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+                  className="w-full px-4 py-2.5 focus:outline-none"
+                  style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px' }}
                 />
               </div>
-              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
                 We'll find the website, menu, and phone number automatically.
               </p>
 
               <button
                 onClick={handleDetailsNext}
-                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
+                className="btn-ink w-full py-3 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Next
               </button>
               <button
                 onClick={() => setStep(STEPS.SEARCH)}
-                className="w-full py-2 text-sm font-medium"
-                style={{ color: 'var(--color-text-tertiary)' }}
+                className="w-full py-2 text-sm"
+                style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}
               >
                 Back to search
               </button>

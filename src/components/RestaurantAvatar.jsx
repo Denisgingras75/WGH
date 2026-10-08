@@ -63,10 +63,10 @@ export var RestaurantAvatar = memo(function RestaurantAvatar({
     var initial = name ? name.charAt(0).toUpperCase() : '?'
     return (
       <div
-        className={fill ? '' : 'rounded-lg flex items-center justify-center flex-shrink-0 ' + className}
+        className={fill ? '' : 'flex items-center justify-center flex-shrink-0 ' + className}
         style={fill
-          ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
-          : { width: size, height: size, background: 'var(--color-surface)', color: 'var(--color-text-tertiary)', fontSize: (size * 0.4) + 'px', fontWeight: 700 }
+          ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-display)', fontSize: (size * 0.4) + 'px', fontWeight: 800 }
+          : { width: size, height: size, background: 'var(--color-surface)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-display)', fontSize: (size * 0.4) + 'px', fontWeight: 800 }
         }
         aria-label={(name || 'Restaurant') + ' icon'}
       >
@@ -77,10 +77,10 @@ export var RestaurantAvatar = memo(function RestaurantAvatar({
 
   return (
     <div
-      className={fill ? '' : 'rounded-lg flex items-center justify-center flex-shrink-0 ' + className}
+      className={fill ? '' : 'flex items-center justify-center flex-shrink-0 ' + className}
       style={fill
-        ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-        : { width: size, height: size, background: 'var(--color-surface)' }
+        ? { position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'var(--color-category-strip)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+        : { width: size, height: size, background: 'var(--color-category-strip)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-md)' }
       }
       aria-label={(name || 'Restaurant') + ' icon'}
     >

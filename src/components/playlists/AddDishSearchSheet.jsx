@@ -11,6 +11,9 @@ import { capture } from '../../lib/analytics'
 import { logger } from '../../utils/logger'
 import { toast } from 'sonner'
 
+// Rotating avatar inks for restaurant initials
+var AVATAR_COLORS = ['var(--color-primary)', 'var(--color-accent)', 'var(--color-ink)', 'var(--color-rating)']
+
 /**
  * Two-mode search sheet for adding dishes to a playlist.
  *
@@ -167,38 +170,39 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '12px 20px', width: '100%',
           background: 'transparent', border: 'none',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: '1.5px solid var(--color-divider)',
           textAlign: 'left', opacity: isAdded ? 0.5 : 1,
         }}
       >
         <div style={{
-          width: 36, height: 36, borderRadius: 6,
+          width: 40, height: 40, borderRadius: 'var(--radius-sm)',
           background: 'var(--color-category-strip)',
+          border: 'var(--border-ink-thin)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 18, flexShrink: 0, overflow: 'hidden',
         }}>
           {getCategoryNeonImage(dish.category) ? (
-            <img src={getCategoryNeonImage(dish.category)} alt="" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+            <img src={getCategoryNeonImage(dish.category)} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
           ) : (
             categoryEmojiFor(dish.category)
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>{name}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>{name}</div>
           {dish.restaurant_name && (
-            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', marginTop: 1 }}>
               {dish.restaurant_name}
-              {dish.restaurant_town && <span> &middot; {dish.restaurant_town}</span>}
+              {dish.restaurant_town && <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}> &middot; {dish.restaurant_town}</span>}
             </div>
           )}
         </div>
         <div style={{
           width: 28, height: 28, borderRadius: '50%',
-          border: '2px solid ' + (isAdded ? 'var(--color-rating)' : 'var(--color-primary)'),
-          background: isAdded ? 'var(--color-rating)' : 'transparent',
-          color: isAdded ? 'var(--color-text-on-primary)' : 'var(--color-primary)',
+          border: 'var(--border-ink)',
+          background: isAdded ? 'var(--color-rating)' : 'var(--color-card)',
+          color: isAdded ? 'var(--color-text-on-primary)' : 'var(--color-ink)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, fontWeight: 700, flexShrink: 0,
+          fontSize: 15, fontWeight: 800, lineHeight: 1, flexShrink: 0,
         }}>
           {isAdded ? '\u2713' : '+'}
         </div>
@@ -208,8 +212,8 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
+      className="fixed inset-0 z-[60] flex items-end"
+      style={{ background: 'rgba(27, 22, 17, 0.55)' }}
       onClick={function (e) { if (e.target === e.currentTarget) onClose() }}
       onKeyDown={function (e) { if (e.key === 'Escape') onClose() }}
     >
@@ -218,51 +222,69 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         role="dialog"
         aria-modal="true"
         aria-label="Add dishes to playlist"
-        className="w-full rounded-t-2xl flex flex-col"
-        style={{ background: 'var(--color-surface)', maxHeight: '85vh' }}
+        className="w-full flex flex-col"
+        style={{
+          background: 'var(--color-card)',
+          border: 'var(--border-ink)',
+          borderBottom: 'none',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+          maxHeight: '85vh',
+        }}
       >
         {/* Grabber */}
-        <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 0' }} />
+        <div style={{ width: 40, height: 6, background: 'var(--color-ink)', opacity: 0.25, borderRadius: 'var(--radius-pill)', margin: '10px auto 0', flexShrink: 0 }} />
 
         {/* Mode toggle — only when NOT drilled into a restaurant */}
         {!selectedRestaurant && (
-          <div className="flex gap-2 px-5 pt-3 pb-2">
-            {['dish', 'restaurant'].map(function (m) {
-              var active = mode === m
-              return (
-                <button
-                  key={m}
-                  onClick={function () { setMode(m); setQuery('') }}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold"
-                  style={{
-                    background: active ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
-                    color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                    border: active ? 'none' : '1px solid var(--color-divider)',
-                  }}
-                >
-                  {m === 'dish' ? 'By Dish' : 'By Restaurant'}
-                </button>
-              )
-            })}
+          <div className="px-5 pt-3 pb-2">
+            <div
+              className="flex p-1"
+              style={{
+                background: 'var(--color-card)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-hard-sm)',
+              }}
+            >
+              {['dish', 'restaurant'].map(function (m) {
+                var active = mode === m
+                return (
+                  <button
+                    key={m}
+                    onClick={function () { setMode(m); setQuery('') }}
+                    className="flex-1 py-2 text-sm transition-all"
+                    style={{
+                      fontWeight: 800,
+                      borderRadius: 'var(--radius-sm)',
+                      background: active ? 'var(--color-ink)' : 'transparent',
+                      color: active ? 'var(--color-bg)' : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {m === 'dish' ? 'By Dish' : 'By Restaurant'}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
         {/* Restaurant drill-down header */}
         {selectedRestaurant && (
-          <div className="flex items-center gap-3 px-5 pt-3 pb-2" style={{ borderBottom: '1px solid var(--color-divider)' }}>
+          <div className="flex items-center gap-3 px-5 pt-3 pb-3" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
             <button
               onClick={function () { setSelectedRestaurant(null); setRestaurantDishes([]) }}
-              style={{ background: 'none', border: 'none', fontSize: 18, color: 'var(--color-text-secondary)', padding: 0 }}
+              className="flex items-center justify-center active:scale-95"
+              style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)', fontSize: 18, fontWeight: 800, color: 'var(--color-ink)', padding: 0, flexShrink: 0 }}
               aria-label="Back to restaurant search"
             >
               &larr;
             </button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
                 {selectedRestaurant.name}
               </div>
               {selectedRestaurant.town && (
-                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                   {selectedRestaurant.town}
                 </div>
               )}
@@ -271,7 +293,7 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         )}
 
         {/* Search input */}
-        <div style={{ padding: '8px 20px 8px', borderBottom: selectedRestaurant ? 'none' : '1px solid var(--color-divider)' }}>
+        <div style={{ padding: '8px 20px 12px', borderBottom: selectedRestaurant ? 'none' : '1.5px solid var(--color-divider)' }}>
           <input
             ref={inputRef}
             type="text"
@@ -286,11 +308,15 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                 : 'Search restaurants...'
             }
             autoComplete="off"
-            className="w-full px-4 py-2.5 rounded-xl text-sm"
+            className="w-full px-4 py-2.5 focus:outline-none"
             style={{
-              background: 'var(--color-bg)',
-              border: '1.5px solid var(--color-divider)',
+              background: 'var(--color-surface-elevated)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-hard)',
               color: 'var(--color-text-primary)',
+              fontSize: '16px',
+              fontWeight: 500,
             }}
           />
         </div>
@@ -302,10 +328,10 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           {selectedRestaurant ? (
             restaurantDishesLoading ? (
               <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
+                <div className="animate-spin w-6 h-6 rounded-full mx-auto" style={{ border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
               </div>
             ) : filteredRestaurantDishes.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14, fontWeight: 600 }}>
                 {dishFilter ? 'No matching dishes' : 'No dishes found'}
               </div>
             ) : (
@@ -319,15 +345,15 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                 {dishError.message || 'Could not load dishes.'}
               </div>
             ) : query.trim().length < 2 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14, fontWeight: 600 }}>
                 Type a dish name to search
               </div>
             ) : dishLoading ? (
               <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
+                <div className="animate-spin w-6 h-6 rounded-full mx-auto" style={{ border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
               </div>
             ) : sortedDishResults.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14, fontWeight: 600 }}>
                 No dishes found for &ldquo;{query.trim()}&rdquo;
               </div>
             ) : (
@@ -337,19 +363,19 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
           /* --- Restaurant mode --- */
           ) : (
             query.trim().length < 2 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14, fontWeight: 600 }}>
                 Type a restaurant name to search
               </div>
             ) : restLoading ? (
               <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <div className="animate-spin w-5 h-5 border-2 rounded-full mx-auto" style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
+                <div className="animate-spin w-6 h-6 rounded-full mx-auto" style={{ border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
               </div>
             ) : restResults.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 14, fontWeight: 600 }}>
                 No restaurants found for &ldquo;{query.trim()}&rdquo;
               </div>
             ) : (
-              restResults.map(function (r) {
+              restResults.map(function (r, ri) {
                 return (
                   <button
                     key={r.id}
@@ -358,27 +384,28 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '14px 20px', width: '100%',
                       background: 'transparent', border: 'none',
-                      borderBottom: '1px solid var(--color-divider)',
+                      borderBottom: '1.5px solid var(--color-divider)',
                       textAlign: 'left',
                     }}
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
-                      background: 'var(--color-primary)', color: 'var(--color-text-on-primary)',
+                      background: AVATAR_COLORS[ri % AVATAR_COLORS.length], color: 'var(--color-text-on-primary)',
+                      border: 'var(--border-ink)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, fontWeight: 700, flexShrink: 0,
+                      fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, flexShrink: 0,
                     }}>
                       {(r.name || '?').charAt(0)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)' }}>
                         {r.name}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
                         {r.town || r.address || ''}
                       </div>
                     </div>
-                    <svg style={{ width: 16, height: 16, color: 'var(--color-text-tertiary)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg style={{ width: 16, height: 16, color: 'var(--color-ink)', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
@@ -389,11 +416,11 @@ export function AddDishSearchSheet({ isOpen, onClose, playlistId, existingDishId
         </div>
 
         {/* Done button */}
-        <div style={{ padding: '12px 20px', borderTop: '1px solid var(--color-divider)' }}>
+        <div style={{ padding: '12px 20px', borderTop: 'var(--border-ink)', flexShrink: 0 }}>
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl font-semibold text-sm"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="btn-ink w-full py-3"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: 15, fontWeight: 800 }}
           >
             Done
           </button>

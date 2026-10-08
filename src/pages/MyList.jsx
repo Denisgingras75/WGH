@@ -58,16 +58,16 @@ export function MyList() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center px-6">
           <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔒</div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="mb-2" style={{ fontSize: '26px', lineHeight: 1.05, color: 'var(--color-text-primary)' }}>
             Local Curators Only
           </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             You need an invite link to become a local curator.
           </p>
           <button
             onClick={function () { navigate('/') }}
-            className="px-6 py-3 rounded-xl font-semibold"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', cursor: 'pointer' }}
+            className="btn-ink px-6 py-3"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', cursor: 'pointer' }}
           >
             Go Home
           </button>
@@ -79,7 +79,7 @@ export function MyList() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
+        <div className="animate-spin rounded-full h-8 w-8" style={{ border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-primary)' }} />
       </div>
     )
   }
@@ -190,25 +190,26 @@ export function MyList() {
   })
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 'calc(160px + env(safe-area-inset-bottom))' }}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pt-5 pb-3">
         <h1 style={{
-          fontSize: '22px',
+          fontSize: '30px',
           fontWeight: 800,
+          lineHeight: 1.05,
           color: 'var(--color-text-primary)',
           letterSpacing: '-0.02em',
         }}>
           My Top 10
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
           Pick up to 10 dishes visitors should try
         </p>
       </div>
 
       {/* Tagline */}
       <div className="px-4 mb-4">
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>
+        <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)', display: 'block', marginBottom: '6px' }}>
           Your tagline
         </label>
         <input
@@ -217,12 +218,13 @@ export function MyList() {
           onChange={function (e) { setTagline(e.target.value) }}
           placeholder="e.g. Manager at Nancy's, lifelong islander"
           maxLength={80}
-          className="w-full rounded-lg"
+          className="w-full"
           style={{
             padding: '10px 12px',
-            fontSize: '14px',
+            fontSize: '16px',
             background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-divider)',
+            border: 'var(--border-ink)',
+            borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-primary)',
             outline: 'none',
           }}
@@ -233,40 +235,57 @@ export function MyList() {
       <div className="px-4">
         {items.length === 0 ? (
           <div
-            className="rounded-xl text-center"
+            className="text-center"
             style={{
               padding: '24px 16px',
-              background: 'var(--color-surface-elevated)',
-              border: '1px dashed var(--color-divider)',
+              background: 'var(--color-surface)',
+              border: '2px dashed var(--color-text-tertiary)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p style={{ fontSize: '14px', color: 'var(--color-text-tertiary)' }}>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>
               No dishes yet — add your first pick below
             </p>
           </div>
         ) : (
-          <div className="flex flex-col" style={{ gap: '8px' }}>
+          <div className="flex flex-col" style={{ gap: '10px' }}>
             {items.map(function (item, i) {
               var emoji = getCategoryEmoji(item.category) || '🍽️'
+              var isPodium = i < 3
               return (
                 <div
                   key={item.dish_id}
-                  className="rounded-xl"
                   style={{
-                    background: 'var(--color-surface-elevated)',
-                    border: '1px solid var(--color-divider)',
+                    background: 'var(--color-card)',
+                    border: 'var(--border-ink)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-hard)',
                     padding: '12px',
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Rank number */}
-                    <span style={{
-                      fontSize: '16px',
-                      fontWeight: 800,
-                      color: 'var(--color-text-tertiary)',
-                      width: '24px',
-                      textAlign: 'center',
-                    }}>
+                    {/* Rank number — medal sticker for the podium */}
+                    <span
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        border: isPodium ? 'var(--border-ink)' : 'none',
+                        background: i === 0
+                          ? 'var(--color-medal-gold)'
+                          : i === 1
+                            ? 'var(--color-medal-silver)'
+                            : i === 2
+                              ? 'var(--color-medal-bronze)'
+                              : 'transparent',
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '16px',
+                        fontWeight: 800,
+                        lineHeight: 1,
+                        color: isPodium ? 'var(--color-ink)' : 'var(--color-text-tertiary)',
+                      }}
+                    >
                       {i + 1}
                     </span>
 
@@ -275,25 +294,27 @@ export function MyList() {
 
                     {/* Name + restaurant */}
                     <div className="flex-1 min-w-0">
-                      <p className="truncate" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                      <p className="truncate" style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--color-text-primary)' }}>
                         {item.dish_name}
                       </p>
-                      <p className="truncate" style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                      <p className="truncate" style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--color-accent)' }}>
                         {item.restaurant_name}
                       </p>
                     </div>
 
                     {/* Reorder buttons */}
-                    <div className="flex flex-col" style={{ gap: '2px' }}>
+                    <div className="flex flex-col" style={{ gap: '3px' }}>
                       <button
                         onClick={function () { handleMoveUp(i) }}
                         disabled={i === 0}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '2px 6px',
-                          fontSize: '14px',
-                          color: i === 0 ? 'var(--color-divider)' : 'var(--color-text-secondary)',
+                          background: 'var(--color-card)',
+                          border: i === 0 ? '1.5px solid var(--color-divider)' : 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '1px 7px',
+                          fontSize: '11px',
+                          lineHeight: 1.4,
+                          color: i === 0 ? 'var(--color-divider)' : 'var(--color-ink)',
                           cursor: i === 0 ? 'default' : 'pointer',
                         }}
                       >
@@ -303,11 +324,13 @@ export function MyList() {
                         onClick={function () { handleMoveDown(i) }}
                         disabled={i >= items.length - 1}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '2px 6px',
-                          fontSize: '14px',
-                          color: i >= items.length - 1 ? 'var(--color-divider)' : 'var(--color-text-secondary)',
+                          background: 'var(--color-card)',
+                          border: i >= items.length - 1 ? '1.5px solid var(--color-divider)' : 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '1px 7px',
+                          fontSize: '11px',
+                          lineHeight: 1.4,
+                          color: i >= items.length - 1 ? 'var(--color-divider)' : 'var(--color-ink)',
                           cursor: i >= items.length - 1 ? 'default' : 'pointer',
                         }}
                       >
@@ -318,12 +341,17 @@ export function MyList() {
                     {/* Remove */}
                     <button
                       onClick={function () { handleRemoveDish(item.dish_id) }}
+                      className="flex items-center justify-center flex-shrink-0"
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: '4px 8px',
-                        fontSize: '16px',
-                        color: 'var(--color-text-tertiary)',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: 'var(--color-card)',
+                        border: 'var(--border-ink-thin)',
+                        padding: 0,
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        color: 'var(--color-ink)',
                         cursor: 'pointer',
                       }}
                     >
@@ -332,7 +360,7 @@ export function MyList() {
                   </div>
 
                   {/* Note */}
-                  <div style={{ marginTop: '8px', marginLeft: '56px' }}>
+                  <div style={{ marginTop: '8px', marginLeft: '72px' }}>
                     <input
                       type="text"
                       value={item.note}
@@ -341,12 +369,12 @@ export function MyList() {
                       maxLength={120}
                       className="w-full"
                       style={{
-                        padding: '6px 8px',
-                        fontSize: '12px',
-                        fontStyle: item.note ? 'normal' : 'italic',
+                        padding: '6px 2px',
+                        fontSize: '16px',
+                        fontWeight: 500,
                         background: 'transparent',
                         border: 'none',
-                        borderBottom: '1px solid var(--color-divider)',
+                        borderBottom: '1.5px dashed var(--color-divider)',
                         color: 'var(--color-text-secondary)',
                         outline: 'none',
                       }}
@@ -365,14 +393,15 @@ export function MyList() {
           {!showSearch ? (
             <button
               onClick={function () { setShowSearch(true) }}
-              className="w-full rounded-xl"
+              className="w-full active:scale-[0.99]"
               style={{
-                padding: '12px',
-                background: 'none',
-                border: '1.5px dashed var(--color-primary)',
-                color: 'var(--color-primary)',
+                padding: '14px 12px',
+                background: 'var(--color-surface)',
+                border: '2px dashed var(--color-text-tertiary)',
+                borderRadius: 'var(--radius-lg)',
+                color: 'var(--color-ink)',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
               }}
             >
@@ -380,13 +409,15 @@ export function MyList() {
             </button>
           ) : (
             <div
-              className="rounded-xl overflow-hidden"
+              className="overflow-hidden"
               style={{
-                background: 'var(--color-surface-elevated)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-card)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-hard)',
               }}
             >
-              <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--color-divider)' }}>
+              <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: 'var(--border-ink)' }}>
                 <span style={{ fontSize: '16px', marginRight: '8px', color: 'var(--color-text-tertiary)' }}>🔍</span>
                 <input
                   type="text"
@@ -394,10 +425,11 @@ export function MyList() {
                   onChange={function (e) { setSearchQuery(e.target.value) }}
                   placeholder="Search dishes..."
                   autoFocus
-                  className="flex-1"
+                  className="flex-1 min-w-0 outline-none"
                   style={{
                     padding: '4px 0',
-                    fontSize: '14px',
+                    fontSize: '16px',
+                    fontWeight: 500,
                     background: 'transparent',
                     border: 'none',
                     color: 'var(--color-text-primary)',
@@ -410,7 +442,8 @@ export function MyList() {
                     background: 'none',
                     border: 'none',
                     fontSize: '13px',
-                    color: 'var(--color-text-tertiary)',
+                    fontWeight: 700,
+                    color: 'var(--color-text-secondary)',
                     cursor: 'pointer',
                     padding: '4px 8px',
                   }}
@@ -423,7 +456,7 @@ export function MyList() {
               {searchQuery.length >= 2 && (
                 <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
                   {filteredResults.length === 0 ? (
-                    <p style={{ padding: '12px', fontSize: '13px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+                    <p style={{ padding: '12px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
                       No dishes found
                     </p>
                   ) : (
@@ -438,20 +471,25 @@ export function MyList() {
                             padding: '10px 12px',
                             background: 'transparent',
                             border: 'none',
-                            borderBottom: '1px solid var(--color-divider)',
+                            borderBottom: '1.5px solid var(--color-divider)',
                             cursor: 'pointer',
                           }}
                         >
                           <span style={{ fontSize: '18px' }}>{emoji}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="truncate" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                            <p className="truncate" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                               {dish.dish_name || dish.name}
                             </p>
-                            <p className="truncate" style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                            <p className="truncate" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-accent)' }}>
                               {dish.restaurant_name}
                             </p>
                           </div>
-                          <span style={{ fontSize: '18px', color: 'var(--color-primary)' }}>+</span>
+                          <span
+                            className="flex items-center justify-center flex-shrink-0"
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'var(--border-ink)', background: 'var(--color-card)', fontSize: '16px', fontWeight: 800, lineHeight: 1, color: 'var(--color-ink)' }}
+                          >
+                            +
+                          </span>
                         </button>
                       )
                     })
@@ -467,19 +505,19 @@ export function MyList() {
       <div
         style={{
           position: 'fixed',
-          bottom: 0,
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
           left: 0,
           right: 0,
           padding: '12px 16px',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          borderTop: '1px solid var(--color-divider)',
+          borderTop: 'var(--border-ink)',
           zIndex: 50,
         }}
       >
         {saveMessage && (
           <p style={{
-            fontSize: '12px',
+            fontSize: '12.5px',
+            fontWeight: 700,
             color: saveMessage.startsWith('Error') ? 'var(--color-danger)' : 'var(--color-success)',
             marginBottom: '8px',
             textAlign: 'center',
@@ -490,13 +528,13 @@ export function MyList() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full rounded-xl font-semibold transition-all disabled:opacity-50"
+          className="btn-ink w-full"
           style={{
             padding: '14px',
             fontSize: '16px',
+            fontWeight: 800,
             background: 'var(--color-primary)',
             color: 'var(--color-text-on-primary)',
-            border: 'none',
             cursor: saving ? 'default' : 'pointer',
           }}
         >
@@ -508,27 +546,30 @@ export function MyList() {
           go on their Top 10. Once rated, it's added automatically. */}
       {pendingRateDish && (
         <div
-          className="fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
+          className="fixed inset-0 z-[60] flex items-end"
+          style={{ background: 'rgba(27, 22, 17, 0.55)' }}
           onClick={function (e) { if (e.target === e.currentTarget) setPendingRateDish(null) }}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Rate this dish to add it"
-            className="w-full rounded-t-2xl"
+            className="w-full"
             style={{
-              background: 'var(--color-surface)',
+              background: 'var(--color-card)',
+              border: 'var(--border-ink)',
+              borderBottom: 'none',
+              borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
               padding: '8px 16px 24px',
               maxHeight: '85vh',
               overflowY: 'auto',
             }}
           >
-            <div style={{ width: 40, height: 4, background: 'var(--color-divider)', borderRadius: 2, margin: '8px auto 16px' }} />
-            <div style={{ marginBottom: '4px', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+            <div style={{ width: 40, height: 6, background: 'var(--color-ink)', opacity: 0.25, borderRadius: 'var(--radius-pill)', margin: '6px auto 16px' }} />
+            <div style={{ marginBottom: '4px', fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               Rate it to add it
             </div>
-            <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
+            <div style={{ marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>
               {(pendingRateDish.dish_name || pendingRateDish.name)} &middot; {pendingRateDish.restaurant_name}
             </div>
             <ReviewFlow

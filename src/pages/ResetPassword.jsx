@@ -70,7 +70,7 @@ export function ResetPassword() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6"
-      style={{ background: 'var(--color-surface)' }}
+      style={{ background: 'var(--color-bg)' }}
     >
       {/* Logo */}
       <div className="mb-6">
@@ -78,20 +78,20 @@ export function ResetPassword() {
       </div>
 
       {/* Heading */}
-      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--color-text-primary)' }}>
+      <h1 className="text-center mb-2" style={{ color: 'var(--color-text-primary)', fontSize: '28px', lineHeight: 1.1 }}>
         Set New Password
       </h1>
-      <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-center text-sm mb-8" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
         Enter your new password below
       </p>
 
       {/* Messages */}
       {message && (
         <div
-          className="w-full max-w-sm mb-4 p-4 rounded-xl text-sm font-medium"
+          className="w-full max-w-sm mb-4 p-4 text-sm"
           style={message.type === 'error'
-            ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(var(--color-danger-rgb), 0.3)' }
-            : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)', border: '1px solid rgba(var(--color-success-rgb), 0.3)' }
+            ? { background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
+            : { background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1.5px solid var(--color-success)', borderRadius: 'var(--radius-md)', fontWeight: 600 }
           }
         >
           {message.text}
@@ -101,8 +101,8 @@ export function ResetPassword() {
       {checkingSession ? (
         <div className="w-full max-w-sm flex justify-center py-8" role="status">
           <div
-            className="w-8 h-8 border-2 rounded-full animate-spin"
-            style={{ borderColor: 'var(--color-divider)', borderTopColor: 'var(--color-primary)' }}
+            className="w-8 h-8 rounded-full animate-spin"
+            style={{ border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-primary)' }}
             aria-hidden="true"
           />
           <span className="sr-only">Loading...</span>
@@ -110,7 +110,7 @@ export function ResetPassword() {
       ) : isValidSession ? (
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
           <div>
-            <label htmlFor="reset-password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+            <label htmlFor="reset-password" className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
               New Password
             </label>
             <input
@@ -122,13 +122,13 @@ export function ResetPassword() {
               required
               autoFocus
               minLength={6}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+              className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+            <label className="block text-sm mb-1.5" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
               Confirm Password
             </label>
             <input
@@ -138,16 +138,16 @@ export function ResetPassword() {
               placeholder="Enter password again"
               required
               minLength={6}
-              className="w-full px-4 py-3 rounded-xl focus:outline-none transition-colors"
-              style={{ background: 'var(--color-bg)', border: '2px solid var(--color-divider)', color: 'var(--color-text-primary)' }}
+              className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="btn-ink w-full px-6 py-4"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             {loading ? 'Updating...' : 'Update Password'}
           </button>
@@ -156,8 +156,8 @@ export function ResetPassword() {
         <div className="w-full max-w-sm">
           <button
             onClick={() => navigate('/login')}
-            className="w-full px-6 py-4 font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
-            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+            className="btn-ink w-full px-6 py-4"
+            style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', fontSize: '16px' }}
           >
             Back to Sign In
           </button>

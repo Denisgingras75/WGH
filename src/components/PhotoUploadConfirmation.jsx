@@ -13,20 +13,42 @@ export function PhotoUploadConfirmation({
 
   return (
     <div className="photo-upload-confirmation">
-      <div className="photo-preview">
+      <div
+        className="photo-preview"
+        style={{
+          border: 'var(--border-ink)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-hard)',
+        }}
+      >
         <img src={photoUrl} alt={dishName} />
-        <div className="checkmark">✓</div>
+        <div
+          className="checkmark"
+          style={{
+            background: 'var(--color-success)',
+            color: 'var(--color-text-on-primary)',
+            border: 'var(--border-ink-thin)',
+            fontWeight: 800,
+          }}
+        >
+          ✓
+        </div>
       </div>
 
-      <h3>Photo Added!</h3>
+      <h3 style={{ fontSize: '22px', fontWeight: 800 }}>Photo Added!</h3>
 
       {/* Tier badge */}
       <div
         className="photo-tier-badge"
-        style={{ '--tier-color': tier.color }}
+        style={{
+          '--tier-color': tier.color,
+          background: status === 'featured' ? 'var(--color-butter)' : 'var(--color-card)',
+          border: 'var(--border-ink-thin)',
+          borderRadius: 'var(--radius-pill)',
+        }}
       >
         <span className="tier-icon">{tier.icon}</span>
-        <span className="tier-label">{tier.label}</span>
+        <span className="tier-label" style={{ color: 'var(--color-ink)', fontWeight: 800 }}>{tier.label}</span>
       </div>
 
       {/* Tier explanation */}
@@ -34,19 +56,28 @@ export function PhotoUploadConfirmation({
 
       {/* Tip for hidden photos */}
       {status === 'hidden' && tier.tip && (
-        <p className="tier-tip">{tier.tip}</p>
+        <p
+          className="tier-tip"
+          style={{ border: '1.5px solid var(--color-primary)', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}
+        >
+          {tier.tip}
+        </p>
       )}
 
       {/* How photos work link */}
       <button
         className="photo-info-link"
+        style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}
         onClick={() => setShowInfo(!showInfo)}
       >
         How photos work {showInfo ? '▲' : '▼'}
       </button>
 
       {showInfo && (
-        <div className="photo-info-content">
+        <div
+          className="photo-info-content"
+          style={{ border: '1.5px dashed var(--color-divider)', borderRadius: 'var(--radius-md)' }}
+        >
           <ul>
             <li>Photos are scored by clarity and shown in the community gallery.</li>
             <li>Everyone can contribute — not all photos are shown the same way.</li>
@@ -55,18 +86,20 @@ export function PhotoUploadConfirmation({
         </div>
       )}
 
-      <p className="rate-prompt">Would you like to rate this dish now?</p>
+      <p className="rate-prompt" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Would you like to rate this dish now?</p>
 
       <div className="confirmation-buttons">
         <button
           onClick={onRateNow}
-          className="btn-primary"
+          className="btn-ink px-6 py-2.5 text-sm"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Rate Now
         </button>
         <button
           onClick={onLater}
-          className="btn-secondary"
+          className="btn-ink px-6 py-2.5 text-sm"
+          style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
         >
           Later
         </button>

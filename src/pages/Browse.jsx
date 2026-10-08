@@ -416,37 +416,45 @@ export function Browse() {
   const showingDishes = selectedCategory || debouncedSearchQuery.trim()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
       <h1 className="sr-only">Browse Dishes</h1>
       {/* Header - only shows when viewing dishes */}
       {showingDishes && (
         <header style={{ background: 'var(--color-bg)' }}>
-          <div className="px-4 py-3 flex items-center gap-3">
+          <div className="px-4 pt-4 pb-2 flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="p-1 -ml-1 rounded-lg transition-opacity hover:opacity-70"
+              className="sticker-press w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
               aria-label="Back to home"
             >
-              <svg className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             {selectedCategory && !debouncedSearchQuery.trim() && (
               <>
-                <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                <span className="eyebrow" style={{ color: 'var(--color-text-secondary)' }}>
                   {CATEGORIES.find(c => c.id === selectedCategory)?.label}
                 </span>
                 <button
                   onClick={handleBackToCategories}
-                  className="text-xs font-medium px-2 py-1 rounded-lg transition-colors"
-                  style={{ color: 'var(--color-primary)', background: 'var(--color-primary-muted)' }}
+                  className="px-2.5 py-1"
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    color: 'var(--color-ink)',
+                    background: 'var(--color-card)',
+                    border: 'var(--border-ink-thin)',
+                    borderRadius: 'var(--radius-pill)',
+                  }}
                 >
                   Clear
                 </button>
               </>
             )}
             {debouncedSearchQuery.trim() && (
-              <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="text-sm truncate" style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
                 Results for "{debouncedSearchQuery.trim()}"
               </span>
             )}

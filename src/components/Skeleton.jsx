@@ -6,10 +6,11 @@
 export function DishRowSkeleton() {
   return (
     <div
-      className="w-full flex items-center gap-3 p-2.5 rounded-xl border"
+      className="w-full flex items-center gap-3 p-2.5"
       style={{
-        background: 'var(--color-bg)',
-        borderColor: 'var(--color-divider)'
+        background: 'var(--color-surface)',
+        border: '2px solid var(--color-divider)',
+        borderRadius: 'var(--radius-lg)',
       }}
       role="status"
       aria-label="Loading dish"
@@ -22,31 +23,31 @@ export function DishRowSkeleton() {
 
       {/* Photo */}
       <div
-        className="w-12 h-12 rounded-lg flex-shrink-0 animate-pulse"
-        style={{ background: 'var(--color-divider)' }}
+        className="w-12 h-12 flex-shrink-0 animate-pulse"
+        style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }}
       />
 
       {/* Dish + Restaurant text */}
       <div className="flex-1 min-w-0 space-y-2">
         <div
-          className="h-4 rounded w-3/4 animate-pulse"
-          style={{ background: 'var(--color-divider)' }}
+          className="h-4 w-3/4 animate-pulse"
+          style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
         />
         <div
-          className="h-3 rounded w-1/2 animate-pulse"
-          style={{ background: 'var(--color-divider)' }}
+          className="h-3 w-1/2 animate-pulse"
+          style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
         />
       </div>
 
       {/* Rating + Votes area */}
       <div className="flex-shrink-0 space-y-1.5 text-right">
         <div
-          className="h-4 rounded w-14 ml-auto animate-pulse"
-          style={{ background: 'var(--color-divider)' }}
+          className="h-4 w-14 ml-auto animate-pulse"
+          style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
         />
         <div
-          className="h-2.5 rounded w-16 ml-auto animate-pulse"
-          style={{ background: 'var(--color-divider)' }}
+          className="h-2.5 w-16 ml-auto animate-pulse"
+          style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
         />
       </div>
 
@@ -62,7 +63,7 @@ export function DishRowSkeleton() {
 // ProfileSkeleton - matches UserProfile layout
 export function ProfileSkeleton() {
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }} role="status" aria-label="Loading profile">
+    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }} role="status" aria-label="Loading profile">
       <div className="animate-pulse">
         {/* Header */}
         <div className="px-4 pt-4 pb-2 flex justify-between items-center">
@@ -72,13 +73,20 @@ export function ProfileSkeleton() {
 
         {/* Profile card */}
         <div className="px-4 pb-4">
-          <div className="rounded-3xl p-6" style={{ background: 'var(--color-bg)' }}>
+          <div
+            className="p-6"
+            style={{
+              background: 'var(--color-surface)',
+              border: '2px solid var(--color-divider)',
+              borderRadius: 'var(--radius-xl)',
+            }}
+          >
             {/* Avatar + name */}
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 rounded-full" style={{ background: 'var(--color-divider)' }} />
               <div className="space-y-2">
-                <div className="h-6 w-32 rounded" style={{ background: 'var(--color-divider)' }} />
-                <div className="h-4 w-24 rounded" style={{ background: 'var(--color-divider)' }} />
+                <div className="h-6 w-32" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }} />
+                <div className="h-4 w-24" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }} />
               </div>
             </div>
 
@@ -86,21 +94,29 @@ export function ProfileSkeleton() {
             <div className="flex justify-center gap-8 mb-6">
               {[1, 2, 3].map(i => (
                 <div key={i} className="text-center space-y-1">
-                  <div className="h-6 w-8 mx-auto rounded" style={{ background: 'var(--color-divider)' }} />
-                  <div className="h-3 w-12 mx-auto rounded" style={{ background: 'var(--color-divider)' }} />
+                  <div className="h-6 w-8 mx-auto" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-sm)' }} />
+                  <div className="h-3 w-12 mx-auto" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }} />
                 </div>
               ))}
             </div>
 
             {/* Follow button */}
-            <div className="h-10 w-full rounded-xl" style={{ background: 'var(--color-divider)' }} />
+            <div className="h-10 w-full" style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-md)' }} />
           </div>
         </div>
 
         {/* Content sections */}
         <div className="px-4 space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 rounded-xl" style={{ background: 'var(--color-divider)' }} />
+            <div
+              key={i}
+              className="h-20"
+              style={{
+                background: 'var(--color-surface)',
+                border: '2px solid var(--color-divider)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+            />
           ))}
         </div>
       </div>
@@ -112,8 +128,12 @@ export function ProfileSkeleton() {
 export function DishCardSkeleton() {
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden border"
-      style={{ background: 'var(--color-card)', borderColor: 'var(--color-divider)' }}
+      className="w-full overflow-hidden"
+      style={{
+        background: 'var(--color-surface)',
+        border: '2px solid var(--color-divider)',
+        borderRadius: 'var(--radius-lg)',
+      }}
       role="status"
       aria-label="Loading dish"
     >
@@ -129,18 +149,18 @@ export function DishCardSkeleton() {
           <div className="flex-1 min-w-0 space-y-2">
             {/* Dish name */}
             <div
-              className="h-5 rounded w-4/5 animate-pulse"
-              style={{ background: 'var(--color-divider)' }}
+              className="h-5 w-4/5 animate-pulse"
+              style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
             />
             {/* Restaurant + price */}
             <div
-              className="h-4 rounded w-3/5 animate-pulse"
-              style={{ background: 'var(--color-divider)' }}
+              className="h-4 w-3/5 animate-pulse"
+              style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
             />
             {/* Rating info */}
             <div
-              className="h-3 rounded w-2/5 animate-pulse"
-              style={{ background: 'var(--color-divider)' }}
+              className="h-3 w-2/5 animate-pulse"
+              style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
             />
           </div>
 
@@ -151,8 +171,8 @@ export function DishCardSkeleton() {
               style={{ background: 'var(--color-divider)' }}
             />
             <div
-              className="h-2 rounded w-6 animate-pulse"
-              style={{ background: 'var(--color-divider)' }}
+              className="h-2 w-6 animate-pulse"
+              style={{ background: 'var(--color-divider)', borderRadius: 'var(--radius-pill)' }}
             />
           </div>
         </div>

@@ -186,7 +186,7 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(27, 22, 17, 0.55)',
         padding: '16px',
       }}
       onClick={handleClose}
@@ -210,11 +210,11 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
           maxWidth: '360px',
           maxHeight: '85vh',
           overflowY: 'auto',
-          backgroundColor: 'var(--color-surface-elevated)',
-          borderRadius: '16px',
+          backgroundColor: 'var(--color-card)',
+          borderRadius: 'var(--radius-xl)',
           padding: '20px',
-          border: '1.5px solid var(--color-divider)',
-          boxShadow: 'none',
+          border: 'var(--border-ink)',
+          boxShadow: 'var(--shadow-hard-lg)',
         }}
       >
         {/* Action buttons - top right */}
@@ -228,16 +228,17 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               width: '44px',
               height: '44px',
               borderRadius: '50%',
-              backgroundColor: 'var(--color-divider)',
-              color: 'var(--color-text-secondary)',
-              border: 'none',
+              backgroundColor: 'var(--color-surface-elevated)',
+              color: 'var(--color-ink)',
+              border: 'var(--border-ink)',
+              boxShadow: 'var(--shadow-hard-sm)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
@@ -253,10 +254,13 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               width: '44px',
               height: '44px',
               borderRadius: '50%',
-              backgroundColor: 'var(--color-divider)',
-              color: 'var(--color-text-secondary)',
-              border: 'none',
-              fontSize: '20px',
+              backgroundColor: 'var(--color-surface-elevated)',
+              color: 'var(--color-ink)',
+              border: 'var(--border-ink)',
+              boxShadow: 'var(--shadow-hard-sm)',
+              fontSize: '22px',
+              fontWeight: 700,
+              lineHeight: 1,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -279,10 +283,10 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
         ) : (
           <>
             {/* Dish name + restaurant */}
-            <h2 id="dish-modal-title" style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px', paddingRight: '30px', color: 'var(--color-text-primary)' }}>
+            <h2 id="dish-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '4px', paddingRight: '100px', color: 'var(--color-text-primary)' }}>
               {dish.dish_name}
             </h2>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+            <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '14px' }}>
               {dish.restaurant_name}
               {dish.price && ` · $${Number(dish.price).toFixed(0)}`}
             </p>
@@ -294,15 +298,14 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
                 // Small delay to let modal close animation complete
                 setTimeout(() => navigate(`/dish/${dish.dish_id}`), 200)
               }}
-              className="w-full py-2.5 mb-4 rounded-xl text-sm font-medium transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2"
+              className="btn-ink w-full py-2.5 mb-4 text-sm"
               style={{
-                background: 'var(--color-surface)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-divider)',
+                background: 'var(--color-card)',
+                color: 'var(--color-ink)',
               }}
             >
               <span>See Reviews & Photos</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -312,10 +315,12 @@ export function DishModal({ dish, onClose, onVote, onLoginRequired }) {
               <div style={{
                 padding: '12px',
                 marginBottom: '12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--color-danger-muted)',
+                border: '1.5px solid var(--color-danger)',
                 color: 'var(--color-danger)',
                 fontSize: '13px',
+                fontWeight: 700,
                 textAlign: 'center',
               }}>
                 Unable to load photos

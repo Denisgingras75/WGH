@@ -7,6 +7,26 @@ import { adminApi } from '../api/adminApi'
 import { restaurantManagerApi } from '../api/restaurantManagerApi'
 import { ALL_CATEGORIES } from '../constants/categories'
 
+const INPUT_STYLE = {
+  background: 'var(--color-surface-elevated)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--color-text-primary)',
+  fontSize: '16px',
+}
+const ROW_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink-thin)',
+  borderRadius: 'var(--radius-md)',
+}
+const PILL_BTN_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink-thin)',
+  borderRadius: 'var(--radius-pill)',
+  fontWeight: 700,
+}
+const LABEL_STYLE = { color: 'var(--color-text-secondary)', fontWeight: 700 }
+
 export function Admin() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
@@ -285,10 +305,10 @@ export function Admin() {
   // Show loading while checking auth or admin status
   if (authLoading || loading || !adminCheckDone) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--color-primary)' }}></div>
-          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--color-ink)' }}></div>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>Loading...</p>
         </div>
       </div>
     )
@@ -297,15 +317,15 @@ export function Admin() {
   // Unauthorized - not logged in or not an admin
   if (!user || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb), 0.2)' }}>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--color-butter)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}>
             <span className="text-2xl">🔒</span>
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="mb-2" style={{ fontSize: '28px', color: 'var(--color-text-primary)' }}>
             Access Denied
           </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             {!user
               ? "You need to be logged in to access this page."
               : "You don't have permission to access the admin area."
@@ -313,7 +333,7 @@ export function Admin() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 rounded-xl font-semibold"
+            className="btn-ink px-6 py-3"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Go Home
@@ -324,29 +344,29 @@ export function Admin() {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="px-4 py-4 border-b" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
+      <header className="px-4 py-4" style={{ background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="sticker-press w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            <h1 style={{ fontSize: '24px', lineHeight: 1.1, color: 'var(--color-text-primary)' }}>
               Admin - {editingDishId ? 'Edit Dish' : 'Add Dishes'}
             </h1>
           </div>
           {editingDishId && (
             <button
               onClick={handleCancelEdit}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-              style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+              className="btn-ink px-3 py-1.5 text-sm"
+              style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
             >
               Cancel Edit
             </button>
@@ -358,10 +378,10 @@ export function Admin() {
         {/* Message */}
         {message && (
           <div
-            className="mb-4 p-3 rounded-lg text-sm font-medium"
+            className="mb-4 p-3 text-sm"
             style={message.type === 'error'
-              ? { background: 'rgba(var(--color-danger-rgb), 0.15)', color: 'var(--color-danger)' }
-              : { background: 'rgba(var(--color-success-rgb), 0.15)', color: 'var(--color-success)' }
+              ? { background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)', borderRadius: 'var(--radius-md)', fontWeight: 700 }
+              : { background: 'var(--color-success-muted)', color: 'var(--color-success)', border: '1.5px solid var(--color-success)', borderRadius: 'var(--radius-md)', fontWeight: 700 }
             }
           >
             {message.text}
@@ -372,14 +392,14 @@ export function Admin() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Restaurant */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Restaurant *
             </label>
             <select
               value={restaurantId}
               onChange={(e) => setRestaurantId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
               required
             >
               <option value="">Select a restaurant...</option>
@@ -393,7 +413,7 @@ export function Admin() {
 
           {/* Dish Name */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Dish Name *
             </label>
             <input
@@ -401,22 +421,22 @@ export function Admin() {
               value={dishName}
               onChange={(e) => setDishName(e.target.value)}
               placeholder="e.g., Chicken Tendys"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
               required
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Category *
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
               required
             >
               <option value="">Select a category...</option>
@@ -430,7 +450,7 @@ export function Admin() {
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Price ($)
             </label>
             <input
@@ -440,14 +460,14 @@ export function Admin() {
               placeholder="e.g., 12.99"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
             />
           </div>
 
           {/* Photo URL */}
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Photo URL (optional)
             </label>
             <input
@@ -455,10 +475,10 @@ export function Admin() {
               value={photoUrl}
               onChange={(e) => setPhotoUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
             />
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
               Leave blank to use category default image
             </p>
           </div>
@@ -467,7 +487,7 @@ export function Admin() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 rounded-lg font-semibold transition-all disabled:opacity-50"
+            className="btn-ink w-full py-3"
             style={{ background: editingDishId ? 'var(--color-green-dark)' : 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             {submitting
@@ -479,7 +499,7 @@ export function Admin() {
 
         {/* Search Dishes */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="mb-3" style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}>
             Search Dishes
           </h2>
           <form onSubmit={handleSearch} className="flex gap-2 mb-3">
@@ -488,13 +508,13 @@ export function Admin() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by dish name..."
-              className="flex-1 px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="flex-1 min-w-0 px-3 py-2"
+              style={INPUT_STYLE}
             />
             <button
               type="submit"
               disabled={searching}
-              className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
+              className="btn-ink px-4 py-2 text-sm"
               style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
             >
               {searching ? '...' : 'Search'}
@@ -504,37 +524,36 @@ export function Admin() {
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="space-y-2 mb-6">
-              <p className="text-xs font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="eyebrow">
                 {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
               </p>
               {searchResults.map((dish) => (
                 <div
                   key={dish.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
+                  className="flex items-center justify-between p-3"
                   style={{
-                    background: 'var(--color-bg)',
-                    borderColor: 'var(--color-divider)',
+                    ...ROW_STYLE,
                     boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
                   }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+                    <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                       {dish.name}
                     </p>
-                    <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                    <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                       {dish.restaurants?.name} · {dish.category} {dish.price ? `· $${dish.price}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
                     <button
                       onClick={() => handleEdit(dish)}
-                      className="text-sm font-medium" style={{ color: 'var(--color-blue)' }}
+                      className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-accent)' }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(dish.id, dish.name)}
-                      className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
+                      className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-danger)' }}
                     >
                       Delete
                     </button>
@@ -544,7 +563,7 @@ export function Admin() {
             </div>
           )}
           {searchQuery && searchResults.length === 0 && !searching && (
-            <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
               No dishes found for "{searchQuery}"
             </p>
           )}
@@ -552,38 +571,37 @@ export function Admin() {
 
         {/* Recent Dishes */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="mb-3" style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}>
             Recent Dishes
           </h2>
           <div className="space-y-2">
             {recentDishes.map((dish) => (
               <div
                 key={dish.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
+                className="flex items-center justify-between p-3"
                 style={{
-                  background: 'var(--color-bg)',
-                  borderColor: 'var(--color-divider)',
+                  ...ROW_STYLE,
                   boxShadow: editingDishId === dish.id ? '0 0 0 2px var(--color-success)' : 'none',
                 }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>
+                  <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                     {dish.name}
                   </p>
-                  <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                  <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                     {dish.restaurants?.name} · {dish.category} {dish.price ? `· $${dish.price}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-2">
                   <button
                     onClick={() => handleEdit(dish)}
-                    className="text-sm font-medium" style={{ color: 'var(--color-blue)' }}
+                    className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-accent)' }}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(dish.id, dish.name)}
-                    className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
+                    className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-danger)' }}
                   >
                     Delete
                   </button>
@@ -591,7 +609,7 @@ export function Admin() {
               </div>
             ))}
             {recentDishes.length === 0 && (
-              <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-sm text-center py-4" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
                 No dishes yet
               </p>
             )}
@@ -599,14 +617,14 @@ export function Admin() {
         </div>
 
         {/* Restaurant Managers Section */}
-        <div className="mt-8 pt-8 border-t" style={{ borderColor: 'var(--color-divider)' }}>
-          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+        <div className="mt-8 pt-8" style={{ borderTop: 'var(--border-ink)' }}>
+          <h2 className="mb-4" style={{ fontSize: '22px', color: 'var(--color-text-primary)' }}>
             Restaurant Managers
           </h2>
 
           {/* Restaurant selector (searchable) */}
           <div className="mb-4 relative" ref={inviteSearchRef}>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            <label className="block text-sm mb-1.5" style={LABEL_STYLE}>
               Restaurant
             </label>
             <input
@@ -623,8 +641,8 @@ export function Admin() {
               }}
               onFocus={() => setInviteDropdownOpen(true)}
               placeholder="Search restaurants..."
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-bg)' }}
+              className="w-full px-3 py-2"
+              style={INPUT_STYLE}
             />
             {inviteRestaurantId && (
               <button
@@ -634,16 +652,16 @@ export function Admin() {
                   setInviteLink('')
                   setManagers([])
                 }}
-                className="absolute right-2 top-[34px] text-sm px-1"
-                style={{ color: 'var(--color-text-tertiary)' }}
+                className="absolute right-3 top-[40px] text-sm px-1"
+                style={{ color: 'var(--color-ink)', fontWeight: 800 }}
               >
                 ✕
               </button>
             )}
             {inviteDropdownOpen && !inviteRestaurantId && (
               <div
-                className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
-                style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                className="absolute z-10 w-full mt-2 max-h-48 overflow-y-auto"
+                style={{ background: 'var(--color-card)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hard)' }}
               >
                 {restaurants
                   .filter((r) => {
@@ -661,10 +679,10 @@ export function Admin() {
                         setInviteLink('')
                         fetchManagers(r.id)
                       }}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-[color:var(--color-surface-elevated)] transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-[color:var(--color-card-hover)] transition-colors"
                       style={{ color: 'var(--color-text-primary)' }}
                     >
-                      <span className="font-medium">{r.name}</span>
+                      <span style={{ fontWeight: 700 }}>{r.name}</span>
                       <span className="ml-1" style={{ color: 'var(--color-text-tertiary)' }}>- {r.address}</span>
                     </button>
                   ))}
@@ -686,15 +704,15 @@ export function Admin() {
             <div className="mb-4">
               <button
                 onClick={handleGenerateInvite}
-                className="px-4 py-2 rounded-lg font-medium transition-all text-sm"
+                className="btn-ink px-4 py-2 text-sm"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
               >
                 Generate Invite Link
               </button>
 
               {inviteLink && (
-                <div className="mt-3 p-3 rounded-lg border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                <div className="mt-3 p-3" style={{ background: 'var(--color-butter-muted)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)' }}>
+                  <p className="text-xs mb-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>
                     Invite Link (expires in 7 days):
                   </p>
                   <div className="flex items-center gap-2">
@@ -703,8 +721,8 @@ export function Admin() {
                       type="text"
                       readOnly
                       value={inviteLink}
-                      className="flex-1 px-2 py-1 border rounded text-xs"
-                      style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)' }}
+                      className="flex-1 min-w-0 px-2 py-1 text-xs"
+                      style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)' }}
                     />
                     <button
                       onClick={() => {
@@ -726,8 +744,8 @@ export function Admin() {
                         }
                         document.body.removeChild(ta)
                       }}
-                      className="px-3 py-1 rounded text-xs font-medium"
-                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
+                      className="btn-ink px-3 py-1 text-xs"
+                      style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)', boxShadow: 'var(--shadow-hard-sm)' }}
                     >
                       Copy
                     </button>
@@ -740,7 +758,7 @@ export function Admin() {
           {/* Current Managers */}
           {inviteRestaurantId && (
             <div>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              <h3 className="eyebrow mb-2">
                 Current Managers
               </h3>
               {managersLoading ? (
@@ -750,11 +768,11 @@ export function Admin() {
                   {managers.map((mgr) => (
                     <div
                       key={mgr.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                      style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}
+                      className="flex items-center justify-between p-3"
+                      style={ROW_STYLE}
                     >
                       <div>
-                        <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                        <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
                           {mgr.profiles?.display_name || 'Unknown'}
                         </p>
                         <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -763,7 +781,7 @@ export function Admin() {
                       </div>
                       <button
                         onClick={() => handleRevokeManager(mgr.id, mgr.profiles?.display_name)}
-                        className="text-sm font-medium" style={{ color: 'var(--color-red)' }}
+                        className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-danger)' }}
                       >
                         Revoke
                       </button>

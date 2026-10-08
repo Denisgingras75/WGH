@@ -3,6 +3,33 @@ import { ALL_CATEGORIES } from '../../constants/categories'
 import { restaurantManagerApi } from '../../api/restaurantManagerApi'
 import { logger } from '../../utils/logger'
 
+const INPUT_STYLE = {
+  background: 'var(--color-surface-elevated)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--color-text-primary)',
+  fontSize: '16px',
+}
+const PANEL_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: 'var(--shadow-hard)',
+}
+const PILL_BTN_STYLE = {
+  background: 'var(--color-card)',
+  border: 'var(--border-ink-thin)',
+  borderRadius: 'var(--radius-pill)',
+  fontWeight: 700,
+}
+const COMPACT_INPUT_STYLE = {
+  background: 'var(--color-surface-elevated)',
+  border: 'var(--border-ink-thin)',
+  borderRadius: 'var(--radius-sm)',
+  color: 'var(--color-text-primary)',
+  fontSize: '16px',
+}
+
 export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
   const [step, setStep] = useState(1)
   const [menuText, setMenuText] = useState('')
@@ -76,24 +103,24 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
 
   if (step === 1) {
     return (
-      <div className="p-4 rounded-xl border mb-4" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
+      <div className="p-4 mb-4" style={PANEL_STYLE}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Import Menu</h3>
-          <button onClick={onClose} className="text-xs font-medium px-2 py-1 rounded" style={{ color: 'var(--color-text-secondary)' }}>Cancel</button>
+          <h3 style={{ fontSize: '18px', color: 'var(--color-text-primary)' }}>Import Menu</h3>
+          <button onClick={onClose} className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-ink)' }}>Cancel</button>
         </div>
         <textarea
           value={menuText}
           onChange={(e) => setMenuText(e.target.value)}
           placeholder="Paste your menu here — dish names, prices, sections, whatever you have..."
           rows={8}
-          className="w-full px-3 py-2 border rounded-lg text-sm resize-y"
-          style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface)', color: 'var(--color-text-primary)' }}
+          className="w-full px-3 py-2 resize-y"
+          style={INPUT_STYLE}
         />
         <div className="flex items-center gap-3 mt-3">
           <button
             onClick={handleParse}
             disabled={!menuText.trim()}
-            className="flex-1 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40"
+            className="btn-ink flex-1 py-2.5 text-sm"
             style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
           >
             Parse Menu
@@ -101,8 +128,8 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={extractingPdf}
-            className="px-4 py-2.5 rounded-lg font-medium text-sm border"
-            style={{ borderColor: 'var(--color-divider)', color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+            className="btn-ink px-4 py-2.5 text-sm"
+            style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
           >
             {extractingPdf ? 'Reading PDF...' : 'Upload PDF'}
           </button>
@@ -115,44 +142,45 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
 
   if (step === 2) {
     return (
-      <div className="p-4 rounded-xl border mb-4 text-center" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--color-primary)' }} />
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Parsing your menu...</p>
-        <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>This takes a few seconds</p>
+      <div className="p-4 mb-4 text-center" style={PANEL_STYLE}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--color-ink)' }} />
+        <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>Parsing your menu...</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>This takes a few seconds</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4 rounded-xl border mb-4" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-divider)' }}>
+    <div className="p-4 mb-4" style={PANEL_STYLE}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Review Dishes ({parsedDishes.length} found)</h3>
-        <button onClick={onClose} className="text-xs font-medium px-2 py-1 rounded" style={{ color: 'var(--color-text-secondary)' }}>Cancel</button>
+        <h3 style={{ fontSize: '18px', color: 'var(--color-text-primary)' }}>Review Dishes ({parsedDishes.length} found)</h3>
+        <button onClick={onClose} className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-ink)' }}>Cancel</button>
       </div>
       <div className="flex gap-2 mb-3">
-        <button onClick={selectAll} className="text-xs font-medium px-2 py-1 rounded" style={{ color: 'var(--color-primary)' }}>Select All</button>
-        <button onClick={deselectAll} className="text-xs font-medium px-2 py-1 rounded" style={{ color: 'var(--color-text-tertiary)' }}>Deselect All</button>
+        <button onClick={selectAll} className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-primary)' }}>Select All</button>
+        <button onClick={deselectAll} className="text-xs px-2.5 py-1" style={{ ...PILL_BTN_STYLE, color: 'var(--color-text-secondary)' }}>Deselect All</button>
       </div>
       <div className="space-y-2 max-h-80 overflow-y-auto">
         {parsedDishes.map((dish, i) => (
           <div
             key={i}
-            className="flex items-center gap-2 p-2 rounded-lg border"
+            className="flex items-center gap-2 p-2"
             style={{
-              borderColor: selected[i] ? 'var(--color-primary)' : 'var(--color-divider)',
-              background: selected[i] ? 'rgba(var(--color-primary-rgb), 0.05)' : 'var(--color-surface)',
+              border: selected[i] ? 'var(--border-ink-thin)' : '1.5px solid var(--color-divider)',
+              borderRadius: 'var(--radius-md)',
+              background: selected[i] ? 'var(--color-butter-muted)' : 'var(--color-surface)',
             }}
           >
-            <input type="checkbox" checked={!!selected[i]} onChange={() => toggleDish(i)} className="shrink-0" />
+            <input type="checkbox" checked={!!selected[i]} onChange={() => toggleDish(i)} className="shrink-0" style={{ accentColor: 'var(--color-ink)' }} />
             <input
               type="text" value={dish.name} onChange={(e) => updateDish(i, 'name', e.target.value)}
-              className="flex-1 min-w-0 px-2 py-1 border rounded text-sm"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+              className="flex-1 min-w-0 px-2 py-1"
+              style={COMPACT_INPUT_STYLE}
             />
             <select
               value={dish.category} onChange={(e) => updateDish(i, 'category', e.target.value)}
-              className="px-1 py-1 border rounded text-xs shrink-0"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)', maxWidth: '100px' }}
+              className="px-1 py-1 text-xs shrink-0"
+              style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink-thin)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)', maxWidth: '100px' }}
             >
               {ALL_CATEGORIES.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.emoji} {cat.label}</option>
@@ -161,8 +189,8 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
             <input
               type="number" value={dish.price || ''} onChange={(e) => updateDish(i, 'price', e.target.value ? parseFloat(e.target.value) : null)}
               placeholder="$" step="0.01" min="0"
-              className="w-16 px-2 py-1 border rounded text-sm text-right shrink-0"
-              style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+              className="w-16 px-2 py-1 text-right shrink-0"
+              style={COMPACT_INPUT_STYLE}
             />
           </div>
         ))}
@@ -170,15 +198,15 @@ export function MenuImportWizard({ restaurantName, onBulkAdd, onClose }) {
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleConfirm} disabled={selectedCount === 0}
-          className="flex-1 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40"
+          className="btn-ink flex-1 py-2.5 text-sm"
           style={{ background: 'var(--color-primary)', color: 'var(--color-text-on-primary)' }}
         >
           Add {selectedCount} to Menu
         </button>
         <button
           onClick={() => { setStep(1); setError(null) }}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium"
-          style={{ color: 'var(--color-text-secondary)', background: 'var(--color-surface-elevated)' }}
+          className="btn-ink px-4 py-2.5 text-sm"
+          style={{ background: 'var(--color-card)', color: 'var(--color-ink)' }}
         >
           Back
         </button>

@@ -40,7 +40,7 @@ export function CategoryChips({
       className={sticky ? 'sticky top-0 z-10' : ''}
       style={Object.assign(
         { position: 'relative' },
-        sticky ? { background: 'var(--color-bg)' } : {}
+        sticky ? { background: 'var(--color-bg)', borderBottom: 'var(--border-ink)' } : {}
       )}
     >
       <div
@@ -74,12 +74,23 @@ export function CategoryChips({
                 minWidth: '48px',
                 fontSize: '11px',
                 background: 'transparent',
-                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                fontWeight: isActive ? 700 : 500,
+                color: isActive ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+                fontWeight: isActive ? 800 : 600,
               }}
             >
               <CategoryIcon categoryId={cat.id} size={56} />
-              <span style={{ marginTop: '2px', lineHeight: 1.2 }}>{cat.label}</span>
+              <span
+                style={{
+                  marginTop: '2px',
+                  lineHeight: 1.2,
+                  padding: '1px 6px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: isActive ? 'var(--color-butter)' : 'transparent',
+                  border: isActive ? 'var(--border-ink-thin)' : '1.5px solid transparent',
+                }}
+              >
+                {cat.label}
+              </span>
             </button>
           )
         })}

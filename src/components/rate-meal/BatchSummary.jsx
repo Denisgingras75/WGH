@@ -19,34 +19,34 @@ export function BatchSummary({
         className="sticky top-0 z-20 px-4 py-3"
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-divider)',
+          borderBottom: 'var(--border-ink)',
         }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
-            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}
+            style={{ background: 'var(--color-surface-elevated)', color: 'var(--color-ink)', border: 'var(--border-ink)', boxShadow: 'var(--shadow-hard-sm)' }}
             aria-label="Back to dishes"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
           </button>
           <div className="min-w-0 flex-1">
             <h1
-              className="font-bold"
               style={{
                 fontFamily: 'var(--font-display)',
                 color: 'var(--color-text-primary)',
-                fontSize: '22px',
+                fontSize: '24px',
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
+                lineHeight: 1.05,
               }}
             >
               Review Your Meal
             </h1>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="truncate" style={{ color: 'var(--color-accent)', fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>
               {restaurantName}
             </p>
           </div>
@@ -60,28 +60,43 @@ export function BatchSummary({
             <button
               key={dish.clientId}
               onClick={function () { onEdit(index) }}
-              className="w-full text-left rounded-2xl px-4 py-4 transition-all active:scale-[0.99]"
+              className="w-full text-left px-4 py-3.5 sticker-press"
               style={{
                 background: 'var(--color-card)',
-                border: '1px solid var(--color-divider)',
+                border: 'var(--border-ink)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-hard)',
               }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                  <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 700, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
                     {dish.name}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="font-bold text-lg" style={{ color: getRatingColor(rating.rating10) }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '24px',
+                        fontWeight: 800,
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1,
+                        color: getRatingColor(rating.rating10),
+                      }}
+                    >
                       {Number(rating.rating10).toFixed(1)}
                     </span>
-                    <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>/10</span>
+                    <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px', fontWeight: 700 }}>/10</span>
                     {rating.reviewText ? (
                       <span
-                        className="px-2 py-1 rounded-full text-xs font-semibold"
                         style={{
-                          background: 'var(--color-surface)',
-                          color: 'var(--color-text-secondary)',
+                          padding: '1px 7px',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          background: 'var(--color-card)',
+                          border: 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-pill)',
+                          color: 'var(--color-ink)',
                         }}
                       >
                         Note
@@ -89,10 +104,14 @@ export function BatchSummary({
                     ) : null}
                     {rating.photoFile ? (
                       <span
-                        className="px-2 py-1 rounded-full text-xs font-semibold"
                         style={{
-                          background: 'var(--color-primary-muted)',
-                          color: 'var(--color-primary)',
+                          padding: '1px 7px',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          background: 'var(--color-butter)',
+                          border: 'var(--border-ink-thin)',
+                          borderRadius: 'var(--radius-pill)',
+                          color: 'var(--color-ink)',
                         }}
                       >
                         Photo
@@ -101,10 +120,21 @@ export function BatchSummary({
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-xs font-semibold" style={{ color: 'var(--color-primary)' }}>
+                  <span
+                    className="inline-block"
+                    style={{
+                      padding: '3px 10px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: 'var(--color-ink)',
+                      background: 'var(--color-card)',
+                      border: 'var(--border-ink-thin)',
+                      borderRadius: 'var(--radius-pill)',
+                    }}
+                  >
                     Edit
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                  </span>
+                  <p className="mt-1.5" style={{ color: 'var(--color-text-tertiary)', fontSize: '11px', fontWeight: 600 }}>
                     Dish {index + 1}
                   </p>
                 </div>
@@ -115,22 +145,23 @@ export function BatchSummary({
 
         {submitError && (
           <div
-            className="rounded-2xl px-4 py-4"
+            className="px-4 py-4"
             style={{
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-danger)',
+              background: 'var(--color-danger-muted)',
+              border: '2px solid var(--color-danger)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p className="text-sm font-semibold" style={{ color: 'var(--color-danger)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-danger)', fontWeight: 800 }}>
               {submittedCount > 0
                 ? 'Stopped after ' + submittedCount + ' dish' + (submittedCount === 1 ? '' : 'es')
                 : "Couldn't submit your meal"}
             </p>
-            <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm mt-1.5" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
               {submitError?.message || 'Please try again.'}
             </p>
             {submittedCount > 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                 Retry is safe. Existing votes update in place.
               </p>
             )}
@@ -139,16 +170,17 @@ export function BatchSummary({
 
         {uploadStatus && (
           <div
-            className="rounded-2xl px-4 py-4"
+            className="px-4 py-4"
             style={{
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-divider)',
+              background: 'var(--color-card)',
+              border: 'var(--border-ink)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-primary)', fontWeight: 800 }}>
               Preparing photos
             </p>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
               {uploadStatus}
             </p>
           </div>
@@ -160,16 +192,18 @@ export function BatchSummary({
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'var(--color-bg)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+          borderTop: 'var(--border-ink)',
         }}
       >
         <button
           onClick={onSubmit}
           disabled={submitting}
-          className="w-full rounded-2xl py-3.5 font-bold text-sm transition-all"
+          className="btn-ink w-full py-3.5"
           style={{
-            background: submitting ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-            color: submitting ? 'var(--color-text-tertiary)' : 'var(--color-text-on-primary)',
+            background: 'var(--color-primary)',
+            color: 'var(--color-text-on-primary)',
+            fontSize: '15px',
+            fontWeight: 800,
           }}
         >
           {submitting ? 'Submitting...' : 'Submit All'}

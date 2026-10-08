@@ -17,8 +17,13 @@ export const SearchAutocomplete = forwardRef(function SearchAutocomplete({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 right-0 mb-1 rounded-lg shadow-lg border overflow-hidden z-50"
-      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-divider)' }}
+      className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden z-50"
+      style={{
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-hard)',
+      }}
     >
       {suggestions.map((suggestion, index) => (
         <button
@@ -26,33 +31,35 @@ export const SearchAutocomplete = forwardRef(function SearchAutocomplete({
           onClick={() => onSelect(suggestion)}
           className="w-full px-3 py-2.5 text-left flex items-center gap-2 transition-colors"
           style={{
-            background: index === activeIndex ? 'var(--color-primary-muted)' : 'transparent'
+            background: index === activeIndex ? 'var(--color-butter-muted)' : 'transparent',
+            borderTop: index > 0 ? '1.5px solid var(--color-divider)' : 'none',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = index === activeIndex ? 'var(--color-primary-muted)' : 'transparent'}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-card-hover)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = index === activeIndex ? 'var(--color-butter-muted)' : 'transparent'}
         >
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="text-sm truncate" style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>
               {suggestion.name}
             </p>
-            <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+            <p className="text-xs truncate" style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
               {suggestion.type === 'dish' ? `at ${suggestion.subtitle}` : suggestion.subtitle}
             </p>
           </div>
 
           {/* Type badge */}
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+            className="px-2 py-0.5 rounded-full flex-shrink-0"
             style={{
+              fontSize: '10px',
+              fontWeight: 800,
+              border: 'var(--border-ink-thin)',
               background:
-                suggestion.type === 'dish' ? 'var(--color-primary-muted)'
-                : suggestion.type === 'place' ? 'rgba(100, 116, 139, 0.15)'
-                : 'rgba(59, 130, 246, 0.15)',
+                suggestion.type === 'dish' ? 'var(--color-butter)'
+                : 'var(--color-card)',
               color:
-                suggestion.type === 'dish' ? 'var(--color-primary)'
-                : suggestion.type === 'place' ? 'var(--color-text-tertiary)'
-                : 'var(--color-blue-light)'
+                suggestion.type === 'restaurant' ? 'var(--color-accent)'
+                : 'var(--color-ink)'
             }}
           >
             {suggestion.type === 'dish' ? 'Dish' : suggestion.type === 'place' ? 'Google Maps' : 'Spot'}
@@ -62,8 +69,8 @@ export const SearchAutocomplete = forwardRef(function SearchAutocomplete({
 
       {showGoogleAttribution && (
         <div
-          className="px-3 py-2 border-t"
-          style={{ borderColor: 'var(--color-divider)', background: 'var(--color-surface-elevated)' }}
+          className="px-3 py-2"
+          style={{ borderTop: '1.5px solid var(--color-divider)', background: 'var(--color-surface)' }}
         >
           <PoweredByGoogle align="right" />
         </div>
