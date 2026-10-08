@@ -177,7 +177,7 @@ export function WelcomeModal() {
   return (
     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(27, 22, 17, 0.55)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'var(--color-backdrop)' }} />
 
       {/* Modal */}
       <div
@@ -325,7 +325,7 @@ export function WelcomeModal() {
                 autoFocus
                 maxLength={50}
                 disabled={saving}
-                className="w-full px-4 py-4 text-lg text-center focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow disabled:opacity-60"
+                className="w-full px-4 py-4 text-lg text-center focus:outline-none disabled:opacity-60"
                 style={{
                   background: 'var(--color-surface-elevated)',
                   border: saveError ? '2px solid var(--color-danger)' : 'var(--border-ink)',

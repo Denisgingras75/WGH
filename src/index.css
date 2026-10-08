@@ -971,34 +971,6 @@
   margin-bottom: 12px;
 }
 
-.photo-upload-confirmation .btn-primary,
-.photo-upload-confirmation .btn-secondary {
-  padding: 10px 24px;
-  border: var(--border-ink);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-hard);
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-
-.photo-upload-confirmation .btn-primary:active,
-.photo-upload-confirmation .btn-secondary:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--color-ink);
-}
-
-.photo-upload-confirmation .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
-}
-
-.photo-upload-confirmation .btn-secondary {
-  background: var(--color-card);
-  color: var(--color-ink);
-}
-
 .photo-upload-confirmation .hint {
   font-size: 12px;
   color: var(--color-text-tertiary);

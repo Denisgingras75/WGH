@@ -122,7 +122,7 @@ export function ResetPassword() {
               required
               autoFocus
               minLength={6}
-              className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+              className="w-full px-4 py-3 focus:outline-none"
               style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>
@@ -138,7 +138,7 @@ export function ResetPassword() {
               placeholder="Enter password again"
               required
               minLength={6}
-              className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+              className="w-full px-4 py-3 focus:outline-none"
               style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
             />
           </div>

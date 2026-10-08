@@ -173,7 +173,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
       role="presentation"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0" style={{ background: 'rgba(27, 22, 17, 0.55)' }} aria-hidden="true" />
+      <div className="absolute inset-0" style={{ background: 'var(--color-backdrop)' }} aria-hidden="true" />
 
       {/* Modal */}
       <div
@@ -343,7 +343,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="you@example.com"
                   required
                   autoFocus
-                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  className="w-full px-4 py-3 focus:outline-none"
                   style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
@@ -359,7 +359,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  className="w-full px-4 py-3 focus:outline-none"
                   style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
@@ -419,7 +419,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="you@example.com"
                   required
                   autoFocus
-                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  className="w-full px-4 py-3 focus:outline-none"
                   style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
@@ -464,7 +464,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                     maxLength={30}
                     aria-describedby={usernameStatus ? 'username-status' : undefined}
                     aria-invalid={usernameStatus === 'taken'}
-                    className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow pr-10"
+                    className="w-full px-4 py-3 focus:outline-none pr-10"
                     style={{
                       background: 'var(--color-surface-elevated)',
                       border: usernameStatus === 'taken' ? '2px solid var(--color-danger)' : usernameStatus === 'available' ? '2px solid var(--color-success)' : 'var(--border-ink)',
@@ -505,7 +505,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  className="w-full px-4 py-3 focus:outline-none"
                   style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
@@ -522,7 +522,7 @@ export function LoginModal({ isOpen, onClose, pendingAction = null }) {
                   placeholder="At least 6 characters"
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 focus:outline-none focus:shadow-[shadow:var(--shadow-hard)] transition-shadow"
+                  className="w-full px-4 py-3 focus:outline-none"
                   style={{ background: 'var(--color-surface-elevated)', border: 'var(--border-ink)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 500 }}
                 />
               </div>
