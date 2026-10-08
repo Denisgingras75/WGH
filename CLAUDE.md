@@ -47,6 +47,7 @@ npm run test:e2e:business # manager persona E2E
 - `TASKS.md` - Prioritized backlog of high-leverage tasks
 - `NOTES.md` - Design tokens, architecture, file locations, category system
 - `ICON-SPEC.md` - Neo-brutalist icon system spec
+- `docs/DESIGN-SYSTEM.md` - "Lobster Buoy" UI system: palette, type, sticker patterns
 - `DEVLOG.md` - Recent work history
 
 ---
@@ -71,6 +72,8 @@ These rules are absolute. Violating any of them is a bug.
 - **Brand colors via CSS variables.** Use `var(--color-*)` for primary, rating, text, backgrounds, medals — anything that defines the app's identity. This makes rebranding a one-file change.
 - **Hex is fine for one-off colors.** SVG fills, map markers, illustrations, third-party brand colors (Google logo), rgba overlays — use hex/rgba directly.
 - **No Tailwind color classes.** No `text-gray-*`, `bg-blue-*`, `text-white`, etc. Tailwind is for layout/spacing only (`className` for flexbox, padding, margin, grid).
+- **Fonts via tokens.** `var(--font-display)` / `var(--font-body)` / `var(--font-mono)` — never a font-family string literal.
+- **Sticker system for surfaces.** Cards, buttons, inputs, modals use the ink outline + hard offset shadow tokens (`--border-ink`, `--shadow-hard*`, `--radius-*`) or the `.sticker` / `.btn-ink` classes. No soft blurred shadows, no glass. See `docs/DESIGN-SYSTEM.md`.
 
 ### 1.4 Data Access
 - **No direct Supabase calls from components or hooks.** All data access goes through `src/api/`.
@@ -254,43 +257,45 @@ export function useFoo(params) {
 | Use "favorites" not "saved" | Database table is `favorites` | `useFavorites`, `isFavorite` |
 
 ### 4.6 Typography
-Two-font system loaded via Google Fonts in `index.html`. Amatic SC for display, Outfit for body.
+Two-font system loaded via Google Fonts in `index.html`, referenced only through tokens.
 
-| Font | Role | Weights | CSS |
-|------|------|---------|-----|
-| **Amatic SC** | Display: brand name, section headers, page titles, menu sections | 700 | `'Amatic SC', cursive` |
-| **Outfit** | Body: dish names, ratings, buttons, inputs, all body text | 400-800 | Inherited from `body` in `index.css` |
-| **SF Mono** | Technical: Jitter badges only | 700 | `'SF Mono', 'Fira Code', monospace` |
+| Font | Token | Role | Weights |
+|------|-------|------|---------|
+| **Bricolage Grotesque** (variable opsz/wdth/wght) | `--font-display` | Brand wordmark, page/section headings, card titles, rank + rating numerals, avatar initials. `h1`–`h3` default to it. | 800 |
+| **Instrument Sans** | `--font-body` | Everything else — dish names, meta, buttons, inputs. Inherited from `body`. | 400–700 |
+| **SF Mono stack** | `--font-mono` | Jitter badges only | 700 |
 
-**Rule:** Amatic SC = section/page headings (things that name a place, category, or section). Outfit = data, actions, body text (things you read to make decisions or interact with).
+**Rule:** display = things that name a place/section or a number you decide on; body = things you read or tap.
 
-**Brand header pattern:** `What's <span gold>Good</span> Here` — all in Amatic SC, "Good" gets `var(--color-accent-gold)`.
+**Brand lockup:** use `<Wordmark size={…} />` (`src/components/Wordmark.jsx`) — "What's **Good** Here" in condensed Bricolage with "Good" on a butter sticker. Don't hand-roll it.
 
-**Removed:** DM Sans, Cormorant, Aglet Sans (Typekit). Do not re-introduce these fonts.
+**Retired:** Amatic SC, Outfit, DM Sans, Cormorant, Aglet Sans. Do not re-introduce these fonts.
 
 ### 4.7 Design Tokens
-Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` for brand tokens so rebranding is easy. One-off colors in SVGs, map markers, or illustrations can use hex directly.
-
+Defined in `src/index.css` `:root` — "Lobster Buoy" (light only). Full system in `docs/DESIGN-SYSTEM.md`.
 
 | Token | Value | Usage |
 |---|---|---|
-| `--color-primary` | `#E4440A` (Warm Coral) | CTAs, primary actions |
-| `--color-accent-gold` | `#C48A12` (Warm Amber) | Links, medals, secondary accents |
-| `--color-accent-orange` | `#E07856` (Warm Orange) | Hover states |
-| `--color-rating` | `#16A34A` (Bright Green) | Rating displays |
-| `--color-text-primary` | `#1A1A1A` (Near Black) | Main text |
-| `--color-text-secondary` | `#555555` (Medium Gray) | Secondary text |
-| `--color-text-tertiary` | `#999999` (Light Gray) | Tertiary text |
-| `--color-bg` | `#F0ECE8` (Warm Stone) | Page background |
-| `--color-surface` | `#F7F4F1` (Near White) | Surface areas |
-| `--color-surface-elevated` | `#FFFFFF` (White) | Cards, modals, bottom sheet |
-| `--color-card` | `#FFFFFF` (White) | Card backgrounds |
-| `--color-medal-gold` | `#E8B820` (Warm Gold) | #1 rank, gold medal |
-| `--color-medal-silver` | `#9EAAB2` | #2 rank |
-| `--color-medal-bronze` | `#B07340` | #3 rank |
-| `--color-category-strip` | `#F2CDBC` (Warm Peach) | Category icon area |
-| `--color-danger` | `#DC2626` | Error states |
-| `--color-success` | `#16A34A` | Success states |
+| `--color-primary` | `#CA3216` (Lobster) | Primary actions, brand mark |
+| `--color-accent` | `#1F4FA3` (Harbor) | Links, restaurant names, secondary actions |
+| `--color-butter` | `#FFC83D` (Butter) | Highlights, active states, #1 — always with ink text |
+| `--color-ink` / `--color-text-primary` | `#1B1611` | Text, outlines, hard shadows |
+| `--color-text-secondary` | `#554A3E` | Secondary text |
+| `--color-text-tertiary` | `#73665A` | Tertiary text (AA on bg) |
+| `--color-bg` | `#F6EEDC` (Cream) | Page background |
+| `--color-surface` | `#FBF6EA` | Recessed / inactive surfaces |
+| `--color-card` / `--color-surface-elevated` | `#FFFDF7` | Cards, inputs, sheets |
+| `--color-divider` | `#E3D7BF` | Subtle rules |
+| `--color-rating` | `#0E7A3D` | Rating displays (scale via `getRatingColor()`) |
+| `--color-medal-gold/silver/bronze` | `#FFC83D` / `#C9CDD1` / `#E0A06A` | Podium discs |
+| `--color-category-strip` | `#F9DDB8` (Peach) | Category icon backdrop |
+| `--color-danger` | `#C1271A` | Error states |
+| `--color-success` | `#0E7A3D` | Success states |
+| `--border-ink` / `--border-ink-thin` | 2px / 1.5px ink | Sticker outlines |
+| `--shadow-hard-sm` / `--shadow-hard` / `--shadow-hard-lg` | 2 / 3 / 5px ink offset, no blur | Sticker shade |
+| `--radius-sm/md/lg/xl/pill` | 8 / 12 / 16 / 22 / 999px | Corner scale |
+
+`--color-accent-gold` is a deprecated alias of `--color-accent` — don't use it in new code.
 
 ### 4.8 Constants & Configuration
 - **`MIN_VOTES_FOR_RANKING` = 5** — `src/constants/app.js` — dishes below this show as "Early"
@@ -446,7 +451,7 @@ Defined in `src/index.css`. Light theme only ("Appetite"). Use `var(--color-*)` 
 - **Optimistic updates with rollback.** UI updates before server confirms, reverts on error.
 - **Unexpected errors classified.** Catch blocks use `createClassifiedError()`. Validation guards throw plain readable errors.
 - **Lazy-loaded pages.** All pages use `lazyWithRetry()` for code splitting with chunk failure recovery.
-- **Light theme only.** "Appetite" palette. All brand colors via CSS variables in `src/index.css`.
+- **Light theme only.** "Lobster Buoy" palette. All brand colors, fonts, radii and shadows via CSS variables in `src/index.css`.
 - **Vote source weighting.** Votes have a `source` field (`user` or `ai_estimated`). AI votes weighted at 0.5x in all ranking aggregations.
 - **Multi-city ready.** Towns constant covers MV + Nantucket + Cape Cod. Schema supports expansion.
 - **Provider order:** `AuthProvider > LocationProvider > BrowserRouter`

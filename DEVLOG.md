@@ -5,6 +5,32 @@ A shared log of what each contributor worked on. Add your entries at the top.
 
 ---
 
+## 2026-10-08 — Denis + Claude
+
+### Full visual redesign — "Lobster Buoy"
+
+**Why:** The UI and the icons were speaking two languages. Dan's food icons are neo-brutalist stickers (bold ink outlines, hard offset shadows, flat saturated fills), but the chrome around them was soft — thin Amatic SC headings, blurry drop shadows, a coral + gold + green palette all competing for attention. This redesign brings the whole interface up to the icons' energy so the app finally reads as one thing.
+
+**Color.** Three screen-print inks on cream paper, each with one job: **Lobster** `#CA3216` = act (primary buttons, brand mark), **Harbor** `#1F4FA3` = navigate (links, restaurant names, Directions), **Butter** `#FFC83D` = celebrate / "you are here" (active nav + chips, #1, price tags). Ink `#1B1611` does everything else. Rating numerals keep the green/amber/red scale. All text colors re-checked for WCAG AA on the new paper.
+
+**Type.** Bricolage Grotesque (variable — condensed width for signage moments) for display + numerals, Instrument Sans for body. Amatic SC and Outfit are retired. Every hardcoded font-family string is now `var(--font-display|body|mono)`.
+
+**Shade.** Ink outlines + hard offset shadows (`--border-ink`, `--shadow-hard*`) replace blurred drop shadows and glass. Tappable cards sink into their shadow on press (`.sticker-press`, `.btn-ink`).
+
+**Signature moments:**
+- `<Wordmark />` — "What's **Good** Here" with Good on a tilted butter sticker. Replaces four copy-pasted brand headers.
+- Home editorial chalkboards → "buoy cards" painted in the three inks, food icon stuck on the corner.
+- Top-10 podium rows become medal stickers; ratings set big in the display face.
+- Dish page verdict card with a butter price-tag sticker and a 60px score.
+- Map pins are ink-outlined stickers (butter when selected, lobster shadow for 9+ rated).
+- SmileyPin, WGH seal, favicon, apple-touch icon and OG/share images redrawn in the system (the app icon was still a neon fork-and-knife from an old identity, and the OG generator was still dark "Island Depths").
+
+**Cleanup along the way:** deleted dead `ChampionCard`, `Top10Scroll`, `CategoryExpand`, `CategoryIcon` and a dozen unused CSS classes; fixed review rating chips that rendered an invalid color (`var(...)26`); fixed map legend hidden behind the bottom nav; Tailwind `shadow-*` utilities pointed at undefined vars (no shadow at all) — now mapped to the hard shadows.
+
+**Docs:** `docs/DESIGN-SYSTEM.md` (new — palette, type, patterns), CLAUDE.md §1.3/§4.6/§4.7, NOTES.md, ICON-SPEC.md.
+
+**Needs Dan's eyes** — visual identity is his call. Everything is token-driven, so palette/type tweaks are one-file changes in `src/index.css`.
+
 ## 2026-06-02 — Dan + Claude
 
 ### Review bar always-on + rate-first gate for lists

@@ -390,10 +390,7 @@ export function Map() {
             }}
           >
             <div className="flex items-center gap-2" style={{ pointerEvents: (pinSelected && location) ? 'none' : 'auto' }}>
-              <div className="flex-1" style={{
-                borderRadius: '14px',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
-              }}>
+              <div className="flex-1">
                 <DishSearch
                   loading={false}
                   placeholder="What are you craving?"
@@ -403,12 +400,14 @@ export function Map() {
                     <button
                       onClick={function (e) { e.stopPropagation(); setRadiusSheetOpen(true) }}
                       aria-label={radius === 0 ? 'Showing dishes everywhere' : 'Search radius: ' + radius + ' miles'}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg font-bold flex-shrink-0"
+                      className="flex items-center gap-1 px-2.5 py-1 flex-shrink-0"
                       style={{
                         fontSize: '12px',
-                        background: 'var(--color-bg)',
-                        color: 'var(--color-text-secondary)',
-                        border: '1px solid var(--color-divider)',
+                        fontWeight: 800,
+                        background: 'var(--color-butter)',
+                        color: 'var(--color-ink)',
+                        border: 'var(--border-ink-thin)',
+                        borderRadius: 'var(--radius-pill)',
                         cursor: 'pointer',
                       }}
                     >
@@ -451,8 +450,8 @@ export function Map() {
               height: '44px',
               borderRadius: '50%',
               background: 'var(--color-card)',
-              border: '1.5px solid var(--color-divider)',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+              border: 'var(--border-ink)',
+              boxShadow: 'var(--shadow-hard)',
             }}
             aria-label="Show distance to dish"
           >

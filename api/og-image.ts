@@ -112,62 +112,64 @@ function generateOgSvg(title: string, subtitle: string, rating: string, badge: s
   const displayTitle = title.length > 40 ? title.slice(0, 37) + '...' : title
   const titleSize = displayTitle.length > 25 ? 48 : 56
 
+  // "Lobster Buoy" palette — keep in sync with src/index.css :root (SVG can't read CSS vars)
+  const INK = '#1B1611'
+  const CREAM = '#F6EEDC'
+  const CARD = '#FFFDF7'
+  const LOBSTER = '#CA3216'
+  const BUTTER = '#FFC83D'
+  const TEXT_2 = '#554A3E'
+  const DISPLAY = "'Bricolage Grotesque', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+  const BODY = "'Instrument Sans', 'Helvetica Neue', Arial, sans-serif"
+
+  const titleY = badge ? 300 : 270
+  const badgeWidth = badge.length * 17 + 44
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0D1B22"/>
-      <stop offset="100%" stop-color="#1A3A42"/>
-    </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#D9A765"/>
-      <stop offset="100%" stop-color="#E8C088"/>
-    </linearGradient>
-  </defs>
+  <!-- Cream paper -->
+  <rect width="1200" height="630" fill="${CREAM}"/>
 
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Sticker card: hard offset shadow + ink outline -->
+  <rect x="58" y="58" width="1100" height="530" rx="34" fill="${INK}"/>
+  <rect x="44" y="44" width="1100" height="530" rx="34" fill="${CARD}" stroke="${INK}" stroke-width="5"/>
 
-  <!-- Subtle top accent line -->
-  <rect x="0" y="0" width="1200" height="4" fill="url(#gold)"/>
-
-  <!-- Bottom accent line -->
-  <rect x="0" y="626" width="1200" height="4" fill="url(#gold)"/>
-
-  <!-- Brand wordmark area -->
-  <text x="80" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="#7D7168">
-    WHAT'S <tspan fill="#D9A765">GOOD</tspan> HERE
-  </text>
+  <!-- Wordmark: "Good" on a butter sticker. textLength pins widths so crawler fallback fonts can't overlap -->
+  <text x="96" y="124" font-family="${DISPLAY}" font-size="38" font-weight="800" fill="${INK}" textLength="122" lengthAdjust="spacingAndGlyphs">What’s</text>
+  <g transform="rotate(-3 290 112)">
+    <rect x="232" y="84" width="124" height="54" rx="11" fill="${INK}" transform="translate(4 4)"/>
+    <rect x="232" y="84" width="124" height="54" rx="11" fill="${BUTTER}" stroke="${INK}" stroke-width="3.5"/>
+    <text x="294" y="124" text-anchor="middle" font-family="${DISPLAY}" font-size="38" font-weight="800" fill="${INK}" textLength="98" lengthAdjust="spacingAndGlyphs">Good</text>
+  </g>
+  <text x="372" y="124" font-family="${DISPLAY}" font-size="38" font-weight="800" fill="${INK}" textLength="84" lengthAdjust="spacingAndGlyphs">Here</text>
 
   ${badge ? `
   <!-- Badge -->
-  <rect x="80" y="140" width="${badge.length * 18 + 40}" height="44" rx="22" fill="#D9A765" opacity="0.15"/>
-  <text x="100" y="168" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" fill="#D9A765">${esc(badge)}</text>
+  <rect x="96" y="176" width="${badgeWidth}" height="46" rx="23" fill="${LOBSTER}" stroke="${INK}" stroke-width="3"/>
+  <text x="${96 + badgeWidth / 2}" y="207" text-anchor="middle" font-family="${BODY}" font-size="21" font-weight="800" letter-spacing="1.5" fill="#FFFFFF">${esc(badge.toUpperCase())}</text>
   ` : ''}
 
   <!-- Main title -->
-  <text x="80" y="${badge ? 250 : 220}" font-family="system-ui, -apple-system, sans-serif" font-size="${titleSize}" font-weight="700" fill="#F5F1E8">
-    ${esc(displayTitle)}
-  </text>
+  <text x="96" y="${titleY}" font-family="${DISPLAY}" font-size="${titleSize + 8}" font-weight="800" letter-spacing="-2" fill="${INK}">${esc(displayTitle)}</text>
 
   <!-- Subtitle -->
-  <text x="80" y="${badge ? 305 : 275}" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#B8A99A">
-    ${esc(subtitle)}
-  </text>
+  <text x="96" y="${titleY + 56}" font-family="${BODY}" font-size="28" font-weight="600" fill="${TEXT_2}">${esc(subtitle)}</text>
 
   ${rating ? `
   <!-- Rating -->
-  <text x="80" y="${badge ? 370 : 340}" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="600" fill="#6BB384">
-    ${esc(rating)}
-  </text>
+  <text x="96" y="${titleY + 136}" font-family="${DISPLAY}" font-size="44" font-weight="800" letter-spacing="-1" fill="#0E7A3D">${esc(rating)}</text>
   ` : ''}
 
-  <!-- Decorative circle (brand element) -->
-  <circle cx="1050" cy="315" r="160" fill="none" stroke="#D9A765" stroke-width="1" opacity="0.1"/>
-  <circle cx="1050" cy="315" r="120" fill="none" stroke="#D9A765" stroke-width="1" opacity="0.08"/>
+  <!-- Smiley pin mark -->
+  <g transform="translate(910 236) scale(1.15)">
+    <path d="M100 20 C60 20, 30 50, 30 90 C30 130, 100 185, 100 185 C100 185, 170 130, 170 90 C170 50, 140 20, 100 20 Z" fill="${INK}" transform="translate(8 8)"/>
+    <path d="M100 20 C60 20, 30 50, 30 90 C30 130, 100 185, 100 185 C100 185, 170 130, 170 90 C170 50, 140 20, 100 20 Z" fill="${LOBSTER}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="100" cy="90" r="46" fill="${CARD}" stroke="${INK}" stroke-width="5"/>
+    <circle cx="84" cy="80" r="7" fill="${INK}"/>
+    <circle cx="116" cy="80" r="7" fill="${INK}"/>
+    <path d="M78 100 Q 100 124, 122 100" stroke="${INK}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  </g>
 
   <!-- Bottom CTA -->
-  <text x="80" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#7D7168">
-    whats-good-here.vercel.app
-  </text>
+  <text x="96" y="540" font-family="${BODY}" font-size="22" font-weight="700" fill="${TEXT_2}">whats-good-here.vercel.app</text>
 </svg>`
 }

@@ -198,53 +198,11 @@ The `dish_search_score()` function uses Bayesian shrinkage to adjust ratings by 
 
 ---
 
-## Design Tokens (Dual Theme)
+## Design Tokens & Typography
 
-Defined in `src/index.css`. Light "Appetite" is the default (`:root`); dark "Island Depths" toggled via `[data-theme="dark"]` on `<html>`. Controlled by `ThemeContext` + `wgh_theme` localStorage key.
-
-### Default — Appetite (Light)
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-primary` | `#E45A35` (Warm Coral) | CTAs, primary actions |
-| `--color-accent-gold` | `#E9A115` (Warm Yellow) | Links, secondary accents |
-| `--color-accent-orange` | `#E07856` (Warm Orange) | Hover states |
-| `--color-rating` | `#16A34A` (Bright Green) | Rating displays |
-| `--color-text-primary` | `#1A1A1A` (Near Black) | Main text |
-| `--color-text-secondary` | `#6B7280` (Cool Gray) | Secondary text |
-| `--color-text-tertiary` | `#9CA3AF` (Light Gray) | Tertiary text |
-| `--color-text-on-primary` | `#FFFFFF` (White) | Text on primary-colored backgrounds |
-| `--color-bg` | `#F0ECE8` (Warm Stone) | Page background |
-| `--color-surface` | `#F7F4F1` (Near White) | Surface areas |
-| `--color-surface-elevated` | `#FFFFFF` (White) | Cards, modals |
-| `--color-card` | `#FFFFFF` (White) | Card backgrounds |
-| `--color-medal-gold` | `#C48A12` (Warm Amber) | #1 rank, gold medal |
-| `--color-category-strip` | `#FADCC8` (Warm Orange) | Category icon area |
-
-### Toggle — Island Depths (Dark)
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-primary` | `#C85A54` (Deep Rust) | CTAs, primary actions, danger |
-| `--color-accent-gold` | `#D9A765` (Warm Gold) | Links, secondary accents |
-| `--color-accent-orange` | `#E07856` (Warm Orange) | Hover states |
-| `--color-rating` | `#6BB384` (Muted Green) | Rating displays, success |
-| `--color-text-primary` | `#F5F1E8` (Soft Cream) | Main text |
-| `--color-text-secondary` | `#B8A99A` (Warm Taupe) | Secondary text |
-| `--color-text-tertiary` | `#7D7168` (Brown Gray) | Tertiary text |
-| `--color-text-on-primary` | `#1A1A1A` | Text on primary-colored backgrounds |
-| `--color-bg` | `#0D1B22` (Deep Charcoal-Navy) | Page background |
-| `--color-surface` | `#0F1F2B` | Slightly lighter surface |
-| `--color-card` | `#1A3A42` (Navy-Teal) | Card backgrounds |
-
----
-
-## Typography
-
-| Element | Font | Weight | Size |
-|---------|------|--------|------|
-| Body | DM Sans | 400 | 14-16px |
-| Headings | DM Sans | 600-700 | 18-24px |
-| Labels | DM Sans | 500 | 12-14px |
-| Hints | DM Sans | 400 | 12px |
+Superseded by the "Lobster Buoy" redesign (Oct 2026). The single source of truth is
+`src/index.css` (`:root`), documented in `docs/DESIGN-SYSTEM.md` and summarized in CLAUDE.md §4.6–4.7.
+Light theme only. Fonts: Bricolage Grotesque (display) + Instrument Sans (body).
 
 ---
 
@@ -264,7 +222,7 @@ Using Tailwind defaults:
 
 | What | Where |
 |------|-------|
-| Design tokens | `src/index.css` (lines 1-30) |
+| Design tokens | `src/index.css` (`:root`) + `docs/DESIGN-SYSTEM.md` |
 | API layer | `src/api/*.js` |
 | React hooks | `src/hooks/*.js` |
 | Auth context | `src/context/AuthContext.jsx` |

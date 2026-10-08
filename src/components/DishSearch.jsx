@@ -186,7 +186,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
             aria-label="Clear search"
             className="p-1 rounded-full transition-colors"
             style={{ ':hover': { background: 'var(--color-surface-elevated)' } }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <svg
@@ -250,8 +250,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Dish Results */}
               {results.dishes.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <div className="px-4 py-2" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
+                    <span className="eyebrow" style={{ fontSize: '10px' }}>
                       {town ? `Best in ${town}` : 'Best Matches'}
                     </span>
                   </div>
@@ -276,7 +276,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       background: results.dishes.length > 0 ? 'var(--color-surface)' : 'transparent',
                     }}
                   >
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                    <span className="eyebrow" style={{ fontSize: '10px' }}>
                       Categories
                     </span>
                   </div>
@@ -293,8 +293,8 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
               {/* Restaurant fallback — local DB + Google Places */}
               {hasRestaurantResults && (
                 <div>
-                  <div className="px-4 py-2 border-b" style={{ borderColor: 'var(--color-divider)' }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <div className="px-4 py-2" style={{ borderBottom: '1.5px solid var(--color-divider)' }}>
+                    <span className="eyebrow" style={{ fontSize: '10px' }}>
                       Restaurants
                     </span>
                   </div>
@@ -304,10 +304,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       key={r.id}
                       onClick={() => { setIsFocused(false); setQuery(''); navigate('/restaurants/' + r.id) }}
                       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-butter-muted)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-rating)', color: 'var(--color-text-on-primary)', border: '1.5px solid var(--color-ink)' }}>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
@@ -324,10 +324,10 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                       key={p.placeId}
                       onClick={() => { setIsFocused(false); setQuery(''); setAddModalQuery(p.name); setAddModalOpen(true) }}
                       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-elevated)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-butter-muted)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)' }}>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-accent)', border: '1.5px solid var(--color-accent)' }}>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -339,7 +339,7 @@ export function DishSearch({ loading = false, placeholder = "Find What's Good ne
                     </button>
                   ))}
                   {restaurantExternal.length > 0 && (
-                    <div className="px-4 py-2 border-t" style={{ borderColor: 'var(--color-divider)' }}>
+                    <div className="px-4 py-2" style={{ borderTop: '1.5px solid var(--color-divider)' }}>
                       <PoweredByGoogle align="right" />
                     </div>
                   )}
@@ -368,12 +368,12 @@ function DishResult({ dish, rank, onClick }) {
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 py-2.5 px-4 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       <span
-        className="w-6 text-center text-sm font-bold flex-shrink-0"
-        style={{ color: 'var(--color-text-tertiary)' }}
+        className="w-6 text-center flex-shrink-0"
+        style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 800, color: 'var(--color-text-tertiary)' }}
       >
         {rank}
       </span>
@@ -388,7 +388,7 @@ function DishResult({ dish, rank, onClick }) {
 
       <div className="flex-shrink-0 text-right">
         {isRanked ? (
-          <span className="text-sm font-bold" style={{ color: getRatingColor(avg_rating) }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 800, letterSpacing: '-0.02em', color: getRatingColor(avg_rating) }}>
             {avg_rating || '—'}
           </span>
         ) : (
@@ -407,7 +407,7 @@ function CategoryResult({ category, onClick }) {
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left"
-      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-surface-elevated)'}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-butter-muted)'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
       {/* Category icon */}

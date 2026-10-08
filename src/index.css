@@ -507,68 +507,12 @@
     animation: fadeInUp 0.5s ease-out forwards;
   }
 
-  .stagger-item {
-    opacity: 0;
-    animation: fadeInUp 0.4s ease-out forwards;
-  }
-
-  .stagger-item:nth-child(1) { animation-delay: 0ms; }
-  .stagger-item:nth-child(2) { animation-delay: 50ms; }
-  .stagger-item:nth-child(3) { animation-delay: 100ms; }
-  .stagger-item:nth-child(4) { animation-delay: 150ms; }
-  .stagger-item:nth-child(5) { animation-delay: 200ms; }
-  .stagger-item:nth-child(6) { animation-delay: 250ms; }
-  .stagger-item:nth-child(7) { animation-delay: 300ms; }
-  .stagger-item:nth-child(8) { animation-delay: 350ms; }
-  .stagger-item:nth-child(9) { animation-delay: 400ms; }
-  .stagger-item:nth-child(10) { animation-delay: 450ms; }
-  .stagger-item:nth-child(11) { animation-delay: 500ms; }
-  .stagger-item:nth-child(12) { animation-delay: 550ms; }
-
   /* Subtle press feedback — gentle scale down */
   .card-press {
     transition: transform 0.1s ease;
   }
   .card-press:active {
     transform: scale(0.98) !important;
-  }
-  .card-press-hero {
-    transition: transform 0.1s ease;
-  }
-  .card-press-hero:active {
-    transform: scale(0.98) !important;
-  }
-
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  /* Warm text shadow for hero headlines */
-  .text-shadow-warm {
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Gradient hero background */
-  .gradient-hero {
-    background: var(--color-bg);
-  }
-
-  /* Search input focus ring */
-  .glow-search:focus-within {
-    box-shadow: 0 0 0 2px var(--color-primary);
-    border-color: var(--color-primary) !important;
-  }
-
-  /* Rating glow for high scores */
-  .glow-rating-high {
-    text-shadow: 0 0 12px rgba(107, 179, 132, 0.5);
-  }
-
-  /* Gold text glow */
-  .glow-gold-text {
-    text-shadow: 0 0 16px rgba(217, 167, 101, 0.4), 0 0 32px rgba(217, 167, 101, 0.15);
   }
 
   .focus-ring {
@@ -874,19 +818,20 @@
   width: 100%;
   padding: 12px 16px;
   background: var(--color-surface);
-  border: 2px dashed var(--color-divider);
-  border-radius: 12px;
+  border: 2px dashed var(--color-text-tertiary);
+  border-radius: var(--radius-md);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .photo-upload-btn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--color-primary-muted);
+  border-color: var(--color-ink);
+  border-style: solid;
+  color: var(--color-ink);
+  background: var(--color-butter-muted);
 }
 
 .photo-upload-btn:disabled {
@@ -900,17 +845,17 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
+  background: var(--color-card);
+  border: var(--border-ink);
   border-radius: 50%;
+  box-shadow: var(--shadow-hard-sm);
   font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .photo-upload-btn-compact:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background: var(--color-primary-muted);
+  background: var(--color-butter);
 }
 
 .photo-upload-btn-compact:disabled {
@@ -931,27 +876,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Ice cream drip animation — melting from chalkboard */
-@keyframes iceDrip {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.25); }
-}
-
-@keyframes iceDripSlow {
-  0%, 100% { transform: scaleY(1); }
-  60% { transform: scaleY(1.15); }
-}
-
-@keyframes iceDroplet {
-  0%, 85% { opacity: 0; transform: translateY(0) scale(0.5); }
-  90% { opacity: 0.7; transform: translateY(2px) scale(1); }
-  100% { opacity: 0; transform: translateY(8px) scale(0.3); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ice-drip, .ice-droplet { animation: none !important; }
-}
-
 .photo-upload-error-container {
   margin-top: 12px;
   text-align: center;
@@ -966,19 +890,18 @@
 
 .photo-upload-retry-btn {
   padding: 6px 16px;
-  background: transparent;
-  border: 1px solid var(--color-primary);
-  border-radius: 6px;
+  background: var(--color-card);
+  border: var(--border-ink-thin);
+  border-radius: var(--radius-pill);
   font-size: 13px;
-  font-weight: 500;
-  color: var(--color-primary);
+  font-weight: 700;
+  color: var(--color-ink);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .photo-upload-retry-btn:hover {
-  background: var(--color-primary);
-  color: white;
+  background: var(--color-butter);
 }
 
 /* Photo Upload Confirmation */
@@ -992,7 +915,9 @@
   width: 120px;
   height: 120px;
   margin: 0 auto 16px;
-  border-radius: 12px;
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
   overflow: hidden;
 }
 
@@ -1008,19 +933,19 @@
   right: 8px;
   width: 28px;
   height: 28px;
-  background: #22c55e;
+  background: var(--color-success);
+  border: var(--border-ink);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text-on-primary);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 800;
 }
 
 .photo-upload-confirmation h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 22px;
   margin-bottom: 4px;
   color: var(--color-text-primary);
 }
@@ -1038,36 +963,32 @@
   margin-bottom: 12px;
 }
 
-.photo-upload-confirmation .btn-primary {
+.photo-upload-confirmation .btn-primary,
+.photo-upload-confirmation .btn-secondary {
   padding: 10px 24px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-.photo-upload-confirmation .btn-primary:hover {
-  filter: brightness(0.9);
+.photo-upload-confirmation .btn-primary:active,
+.photo-upload-confirmation .btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-ink);
+}
+
+.photo-upload-confirmation .btn-primary {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 
 .photo-upload-confirmation .btn-secondary {
-  padding: 10px 24px;
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-divider);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.photo-upload-confirmation .btn-secondary:hover {
-  background: var(--color-divider);
+  background: var(--color-card);
+  color: var(--color-ink);
 }
 
 .photo-upload-confirmation .hint {
@@ -1082,9 +1003,9 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: color-mix(in srgb, var(--tier-color) 15%, var(--color-bg));
-  border: 1px solid color-mix(in srgb, var(--tier-color) 30%, var(--color-bg));
-  border-radius: 20px;
+  background: var(--color-card);
+  border: 2px solid var(--tier-color);
+  border-radius: var(--radius-pill);
   margin: 8px 0 12px;
 }
 
@@ -1094,7 +1015,7 @@
 
 .photo-tier-badge .tier-label {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--tier-color);
 }
 
@@ -1107,10 +1028,12 @@
 
 .photo-upload-confirmation .tier-tip {
   font-size: 12px;
-  color: var(--color-primary);
-  background: var(--color-primary-muted);
+  font-weight: 600;
+  color: var(--color-ink);
+  background: var(--color-butter-muted);
+  border: 1.5px solid var(--color-ink);
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 12px;
 }
 
@@ -1131,7 +1054,8 @@
 
 .photo-upload-confirmation .photo-info-content {
   background: var(--color-surface);
-  border-radius: 8px;
+  border: 1.5px dashed var(--color-divider);
+  border-radius: var(--radius-sm);
   padding: 12px;
   margin-bottom: 12px;
   text-align: left;
@@ -1167,7 +1091,9 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 12px;
+  border: var(--border-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hard);
   overflow: hidden;
   margin-bottom: 16px;
 }
@@ -1182,17 +1108,18 @@
   position: absolute;
   bottom: 8px;
   left: 8px;
-  padding: 4px 10px;
+  padding: 3px 10px;
   font-size: 11px;
-  font-weight: 600;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  backdrop-filter: blur(4px);
+  font-weight: 800;
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  color: var(--color-ink);
 }
 
 .photo-badge.restaurant {
   background: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 
 .community-photos {
@@ -1200,9 +1127,11 @@
 }
 
 .community-photos h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
   margin-bottom: 10px;
 }
 
@@ -1214,7 +1143,8 @@
 
 .photo-grid-item {
   aspect-ratio: 1;
-  border-radius: 8px;
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-surface);
   cursor: pointer;
@@ -1240,20 +1170,18 @@
   width: 100%;
   margin-top: 10px;
   padding: 8px;
-  background: transparent;
-  border: 1px solid rgba(217, 167, 101, 0.2);
-  border-radius: 8px;
+  background: var(--color-card);
+  border: var(--border-ink-thin);
+  border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 500;
-  color: var(--color-accent);
+  font-weight: 800;
+  color: var(--color-ink);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .see-all-photos-btn:hover {
-  background: var(--color-accent-muted);
-  color: var(--color-accent);
-  border-color: rgba(217, 167, 101, 0.4);
+  background: var(--color-butter);
 }
 
 /* Photo Lightbox */
@@ -1264,7 +1192,7 @@
   right: 0;
   bottom: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.95);
+  background: rgba(27, 22, 17, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1276,7 +1204,8 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border: 3px solid var(--color-bg);
+  border-radius: var(--radius-md);
 }
 
 .lightbox-close {
@@ -1286,9 +1215,9 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
+  background: var(--color-card);
+  border: var(--border-ink);
+  color: var(--color-ink);
   font-size: 24px;
   cursor: pointer;
   display: flex;
@@ -1298,20 +1227,8 @@
 }
 
 .lightbox-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-butter);
 }
-
-/* ===========================
-   Performance Utilities
-   =========================== */
-
-/* content-visibility for long lists - skip rendering off-screen items */
-.dish-card-virtualized {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 420px;
-}
-
-/* Note: .browse-card-virtualized removed - content-visibility was causing card content clipping */
 
 /* ===========================
    Accessibility: Reduced Motion
@@ -1326,11 +1243,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  /* Keep opacity for stagger items so they're visible */
-  .stagger-item {
-    opacity: 1;
   }
 
   /* Disable specific animation classes */
@@ -1430,5 +1342,51 @@ input.outline-none:focus-visible {
    CartoDB Voyager
    =========================== */
 .wgh-map-tiles {
-  filter: brightness(1.0) contrast(1.02);
+  /* Warm the cool CARTO Voyager tiles so they sit on the cream palette */
+  filter: sepia(0.16) saturate(1.08) contrast(1.02);
+}
+
+/* Leaflet chrome → sticker system */
+.leaflet-container {
+  font-family: var(--font-body);
+  background: var(--color-surface);
+}
+.leaflet-popup-content-wrapper {
+  background: var(--color-card);
+  color: var(--color-text-primary);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+}
+.leaflet-popup-tip {
+  background: var(--color-card);
+  border: var(--border-ink);
+  box-shadow: none;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-ink);
+}
+.leaflet-bar {
+  border: var(--border-ink) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-hard) !important;
+  overflow: hidden;
+}
+.leaflet-bar a {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border-bottom: 1.5px solid var(--color-divider);
+  font-weight: 800;
+}
+.leaflet-bar a:hover {
+  background: var(--color-butter);
+  color: var(--color-ink);
+}
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(var(--color-bg-rgb), 0.85);
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-accent);
 }

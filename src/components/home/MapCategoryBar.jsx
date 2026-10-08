@@ -15,11 +15,11 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
   return (
     <div
       style={{
-        background: 'rgba(var(--color-bg-rgb), 0.75)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: 16,
-        padding: '6px 4px',
+        background: 'var(--color-card)',
+        border: 'var(--border-ink)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-hard)',
+        padding: '5px 4px',
       }}
     >
       <div
@@ -36,14 +36,14 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
             width: 40,
             height: 40,
             borderRadius: 12,
-            border: activeCategory === null ? '2px solid var(--color-primary)' : '2px solid transparent',
-            background: activeCategory === null ? 'rgba(var(--color-primary-rgb), 0.12)' : 'transparent',
+            border: activeCategory === null ? 'var(--border-ink)' : '2px solid transparent',
+            background: activeCategory === null ? 'var(--color-butter)' : 'transparent',
             transition: 'border-color 0.2s, background 0.2s',
           }}
           aria-label="Near You — all categories"
           title="Near You"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-primary)' : 'var(--color-text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={activeCategory === null ? 'var(--color-ink)' : 'var(--color-text-secondary)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
@@ -63,15 +63,15 @@ export function MapCategoryBar({ activeCategory, onCategoryChange }) {
                 width: 40,
                 height: 40,
                 borderRadius: 12,
-                border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-                background: isActive ? 'rgba(var(--color-primary-rgb), 0.12)' : 'transparent',
+                border: isActive ? 'var(--border-ink)' : '2px solid transparent',
+                background: isActive ? 'var(--color-butter)' : 'transparent',
                 transition: 'border-color 0.2s, background 0.2s',
               }}
               aria-label={cat.label}
               title={cat.label}
             >
               {iconSrc ? (
-                <img src={iconSrc} alt="" width={28} height={28} loading="lazy" />
+                <img src={iconSrc} alt="" width={32} height={32} loading="lazy" />
               ) : (
                 <span style={{ fontSize: 20 }}>{cat.emoji}</span>
               )}

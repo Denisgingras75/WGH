@@ -17,18 +17,23 @@ function escapeXml(str: string): string {
 
 function renderSvg(title: string, byline: string, emojis: string[]): string {
   const tiles = [0, 1, 2, 3].map(i => emojis[i] || '🍽️')
-  const colors = ['#C48A12', '#E4440A', '#B07340', '#16A34A']
+  // "Lobster Buoy" inks — keep in sync with src/index.css :root (SVG can't read CSS vars)
+  const INK = '#1B1611'
+  const colors = ['#CA3216', '#FFC83D', '#1F4FA3', '#F9DDB8']
+  const DISPLAY = "'Bricolage Grotesque', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+  const BODY = "'Instrument Sans', 'Helvetica Neue', Arial, sans-serif"
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#F0ECE8"/>
-  <text x="60" y="55" font-family="sans-serif" font-size="22" fill="#999">What's Good Here</text>
+  <rect width="1200" height="630" fill="#F6EEDC"/>
+  <text x="60" y="58" font-family="${DISPLAY}" font-size="26" font-weight="800" fill="${INK}">What’s Good Here</text>
   ${tiles.map((emoji, i) => {
-    const x = 60 + (i % 2) * 152
-    const y = 90 + Math.floor(i / 2) * 152
-    return `<rect x="${x}" y="${y}" width="150" height="150" rx="8" fill="${colors[i]}"/>
-    <text x="${x + 75}" y="${y + 95}" font-size="72" text-anchor="middle" dominant-baseline="middle">${emoji}</text>`
+    const x = 60 + (i % 2) * 160
+    const y = 92 + Math.floor(i / 2) * 160
+    return `<rect x="${x + 5}" y="${y + 5}" width="148" height="148" rx="18" fill="${INK}"/>
+    <rect x="${x}" y="${y}" width="148" height="148" rx="18" fill="${colors[i]}" stroke="${INK}" stroke-width="4"/>
+    <text x="${x + 74}" y="${y + 92}" font-size="72" text-anchor="middle" dominant-baseline="middle">${emoji}</text>`
   }).join('\n  ')}
-  <text x="420" y="220" font-family="sans-serif" font-size="56" font-weight="800" fill="#1A1A1A">${escapeXml(title.length > 30 ? title.slice(0, 28) + '…' : title)}</text>
-  <text x="420" y="280" font-family="sans-serif" font-size="24" fill="#555">${escapeXml(byline)}</text>
+  <text x="430" y="226" font-family="${DISPLAY}" font-size="60" font-weight="800" letter-spacing="-2" fill="${INK}">${escapeXml(title.length > 30 ? title.slice(0, 28) + '…' : title)}</text>
+  <text x="430" y="286" font-family="${BODY}" font-size="26" font-weight="600" fill="#554A3E">${escapeXml(byline)}</text>
 </svg>`
 }
 

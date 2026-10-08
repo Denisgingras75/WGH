@@ -14,7 +14,7 @@ export function HearingIcon({ size = 20, className = '', active = false }) {
         height: scaledSize,
         margin: -Math.round(size * 0.3),
         filter: active
-          ? 'brightness(1.15) drop-shadow(0 0 4px rgba(var(--color-primary-rgb), 0.4))'
+          ? 'drop-shadow(2px 2px 0 var(--color-ink))'
           : 'brightness(0.9) opacity(0.85)',
       }}
     />

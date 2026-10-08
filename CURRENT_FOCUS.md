@@ -2,7 +2,7 @@
 
 *Dan (or any Claude session starting work) updates this file at session start. Every other Claude session reads it first to avoid collisions.*
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-10-08
 
 ---
 
@@ -12,11 +12,11 @@
      This is the collision-prevention surface — if it's stale, the whole
      system weakens. Keep it honest. -->
 
-- **Owner / session:** _(Dan's terminal | Dan's other Claude | Denis's Claude | scheduled agent name)_
-- **Branch:** _(e.g., audit/supabase-2026-04-16 — or `main` if directly committing)_
-- **Files / modules claimed:** _(e.g., `src/api/votesApi.js`, `supabase/schema.sql §votes`, `src/pages/Profile.jsx`)_
-- **Safe for others to continue:** _(what parts of the repo are NOT touched and open for parallel work)_
-- **Do not duplicate:** _(specific tasks already in-flight — PR numbers, migration filenames, feature names)_
+- **Owner / session:** Denis's Claude (cloud session)
+- **Branch:** `ccr-0a624ce3-i5unc8`
+- **Files / modules claimed:** visual layer of essentially every `src/**/*.jsx` file, `src/index.css`, `index.html` (fonts), `tailwind.config.js`, `public/favicon.svg`, design docs (CLAUDE.md §4.6–4.7, NOTES.md, `docs/DESIGN-SYSTEM.md`)
+- **Safe for others to continue:** `src/api/`, `src/hooks/`, `supabase/`, `api/`, `e2e/`, `scripts/` — no logic/data changes in this branch
+- **Do not duplicate:** full-site visual redesign ("Lobster Buoy": new palette, Bricolage Grotesque + Instrument Sans, sticker/hard-shadow system). Rebase UI work onto this branch or expect style conflicts.
 
 ---
 
@@ -25,14 +25,15 @@
 <!-- One paragraph. What are we actually shipping this session?
      Skip the long context — CLAUDE.md + SPEC.md provide that. -->
 
-_(stub)_
+Top-to-bottom visual redesign requested by Denis: new color system (Lobster / Harbor / Butter inks on cream, ink outlines, hard offset shadows that match Dan's neo-brutalist food icons), new type (Bricolage Grotesque display + Instrument Sans body, replacing Amatic SC + Outfit), and every screen moved onto shared tokens/primitives. Visual only — no behavior, copy, or data changes. **Needs Dan's sign-off** (he owns visual identity) before merge.
 
 ## Blockers / waiting on
 
 <!-- Anything held up on Denis, Apple review, a design decision, etc.
      Claude should NOT quietly start work that's waiting on someone else. -->
 
-- _(nothing)_
+- Dan's review of the redesign direction (brand/visual identity is his call).
+- Regenerated `og-image.png`/`.svg`, `wgh-icon.png`, `favicon.png`/`.svg` in the new style. `public/logo*.svg`, `logo.webp`, `wgh-splash.webp` are unreferenced legacy assets — left untouched.
 
 ## Not this session
 

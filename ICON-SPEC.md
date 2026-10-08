@@ -26,7 +26,7 @@ They must work at 48px in a category chip AND at 128px as a category hero. The s
 
 ### Color Temperature
 
-All icons share a warm, saturated color temperature. Bright yellows (buns, cheese), punchy reds (pepperoni, ketchup, tomato), vivid greens (lettuce). Even "cool" foods skew warm. This keeps the set cohesive on the warm stone `#F0ECE8` background.
+All icons share a warm, saturated color temperature. Bright yellows (buns, cheese), punchy reds (pepperoni, ketchup, tomato), vivid greens (lettuce). Even "cool" foods skew warm. This keeps the set cohesive on the cream `#F6EEDC` background.
 
 ### Hard Shadow
 
@@ -65,7 +65,7 @@ File naming: `{category-id}.png` — must exactly match the `id` field in `ALL_C
 
 ### Theme
 
-Light mode only (Appetite theme). Icons use warm flat fills — no tinting or CSS filtering needed. They sit on the warm stone `#F0ECE8` background or white `#FFFFFF` card surfaces.
+Light mode only (Appetite theme). Icons use warm flat fills — no tinting or CSS filtering needed. They sit on the cream `#F6EEDC` background, `#FFFDF7` card surfaces, or the peach `#F9DDB8` plate discs. The UI's ink outlines + hard offset shadows (docs/DESIGN-SYSTEM.md) are borrowed from this icon style.
 
 ---
 
